@@ -732,12 +732,27 @@ onUnmounted(() => {
               style="height: 20px; top: 50%; transform: translateY(-50%);"
               xmlns="http://www.w3.org/2000/svg"
             >
+              <defs>
+                <filter id="glowFilter2">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <linearGradient id="cometGrad2" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="var(--ui-primary)" stop-opacity="0" />
+                  <stop offset="40%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
+                  <stop offset="60%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
+                  <stop offset="100%" stop-color="var(--ui-primary)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
               <!-- Base track -->
               <path ref="flowPath2BaseRef" stroke="var(--ui-primary)" stroke-width="2" fill="none" opacity="0.15" />
               <!-- Glow -->
-              <path ref="flowPath2GlowRef" stroke="var(--ui-primary)" stroke-width="6" fill="none" opacity="0.08" filter="url(#glowFilter1)" />
-              <!-- Traveling segment (uses same gradient defs from SVG 1) -->
-              <path ref="flowPath2TravelRef" stroke="var(--ui-primary)" stroke-width="2.5" fill="none" opacity="0.8" />
+              <path ref="flowPath2GlowRef" stroke="var(--ui-primary)" stroke-width="6" fill="none" opacity="0.08" filter="url(#glowFilter2)" />
+              <!-- Traveling segment -->
+              <path ref="flowPath2TravelRef" stroke="url(#cometGrad2)" stroke-width="2.5" fill="none" />
               <!-- Node dots between cards -->
               <circle v-for="n in 5" :key="n" :cx="`${n * 16.67}%`" cy="10" r="3" fill="var(--ui-primary)" opacity="0.2" />
             </svg>
