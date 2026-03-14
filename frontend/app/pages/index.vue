@@ -37,6 +37,7 @@ const featuresSectionRef = useTemplateRef<HTMLElement>('featuresSectionRef');
 const featuresTrackRef = useTemplateRef<HTMLElement>('featuresTrackRef');
 
 // Flowing line SVG 1 refs (How It Works — vertical)
+const timelineContainerRef = useTemplateRef<HTMLElement>('timelineContainerRef');
 const flowLineSvg1Ref = useTemplateRef<SVGSVGElement>('flowLineSvg1Ref');
 const flowPath1BaseRef = useTemplateRef<SVGPathElement>('flowPath1BaseRef');
 const flowPath1GlowRef = useTemplateRef<SVGPathElement>('flowPath1GlowRef');
@@ -297,43 +298,49 @@ onMounted(async () => {
     && flowPath1BaseRef.value
     && flowPath1GlowRef.value
     && flowPath1TravelRef.value
-    && howItWorksRef.value
+    && timelineContainerRef.value
     && window.innerWidth >= 1024
   ) {
     await nextTick();
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
     const svg = flowLineSvg1Ref.value!;
-    const sectionEl = howItWorksRef.value!;
-    const sectionRect = sectionEl.getBoundingClientRect();
+    const container = timelineContainerRef.value!;
+    const containerRect = container.getBoundingClientRect();
     const circles = stepCircleRefs.value;
 
     if (circles.length >= 3) {
-      // Calculate path through step circles
+      // Calculate circle positions relative to the SVG's parent container
       const circlePositions = circles.map((circle) => {
         const rect = circle.getBoundingClientRect();
         return {
-          x: rect.left + rect.width / 2 - sectionRect.left,
-          y: rect.top + rect.height / 2 - sectionRect.top,
+          x: rect.left + rect.width / 2 - containerRect.left,
+          y: rect.top + rect.height / 2 - containerRect.top,
         };
       });
 
       const centerX = circlePositions[0].x;
-      const topY = circlePositions[0].y - 40;
-      const bottomY = circlePositions[2].y + 60;
+      const topY = Math.max(0, circlePositions[0].y - 40);
+      const lastCircleY = circlePositions[2].y;
+      // Extend the line well below the last step to create room for the curve
+      const curveStartY = lastCircleY + 80;
+      const curveEndY = curveStartY + 60;
+      const containerWidth = containerRect.width;
 
-      // Path: straight vertical through circles, then curve to bottom-right
+      // Path: straight vertical through circles, then smooth curve to bottom-right
       const pathD = [
         `M ${centerX} ${topY}`,
         `L ${centerX} ${circlePositions[0].y}`,
         `L ${centerX} ${circlePositions[1].y}`,
-        `L ${centerX} ${circlePositions[2].y}`,
-        `C ${centerX} ${bottomY}, ${centerX + 100} ${bottomY}, ${sectionRect.width - 40} ${bottomY}`,
+        `L ${centerX} ${lastCircleY}`,
+        `L ${centerX} ${curveStartY}`,
+        `C ${centerX} ${curveEndY}, ${centerX + 150} ${curveEndY}, ${containerWidth} ${curveEndY}`,
       ].join(' ');
 
-      // Set SVG viewBox to match section size
-      svg.setAttribute('viewBox', `0 0 ${sectionRect.width} ${bottomY + 20}`);
-      svg.style.height = `${bottomY + 20}px`;
+      // Set SVG viewBox to match container — add extra height for the curve
+      const svgHeight = curveEndY + 20;
+      svg.setAttribute('viewBox', `0 0 ${containerWidth} ${svgHeight}`);
+      svg.style.height = `${svgHeight}px`;
 
       // Apply path to all three layers
       [flowPath1BaseRef.value!, flowPath1GlowRef.value!, flowPath1TravelRef.value!].forEach((p) => {
@@ -645,7 +652,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Vertical timeline layout -->
-          <div class="relative mx-auto max-w-2xl">
+          <div ref="timelineContainerRef" class="relative mx-auto max-w-2xl">
             <!-- Flowing line SVG (desktop) -->
             <svg
               ref="flowLineSvg1Ref"
