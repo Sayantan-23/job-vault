@@ -5,9 +5,7 @@
   --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* scroll-behavior removed — Lenis handles smooth scrolling */
 
 :root {
   --ui-radius: 0.75rem;
@@ -220,10 +218,16 @@ html {
 }
 
 /* Floating orb animations — smooth organic drift */
-.orb-float-1 { animation: orb-drift-1 22s ease-in-out infinite; }
-.orb-float-2 { animation: orb-drift-2 26s ease-in-out infinite; }
-.orb-float-3 { animation: orb-drift-3 28s ease-in-out infinite; }
-.orb-float-4 { animation: orb-drift-4 32s ease-in-out infinite; }
+.orb-float-1 { animation: orb-drift-1 22s ease-in-out infinite; animation-play-state: paused; }
+.orb-float-2 { animation: orb-drift-2 26s ease-in-out infinite; animation-play-state: paused; }
+.orb-float-3 { animation: orb-drift-3 28s ease-in-out infinite; animation-play-state: paused; }
+.orb-float-4 { animation: orb-drift-4 32s ease-in-out infinite; animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .orb-float-1, .orb-float-2, .orb-float-3, .orb-float-4 {
+    animation-play-state: running;
+  }
+}
 
 @keyframes orb-drift-1 {
   0%   { transform: translate(0, 0); }
@@ -405,4 +409,26 @@ html {
   .gradient-blob-interactive {
     display: none;
   }
+}
+
+/* Features horizontal scroll — hidden scrollbar */
+.features-track-wrapper {
+  overflow: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.features-track-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+/* Flowing line z-index layering */
+.flowing-line-svg {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.section-content {
+  position: relative;
+  z-index: 2;
 }
