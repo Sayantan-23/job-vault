@@ -1,0 +1,27 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^4.4.0",
+    "marked": "^15.0.0",
+    "nuxt": "^4.3.1",
+    "tailwindcss": "^4.1.18",
+    "vue": "^3.5.28",
+    "gsap": "^3.12.7",
+    "vue-draggable-plus": "^0.6.1",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.91",
+    "@iconify-json/simple-icons": "^1.2.71",
+    "@types/marked": "^6.0.0"
+  }
+}
