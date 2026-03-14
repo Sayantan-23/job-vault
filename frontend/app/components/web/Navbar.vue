@@ -20,7 +20,7 @@ const isHomePage = computed(() => route.path === '/');
 const navLinks = computed(() => {
   const links = [];
   if (isHomePage.value) {
-    links.push({ label: 'Features', href: '/#features', isAnchor: true });
+    links.push({ label: 'How It Works', href: '/#how-it-works', isAnchor: true });
   }
   links.push(
     { label: 'FAQ', to: '/web/faq', isAnchor: false },
@@ -33,10 +33,8 @@ const navLinks = computed(() => {
 function onNavLinkClick(link: { isAnchor: boolean; href?: string }) {
   if (link.isAnchor && link.href) {
     isMobileMenuOpen.value = false;
-    const target = document.querySelector(link.href.replace('/', ''));
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
-    }
+    const selector = link.href.replace('/', '');
+    useNuxtApp().$lenis.scrollTo(selector);
   } else {
     isMobileMenuOpen.value = false;
   }

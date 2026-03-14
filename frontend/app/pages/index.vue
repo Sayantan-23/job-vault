@@ -10,9 +10,9 @@ useSeoMeta({
   ogDescription: 'Track job applications, preserve job postings, and generate AI cover letters. Never lose track of your job search again.',
 });
 
-function scrollToFeatures() {
+function scrollToHowItWorks() {
   if (import.meta.client) {
-    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+    useNuxtApp().$lenis.scrollTo('#how-it-works');
   }
 }
 
@@ -239,7 +239,7 @@ onUnmounted(() => {
                 icon="i-lucide-chevron-down"
                 trailing
                 class="rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm"
-                @click.prevent="scrollToFeatures"
+                @click.prevent="scrollToHowItWorks"
               />
             </div>
           </div>
