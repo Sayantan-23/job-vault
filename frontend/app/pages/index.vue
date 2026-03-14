@@ -36,6 +36,18 @@ const orbRefs = ref<HTMLElement[]>([]);
 const featuresSectionRef = useTemplateRef<HTMLElement>('featuresSectionRef');
 const featuresTrackRef = useTemplateRef<HTMLElement>('featuresTrackRef');
 
+// Flowing line SVG 1 refs (How It Works — vertical)
+const flowLineSvg1Ref = useTemplateRef<SVGSVGElement>('flowLineSvg1Ref');
+const flowPath1BaseRef = useTemplateRef<SVGPathElement>('flowPath1BaseRef');
+const flowPath1GlowRef = useTemplateRef<SVGPathElement>('flowPath1GlowRef');
+const flowPath1TravelRef = useTemplateRef<SVGPathElement>('flowPath1TravelRef');
+
+// Flowing line SVG 2 refs (Features — horizontal)
+const flowLineSvg2Ref = useTemplateRef<SVGSVGElement>('flowLineSvg2Ref');
+const flowPath2BaseRef = useTemplateRef<SVGPathElement>('flowPath2BaseRef');
+const flowPath2GlowRef = useTemplateRef<SVGPathElement>('flowPath2GlowRef');
+const flowPath2TravelRef = useTemplateRef<SVGPathElement>('flowPath2TravelRef');
+
 const prefersReducedMotion = ref(false);
 
 const features = [
@@ -43,13 +55,11 @@ const features = [
     icon: 'i-lucide-columns-3',
     title: 'Kanban Pipeline',
     description: 'Drag-and-drop your applications through stages from Wishlist to Offer.',
-    hero: true,
   },
   {
     icon: 'i-lucide-ghost',
     title: 'Ghost Meter',
     description: 'Know exactly which employers have gone silent with automatic ghost detection.',
-    hero: true,
   },
   {
     icon: 'i-lucide-camera',
@@ -127,6 +137,15 @@ const trustBadges = [
 
 const gsapTriggers: any[] = [];
 const abortController = new AbortController();
+
+let resizeTimer: ReturnType<typeof setTimeout>;
+function onResize() {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(async () => {
+    const { ScrollTrigger } = await import('gsap/ScrollTrigger');
+    ScrollTrigger.refresh();
+  }, 200);
+}
 
 onMounted(async () => {
   if (!import.meta.client) return;
@@ -272,7 +291,58 @@ onMounted(async () => {
     });
   }
 
-  // === Features horizontal scroll (desktop only) ===
+  // === Flowing line SVG 1 — path calculation (How It Works vertical, desktop only) ===
+  if (
+    flowLineSvg1Ref.value
+    && flowPath1BaseRef.value
+    && flowPath1GlowRef.value
+    && flowPath1TravelRef.value
+    && howItWorksRef.value
+    && window.innerWidth >= 1024
+  ) {
+    await nextTick();
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    const svg = flowLineSvg1Ref.value!;
+    const sectionEl = howItWorksRef.value!;
+    const sectionRect = sectionEl.getBoundingClientRect();
+    const circles = stepCircleRefs.value;
+
+    if (circles.length >= 3) {
+      // Calculate path through step circles
+      const circlePositions = circles.map((circle) => {
+        const rect = circle.getBoundingClientRect();
+        return {
+          x: rect.left + rect.width / 2 - sectionRect.left,
+          y: rect.top + rect.height / 2 - sectionRect.top,
+        };
+      });
+
+      const centerX = circlePositions[0].x;
+      const topY = circlePositions[0].y - 40;
+      const bottomY = circlePositions[2].y + 60;
+
+      // Path: straight vertical through circles, then curve to bottom-right
+      const pathD = [
+        `M ${centerX} ${topY}`,
+        `L ${centerX} ${circlePositions[0].y}`,
+        `L ${centerX} ${circlePositions[1].y}`,
+        `L ${centerX} ${circlePositions[2].y}`,
+        `C ${centerX} ${bottomY}, ${centerX + 100} ${bottomY}, ${sectionRect.width - 40} ${bottomY}`,
+      ].join(' ');
+
+      // Set SVG viewBox to match section size
+      svg.setAttribute('viewBox', `0 0 ${sectionRect.width} ${bottomY + 20}`);
+      svg.style.height = `${bottomY + 20}px`;
+
+      // Apply path to all three layers
+      [flowPath1BaseRef.value!, flowPath1GlowRef.value!, flowPath1TravelRef.value!].forEach((p) => {
+        p.setAttribute('d', pathD);
+      });
+    }
+  }
+
+  // === Features horizontal scroll (desktop only) + SVG 2 + unified scroll ===
   ScrollTrigger.matchMedia({
     '(min-width: 1024px)': () => {
       if (!featuresTrackRef.value || !featuresSectionRef.value) return;
@@ -301,11 +371,101 @@ onMounted(async () => {
       gsapTriggers.push(featuresTween);
       gsapTriggers.push(ScrollTrigger.getAll().at(-1));
 
+      // Setup SVG 2 horizontal path
+      if (flowPath2BaseRef.value && flowPath2GlowRef.value && flowPath2TravelRef.value && flowLineSvg2Ref.value) {
+        const trackWidth = track.scrollWidth;
+        const pathD = `M 0 10 L ${trackWidth} 10`;
+        const svg2 = flowLineSvg2Ref.value;
+        svg2.setAttribute('viewBox', `0 0 ${trackWidth} 20`);
+        svg2.style.width = `${trackWidth}px`;
+
+        [flowPath2BaseRef.value, flowPath2GlowRef.value, flowPath2TravelRef.value].forEach((p) => {
+          p.setAttribute('d', pathD);
+        });
+
+        // Setup traveling segment
+        const path2Length = flowPath2TravelRef.value.getTotalLength();
+        const seg2Length = path2Length * 0.15;
+        gsap.set(flowPath2TravelRef.value, {
+          strokeDasharray: `${seg2Length} ${path2Length - seg2Length}`,
+          strokeDashoffset: path2Length,
+        });
+      }
+
+      // === Unified scroll coordination for both SVGs ===
+      // Single trigger spans from How It Works top to Features bottom
+      if (howItWorksRef.value && flowPath1TravelRef.value && flowPath2TravelRef.value) {
+        const path1Length = flowPath1TravelRef.value.getTotalLength();
+        const seg1Length = path1Length * 0.15;
+        const path2Length = flowPath2TravelRef.value.getTotalLength();
+        const seg2Length = path2Length * 0.15;
+
+        // Ensure SVG 1 is set up for unified control
+        gsap.set(flowPath1TravelRef.value, {
+          strokeDasharray: `${seg1Length} ${path1Length - seg1Length}`,
+          strokeDashoffset: path1Length,
+        });
+
+        ScrollTrigger.create({
+          trigger: howItWorksRef.value,
+          start: 'top 60%',
+          endTrigger: section, // Features section (pinned)
+          end: 'bottom bottom',
+          scrub: 1.5,
+          onUpdate: (self) => {
+            const progress = self.progress;
+
+            if (progress <= 0.4) {
+              // Progress 0-0.4: animate SVG 1 (vertical)
+              const svg1Progress = progress / 0.4; // normalize to 0-1
+              const offset1 = path1Length - (svg1Progress * (path1Length + seg1Length));
+              gsap.set(flowPath1TravelRef.value!, {
+                strokeDashoffset: offset1,
+              });
+              // Reset SVG 2 to start
+              gsap.set(flowPath2TravelRef.value!, {
+                strokeDashoffset: path2Length,
+              });
+
+              // Step circle pulses
+              stepCircleRefs.value.forEach((circle, i) => {
+                if (!circle) return;
+                const threshold = (i + 1) / (stepCircleRefs.value.length + 1);
+                if (svg1Progress >= threshold && !activatedCircles.has(i)) {
+                  activatedCircles.add(i);
+                  gsap.fromTo(circle,
+                    { scale: 1 },
+                    { scale: 1.15, duration: 0.2, ease: 'back.out(2)', yoyo: true, repeat: 1 },
+                  );
+                }
+              });
+            }
+            else {
+              // Progress 0.4-1.0: animate SVG 2 (horizontal)
+              const svg2Progress = (progress - 0.4) / 0.6; // normalize to 0-1
+              const offset2 = path2Length - (svg2Progress * (path2Length + seg2Length));
+              gsap.set(flowPath2TravelRef.value!, {
+                strokeDashoffset: offset2,
+              });
+              // SVG 1 segment should be fully past the end (invisible)
+              gsap.set(flowPath1TravelRef.value!, {
+                strokeDashoffset: -seg1Length,
+              });
+            }
+          },
+        });
+
+        gsapTriggers.push(ScrollTrigger.getAll().at(-1));
+      }
+
       return () => {
         featuresTween.kill();
       };
     },
   });
+
+  // Resize handler for SVG recalculation
+  window.addEventListener('resize', onResize, { signal: abortController.signal });
 });
 
 onUnmounted(() => {
@@ -486,6 +646,36 @@ onUnmounted(() => {
 
           <!-- Vertical timeline layout -->
           <div class="relative mx-auto max-w-2xl">
+            <!-- Flowing line SVG (desktop) -->
+            <svg
+              ref="flowLineSvg1Ref"
+              class="flowing-line-svg hidden lg:block inset-0 w-full h-full"
+              xmlns="http://www.w3.org/2000/svg"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <filter id="glowFilter1">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <linearGradient id="cometGrad1" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stop-color="var(--ui-primary)" stop-opacity="0" />
+                  <stop offset="40%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
+                  <stop offset="60%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
+                  <stop offset="100%" stop-color="var(--ui-primary)" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <!-- Base track -->
+              <path ref="flowPath1BaseRef" stroke="var(--ui-primary)" stroke-width="2" fill="none" opacity="0.15" />
+              <!-- Glow layer -->
+              <path ref="flowPath1GlowRef" stroke="var(--ui-primary)" stroke-width="6" fill="none" opacity="0.08" filter="url(#glowFilter1)" />
+              <!-- Traveling segment -->
+              <path ref="flowPath1TravelRef" stroke="url(#cometGrad1)" stroke-width="2.5" fill="none" />
+            </svg>
+
             <!-- Static dashed line (mobile) / will be replaced by SVG on desktop -->
             <div class="lg:hidden absolute left-6 top-0 bottom-0 w-px border-l-2 border-dashed border-primary/20" />
 
@@ -535,6 +725,22 @@ onUnmounted(() => {
 
           <!-- Desktop: horizontal scroll track -->
           <div v-if="!prefersReducedMotion" class="features-track-wrapper hidden lg:block section-content">
+            <!-- Flowing line SVG 2 (horizontal, inside pinned container) -->
+            <svg
+              ref="flowLineSvg2Ref"
+              class="flowing-line-svg inset-0 w-full"
+              style="height: 20px; top: 50%; transform: translateY(-50%);"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <!-- Base track -->
+              <path ref="flowPath2BaseRef" stroke="var(--ui-primary)" stroke-width="2" fill="none" opacity="0.15" />
+              <!-- Glow -->
+              <path ref="flowPath2GlowRef" stroke="var(--ui-primary)" stroke-width="6" fill="none" opacity="0.08" filter="url(#glowFilter1)" />
+              <!-- Traveling segment (uses same gradient defs from SVG 1) -->
+              <path ref="flowPath2TravelRef" stroke="var(--ui-primary)" stroke-width="2.5" fill="none" opacity="0.8" />
+              <!-- Node dots between cards -->
+              <circle v-for="n in 5" :key="n" :cx="`${n * 16.67}%`" cy="10" r="3" fill="var(--ui-primary)" opacity="0.2" />
+            </svg>
             <div ref="featuresTrackRef" class="features-track flex gap-6">
               <div
                 v-for="feature in features"
@@ -669,22 +875,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-.bento-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .bento-grid { grid-template-columns: repeat(2, 1fr); }
-  .bento-hero { grid-column: span 2; }
-}
-
-@media (min-width: 1024px) {
-  .bento-grid { grid-template-columns: repeat(4, 1fr); }
-  .bento-hero { grid-column: span 2; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .bento-card { opacity: 1 !important; transform: none !important; }
 }
