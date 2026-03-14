@@ -18,9 +18,25 @@ function scrollToHowItWorks() {
 
 const featureGridRef = useTemplateRef<HTMLElement>('featureGridRef');
 const howItWorksRef = useTemplateRef<HTMLElement>('howItWorksRef');
-const stepLineRef = useTemplateRef<SVGLineElement>('stepLineRef');
 const stepCircleRefs = ref<HTMLElement[]>([]);
 const activatedCircles = reactive(new Set<number>());
+
+// Hero entrance refs
+const heroBgRef = useTemplateRef<HTMLElement>('heroBgRef');
+const heroGridRef = useTemplateRef<HTMLElement>('heroGridRef');
+const heroTextRef = useTemplateRef<HTMLElement>('heroTextRef');
+const heroHeadingRef = useTemplateRef<HTMLElement>('heroHeadingRef');
+const ghostProofRef = useTemplateRef<HTMLElement>('ghostProofRef');
+const heroSubtitleRef = useTemplateRef<HTMLElement>('heroSubtitleRef');
+const heroCtasRef = useTemplateRef<HTMLElement>('heroCtasRef');
+const heroMockupRef = useTemplateRef<HTMLElement>('heroMockupRef');
+const orbRefs = ref<HTMLElement[]>([]);
+
+// Features horizontal scroll refs
+const featuresSectionRef = useTemplateRef<HTMLElement>('featuresSectionRef');
+const featuresTrackRef = useTemplateRef<HTMLElement>('featuresTrackRef');
+
+const prefersReducedMotion = ref(false);
 
 const features = [
   {
@@ -115,17 +131,135 @@ const abortController = new AbortController();
 onMounted(async () => {
   if (!import.meta.client) return;
 
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (prefersReducedMotion) return;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  prefersReducedMotion.value = reducedMotion;
+  if (reducedMotion) {
+    // Make orbs visible and let CSS animations run
+    orbRefs.value.forEach((orb) => {
+      if (orb) orb.style.animationPlayState = 'running';
+    });
+    return;
+  }
 
   const gsap = (await import('gsap')).default;
   const { ScrollTrigger } = await import('gsap/ScrollTrigger');
   gsap.registerPlugin(ScrollTrigger);
 
+  // === Hero entrance animation ===
+  const heroTl = gsap.timeline();
+
+  // Initial hidden state — all gsap.set() calls BEFORE timeline tweens
+  const heroElements = [
+    heroBgRef.value,
+    heroGridRef.value,
+    heroHeadingRef.value,
+    heroSubtitleRef.value,
+    heroCtasRef.value,
+    heroMockupRef.value,
+  ].filter(Boolean);
+  gsap.set(heroElements, { opacity: 0, visibility: 'hidden' });
+  gsap.set(orbRefs.value, { opacity: 0, visibility: 'hidden', scale: 0 });
+  gsap.set(heroBgRef.value, { scale: 0.95 });
+  gsap.set(heroHeadingRef.value, { y: 30 });
+  gsap.set(heroSubtitleRef.value, { y: 20 });
+  gsap.set(heroMockupRef.value, { x: 60 });
+  if (ghostProofRef.value) {
+    gsap.set(ghostProofRef.value, { backgroundPosition: '-100% 0' });
+  }
+  if (heroCtasRef.value) {
+    gsap.set(heroCtasRef.value.children, { y: 20, opacity: 0 });
+  }
+
+  // 0ms: Background gradient bloom
+  heroTl.to(heroBgRef.value, {
+    opacity: 1,
+    scale: 1,
+    visibility: 'visible',
+    duration: 0.8,
+    ease: 'power2.out',
+  }, 0);
+
+  // 200ms: Hero grid pattern fade
+  heroTl.to(heroGridRef.value, {
+    opacity: 0.15,
+    visibility: 'visible',
+    duration: 0.6,
+    ease: 'power2.out',
+  }, 0.2);
+
+  // 400ms: Heading slides up
+  heroTl.to(heroHeadingRef.value, {
+    y: 0,
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.6,
+    ease: 'power3.out',
+  }, 0.4);
+
+  // 400ms: "Ghost-Proof" gradient sweep
+  if (ghostProofRef.value) {
+    heroTl.to(ghostProofRef.value, {
+      backgroundPosition: '0% 0',
+      duration: 0.8,
+      ease: 'power2.inOut',
+    }, 0.4);
+  }
+
+  // 700ms: Subtitle fades in
+  heroTl.to(heroSubtitleRef.value, {
+    y: 0,
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.5,
+    ease: 'power3.out',
+  }, 0.7);
+
+  // 900ms: CTA buttons stagger
+  if (heroCtasRef.value) {
+    heroTl.set(heroCtasRef.value, { visibility: 'visible', opacity: 1 }, 0.9);
+    heroTl.to(heroCtasRef.value.children, {
+      y: 0,
+      opacity: 1,
+      duration: 0.4,
+      ease: 'power3.out',
+      stagger: 0.1,
+    }, 0.9);
+  }
+
+  // 1200ms: Dashboard mockup sweeps from right
+  heroTl.to(heroMockupRef.value, {
+    x: 0,
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.8,
+    ease: 'back.out(1.2)',
+  }, 1.2);
+
+  // 1800ms: Floating orbs pop in
+  heroTl.to(orbRefs.value, {
+    scale: 1,
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.4,
+    ease: 'back.out(2)',
+    stagger: 0.15,
+    onComplete: () => {
+      // Hand off to CSS drift animation
+      orbRefs.value.forEach((orb) => {
+        if (orb) orb.style.animationPlayState = 'running';
+      });
+    },
+  }, 1.8);
+
+  gsapTriggers.push(heroTl);
+
   // === Feature card icon hover ===
-  if (featureGridRef.value) {
-    const cards = featureGridRef.value.querySelectorAll('.bento-card');
-    cards.forEach((card) => {
+  if (featureGridRef.value || featuresTrackRef.value) {
+    const allCards = [
+      ...(featureGridRef.value?.querySelectorAll('.bento-card') || []),
+      ...(featuresTrackRef.value?.querySelectorAll('.feature-card') || []),
+    ];
+    allCards.forEach((card) => {
       const icon = card.querySelector('.feature-icon');
       if (!icon) return;
 
@@ -138,42 +272,40 @@ onMounted(async () => {
     });
   }
 
-  // === How It Works line draw (desktop only) ===
-  if (stepLineRef.value && window.innerWidth >= 768) {
-    const lineEl = stepLineRef.value as unknown as SVGGeometryElement;
-    const length = lineEl.getTotalLength
-      ? lineEl.getTotalLength()
-      : lineEl.getBoundingClientRect().width;
+  // === Features horizontal scroll (desktop only) ===
+  ScrollTrigger.matchMedia({
+    '(min-width: 1024px)': () => {
+      if (!featuresTrackRef.value || !featuresSectionRef.value) return;
 
-    gsap.set(lineEl, { strokeDasharray: length, strokeDashoffset: length });
+      const track = featuresTrackRef.value;
+      const section = featuresSectionRef.value;
 
-    const lineTween = gsap.to(lineEl, {
-      strokeDashoffset: 0,
-      ease: 'none',
-      scrollTrigger: {
-        trigger: howItWorksRef.value,
-        start: 'top 60%',
-        end: 'bottom 50%',
-        scrub: 1.5,
-        onUpdate: (self: any) => {
-          const progress = self.progress;
-          stepCircleRefs.value.forEach((circle, i) => {
-            if (!circle) return;
-            const threshold = i / (stepCircleRefs.value.length - 1);
-            if (progress >= threshold && !activatedCircles.has(i)) {
-              activatedCircles.add(i);
-              gsap.fromTo(circle,
-                { scale: 1 },
-                { scale: 1.15, duration: 0.2, ease: 'back.out(2)', yoyo: true, repeat: 1 },
-              );
-            }
-          });
+      // Calculate total scroll distance
+      const totalWidth = track.scrollWidth;
+      const viewportWidth = section.offsetWidth;
+      const scrollDistance = totalWidth - viewportWidth + 100; // 100px padding
+
+      const featuresTween = gsap.to(track, {
+        x: -scrollDistance,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: () => `+=${scrollDistance * 1.5}px`,
+          pin: true,
+          scrub: 1.5,
+          invalidateOnRefresh: true,
         },
-      },
-    });
-    gsapTriggers.push(lineTween);
-    gsapTriggers.push(ScrollTrigger.getAll().at(-1));
-  }
+      });
+
+      gsapTriggers.push(featuresTween);
+      gsapTriggers.push(ScrollTrigger.getAll().at(-1));
+
+      return () => {
+        featuresTween.kill();
+      };
+    },
+  });
 });
 
 onUnmounted(() => {
@@ -186,9 +318,9 @@ onUnmounted(() => {
 <template>
   <div>
     <!-- ==================== HERO SECTION ==================== -->
-    <section class="hero-bg relative overflow-hidden -mt-16 pt-36 sm:pt-44 lg:pt-52 pb-20 sm:pb-28 lg:pb-36">
+    <section ref="heroBgRef" class="hero-bg relative overflow-hidden -mt-16 pt-36 sm:pt-44 lg:pt-52 pb-20 sm:pb-28 lg:pb-36">
       <!-- Grid pattern overlay -->
-      <div class="hero-grid pointer-events-none absolute inset-0" />
+      <div ref="heroGridRef" class="hero-grid pointer-events-none absolute inset-0" />
 
       <!-- Animated glow lines traveling along the grid -->
       <div class="pointer-events-none absolute inset-0 overflow-hidden">
@@ -203,31 +335,31 @@ onUnmounted(() => {
       </div>
 
       <!-- Floating glass orbs -->
-      <div class="orb-float-1 pointer-events-none absolute right-[8%] top-[10%] flex size-16 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[0] = el as HTMLElement }" class="orb-float-1 pointer-events-none absolute right-[8%] top-[10%] flex size-16 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-briefcase" class="size-7 text-primary/40" />
       </div>
-      <div class="orb-float-2 pointer-events-none absolute left-[5%] top-[25%] flex size-12 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[1] = el as HTMLElement }" class="orb-float-2 pointer-events-none absolute left-[5%] top-[25%] flex size-12 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-sparkles" class="size-5 text-primary/40" />
       </div>
-      <div class="orb-float-3 pointer-events-none absolute bottom-[5%] left-[12%] flex size-14 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[2] = el as HTMLElement }" class="orb-float-3 pointer-events-none absolute bottom-[5%] left-[12%] flex size-14 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-bar-chart-3" class="size-6 text-primary/40" />
       </div>
-      <div class="orb-float-4 pointer-events-none absolute bottom-[20%] right-[15%] flex size-10 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[3] = el as HTMLElement }" class="orb-float-4 pointer-events-none absolute bottom-[20%] right-[15%] flex size-10 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-ghost" class="size-4 text-primary/40" />
       </div>
 
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
           <!-- Left: Text content -->
-          <div id="hero-text" v-reveal.up class="flex-1 text-center lg:text-left">
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-highlighted leading-[1.15] tracking-tight">
-              <span class="text-primary">Ghost-Proof</span><br />
+          <div id="hero-text" ref="heroTextRef" class="flex-1 text-center lg:text-left">
+            <h1 ref="heroHeadingRef" class="text-4xl sm:text-5xl lg:text-6xl font-bold text-highlighted leading-[1.15] tracking-tight">
+              <span ref="ghostProofRef" class="text-primary ghost-proof-sweep">Ghost-Proof</span><br />
               Your Job Search
             </h1>
-            <p class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-xl mx-auto lg:mx-0">
+            <p ref="heroSubtitleRef" class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-xl mx-auto lg:mx-0">
               Track applications, preserve job postings before they vanish, and generate AI-powered cover letters — all in one place.
             </p>
-            <div class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start">
+            <div ref="heroCtasRef" class="mt-8 flex flex-wrap gap-4 justify-center lg:justify-start">
               <UiButtonWithIcon
                 to="/app/auth/register"
                 label="Start Tracking"
@@ -245,7 +377,7 @@ onUnmounted(() => {
           </div>
 
           <!-- Right: Dashboard mockup illustration -->
-          <div id="hero-mockup" v-reveal.right="{ delay: 2 }" class="flex-1 w-full max-w-lg mx-auto lg:mx-0">
+          <div id="hero-mockup" ref="heroMockupRef" class="flex-1 w-full max-w-lg mx-auto lg:mx-0">
             <!-- Glass card mockup of a mini kanban board -->
             <div class="rounded-2xl border border-white/30 dark:border-gray-700/40 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-5 shadow-2xl shadow-primary/10">
               <!-- Mock header -->
@@ -342,142 +474,95 @@ onUnmounted(() => {
         </div>
       </section>
 
-      <!-- ==================== FEATURES SECTION ==================== -->
-      <section id="features" class="py-16 sm:py-24">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div class="text-center mb-14">
-            <h2 class="text-3xl sm:text-4xl font-bold text-highlighted tracking-tight leading-tight mb-4">
-              Six tools. Zero ghosting.
-            </h2>
-            <p class="text-lg text-muted max-w-2xl mx-auto">
-              From tracking applications to generating cover letters, JobVault has you covered.
-            </p>
-          </div>
-
-          <div ref="featureGridRef" class="bento-grid">
-            <div
-              v-for="(feature, i) in features"
-              :key="feature.title"
-              v-reveal.up="{ delay: i }"
-              class="bento-card group rounded-2xl shadow-sm shadow-black/5 transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/8"
-              :class="[
-                feature.hero
-                  ? 'bento-hero bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-primary/10 dark:border-primary/15 p-7 sm:p-8'
-                  : 'bg-white/80 dark:bg-gray-800/80 border border-white/20 dark:border-gray-700/30 p-6'
-              ]"
-            >
-              <!-- Icon -->
-              <div
-                class="feature-icon flex items-center justify-center rounded-xl bg-primary/10 mb-4 will-change-transform"
-                :class="feature.hero ? 'size-14' : 'size-12'"
-              >
-                <UIcon
-                  :name="feature.icon"
-                  class="text-primary"
-                  :class="feature.hero ? 'size-7' : 'size-6'"
-                />
-              </div>
-
-              <!-- Text -->
-              <h3
-                class="font-semibold text-highlighted mb-2"
-                :class="feature.hero ? 'text-xl' : 'text-lg'"
-              >
-                {{ feature.title }}
-              </h3>
-              <p
-                class="text-muted leading-relaxed"
-                :class="feature.hero ? 'text-base' : 'text-sm'"
-              >
-                {{ feature.description }}
-              </p>
-
-              <!-- Hero card: Kanban mini-illustration -->
-              <div v-if="feature.hero && feature.icon === 'i-lucide-columns-3'" class="mt-5 flex gap-1.5">
-                <div v-for="n in 3" :key="n" class="flex-1 space-y-1.5">
-                  <div class="h-1.5 rounded-full bg-primary/15 dark:bg-primary/25" />
-                  <div
-                    v-for="m in (4 - n)"
-                    :key="m"
-                    class="h-6 rounded-lg border border-white/30 dark:border-gray-600/30 bg-white/60 dark:bg-gray-700/40"
-                  />
-                </div>
-              </div>
-
-              <!-- Hero card: Ghost meter mini-illustration -->
-              <div v-if="feature.hero && feature.icon === 'i-lucide-ghost'" class="mt-5 flex items-end gap-1.5 h-10">
-                <div
-                  v-for="(h, idx) in [40, 65, 30, 85, 55, 45, 75]"
-                  :key="idx"
-                  class="flex-1 rounded-t-sm transition-colors"
-                  :class="h > 60 ? 'bg-red-400/40 dark:bg-red-400/30' : 'bg-primary/15 dark:bg-primary/25'"
-                  :style="{ height: `${h}%` }"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- ==================== HOW IT WORKS ==================== -->
-      <section ref="howItWorksRef" class="py-16 sm:py-24">
+      <section id="how-it-works" ref="howItWorksRef" class="py-16 sm:py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div class="text-center mb-12">
-            <h2 class="text-3xl sm:text-4xl font-bold text-highlighted tracking-tight leading-tight mb-4">How it works</h2>
-            <p class="text-lg text-muted max-w-2xl mx-auto">
+            <h2 v-reveal.up class="text-3xl sm:text-4xl font-bold text-highlighted tracking-tight leading-tight mb-4">How it works</h2>
+            <p v-reveal.up="{ delay: 1 }" class="text-lg text-muted max-w-2xl mx-auto">
               Get started in minutes. No complicated setup required.
             </p>
           </div>
 
-          <div class="relative">
-            <!-- SVG connecting line (desktop) -->
-            <svg
-              class="hidden md:block absolute top-6 left-[16.67%] right-[16.67%] h-1 overflow-visible"
-              xmlns="http://www.w3.org/2000/svg"
-              preserveAspectRatio="none"
-            >
-              <line
-                ref="stepLineRef"
-                x1="0" y1="0" x2="100%" y2="0"
-                stroke="var(--ui-color-primary-300)"
-                stroke-width="2"
-                stroke-linecap="round"
-                class="dark:stroke-primary/40"
-              />
-            </svg>
+          <!-- Vertical timeline layout -->
+          <div class="relative mx-auto max-w-2xl">
+            <!-- Static dashed line (mobile) / will be replaced by SVG on desktop -->
+            <div class="lg:hidden absolute left-6 top-0 bottom-0 w-px border-l-2 border-dashed border-primary/20" />
 
-            <!-- Mobile vertical line -->
-            <div class="md:hidden absolute left-6 top-0 bottom-0 w-0.5 bg-primary/20" />
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="flex flex-col gap-10">
               <div
                 v-for="(step, i) in steps"
                 :key="step.number"
-                class="relative flex flex-col items-center text-center"
+                v-reveal.up="{ delay: i }"
+                class="relative flex items-start gap-6"
               >
                 <!-- Numbered circle -->
                 <div
                   :ref="(el) => { if (el) stepCircleRefs[i] = el as HTMLElement }"
-                  class="relative z-10 mb-6 flex size-12 items-center justify-center rounded-full font-bold text-lg transition-all duration-300"
+                  class="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full font-bold text-lg transition-all duration-300"
                   :class="activatedCircles.has(i)
                     ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                    : 'md:bg-primary/10 md:text-primary bg-primary text-white shadow-lg shadow-primary/25'"
+                    : 'lg:bg-primary/10 lg:text-primary bg-primary text-white shadow-lg shadow-primary/25'"
                 >
                   {{ step.number }}
                 </div>
 
                 <!-- Content card -->
-                <div
-                  v-reveal.up="{ delay: i }"
-                  class="rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg p-6 shadow-sm shadow-black/5 w-full"
-                >
-                  <div class="flex items-center justify-center gap-2 mb-3">
+                <div class="flex-1 rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg p-6 shadow-sm shadow-black/5">
+                  <div class="flex items-center gap-2 mb-3">
                     <UIcon :name="step.icon" class="size-5 text-primary" />
                     <h3 class="text-lg font-semibold text-highlighted">{{ step.title }}</h3>
                   </div>
                   <p class="text-sm text-muted leading-relaxed">{{ step.description }}</p>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== FEATURES SECTION ==================== -->
+      <section id="features" ref="featuresSectionRef" class="features-section py-16 sm:py-24">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div class="features-header text-center mb-14 section-content">
+            <h2 v-reveal.up class="text-3xl sm:text-4xl font-bold text-highlighted tracking-tight leading-tight mb-4">
+              Six tools. Zero ghosting.
+            </h2>
+            <p v-reveal.up="{ delay: 1 }" class="text-lg text-muted max-w-2xl mx-auto">
+              From tracking applications to generating cover letters, JobVault has you covered.
+            </p>
+          </div>
+
+          <!-- Desktop: horizontal scroll track -->
+          <div v-if="!prefersReducedMotion" class="features-track-wrapper hidden lg:block section-content">
+            <div ref="featuresTrackRef" class="features-track flex gap-6">
+              <div
+                v-for="feature in features"
+                :key="feature.title"
+                class="feature-card group shrink-0 w-80 rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg border border-white/20 dark:border-gray-700/30 p-6 shadow-sm shadow-black/5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/8"
+              >
+                <div class="feature-icon flex size-12 items-center justify-center rounded-xl bg-primary/10 mb-4 will-change-transform">
+                  <UIcon :name="feature.icon" class="size-6 text-primary" />
+                </div>
+                <h3 class="text-lg font-semibold text-highlighted mb-2">{{ feature.title }}</h3>
+                <p class="text-sm text-muted leading-relaxed">{{ feature.description }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mobile: vertical stack (same as before but simplified) -->
+          <div ref="featureGridRef" :class="prefersReducedMotion ? 'grid grid-cols-1 sm:grid-cols-2 gap-4' : 'lg:hidden grid grid-cols-1 sm:grid-cols-2 gap-4'">
+            <div
+              v-for="(feature, i) in features"
+              :key="feature.title"
+              v-reveal.up="{ delay: i }"
+              class="bento-card group rounded-2xl bg-white/80 dark:bg-gray-800/80 border border-white/20 dark:border-gray-700/30 p-6 shadow-sm shadow-black/5 transition-shadow duration-300 hover:shadow-xl hover:shadow-primary/8"
+            >
+              <div class="feature-icon flex size-12 items-center justify-center rounded-xl bg-primary/10 mb-4 will-change-transform">
+                <UIcon :name="feature.icon" class="size-6 text-primary" />
+              </div>
+              <h3 class="text-lg font-semibold text-highlighted mb-2">{{ feature.title }}</h3>
+              <p class="text-sm text-muted leading-relaxed">{{ feature.description }}</p>
             </div>
           </div>
         </div>
@@ -602,5 +687,20 @@ onUnmounted(() => {
 
 @media (prefers-reduced-motion: reduce) {
   .bento-card { opacity: 1 !important; transform: none !important; }
+}
+
+.ghost-proof-sweep {
+  /* Uses --ui-primary which already switches between light/dark mode via :root/.dark */
+  background: linear-gradient(
+    90deg,
+    var(--ui-primary) 0%,
+    var(--ui-primary) 50%,
+    transparent 50%
+  );
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 </style>
