@@ -1,5 +1,13 @@
 export default defineNuxtPlugin((nuxtApp) => {
-  if (!import.meta.client) return;
+  if (!import.meta.client) {
+    // Register a no-op directive with getSSRProps so SSR doesn't crash
+    nuxtApp.vueApp.directive('reveal', {
+      getSSRProps() {
+        return {};
+      },
+    });
+    return;
+  }
 
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
