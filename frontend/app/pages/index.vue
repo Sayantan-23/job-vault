@@ -26,9 +26,9 @@ const heroBgRef = useTemplateRef<HTMLElement>('heroBgRef');
 const heroGridRef = useTemplateRef<HTMLElement>('heroGridRef');
 const heroTextRef = useTemplateRef<HTMLElement>('heroTextRef');
 const heroHeadingRef = useTemplateRef<HTMLElement>('heroHeadingRef');
-const ghostProofRef = useTemplateRef<HTMLElement>('ghostProofRef');
 const heroSubtitleRef = useTemplateRef<HTMLElement>('heroSubtitleRef');
 const heroCtasRef = useTemplateRef<HTMLElement>('heroCtasRef');
+const heroBadgesRef = useTemplateRef<HTMLElement>('heroBadgesRef');
 const heroMockupRef = useTemplateRef<HTMLElement>('heroMockupRef');
 const orbRefs = ref<HTMLElement[]>([]);
 
@@ -38,16 +38,12 @@ const featuresTrackRef = useTemplateRef<HTMLElement>('featuresTrackRef');
 
 // Flowing line SVG 1 refs (How It Works — vertical)
 const timelineContainerRef = useTemplateRef<HTMLElement>('timelineContainerRef');
-const flowLineSvg1Ref = useTemplateRef<SVGSVGElement>('flowLineSvg1Ref');
-const flowPath1BaseRef = useTemplateRef<SVGPathElement>('flowPath1BaseRef');
-const flowPath1GlowRef = useTemplateRef<SVGPathElement>('flowPath1GlowRef');
-const flowPath1TravelRef = useTemplateRef<SVGPathElement>('flowPath1TravelRef');
+const timelineLineRef = useTemplateRef<SVGSVGElement>('timelineLineRef');
+const timelinePathRef = useTemplateRef<SVGPathElement>('timelinePathRef');
+
+const timelinePath = ref('M 0 0');
 
 // Flowing line SVG 2 refs (Features — horizontal)
-const flowLineSvg2Ref = useTemplateRef<SVGSVGElement>('flowLineSvg2Ref');
-const flowPath2BaseRef = useTemplateRef<SVGPathElement>('flowPath2BaseRef');
-const flowPath2GlowRef = useTemplateRef<SVGPathElement>('flowPath2GlowRef');
-const flowPath2TravelRef = useTemplateRef<SVGPathElement>('flowPath2TravelRef');
 
 const prefersReducedMotion = ref(false);
 
@@ -175,6 +171,7 @@ onMounted(async () => {
     heroHeadingRef.value,
     heroSubtitleRef.value,
     heroCtasRef.value,
+    heroBadgesRef.value,
     heroMockupRef.value,
   ].filter(Boolean);
   gsap.set(heroElements, { opacity: 0, visibility: 'hidden' });
@@ -183,12 +180,8 @@ onMounted(async () => {
   gsap.set(heroHeadingRef.value, { y: 30 });
   gsap.set(heroSubtitleRef.value, { y: 20 });
   gsap.set(heroMockupRef.value, { x: 60 });
-  if (ghostProofRef.value) {
-    gsap.set(ghostProofRef.value, { backgroundPosition: '-100% 0' });
-  }
-  if (heroCtasRef.value) {
-    gsap.set(heroCtasRef.value.children, { y: 20, opacity: 0 });
-  }
+  gsap.set(heroCtasRef.value, { y: 20 });
+  gsap.set(heroBadgesRef.value, { y: 15 });
 
   // 0ms: Background gradient bloom
   heroTl.to(heroBgRef.value, {
@@ -216,15 +209,6 @@ onMounted(async () => {
     ease: 'power3.out',
   }, 0.4);
 
-  // 400ms: "Ghost-Proof" gradient sweep
-  if (ghostProofRef.value) {
-    heroTl.to(ghostProofRef.value, {
-      backgroundPosition: '0% 0',
-      duration: 0.8,
-      ease: 'power2.inOut',
-    }, 0.4);
-  }
-
   // 700ms: Subtitle fades in
   heroTl.to(heroSubtitleRef.value, {
     y: 0,
@@ -234,17 +218,23 @@ onMounted(async () => {
     ease: 'power3.out',
   }, 0.7);
 
-  // 900ms: CTA buttons stagger
-  if (heroCtasRef.value) {
-    heroTl.set(heroCtasRef.value, { visibility: 'visible', opacity: 1 }, 0.9);
-    heroTl.to(heroCtasRef.value.children, {
-      y: 0,
-      opacity: 1,
-      duration: 0.4,
-      ease: 'power3.out',
-      stagger: 0.1,
-    }, 0.9);
-  }
+  // 900ms: CTA buttons
+  heroTl.to(heroCtasRef.value, {
+    y: 0,
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.7,
+    ease: 'power3.out',
+  }, 0.9);
+
+  // 1100ms: Trust badges fade in
+  heroTl.to(heroBadgesRef.value, {
+    y: 0,
+    opacity: 1,
+    visibility: 'visible',
+    duration: 0.5,
+    ease: 'power3.out',
+  }, 1.1);
 
   // 1200ms: Dashboard mockup sweeps from right
   heroTl.to(heroMockupRef.value, {
@@ -292,61 +282,119 @@ onMounted(async () => {
     });
   }
 
-  // === Flowing line SVG 1 — path calculation (How It Works vertical, desktop only) ===
-  if (
-    flowLineSvg1Ref.value
-    && flowPath1BaseRef.value
-    && flowPath1GlowRef.value
-    && flowPath1TravelRef.value
-    && timelineContainerRef.value
-    && window.innerWidth >= 1024
-  ) {
+  // === Timeline line — draws through steps then curves down (desktop only) ===
+  if (timelinePathRef.value && timelineContainerRef.value && window.innerWidth >= 768) {
     await nextTick();
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
-    const svg = flowLineSvg1Ref.value!;
+    // Calculate path using actual circle positions relative to container
+    const svgEl = timelineLineRef.value!;
     const container = timelineContainerRef.value!;
     const containerRect = container.getBoundingClientRect();
     const circles = stepCircleRefs.value;
 
-    if (circles.length >= 3) {
-      // Calculate circle positions relative to the SVG's parent container
-      const circlePositions = circles.map((circle) => {
-        const rect = circle.getBoundingClientRect();
-        return {
-          x: rect.left + rect.width / 2 - containerRect.left,
-          y: rect.top + rect.height / 2 - containerRect.top,
-        };
-      });
+    if (circles.length < 3) return;
 
-      const centerX = circlePositions[0].x;
-      const topY = Math.max(0, circlePositions[0].y - 40);
-      const lastCircleY = circlePositions[2].y;
-      // Extend the line well below the last step to create room for the curve
-      const curveStartY = lastCircleY + 80;
-      const curveEndY = curveStartY + 60;
-      const containerWidth = containerRect.width;
+    // Get circle center positions relative to container
+    const pts = circles.map((c) => {
+      const cr = c.getBoundingClientRect();
+      return {
+        x: cr.left + cr.width / 2 - containerRect.left,
+        y: cr.top + cr.height / 2 - containerRect.top,
+      };
+    });
 
-      // Path: straight vertical through circles, then smooth curve to bottom-right
-      const pathD = [
-        `M ${centerX} ${topY}`,
-        `L ${centerX} ${circlePositions[0].y}`,
-        `L ${centerX} ${circlePositions[1].y}`,
-        `L ${centerX} ${lastCircleY}`,
-        `L ${centerX} ${curveStartY}`,
-        `C ${centerX} ${curveEndY}, ${centerX + 150} ${curveEndY}, ${containerWidth} ${curveEndY}`,
-      ].join(' ');
+    const containerW = containerRect.width;
+    const containerH = containerRect.height;
+    const cy = pts[0].y; // circle Y (all same row)
+    const uRadius = 100; // radius for the U-turn curves
 
-      // Set SVG viewBox to match container — add extra height for the curve
-      const svgHeight = curveEndY + 20;
-      svg.setAttribute('viewBox', `0 0 ${containerWidth} ${svgHeight}`);
-      svg.style.height = `${svgHeight}px`;
+    // Key coordinates for the path shape:
+    // Right U-turn extends past the container edge
+    const rightPeak = containerW + 60;
+    // After U-turn, the line comes back and goes diagonally down-left
+    // The diagonal reaches the left side at the bottom
+    const diagEndX = pts[0].x - 80; // left of step 1
+    const diagEndY = containerH + 120; // well below the step cards
+    // Bottom U-turn: curves down then right to meet kanban card
+    const bottomPeak = diagEndY + uRadius * 1.8;
+    const endX = pts[0].x; // ends roughly at step 1 x
 
-      // Apply path to all three layers
-      [flowPath1BaseRef.value!, flowPath1GlowRef.value!, flowPath1TravelRef.value!].forEach((p) => {
-        p.setAttribute('d', pathD);
-      });
-    }
+    // Build the path:
+    // 1) Horizontal through step circles
+    // 2) Right U-turn (wide semicircle extending past container)
+    // 3) Diagonal down-left
+    // 4) Bottom U-turn (curves down then right)
+    timelinePath.value = [
+      // 1. Horizontal through steps
+      `M ${pts[0].x} ${cy}`,
+      `L ${pts[1].x} ${cy}`,
+      `L ${pts[2].x} ${cy}`,
+
+      // 2. Right U-turn: smooth arc going right, down, then back left
+      //    First control point pulls right, second pulls right+down
+      `Q ${rightPeak} ${cy}, ${rightPeak} ${cy + uRadius}`,
+      //    Continue the U-turn back toward the left
+      `Q ${rightPeak} ${cy + uRadius * 2}, ${pts[2].x} ${cy + uRadius * 2}`,
+
+      // 3. Diagonal down-left to bottom area
+      `L ${diagEndX} ${diagEndY}`,
+
+      // 4. Bottom U-turn: smooth arc going down, then right
+      `Q ${diagEndX - uRadius} ${diagEndY}, ${diagEndX - uRadius} ${diagEndY + uRadius}`,
+      `Q ${diagEndX - uRadius} ${bottomPeak}, ${endX} ${bottomPeak}`,
+    ].join(' ');
+
+    // viewBox = pixel coords, 1:1 mapping. Extend to fit the right bulge and bottom
+    const vbLeft = diagEndX - uRadius - 20;
+    const vbWidth = rightPeak - vbLeft + 20;
+    const vbHeight = bottomPeak + 20;
+    svgEl.setAttribute('viewBox', `${vbLeft} ${cy / 2} ${vbWidth} ${vbHeight}`);
+    svgEl.style.width = `${vbWidth}px`;
+    svgEl.style.height = `${vbHeight}px`;
+    svgEl.style.left = `${vbLeft}px`;
+    svgEl.style.top = `0px`;
+
+    // Wait for path to render
+    await nextTick();
+
+    const pathEl = timelinePathRef.value!;
+    const pathLength = pathEl.getTotalLength();
+
+    gsap.set(pathEl, {
+      strokeDasharray: pathLength,
+      strokeDashoffset: pathLength,
+    });
+
+    const lineTween = gsap.to(pathEl, {
+      strokeDashoffset: 0,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: timelineContainerRef.value,
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 1.5,
+        onUpdate: (self: any) => {
+          const progress = self.progress;
+          // Pulse step circles as the line reaches them
+          // Steps are at roughly 0%, 33%, 66% of the horizontal portion (~60% of total path)
+          stepCircleRefs.value.forEach((circle, i) => {
+            if (!circle) return;
+            const threshold = ((i + 1) / (stepCircleRefs.value.length + 1)) * 0.6;
+            if (progress >= threshold && !activatedCircles.has(i)) {
+              activatedCircles.add(i);
+              gsap.fromTo(circle,
+                { scale: 1 },
+                { scale: 1.15, duration: 0.2, ease: 'back.out(2)', yoyo: true, repeat: 1 },
+              );
+            }
+          });
+        },
+      },
+    });
+
+    gsapTriggers.push(lineTween);
+    gsapTriggers.push(ScrollTrigger.getAll().at(-1));
   }
 
   // === Features horizontal scroll (desktop only) + SVG 2 + unified scroll ===
@@ -378,93 +426,6 @@ onMounted(async () => {
       gsapTriggers.push(featuresTween);
       gsapTriggers.push(ScrollTrigger.getAll().at(-1));
 
-      // Setup SVG 2 horizontal path
-      if (flowPath2BaseRef.value && flowPath2GlowRef.value && flowPath2TravelRef.value && flowLineSvg2Ref.value) {
-        const trackWidth = track.scrollWidth;
-        const pathD = `M 0 10 L ${trackWidth} 10`;
-        const svg2 = flowLineSvg2Ref.value;
-        svg2.setAttribute('viewBox', `0 0 ${trackWidth} 20`);
-        svg2.style.width = `${trackWidth}px`;
-
-        [flowPath2BaseRef.value, flowPath2GlowRef.value, flowPath2TravelRef.value].forEach((p) => {
-          p.setAttribute('d', pathD);
-        });
-
-        // Setup traveling segment
-        const path2Length = flowPath2TravelRef.value.getTotalLength();
-        const seg2Length = path2Length * 0.15;
-        gsap.set(flowPath2TravelRef.value, {
-          strokeDasharray: `${seg2Length} ${path2Length - seg2Length}`,
-          strokeDashoffset: path2Length,
-        });
-      }
-
-      // === Unified scroll coordination for both SVGs ===
-      // Single trigger spans from How It Works top to Features bottom
-      if (howItWorksRef.value && flowPath1TravelRef.value && flowPath2TravelRef.value) {
-        const path1Length = flowPath1TravelRef.value.getTotalLength();
-        const seg1Length = path1Length * 0.15;
-        const path2Length = flowPath2TravelRef.value.getTotalLength();
-        const seg2Length = path2Length * 0.15;
-
-        // Ensure SVG 1 is set up for unified control
-        gsap.set(flowPath1TravelRef.value, {
-          strokeDasharray: `${seg1Length} ${path1Length - seg1Length}`,
-          strokeDashoffset: path1Length,
-        });
-
-        ScrollTrigger.create({
-          trigger: howItWorksRef.value,
-          start: 'top 60%',
-          endTrigger: section, // Features section (pinned)
-          end: 'bottom bottom',
-          scrub: 1.5,
-          onUpdate: (self) => {
-            const progress = self.progress;
-
-            if (progress <= 0.4) {
-              // Progress 0-0.4: animate SVG 1 (vertical)
-              const svg1Progress = progress / 0.4; // normalize to 0-1
-              const offset1 = path1Length - (svg1Progress * (path1Length + seg1Length));
-              gsap.set(flowPath1TravelRef.value!, {
-                strokeDashoffset: offset1,
-              });
-              // Reset SVG 2 to start
-              gsap.set(flowPath2TravelRef.value!, {
-                strokeDashoffset: path2Length,
-              });
-
-              // Step circle pulses
-              stepCircleRefs.value.forEach((circle, i) => {
-                if (!circle) return;
-                const threshold = (i + 1) / (stepCircleRefs.value.length + 1);
-                if (svg1Progress >= threshold && !activatedCircles.has(i)) {
-                  activatedCircles.add(i);
-                  gsap.fromTo(circle,
-                    { scale: 1 },
-                    { scale: 1.15, duration: 0.2, ease: 'back.out(2)', yoyo: true, repeat: 1 },
-                  );
-                }
-              });
-            }
-            else {
-              // Progress 0.4-1.0: animate SVG 2 (horizontal)
-              const svg2Progress = (progress - 0.4) / 0.6; // normalize to 0-1
-              const offset2 = path2Length - (svg2Progress * (path2Length + seg2Length));
-              gsap.set(flowPath2TravelRef.value!, {
-                strokeDashoffset: offset2,
-              });
-              // SVG 1 segment should be fully past the end (invisible)
-              gsap.set(flowPath1TravelRef.value!, {
-                strokeDashoffset: -seg1Length,
-              });
-            }
-          },
-        });
-
-        gsapTriggers.push(ScrollTrigger.getAll().at(-1));
-      }
-
       return () => {
         featuresTween.kill();
       };
@@ -485,7 +446,7 @@ onUnmounted(() => {
 <template>
   <div>
     <!-- ==================== HERO SECTION ==================== -->
-    <section ref="heroBgRef" class="hero-bg relative overflow-hidden -mt-16 pt-36 sm:pt-44 lg:pt-52 pb-20 sm:pb-28 lg:pb-36">
+    <section ref="heroBgRef" class="hero-bg relative overflow-hidden -mt-16 min-h-screen flex flex-col justify-center pt-16 pb-12">
       <!-- Grid pattern overlay -->
       <div ref="heroGridRef" class="hero-grid pointer-events-none absolute inset-0" />
 
@@ -502,25 +463,25 @@ onUnmounted(() => {
       </div>
 
       <!-- Floating glass orbs -->
-      <div :ref="(el) => { if (el) orbRefs[0] = el as HTMLElement }" class="orb-float-1 pointer-events-none absolute right-[8%] top-[10%] flex size-16 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[0] = el as HTMLElement }" class="orb-float-1 pointer-events-none absolute right-[15%] top-[15%] flex size-16 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-briefcase" class="size-7 text-primary/40" />
       </div>
-      <div :ref="(el) => { if (el) orbRefs[1] = el as HTMLElement }" class="orb-float-2 pointer-events-none absolute left-[5%] top-[25%] flex size-12 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[1] = el as HTMLElement }" class="orb-float-2 pointer-events-none absolute left-[10%] top-[28%] flex size-12 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-sparkles" class="size-5 text-primary/40" />
       </div>
-      <div :ref="(el) => { if (el) orbRefs[2] = el as HTMLElement }" class="orb-float-3 pointer-events-none absolute bottom-[5%] left-[12%] flex size-14 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[2] = el as HTMLElement }" class="orb-float-3 pointer-events-none absolute bottom-[12%] left-[15%] flex size-14 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-bar-chart-3" class="size-6 text-primary/40" />
       </div>
-      <div :ref="(el) => { if (el) orbRefs[3] = el as HTMLElement }" class="orb-float-4 pointer-events-none absolute bottom-[20%] right-[15%] flex size-10 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
+      <div :ref="(el) => { if (el) orbRefs[3] = el as HTMLElement }" class="orb-float-4 pointer-events-none absolute bottom-[22%] right-[18%] flex size-10 items-center justify-center rounded-full border border-purple-200/50 bg-white/40 shadow-lg backdrop-blur-sm dark:border-purple-700/30 dark:bg-white/5">
         <UIcon name="i-lucide-ghost" class="size-4 text-primary/40" />
       </div>
 
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col items-center gap-12 lg:flex-row lg:gap-16">
+        <div class="flex flex-col items-center gap-12 lg:flex-row lg:gap-24">
           <!-- Left: Text content -->
-          <div id="hero-text" ref="heroTextRef" class="flex-1 text-center lg:text-left">
+          <div id="hero-text" ref="heroTextRef" class="lg:flex-[1.4] text-center lg:text-left">
             <h1 ref="heroHeadingRef" class="text-4xl sm:text-5xl lg:text-6xl font-bold text-highlighted leading-[1.15] tracking-tight">
-              <span ref="ghostProofRef" class="text-primary ghost-proof-sweep">Ghost-Proof</span><br />
+              <span class="text-primary">Ghost-Proof</span><br />
               Your Job Search
             </h1>
             <p ref="heroSubtitleRef" class="mt-6 text-lg sm:text-xl text-muted leading-relaxed max-w-xl mx-auto lg:mx-0">
@@ -541,10 +502,22 @@ onUnmounted(() => {
                 @click.prevent="scrollToHowItWorks"
               />
             </div>
+
+            <!-- Trust badges -->
+            <div ref="heroBadgesRef" class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 lg:justify-start">
+              <div
+                v-for="badge in trustBadges"
+                :key="badge.label"
+                class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-white/40 dark:border-white/10 bg-white/50 dark:bg-white/5 backdrop-blur-sm px-3 py-1 text-xs text-muted"
+              >
+                <UIcon :name="badge.icon" class="size-3.5 text-primary/60" />
+                <span>{{ badge.label }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- Right: Dashboard mockup illustration -->
-          <div id="hero-mockup" ref="heroMockupRef" class="flex-1 w-full max-w-lg mx-auto lg:mx-0">
+          <div id="hero-mockup" ref="heroMockupRef" class="flex-1 w-full max-w-xl mx-auto lg:mx-0">
             <!-- Glass card mockup of a mini kanban board -->
             <div class="rounded-2xl border border-white/30 dark:border-gray-700/40 bg-white/60 dark:bg-gray-900/60 backdrop-blur-xl p-5 shadow-2xl shadow-primary/10">
               <!-- Mock header -->
@@ -624,23 +597,6 @@ onUnmounted(() => {
 
     <!-- ==================== GRADIENT BACKGROUND WRAPPER (sections after hero) ==================== -->
     <UiBackgroundGradientAnimation>
-      <!-- ==================== TRUST BADGES ==================== -->
-      <section id="trust-badges" v-reveal.up class="py-8 border-y border-[var(--ui-color-primary-200)]/30 dark:border-white/10">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div class="flex flex-wrap justify-center gap-4 sm:gap-6">
-            <div
-              v-for="(badge, i) in trustBadges"
-              :key="badge.label"
-              v-reveal.up="{ delay: i }"
-              class="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-3 py-1.5 text-xs font-medium uppercase tracking-wide text-muted"
-            >
-              <UIcon :name="badge.icon" class="size-4" />
-              <span>{{ badge.label }}</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <!-- ==================== HOW IT WORKS ==================== -->
       <section id="how-it-works" ref="howItWorksRef" class="py-16 sm:py-24">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -651,62 +607,59 @@ onUnmounted(() => {
             </p>
           </div>
 
-          <!-- Vertical timeline layout -->
-          <div ref="timelineContainerRef" class="relative mx-auto max-w-2xl">
-            <!-- Flowing line SVG (desktop) -->
+          <!-- Steps layout -->
+          <div ref="timelineContainerRef" class="relative">
+            <!-- SVG connecting path (desktop) — horizontal through steps, U-turn, diagonal, U-turn to features -->
             <svg
-              ref="flowLineSvg1Ref"
-              class="flowing-line-svg hidden lg:block inset-0 w-full h-full"
+              ref="timelineLineRef"
+              class="hidden md:block absolute pointer-events-none overflow-visible"
               xmlns="http://www.w3.org/2000/svg"
-              preserveAspectRatio="none"
             >
-              <defs>
-                <filter id="glowFilter1">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <linearGradient id="cometGrad1" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="var(--ui-primary)" stop-opacity="0" />
-                  <stop offset="40%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
-                  <stop offset="60%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
-                  <stop offset="100%" stop-color="var(--ui-primary)" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <!-- Base track -->
-              <path ref="flowPath1BaseRef" stroke="var(--ui-primary)" stroke-width="2" fill="none" opacity="0.15" />
+              <path
+                ref="timelinePathRef"
+                :d="timelinePath"
+                stroke="var(--ui-color-primary-600)"
+                stroke-width="2"
+                fill="none"
+                opacity="0.7"
+                stroke-linecap="round"
+              />
               <!-- Glow layer -->
-              <path ref="flowPath1GlowRef" stroke="var(--ui-primary)" stroke-width="6" fill="none" opacity="0.08" filter="url(#glowFilter1)" />
-              <!-- Traveling segment -->
-              <path ref="flowPath1TravelRef" stroke="url(#cometGrad1)" stroke-width="2.5" fill="none" />
+              <path
+                :d="timelinePath"
+                stroke="var(--ui-color-primary-600)"
+                stroke-width="6"
+                fill="none"
+                opacity="0.15"
+                stroke-linecap="round"
+                style="filter: blur(4px);"
+              />
             </svg>
 
-            <!-- Static dashed line (mobile) / will be replaced by SVG on desktop -->
-            <div class="lg:hidden absolute left-6 top-0 bottom-0 w-px border-l-2 border-dashed border-primary/20" />
+            <!-- Mobile: vertical dashed line -->
+            <div class="md:hidden absolute left-6 top-0 bottom-0 w-px border-l-2 border-dashed border-primary/20" />
 
-            <div class="flex flex-col gap-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div
                 v-for="(step, i) in steps"
                 :key="step.number"
                 v-reveal.up="{ delay: i }"
-                class="relative flex items-start gap-6"
+                class="relative flex flex-col items-center text-center"
               >
                 <!-- Numbered circle -->
                 <div
                   :ref="(el) => { if (el) stepCircleRefs[i] = el as HTMLElement }"
-                  class="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full font-bold text-lg transition-all duration-300"
+                  class="relative z-10 mb-6 flex size-12 items-center justify-center rounded-full font-bold text-lg transition-all duration-300"
                   :class="activatedCircles.has(i)
                     ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                    : 'lg:bg-primary/10 lg:text-primary bg-primary text-white shadow-lg shadow-primary/25'"
+                    : 'md:bg-primary/10 md:text-primary bg-primary text-white shadow-lg shadow-primary/25'"
                 >
                   {{ step.number }}
                 </div>
 
                 <!-- Content card -->
-                <div class="flex-1 rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg p-6 shadow-sm shadow-black/5">
-                  <div class="flex items-center gap-2 mb-3">
+                <div class="rounded-2xl border border-white/20 dark:border-gray-700/30 bg-white/70 dark:bg-gray-800/70 backdrop-blur-lg p-6 shadow-sm shadow-black/5 w-full">
+                  <div class="flex items-center justify-center gap-2 mb-3">
                     <UIcon :name="step.icon" class="size-5 text-primary" />
                     <h3 class="text-lg font-semibold text-highlighted">{{ step.title }}</h3>
                   </div>
@@ -732,37 +685,6 @@ onUnmounted(() => {
 
           <!-- Desktop: horizontal scroll track -->
           <div v-if="!prefersReducedMotion" class="features-track-wrapper hidden lg:block section-content">
-            <!-- Flowing line SVG 2 (horizontal, inside pinned container) -->
-            <svg
-              ref="flowLineSvg2Ref"
-              class="flowing-line-svg inset-0 w-full"
-              style="height: 20px; top: 50%; transform: translateY(-50%);"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs>
-                <filter id="glowFilter2">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <linearGradient id="cometGrad2" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="var(--ui-primary)" stop-opacity="0" />
-                  <stop offset="40%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
-                  <stop offset="60%" stop-color="var(--ui-primary)" stop-opacity="0.8" />
-                  <stop offset="100%" stop-color="var(--ui-primary)" stop-opacity="0" />
-                </linearGradient>
-              </defs>
-              <!-- Base track -->
-              <path ref="flowPath2BaseRef" stroke="var(--ui-primary)" stroke-width="2" fill="none" opacity="0.15" />
-              <!-- Glow -->
-              <path ref="flowPath2GlowRef" stroke="var(--ui-primary)" stroke-width="6" fill="none" opacity="0.08" filter="url(#glowFilter2)" />
-              <!-- Traveling segment -->
-              <path ref="flowPath2TravelRef" stroke="url(#cometGrad2)" stroke-width="2.5" fill="none" />
-              <!-- Node dots between cards -->
-              <circle v-for="n in 5" :key="n" :cx="`${n * 16.67}%`" cy="10" r="3" fill="var(--ui-primary)" opacity="0.2" />
-            </svg>
             <div ref="featuresTrackRef" class="features-track flex gap-6">
               <div
                 v-for="feature in features"
@@ -901,18 +823,4 @@ onUnmounted(() => {
   .bento-card { opacity: 1 !important; transform: none !important; }
 }
 
-.ghost-proof-sweep {
-  /* Uses --ui-primary which already switches between light/dark mode via :root/.dark */
-  background: linear-gradient(
-    90deg,
-    var(--ui-primary) 0%,
-    var(--ui-primary) 50%,
-    transparent 50%
-  );
-  background-size: 200% 100%;
-  background-position: -100% 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
 </style>

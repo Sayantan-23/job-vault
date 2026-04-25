@@ -5,7 +5,6 @@ const mockupRef = ref<HTMLElement | null>(null);
 const heroRef = ref<HTMLElement | null>(null);
 const headlineWords = ['Ghost-Proof', 'Your', 'Job', 'Search'];
 
-let ctx: any = null;
 let mouseMoveHandler: ((e: MouseEvent) => void) | null = null;
 
 onMounted(async () => {
@@ -81,22 +80,11 @@ onUnmounted(() => {
 <template>
   <section
     ref="heroRef"
-    class="hero-mesh relative overflow-hidden -mt-16 pt-36 sm:pt-44 lg:pt-52 pb-24 sm:pb-32 lg:pb-40"
+    class="relative overflow-hidden -mt-16 pt-36 sm:pt-44 lg:pt-52 pb-24 sm:pb-32 lg:pb-40"
   >
-    <!-- Gradient mesh background -->
-    <div class="pointer-events-none absolute inset-0 hero-gradient-mesh" />
-
-    <!-- SVG grain/noise texture overlay -->
-    <svg class="pointer-events-none absolute inset-0 size-full opacity-[0.035] dark:opacity-[0.06]" xmlns="http://www.w3.org/2000/svg">
-      <filter id="hero-grain">
-        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-        <feColorMatrix type="saturate" values="0" />
-      </filter>
-      <rect width="100%" height="100%" filter="url(#hero-grain)" />
-    </svg>
-
-    <!-- Subtle radial glow -->
-    <div class="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full bg-primary/8 dark:bg-primary/12 blur-[120px]" />
+    <!-- Background -->
+    <div class="absolute inset-0 bg-gray-50 dark:bg-[#030303]" />
+    <UiGeometricShapesBackground />
 
     <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <div class="flex flex-col items-center gap-14 lg:flex-row lg:gap-20">
@@ -223,28 +211,11 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
   </section>
 </template>
 
 <style scoped>
-.hero-gradient-mesh {
-  background-color: #f8f6fc;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(91, 43, 238, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 30%, rgba(143, 92, 255, 0.10) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 80%, rgba(174, 139, 255, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 70%, rgba(117, 53, 255, 0.06) 0%, transparent 40%);
-}
-
-.dark .hero-gradient-mesh {
-  background-color: #0f0a1e;
-  background-image:
-    radial-gradient(ellipse at 20% 20%, rgba(91, 43, 238, 0.20) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 30%, rgba(143, 92, 255, 0.15) 0%, transparent 45%),
-    radial-gradient(ellipse at 50% 80%, rgba(79, 31, 212, 0.12) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 70%, rgba(117, 53, 255, 0.08) 0%, transparent 40%);
-}
-
 @media (prefers-reduced-motion: reduce) {
   .hero-word,
   .hero-subtitle,
