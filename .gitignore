@@ -2,3 +2,8 @@ node_modules/
 .superpowers/
 nul
 frontend/nul
+
+# Local env files
+.env
+.env.*
+!.env.example
