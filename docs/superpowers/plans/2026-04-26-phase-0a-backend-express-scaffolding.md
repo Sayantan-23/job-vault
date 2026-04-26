@@ -186,6 +186,27 @@ git commit -m "chore(backend-express): initialize package.json and install depen
 - Create: `backend-express/.prettierrc`
 - Create: `backend-express/.gitignore`
 - Create: `backend-express/vitest.config.ts`
+- Modify: `backend-express/package.json` (add `@vitest/coverage-v8` devDep + `test:coverage` script + downgrade `@types/node` from `^22` to `^20` so it matches `engines.node >= 20`)
+
+- [ ] **Step 0: Patch `package.json` to align with the configs added in this task**
+
+This addresses Task 1's code-quality follow-ups (missing coverage provider; type stubs ahead of runtime engine pin).
+
+Edit `backend-express/package.json`:
+- In `scripts`, add a new entry **before** `"test:watch"`:
+  ```json
+  "test:coverage": "vitest run --coverage",
+  ```
+- In `devDependencies`, change `"@types/node": "^22.10.0"` to `"@types/node": "^20.17.0"`.
+- In `devDependencies`, add `"@vitest/coverage-v8": "^2.1.8"` (must match `vitest`).
+
+Then re-install to update the lockfile:
+
+```bash
+cd /home/weloin/Projects/job-vault/.worktrees/phase-0a-backend-scaffolding/backend-express && npm install
+```
+
+Expected: lockfile updated; `@vitest/coverage-v8` resolves; `@types/node` downgrades cleanly.
 
 - [ ] **Step 1: Create `tsconfig.json`**
 
@@ -323,9 +344,9 @@ Expected: `tsc OK` (no error — there are no source files yet, so tsc has nothi
 - [ ] **Step 7: Commit**
 
 ```bash
-cd /home/weloin/Projects/job-vault && \
-git add backend-express/tsconfig.json backend-express/.gitignore backend-express/.prettierrc backend-express/.eslintrc.cjs backend-express/vitest.config.ts && \
-git commit -m "chore(backend-express): add TypeScript, ESLint, Prettier, and Vitest configs"
+cd /home/weloin/Projects/job-vault/.worktrees/phase-0a-backend-scaffolding && \
+git add backend-express/tsconfig.json backend-express/.gitignore backend-express/.prettierrc backend-express/.eslintrc.cjs backend-express/vitest.config.ts backend-express/package.json backend-express/package-lock.json && \
+git commit -m "chore(backend-express): add TypeScript, ESLint, Prettier, Vitest configs and align deps"
 ```
 
 ---
