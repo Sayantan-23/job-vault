@@ -7,12 +7,12 @@ import { AppError } from '@/shared/errors.js'
 let app: express.Express
 
 beforeAll(async () => {
-  process.env.NODE_ENV = 'test'
-  process.env.PORT = '3000'
-  process.env.CORS_ORIGINS = 'http://localhost:8080'
-  process.env.DATABASE_URL = 'postgres://x:x@x:5432/x'
-  process.env.JWT_SECRET = 'a'.repeat(32)
-  process.env.LOG_LEVEL = 'silent'
+  process.env['NODE_ENV'] = 'test'
+  process.env['PORT'] = '3000'
+  process.env['CORS_ORIGINS'] = 'http://localhost:8080'
+  process.env['DATABASE_URL'] = 'postgres://x:x@x:5432/x'
+  process.env['JWT_SECRET'] = 'a'.repeat(32)
+  process.env['LOG_LEVEL'] = 'silent'
   const { errorHandler, notFoundHandler } = await import('./error.middleware.js')
 
   app = express()
