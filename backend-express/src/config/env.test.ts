@@ -27,7 +27,7 @@ describe('parseEnv', () => {
 
   it('throws when DATABASE_URL is missing', () => {
     const broken: Record<string, string> = { ...validEnv }
-    delete broken.DATABASE_URL
+    delete broken['DATABASE_URL']
     expect(() => parseEnv(broken)).toThrowError(/DATABASE_URL/)
   })
 
@@ -43,9 +43,9 @@ describe('parseEnv', () => {
 describe('getEnv', () => {
   it('throws when the real process.env is invalid', async () => {
     const original = { ...process.env }
-    delete process.env.DATABASE_URL
-    delete process.env.JWT_SECRET
-    delete process.env.CORS_ORIGINS
+    delete process.env['DATABASE_URL']
+    delete process.env['JWT_SECRET']
+    delete process.env['CORS_ORIGINS']
     try {
       vi.resetModules()
       const fresh = await import('./env.js')
