@@ -12,11 +12,11 @@ export const notFoundHandler: RequestHandler = (_req, res) => {
   })
 }
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   if (err instanceof AppError) {
     const status = httpStatusForCode(err.code)
-    if (status >= 500) logger.error({ err }, 'app error (5xx)')
-    else logger.warn({ err }, 'app error')
+    if (status >= 500) logger.error({ err, requestId: req.id }, 'app error (5xx)')
+    else logger.warn({ err, requestId: req.id }, 'app error')
     res.status(status).json({
       statusCode: status,
       message: err.message,
@@ -26,7 +26,7 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 
   if (err instanceof ZodError) {
-    logger.warn({ err: err.issues }, 'validation error')
+    logger.warn({ err: err.issues, requestId: req.id }, 'validation error')
     res.status(400).json({
       statusCode: 400,
       message: 'Validation failed',
@@ -36,11 +36,16 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     return
   }
 
-  logger.error({ err }, 'unhandled error')
+  logger.error({ err, requestId: req.id }, 'unhandled error')
   const env = getEnv()
   res.status(500).json({
     statusCode: 500,
-    message: env.NODE_ENV === 'production' ? 'Internal server error' : (err as Error).message,
+    message:
+      env.NODE_ENV === 'production'
+        ? 'Internal server error'
+        : err instanceof Error
+          ? err.message
+          : String(err),
     error: 'INTERNAL_ERROR',
   })
 }

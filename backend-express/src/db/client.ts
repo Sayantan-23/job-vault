@@ -5,8 +5,10 @@ import * as schema from './schema/index.js'
 
 const { Pool } = pg
 
+export type Db = ReturnType<typeof drizzle<typeof schema>>
+
 let _pool: pg.Pool | undefined
-let _db: ReturnType<typeof drizzle> | undefined
+let _db: Db | undefined
 
 function getPool(): pg.Pool {
   if (_pool) return _pool
@@ -19,7 +21,7 @@ function getPool(): pg.Pool {
   return _pool
 }
 
-export function getDb() {
+export function getDb(): Db {
   if (_db) return _db
   _db = drizzle(getPool(), { schema })
   return _db
@@ -33,4 +35,3 @@ export async function closeDb(): Promise<void> {
   }
 }
 
-export type Db = ReturnType<typeof getDb>
