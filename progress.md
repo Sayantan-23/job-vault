@@ -8,6 +8,17 @@
 
 ---
 
+## Migration Phase 0a — Backend Express Scaffolding (NEW)
+
+> **Plan**: `docs/superpowers/plans/2026-04-26-phase-0a-backend-express-scaffolding.md`
+> **Spec**: `docs/superpowers/specs/2026-04-26-nest-to-express-nuxt-to-next-migration-design.md`
+
+- [x] backend-express scaffolded (Express 5 + Drizzle + Pino + Zod + TS strict)
+- [x] /api/health responds 200 under Docker Compose
+- [x] Root docker-compose.yml runs postgres + backend-express
+
+---
+
 ## Dependency Diagram
 
 ```
