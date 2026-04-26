@@ -24,5 +24,10 @@ function createLogger() {
   return pino(options)
 }
 
+/**
+ * Singleton logger. Constructed at module-load time, which calls `getEnv()`.
+ * Tests that import this module must set required env vars (DATABASE_URL,
+ * JWT_SECRET, CORS_ORIGINS) before the import, otherwise module load throws.
+ */
 export const logger = createLogger()
 export type Logger = typeof logger

@@ -3,8 +3,8 @@ import type { Request, Response, NextFunction } from 'express'
 import { asyncHandler } from './async-handler.js'
 
 function makeReqRes(): { req: Request; res: Response; next: NextFunction } {
-  const req = {} as Request
-  const res = {} as Response
+  const req = {} as unknown as Request
+  const res = {} as unknown as Response
   const next = vi.fn() as unknown as NextFunction
   return { req, res, next }
 }
