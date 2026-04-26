@@ -17,7 +17,6 @@ module.exports = {
       { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
     ],
     'no-console': 'error',
-    'no-default-export': 'off',
   },
   ignorePatterns: ['dist/', 'node_modules/'],
 }

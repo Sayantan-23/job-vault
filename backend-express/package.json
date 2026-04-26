@@ -12,7 +12,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint --no-error-on-unmatched-pattern \"src/**/*.ts\"",
     "format": "prettier --write \"src/**/*.{ts,json}\"",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
