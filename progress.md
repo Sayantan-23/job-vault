@@ -17,6 +17,17 @@
 - [x] /api/health responds 200 under Docker Compose
 - [x] Root docker-compose.yml runs postgres + backend-express
 
+## Migration Phase 0b — Frontend Next.js Scaffolding (NEW)
+
+> **Plan**: `docs/superpowers/plans/2026-05-05-phase-0b-frontend-next-scaffolding.md`
+> **Spec**: `docs/superpowers/specs/2026-04-26-nest-to-express-nuxt-to-next-migration-design.md`
+
+- [x] frontend-next scaffolded (Next.js 15 + React 19 + Tailwind v4 + TanStack Query + TS strict)
+- [x] Theme isolation skeleton (web/auth/app route groups with scoped CSS vars)
+- [x] /, /about, /login render under Docker Compose; /app/dashboard redirects to /login
+- [x] /api/* proxies through frontend-next to backend-express
+- [x] Root docker-compose.yml runs postgres + backend-express + frontend-next
+
 ---
 
 ## Dependency Diagram
