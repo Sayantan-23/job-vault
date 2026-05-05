@@ -1,18 +1,7 @@
-const API_BASE = process.env['NEXT_PUBLIC_API_BASE'] ?? ''
+import { cookies } from 'next/headers'
+import { ApiError } from './api-client'
 
-export class ApiError extends Error {
-  public readonly statusCode: number
-  public readonly code: string
-  public readonly details?: unknown
-
-  constructor(statusCode: number, message: string, code: string, details?: unknown) {
-    super(message)
-    this.name = 'ApiError'
-    this.statusCode = statusCode
-    this.code = code
-    if (details !== undefined) this.details = details
-  }
-}
+const API_BASE = process.env['NEXT_PUBLIC_API_BASE'] ?? 'http://localhost:3000'
 
 interface SuccessEnvelope<T> {
   data: T
@@ -32,17 +21,24 @@ async function request<T>(
   body?: unknown,
   init?: RequestInit,
 ): Promise<T> {
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`
+  const cookieStore = await cookies()
+  const cookieHeader = cookieStore
+    .getAll()
+    .map((c) => `${c.name}=${c.value}`)
+    .join('; ')
+
   const headers: Record<string, string> = {
     Accept: 'application/json',
     ...((init?.headers as Record<string, string> | undefined) ?? {}),
   }
+  if (cookieHeader) headers['Cookie'] = cookieHeader
   if (body !== undefined) headers['Content-Type'] = 'application/json'
 
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`
   const fetchInit: RequestInit = {
     method,
-    credentials: 'include',
     headers,
+    cache: 'no-store',
     ...init,
   }
   if (body !== undefined) fetchInit.body = JSON.stringify(body)
@@ -66,10 +62,7 @@ async function request<T>(
   return payload as T
 }
 
-export const apiClient = {
+export const apiServer = {
   get: <T>(path: string, init?: RequestInit) => request<T>('GET', path, undefined, init),
   post: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('POST', path, body, init),
-  patch: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('PATCH', path, body, init),
-  put: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('PUT', path, body, init),
-  delete: <T>(path: string, init?: RequestInit) => request<T>('DELETE', path, undefined, init),
 }

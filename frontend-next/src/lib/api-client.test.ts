@@ -14,7 +14,7 @@ function mockFetch(response: { status: number; body: unknown; ok?: boolean }) {
 
 describe('apiClient', () => {
   beforeEach(() => {
-    process.env.NEXT_PUBLIC_API_BASE = 'http://localhost:3000'
+    process.env['NEXT_PUBLIC_API_BASE'] = 'http://localhost:3000'
   })
   afterEach(() => {
     globalThis.fetch = originalFetch
@@ -27,17 +27,20 @@ describe('apiClient', () => {
   })
 
   it('sends credentials and JSON content-type on POST', async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({ data: { id: 1 } }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+    const fetchMock = vi.fn(
+      async (_url: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
+        new Response(JSON.stringify({ data: { id: 1 } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
     )
     globalThis.fetch = fetchMock as unknown as typeof fetch
     await apiClient.post('/api/echo', { name: 'x' })
+    expect(fetchMock).toHaveBeenCalledOnce()
     const call = fetchMock.mock.calls[0]
-    expect(call).toBeDefined()
-    const init = call![1] as RequestInit
+    if (!call) throw new Error('fetch was not called')
+    const init = call[1]
+    if (!init) throw new Error('fetch was called without init')
     expect(init.credentials).toBe('include')
     expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json')
     expect(init.body).toBe(JSON.stringify({ name: 'x' }))
