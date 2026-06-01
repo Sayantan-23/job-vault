@@ -27,6 +27,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ghost-active: var(--ghost-active);
+  --color-ghost-stale: var(--ghost-stale);
+  --color-ghost-ghosted: var(--ghost-ghosted);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
   --radius-md: var(--radius);
 }
 
@@ -41,5 +46,6 @@ html, body {
 body {
   background: var(--color-background);
   color: var(--color-foreground);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: 'rlig' 1, 'calt' 1;
 }

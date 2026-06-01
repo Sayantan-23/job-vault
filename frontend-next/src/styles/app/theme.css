@@ -1,22 +1,55 @@
+/* App surface — minimalist-ui: warm-stone neutral, muted indigo accent (flat). */
 [data-theme-scope='app'] {
-  --background: oklch(0.99 0 0);
-  --foreground: oklch(0.13 0 0);
+  --background: oklch(0.992 0.004 75);
+  --foreground: oklch(0.21 0.01 60);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.13 0 0);
+  --card-foreground: oklch(0.21 0.01 60);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.13 0 0);
-  --primary: oklch(0.21 0 0);
+  --popover-foreground: oklch(0.21 0.01 60);
+  --primary: oklch(0.55 0.12 270);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.21 0 0);
-  --muted: oklch(0.96 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.96 0 0);
-  --accent-foreground: oklch(0.21 0 0);
+  --secondary: oklch(0.96 0.005 75);
+  --secondary-foreground: oklch(0.27 0.01 60);
+  --muted: oklch(0.96 0.005 75);
+  --muted-foreground: oklch(0.53 0.01 60);
+  --accent: oklch(0.96 0.005 75);
+  --accent-foreground: oklch(0.27 0.01 60);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.92 0 0);
-  --input: oklch(0.92 0 0);
-  --ring: oklch(0.21 0 0);
+  --border: oklch(0.91 0.005 75);
+  --input: oklch(0.91 0.005 75);
+  --ring: oklch(0.55 0.12 270);
   --radius: 0.5rem;
+
+  /* Status palette — reserved for application health only. */
+  --ghost-active: oklch(0.7 0.15 155);
+  --ghost-stale: oklch(0.78 0.15 75);
+  --ghost-ghosted: oklch(0.63 0.2 20);
+}
+
+/* Dark mode — toggled by `.dark` on <html> (wiring lands in Slice 1). */
+.dark [data-theme-scope='app'] {
+  --background: oklch(0.18 0.004 75);
+  --foreground: oklch(0.95 0.005 75);
+  --card: oklch(0.21 0.005 75);
+  --card-foreground: oklch(0.95 0.005 75);
+  --popover: oklch(0.21 0.005 75);
+  --popover-foreground: oklch(0.95 0.005 75);
+  --primary: oklch(0.65 0.13 270);
+  --primary-foreground: oklch(0.15 0.01 270);
+  --secondary: oklch(0.27 0.005 75);
+  --secondary-foreground: oklch(0.95 0.005 75);
+  --muted: oklch(0.27 0.005 75);
+  --muted-foreground: oklch(0.66 0.01 75);
+  --accent: oklch(0.27 0.005 75);
+  --accent-foreground: oklch(0.95 0.005 75);
+  --destructive: oklch(0.5 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.3 0.005 75);
+  --input: oklch(0.3 0.005 75);
+  --ring: oklch(0.65 0.13 270);
+
+  --ghost-active: oklch(0.72 0.15 155);
+  --ghost-stale: oklch(0.8 0.15 75);
+  --ghost-ghosted: oklch(0.66 0.2 20);
 }
