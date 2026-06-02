@@ -17,9 +17,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:generate": "tsx ./node_modules/drizzle-kit/bin.cjs generate",
+    "db:migrate": "tsx ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:studio": "tsx ./node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
