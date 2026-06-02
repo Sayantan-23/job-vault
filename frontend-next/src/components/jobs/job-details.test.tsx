@@ -1,0 +1,54 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
+import type { Job } from '@/types/job'
+
+vi.mock('@/lib/api-client', () => ({
+  apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+  ApiError: class ApiError extends Error {},
+}))
+
+import { apiClient } from '@/lib/api-client'
+import { JobDetails } from './job-details'
+
+const api = vi.mocked(apiClient)
+
+function wrapper({ children }: { children: ReactNode }) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+}
+
+const JOB: Job = {
+  id: 'j1', createdAt: '', updatedAt: '', userId: 'u1', title: 'SWE', company: 'Acme',
+  location: 'Remote', salaryRange: null, sourceUrl: null, snapshotMarkdown: null,
+  status: 'APPLIED', kanbanOrder: 1, lastActivityAt: null, ghostDays: 0, notes: null,
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('JobDetails', () => {
+  it('renders the job title, company, and status', () => {
+    render(<JobDetails job={JOB} onDeleted={vi.fn()} />, { wrapper })
+    expect(screen.getByRole('heading', { name: 'SWE' })).toBeInTheDocument()
+    expect(screen.getByText('Acme')).toBeInTheDocument()
+  })
+
+  it('patches the status when changed', async () => {
+    api.patch.mockResolvedValue({ ...JOB, status: 'OFFER' })
+    render(<JobDetails job={JOB} onDeleted={vi.fn()} />, { wrapper })
+    await userEvent.selectOptions(screen.getByLabelText(/status/i), 'OFFER')
+    await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/api/jobs/j1', { status: 'OFFER' }))
+  })
+
+  it('requires confirmation before deleting', async () => {
+    api.delete.mockResolvedValue({ message: 'Job deleted successfully' })
+    const onDeleted = vi.fn()
+    render(<JobDetails job={JOB} onDeleted={onDeleted} />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    await userEvent.click(screen.getByRole('button', { name: /confirm delete/i }))
+    await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/jobs/j1'))
+    await waitFor(() => expect(onDeleted).toHaveBeenCalled())
+  })
+})
