@@ -75,7 +75,7 @@ export function ManualJobForm({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="salaryRange">Salary range</Label>
-          <Input id="salaryRange" placeholder="e.g. $120k–$150k" {...register('salaryRange')} />
+          <Input id="salaryRange" placeholder="e.g. ₹12–18 LPA" {...register('salaryRange')} />
         </div>
       </div>
 
