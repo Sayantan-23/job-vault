@@ -53,7 +53,36 @@
 - [x] Backend: typecheck + lint + test (27) — all green
 - [x] Adversarial multi-lens review run; semantic-color violation found and fixed, tests hardened
 - [ ] Manual browser smoke (`/app/dashboard` light/dark, `/about` placeholder) — pending
-- [ ] Slice 1 (Auth): update `drizzle.config.ts` schema path to handle multiple tables
+- [ ] Slice 2 (Jobs): update `drizzle.config.ts` schema path to handle multiple tables
+
+## Migration Slice 1 — Authentication (email/password) (NEW)
+
+> **Plan**: `docs/superpowers/plans/2026-06-02-slice-1-auth.md`
+> **Spec**: `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md`
+> **Auth model**: custom JWT in HTTP-only cookies (the intentional change from NestJS Bearer-in-body). Google OAuth deferred. No new migration (reuses Slice 0 `users`).
+
+### Backend (`backend-express`)
+- [x] JWT + bcrypt(12) token helpers; `Request.user` augmentation
+- [x] Zod `validate` middleware + JWT-cookie `authMiddleware`
+- [x] Auth Zod schemas + `toPublicUser` (strips passwordHash/refreshTokenHash)
+- [x] Drizzle auth repository (real-Postgres tested)
+- [x] Auth service: register/login/refresh/logout/profile — bcrypt 12, refresh rotation + reuse detection
+- [x] Cookie helpers (accessToken path `/` 15m, refreshToken path `/api/auth` 7d), controller, router (+ auth rate-limit), wired under `/api/auth`
+- [x] HTTP integration tests (Supertest): all 6 endpoints + cookie-flag assertions
+
+### Frontend (`frontend-next`)
+- [x] `Input` + `Label` primitives
+- [x] Auth Zod schemas + `AuthUser` type
+- [x] `useAuth` hooks (current user / login / register / logout via TanStack Query)
+- [x] `LoginForm` + `RegisterForm` (RHF + Zod, minimalist design) + server-error alerts
+- [x] Real `/login` + `/register` pages; `LogoutButton` in app header
+
+### Verification
+- [x] Backend: typecheck + lint + test (72) — all green
+- [x] Frontend: typecheck + lint + test (43) — all green
+- [x] Adversarial multi-lens review (auth-security & contract-parity clean); test-coverage gaps then closed
+- [x] End-to-end smoke on the Docker stack: register→201+cookies, /me→200, login→200, dup→409, wrong-pw→401, `/login` renders the real form — all via the `:8080` browser proxy path
+- [ ] **Deferred — automatic token refresh:** the `/api/auth/refresh` endpoint (rotation + reuse detection) is built and tested, but nothing triggers it automatically yet. `middleware.ts` only checks for the `accessToken` cookie's presence and `api-client` does not retry-on-401. **Consequence: a session effectively ends when the 15-minute access token expires** (user is redirected to `/login`). Wiring auto-refresh (Next middleware edge-decode + Set-Cookie copy, and/or an `api-client` 401-retry) is a small follow-up.
 
 ---
 
