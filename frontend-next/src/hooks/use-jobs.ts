@@ -2,11 +2,11 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
+import { JOBS_KEY, jobKey, DASHBOARD_KANBAN_KEY } from '@/lib/query-keys'
 import type { Job, ScrapeResult } from '@/types/job'
 import type { ManualJobValues, UpdateJobValues } from '@/schemas/job'
 
-export const JOBS_KEY = ['jobs'] as const
-export const jobKey = (id: string) => ['jobs', id] as const
+export { JOBS_KEY, jobKey }
 
 export function useJobs(initialData?: Job[]) {
   return useQuery({
@@ -51,6 +51,7 @@ export function useUpdateJob(id: string) {
     onSuccess: (job) => {
       qc.setQueryData(jobKey(id), job)
       void qc.invalidateQueries({ queryKey: JOBS_KEY })
+      void qc.invalidateQueries({ queryKey: DASHBOARD_KANBAN_KEY })
     },
   })
 }
@@ -61,6 +62,7 @@ export function useDeleteJob() {
     mutationFn: (id: string) => apiClient.delete<{ message: string }>(`/api/jobs/${id}`),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: JOBS_KEY })
+      void qc.invalidateQueries({ queryKey: DASHBOARD_KANBAN_KEY })
     },
   })
 }
