@@ -115,6 +115,32 @@
 - [ ] **Deferred — timeline auto-entries:** the NestJS `JobService` wrote a timeline event on create/status-change; that integration lands with **Slice 4** (Timeline + Reminders + Notifications), so Slice 2 jobs create/move without timeline side-effects.
 - [ ] Manual browser pass (Add-Job modal tabs, drawer deep-link + Back, dark mode) — recommended before merge
 
+## Migration Slice 3 — Dashboard & Kanban (NEW)
+
+> **Plan**: `docs/superpowers/plans/2026-06-02-slice-3-dashboard-kanban.md`
+> **Spec**: `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md` (§9 Slice 3 resolutions)
+> **Decisions**: dedicated `/api/dashboard/kanban`+`/stats` (because `/api/jobs` is paginated); fractional-float `kanbanOrder` on drop; `@dnd-kit` + optimistic `useMoveJob` (snapshot rollback); ghost-days **derived live** from `lastActivityAt`; reuse the JobDrawer on the dashboard; ViewToggle deferred to Slice 5.
+
+### Backend (`backend-express`)
+- [x] `dashboard` module: query schema (search `.max(255)`) + response types, pure ghost-derivation helpers, repository (all user jobs, kanbanOrder order), service (grouping + derived-ghost stats), controller/router under `/api/dashboard`
+- [x] `GET /api/dashboard/kanban` (6 columns + filtered stats) and `GET /api/dashboard/stats` (global) — user-scoped, auth-guarded
+- [x] HTTP integration tests (Supertest) + real-DB repository test
+
+### Frontend (`frontend-next`)
+- [x] `@dnd-kit` installed; dashboard types + shared query keys; pure kanban helpers (`lib/kanban.ts`) — unit tested
+- [x] `use-dashboard` (kanban query + optimistic `useMoveJob`); job edits/deletes also refresh the board
+- [x] StatCard + DashboardStats (5 cards); sortable KanbanCard (tap-to-open vs drag, 6px threshold), droppable KanbanColumn, KanbanBoard (drag + snapshot rollback)
+- [x] JobDrawer close generalized to the current page (reused on the dashboard via `?job=`)
+- [x] DashboardView + `/app/dashboard` page (SSR initial board, Suspense)
+
+### Verification
+- [x] Backend: typecheck + lint + test (150) — all green
+- [x] Frontend: typecheck + lint + test (105) + Docker production build — all green
+- [x] Adversarial six-lens review (security/contract/strict-TS/ghost-derivation/dnd-optimistic/test-faithfulness); search capped + StatCard & drag-vs-tap tests added
+- [x] Live end-to-end smoke on the Docker stack: kanban groups the 6 columns with **derived ghost-days**; `/stats` global; a `/move` (APPLIED→OFFER) persists into the board
+- [ ] **Note — ghost-days derived live; move events don't write timeline entries yet** (timeline auto-events land in Slice 4)
+- [ ] Manual browser pass (drag-and-drop, card → dashboard drawer, dark mode) — recommended before merge
+
 ---
 
 ## Dependency Diagram
