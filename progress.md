@@ -82,7 +82,7 @@
 - [x] Frontend: typecheck + lint + test (43) — all green
 - [x] Adversarial multi-lens review (auth-security & contract-parity clean); test-coverage gaps then closed
 - [x] End-to-end smoke on the Docker stack: register→201+cookies, /me→200, login→200, dup→409, wrong-pw→401, `/login` renders the real form — all via the `:8080` browser proxy path
-- [ ] **Deferred — automatic token refresh:** the `/api/auth/refresh` endpoint (rotation + reuse detection) is built and tested, but nothing triggers it automatically yet. `middleware.ts` only checks for the `accessToken` cookie's presence and `api-client` does not retry-on-401. **Consequence: a session effectively ends when the 15-minute access token expires** (user is redirected to `/login`). Wiring auto-refresh (Next middleware edge-decode + Set-Cookie copy, and/or an `api-client` 401-retry) is a small follow-up.
+- [x] **Automatic token refresh — DONE** (`fix(auth): silent token refresh`, branch `fix-auth-silent-refresh`): the `api-client` now retries once on a 401 via `/api/auth/refresh` with a **single-flight** guard (so rotation never races), `middleware.ts` gates `/app/*` on **either** cookie (an expired access token + live refresh token is recoverable, not a logout), the refresh cookie is widened to `Path=/`, and `useJobs` refetches on mount. Sessions now roll forward across days of active use instead of ending at 15 minutes. Live-smoked through the `:8080` proxy.
 
 ## Migration Slice 2 — Jobs (CRUD + scraper + AddJobModal/JobDrawer) (NEW)
 
