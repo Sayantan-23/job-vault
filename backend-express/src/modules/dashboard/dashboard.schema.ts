@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { JOB_STATUSES, type JobStatus } from '@/db/schema/jobs.js'
 
 export const DashboardQuerySchema = z.object({
-  search: z.string().optional(),
+  search: z.string().max(255).optional(),
   status: z.enum(JOB_STATUSES).optional(),
   ghostFilter: z.enum(['all', 'active', 'stale', 'ghost']).optional(),
 })

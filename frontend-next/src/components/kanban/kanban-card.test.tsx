@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DndContext } from '@dnd-kit/core'
 import { SortableContext } from '@dnd-kit/sortable'
@@ -25,6 +25,8 @@ function renderCard(card: Card = CARD) {
 }
 
 describe('KanbanCard', () => {
+  beforeEach(() => vi.clearAllMocks())
+
   it('shows the title, company and ghost meter', () => {
     renderCard()
     expect(screen.getByText('Staff Engineer')).toBeInTheDocument()
@@ -36,5 +38,14 @@ describe('KanbanCard', () => {
     renderCard()
     await userEvent.click(screen.getByText('Staff Engineer'))
     expect(push).toHaveBeenCalledWith('/app/dashboard?job=j1')
+  })
+
+  it('does NOT navigate when the pointer moves past the threshold (a drag, not a tap)', () => {
+    renderCard()
+    const cardButton = screen.getByText('Staff Engineer').closest('button')
+    if (!cardButton) throw new Error('card button not found')
+    fireEvent.pointerDown(cardButton, { clientX: 0, clientY: 0 })
+    fireEvent.pointerUp(cardButton, { clientX: 40, clientY: 0 })
+    expect(push).not.toHaveBeenCalled()
   })
 })
