@@ -15,25 +15,39 @@ beforeEach(() => {
   state.error = null
 })
 
+// "Password" and "Confirm password" both contain "password", so use exact labels.
+async function fill(values: { name: string; email: string; password: string; confirm: string }) {
+  await userEvent.type(screen.getByLabelText('Name'), values.name)
+  await userEvent.type(screen.getByLabelText('Email'), values.email)
+  await userEvent.type(screen.getByLabelText('Password'), values.password)
+  await userEvent.type(screen.getByLabelText('Confirm password'), values.confirm)
+  await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+}
+
 describe('RegisterForm', () => {
   it('rejects a short password', async () => {
     render(<RegisterForm />)
-    await userEvent.type(screen.getByLabelText(/name/i), 'Ada')
-    await userEvent.type(screen.getByLabelText(/email/i), 'a@b.co')
-    await userEvent.type(screen.getByLabelText(/password/i), 'short')
-    await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+    await fill({ name: 'Ada', email: 'a@b.co', password: 'short', confirm: 'short' })
     expect(await screen.findByText(/at least 8/i)).toBeInTheDocument()
     expect(state.mutate).not.toHaveBeenCalled()
   })
 
-  it('submits a valid registration', async () => {
+  it('rejects mismatched passwords', async () => {
     render(<RegisterForm />)
-    await userEvent.type(screen.getByLabelText(/name/i), 'Ada')
-    await userEvent.type(screen.getByLabelText(/email/i), 'a@b.co')
-    await userEvent.type(screen.getByLabelText(/password/i), 'longenough')
-    await userEvent.click(screen.getByRole('button', { name: /create account/i }))
+    await fill({ name: 'Ada', email: 'a@b.co', password: 'longenough', confirm: 'different' })
+    expect(await screen.findByText(/do not match/i)).toBeInTheDocument()
+    expect(state.mutate).not.toHaveBeenCalled()
+  })
+
+  it('submits a valid registration without the confirm field', async () => {
+    render(<RegisterForm />)
+    await fill({ name: 'Ada', email: 'a@b.co', password: 'longenough', confirm: 'longenough' })
     await waitFor(() =>
-      expect(state.mutate).toHaveBeenCalledWith({ name: 'Ada', email: 'a@b.co', password: 'longenough' }),
+      expect(state.mutate).toHaveBeenCalledWith({
+        name: 'Ada',
+        email: 'a@b.co',
+        password: 'longenough',
+      }),
     )
   })
 

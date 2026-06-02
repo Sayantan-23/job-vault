@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { LoginSchema, RegisterSchema } from './auth'
+import { LoginSchema, RegisterSchema, RegisterFormSchema } from './auth'
 
 describe('auth schemas', () => {
   it('accepts valid login input', () => {
@@ -29,5 +29,30 @@ describe('auth schemas', () => {
       RegisterSchema.safeParse({ name: 'x'.repeat(101), email: 'a@b.co', password: 'longenough' })
         .success,
     ).toBe(false)
+  })
+})
+
+describe('RegisterFormSchema (confirm password)', () => {
+  it('accepts matching passwords', () => {
+    expect(
+      RegisterFormSchema.safeParse({
+        name: 'Ada',
+        email: 'a@b.co',
+        password: 'longenough',
+        confirmPassword: 'longenough',
+      }).success,
+    ).toBe(true)
+  })
+  it('rejects mismatched passwords on the confirmPassword path', () => {
+    const result = RegisterFormSchema.safeParse({
+      name: 'Ada',
+      email: 'a@b.co',
+      password: 'longenough',
+      confirmPassword: 'different',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.path).toContain('confirmPassword')
+    }
   })
 })

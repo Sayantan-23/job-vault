@@ -11,5 +11,15 @@ export const RegisterSchema = z.object({
   password: z.string().min(8, 'At least 8 characters').max(72),
 })
 
+// The form collects a confirmation field that the API does not need; the form
+// strips it before calling the register mutation.
+export const RegisterFormSchema = RegisterSchema.extend({
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((values) => values.password === values.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+})
+
 export type LoginValues = z.infer<typeof LoginSchema>
 export type RegisterValues = z.infer<typeof RegisterSchema>
+export type RegisterFormValues = z.infer<typeof RegisterFormSchema>
