@@ -1,0 +1,93 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('./jobs.repository.js', () => ({
+  jobsRepository: {
+    nextKanbanOrder: vi.fn(),
+    create: vi.fn(),
+    findById: vi.fn(),
+    findAll: vi.fn(),
+    update: vi.fn(),
+    move: vi.fn(),
+    remove: vi.fn(),
+  },
+}))
+vi.mock('./scraper.js', () => ({ scrapeUrl: vi.fn() }))
+
+import { jobsRepository } from './jobs.repository.js'
+import { scrapeUrl } from './scraper.js'
+import { jobsService } from './jobs.service.js'
+import type { JobRow } from '@/db/schema/jobs.js'
+
+const repo = vi.mocked(jobsRepository)
+const scrape = vi.mocked(scrapeUrl)
+
+function fakeJob(over: Record<string, unknown> = {}): JobRow {
+  return {
+    id: 'j1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    userId: 'u1',
+    title: 'SWE',
+    company: 'Acme',
+    location: null,
+    salaryRange: null,
+    sourceUrl: null,
+    snapshotMarkdown: null,
+    status: 'WISHLIST',
+    kanbanOrder: 1,
+    lastActivityAt: new Date(),
+    ghostDays: 0,
+    notes: null,
+    ...over,
+  }
+}
+
+beforeEach(() => vi.clearAllMocks())
+
+describe('jobsService.create', () => {
+  it('defaults status to WISHLIST and assigns the next kanbanOrder', async () => {
+    repo.nextKanbanOrder.mockResolvedValue(3)
+    repo.create.mockResolvedValue(fakeJob({ kanbanOrder: 3 }))
+    const job = await jobsService.create('u1', { title: 'SWE', company: 'Acme' })
+    expect(repo.nextKanbanOrder).toHaveBeenCalledWith('u1', 'WISHLIST')
+    const values = repo.create.mock.calls[0]?.[0] as { kanbanOrder: number; userId: string }
+    expect(values.kanbanOrder).toBe(3)
+    expect(values.userId).toBe('u1')
+    expect(job.id).toBe('j1')
+  })
+})
+
+describe('jobsService.get', () => {
+  it('throws NOT_FOUND when the job is missing or not owned', async () => {
+    repo.findById.mockResolvedValue(null)
+    await expect(jobsService.get('u1', 'missing')).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
+describe('jobsService.update / move / remove', () => {
+  it('throws NOT_FOUND from update when repo returns null', async () => {
+    repo.update.mockResolvedValue(null)
+    await expect(jobsService.update('u1', 'x', { title: 'y' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+  it('throws NOT_FOUND from move when repo returns null', async () => {
+    repo.move.mockResolvedValue(null)
+    await expect(jobsService.move('u1', 'x', { status: 'OFFER', kanbanOrder: 1 })).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+    })
+  })
+  it('throws NOT_FOUND from remove when repo returns false', async () => {
+    repo.remove.mockResolvedValue(false)
+    await expect(jobsService.remove('u1', 'x')).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
+describe('jobsService.scrape', () => {
+  it('returns the scrape result on success', async () => {
+    scrape.mockResolvedValue({ title: 'T', company: 'C', snapshotMarkdown: 'md' })
+    expect(await jobsService.scrape('https://x.com/j')).toMatchObject({ title: 'T' })
+  })
+  it('wraps scraper errors as VALIDATION_ERROR', async () => {
+    scrape.mockRejectedValue(new Error('timeout'))
+    await expect(jobsService.scrape('https://x.com/j')).rejects.toMatchObject({ code: 'VALIDATION_ERROR' })
+  })
+})
