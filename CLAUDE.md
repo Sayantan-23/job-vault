@@ -8,24 +8,24 @@ JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: th
 
 - **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 15). **Build here.**
 - **Reference only:** `backend/` (NestJS) and `frontend/` (Nuxt) — kept to read the original behavior/contracts. **Do not edit; delete only at the final cleanup slice.**
-- **Done:** Slice 0 (Foundation — design system, app shell, `users` schema) and Slice 1 (Auth — email/password, JWT cookies).
-- **Next:** Slice 2 (Jobs — CRUD + scraper + AddJobModal/JobDrawer).
+- **Done:** Slice 0 (Foundation), Slice 1 (Auth — email/password, JWT cookies, **+ silent token refresh**), Slice 2 (Jobs — CRUD + Cheerio/Turndown scraper, AddJobModal + URL-driven JobDrawer via `?job=`).
+- **Next:** Slice 3 (Dashboard & Kanban — `@dnd-kit` board + `GET /api/dashboard/kanban`/`stats` endpoints; `PATCH /api/jobs/:id/move` is already built). **Plan not yet written** — brainstorm the open decisions, then write `docs/superpowers/plans/YYYY-MM-DD-slice-3-dashboard-kanban.md`.
 
 ### Where to look (source of truth)
 - `progress.md` — **status of every slice; read this first.**
 - `docs/superpowers/specs/2026-04-26-nest-to-express-nuxt-to-next-migration-design.md` — overall migration architecture + the slice roadmap.
 - `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md` — scope of this effort (app surface + Express), design direction, decisions.
-- `docs/superpowers/plans/2026-06-01-slice-0-foundation.md`, `…/2026-06-02-slice-1-auth.md` — the executed slice plans (use as the pattern for new slices).
+- `docs/superpowers/plans/2026-06-01-slice-0-foundation.md`, `…/slice-1-auth.md`, `…/2026-06-02-slice-2-jobs.md` — the executed slice plans (use as the pattern for new slices).
 - `docs/best-practices/{express,nextjs,typescript}.md` — the standards a reviewer checks against.
 - `CONVENTIONS.md` — DB/backend/frontend naming conventions.
 
 ## Tech Stack (target)
 
 - **Backend** (`backend-express/`): Express 5, Drizzle ORM, PostgreSQL 16, Pino, Zod, strict TypeScript (NodeNext — imports use `.js`).
-- **Frontend** (`frontend-next/`): Next.js 15 (App Router) + React 19, Tailwind v4 (CSS-first), shadcn/ui, TanStack Query v5, React Hook Form + Zod.
-- **Auth:** custom JWT in **HTTP-only cookies** (access 15m `path:/`, refresh 7d `path:/api/auth`) + refresh rotation. (NestJS used Bearer-in-body; the cookie model is the intentional change.)
+- **Frontend** (`frontend-next/`): Next.js 15 (App Router) + React 19, Tailwind v4 (CSS-first), TanStack Query v5, React Hook Form + Zod. **UI primitives are hand-written in `src/components/ui/` with our tokens (not the shadcn CLI); Radix is used only for overlay *behavior* (`@radix-ui/react-dialog` → dialog/sheet). Any styled element gets its own component — never inline styled markup.**
+- **Auth:** custom JWT in **HTTP-only cookies** (access 15m, refresh 7d, **both `path:/`**) + refresh rotation + **silent refresh** (api-client retries 401→`/api/auth/refresh`→retry, single-flight; `middleware.ts` gates `/app/*` on either cookie). (NestJS used Bearer-in-body; the cookie model is the intentional change.)
 - **Design:** minimalist-ui — warm-stone base, **flat muted-indigo** accent, **Geist** (sans) + **Geist Mono** (numerics signature) + **Instrument Serif** (editorial headings), faint hairline borders, near-zero diffuse shadows, dark-mode first-class. Use the `minimalist-ui` skill.
-- **Deferred (not yet built):** automatic token refresh (session currently ends when the 15m access token expires), Google OAuth, AI/cover-letters/resume (Gemini), file storage (Cloudinary/pdfkit), public-page redesign, Chrome extension.
+- **Deferred (not yet built):** Google OAuth, AI/cover-letters/resume (Gemini), file storage (Cloudinary/pdfkit), public-page redesign, Chrome extension. (Automatic token refresh is now **done**.)
 
 ## Running the stack (Docker)
 
