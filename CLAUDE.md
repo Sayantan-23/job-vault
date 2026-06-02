@@ -1,170 +1,86 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repository.
 
-## Project Overview
+## ⚠️ Current State — read first
 
-Job Tracker ("Ghost-Proof Job Application & AI Assistant") — a full-stack app for managing job applications, preserving job postings, and generating AI cover letters. The project has detailed implementation plans in `plans/` but the backend/frontend code is not yet built.
+JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: the original stack (NestJS + Nuxt 4) is being rebuilt as **Express + Next.js**, feature-by-feature, with a fresh **minimalist-ui** design.
 
-## Tech Stack
+- **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 15). **Build here.**
+- **Reference only:** `backend/` (NestJS) and `frontend/` (Nuxt) — kept to read the original behavior/contracts. **Do not edit; delete only at the final cleanup slice.**
+- **Done:** Slice 0 (Foundation — design system, app shell, `users` schema) and Slice 1 (Auth — email/password, JWT cookies).
+- **Next:** Slice 2 (Jobs — CRUD + scraper + AddJobModal/JobDrawer).
 
-- **Backend**: NestJS + MikroORM + PostgreSQL 16 (Docker)
-- **Frontend**: Nuxt 4 + Nuxt UI v4 (Reka UI + Tailwind CSS)
-- **AI**: Google Gemini 2.0 Flash (cover letters, resume parsing)
-- **Storage**: Cloudinary (resume files), pdfkit (PDF export)
-- **Scraping**: Cheerio (primary) + Gemini fallback
-- **Auth**: JWT (access 15m + refresh 7d with rotation), Google OAuth 2.0 via Passport.js
+### Where to look (source of truth)
+- `progress.md` — **status of every slice; read this first.**
+- `docs/superpowers/specs/2026-04-26-nest-to-express-nuxt-to-next-migration-design.md` — overall migration architecture + the slice roadmap.
+- `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md` — scope of this effort (app surface + Express), design direction, decisions.
+- `docs/superpowers/plans/2026-06-01-slice-0-foundation.md`, `…/2026-06-02-slice-1-auth.md` — the executed slice plans (use as the pattern for new slices).
+- `docs/best-practices/{express,nextjs,typescript}.md` — the standards a reviewer checks against.
+- `CONVENTIONS.md` — DB/backend/frontend naming conventions.
 
-## Development Commands
+## Tech Stack (target)
 
-### Docker (full stack)
+- **Backend** (`backend-express/`): Express 5, Drizzle ORM, PostgreSQL 16, Pino, Zod, strict TypeScript (NodeNext — imports use `.js`).
+- **Frontend** (`frontend-next/`): Next.js 15 (App Router) + React 19, Tailwind v4 (CSS-first), shadcn/ui, TanStack Query v5, React Hook Form + Zod.
+- **Auth:** custom JWT in **HTTP-only cookies** (access 15m `path:/`, refresh 7d `path:/api/auth`) + refresh rotation. (NestJS used Bearer-in-body; the cookie model is the intentional change.)
+- **Design:** minimalist-ui — warm-stone base, **flat muted-indigo** accent, **Geist** (sans) + **Geist Mono** (numerics signature) + **Instrument Serif** (editorial headings), faint hairline borders, near-zero diffuse shadows, dark-mode first-class. Use the `minimalist-ui` skill.
+- **Deferred (not yet built):** automatic token refresh (session currently ends when the 15m access token expires), Google OAuth, AI/cover-letters/resume (Gemini), file storage (Cloudinary/pdfkit), public-page redesign, Chrome extension.
+
+## Running the stack (Docker)
+
+Host ports `5432`/`3000`/`3001` are taken on this machine, so a **gitignored root `.env`** remaps them:
+`DB_PORT_EXTERNAL=5433`, `BACKEND_PORT=3100`, `FRONTEND_PORT=8080` (`JWT_SECRET` is a 32-char dev value). Recreate `.env` from these if it is missing.
+
 ```bash
-docker-compose up              # Start postgres + backend + frontend
-docker-compose up postgres     # Database only (local dev)
+docker compose up -d --build                              # postgres + backend-express + frontend-next
+docker compose up -d --build --force-recreate --renew-anon-volumes   # use this after adding npm deps
+docker compose logs -f backend-express                    # watch logs
 ```
 
-### Backend (`backend/`)
+- App: **http://localhost:8080** · API (direct): **http://localhost:3100/api/health**
+- Backend runs `db:migrate && dev` on startup (auto-applies Drizzle migrations).
+- The browser calls `/api/*` **same-origin**; Next proxies it to `BACKEND_INTERNAL_URL` (the in-network backend). Don't put a Docker hostname in a `NEXT_PUBLIC_*` var.
+- Both services bind-mount their source and hot-reload. `.next` and `node_modules` are anonymous volumes (hence `--renew-anon-volumes` after dep changes).
+
+### Per-app commands
 ```bash
-npm run start:dev              # NestJS dev server with watch (port 3000)
-npm run build                  # Compile TypeScript
-npm run test                   # Jest unit tests
-npm run test:e2e               # Supertest E2E tests
-npx mikro-orm migration:create # Create new migration
-npx mikro-orm migration:up     # Run pending migrations
+# backend-express/
+npm run typecheck && npm run lint && npm run test         # Vitest (+ real Postgres for repository tests)
+npm run db:generate && npm run db:migrate                 # Drizzle Kit
+
+# frontend-next/
+npm run typecheck && npm run lint && npm run test && npm run build   # Vitest + RTL; Next build
 ```
+> Note: the running dev container writes a root-owned `.next` into the host mount, so a host `rm -rf .next` may hit permission errors — verify production builds via `docker build --target production ./frontend-next` instead.
 
-### Frontend (`frontend/`)
-```bash
-npm run dev                    # Nuxt dev server (port 8080)
-npm run build                  # Production SSR build
-npm run preview                # Preview production build
-npm test                       # Vitest unit tests
-npm run test:e2e               # Playwright E2E tests
-```
+## Backend architecture (`backend-express/`)
 
-## Architecture
+Layered modules under `src/modules/<feature>/`: `router → controller → service → repository → schema (Zod)` + co-located `.test.ts`.
+- Controller never imports Drizzle; service never touches `req`/`res`; repository returns plain objects.
+- `asyncHandler` wraps async handlers; throw `AppError(code, message)` (codes map to HTTP status); `validate(schema)` middleware parses bodies; `authMiddleware` guards protected routes via the `accessToken` cookie.
+- Success envelope `{ data, meta? }`; error envelope `{ statusCode, message, error, details? }` (matches the old Nest contract — frontend is unaffected).
+- Drizzle schema files in `src/db/schema/`, re-exported from `index.ts`. **`drizzle.config.ts` currently points at a single table file — generalize it to all tables when Slice 2 adds `jobs`.**
+- All queries scoped by `userId`.
 
-### Monorepo Structure
-```
-job-tracker/
-├── backend/           # NestJS API (to be created)
-├── frontend/          # Nuxt 4 SPA (to be created)
-├── plans/
-│   ├── backend/       # 8 backend implementation plans (01-08)
-│   └── frontend/      # 8 frontend implementation plans (01-08)
-├── project.md         # Executive project specification
-└── docker-compose.yml # PostgreSQL + backend + frontend orchestration
-```
+## Frontend architecture (`frontend-next/`)
 
-### Backend Modules (NestJS)
-8 independent modules, each with its own plan in `plans/backend/`:
-1. **Project Setup** — MikroORM config, global pipes/filters/interceptors, base entity, pagination
-2. **Auth** — User entity, JWT + refresh token rotation, Google OAuth, `@CurrentUser()` decorator
-3. **Job** — CRUD, web scraping (Cheerio + Gemini), ghost days tracking
-4. **Dashboard** — Kanban board API, aggregated stats
-5. **Timeline & Reminders** — Event log, cron jobs (ghost detection daily, reminders every 10m)
-6. **File Storage** — Cloudinary upload, PDF generation with pdfkit
-7. **AI/Gemini** — Resume parsing, cover letter generation (rate-limited: 10/hour per user)
-8. **Extension API** — Chrome extension auth via API keys (X-API-Key header)
+App Router with theme-isolated route groups: `(web)/` (public, placeholder pages for now), `(auth)/` (login/register), `app/` (authenticated). Each sets `data-theme-scope` and imports its own theme CSS. Tokens live in `src/styles/{app,web}/theme.css` and are bridged to Tailwind via `@theme inline` in `globals.css`.
+- React hooks replace Vue composables (`src/hooks/`); `lib/api-client.ts` (browser, relative URLs) and `lib/api-server.ts` (Server Components, forwards cookies).
+- Server Components by default; push `'use client'` down to interactive leaves (hooks, forms).
+- shadcn-style primitives in `src/components/ui/`.
 
-### Frontend Structure (Nuxt 4)
-8 implementation plans in `plans/frontend/`:
-- State via composables: `useAuth` (tokens/user), `useJobs` (board data), `useApi` ($fetch wrapper)
-- Layouts: `default.vue` (authenticated app), `auth.vue` (login/register), `web.vue` (public pages)
-- Routes: `/` (landing), `/web/**` (public pages), `/app/auth/**` (login/register), `/app/**` (protected app)
-- Global auth middleware: `/` and `/web/**` public; `/app/auth/**` public auth; `/app/**` requires auth
-- Kanban uses `vue-draggable-plus` with optimistic updates (float-based ordering)
-- Nuxt UI v4 semantic color theming with dark mode support
+## Implementation workflow
 
-### Database (PostgreSQL)
-Core entities: User, Job, CoverLetter, TimelineEvent, Reminder, Notification, ApiKey. All use UUID primary keys with `timestamptz` fields. All queries scoped by `userId` — no cross-user data access.
+This repo uses the **superpowers** skills, not the old sub-agent system (those agents were removed). For each slice:
+1. Read `progress.md` and the migration/app-redesign specs.
+2. For a new slice with open design choices, brainstorm the decisions with the user, then write a bite-sized TDD plan to `docs/superpowers/plans/YYYY-MM-DD-slice-N-<name>.md` (mirror the Slice 1 plan).
+3. Execute the plan task-by-task (TDD, commit per task). Substantial slices may be orchestrated via the `Workflow` tool: implement → adversarial read-only verify → solo ground-truth gates. (Don't run multiple `next build`/`vitest` in the same dir concurrently — they race on `.next`/caches.)
+4. Verify (typecheck + lint + tests + a smoke test against the Docker stack), update `progress.md`, then move on.
 
-### Key Conventions
-- All API routes prefixed with `/api/`
-- Global `HttpExceptionFilter` wraps errors in `{ statusCode, message, error }` format
-- Global `TransformInterceptor` wraps success responses in `{ data, meta? }` format
-- Standardized pagination via `PaginationQueryDto` (page, limit, sortBy, sortOrder)
-- Frontend proxies `/api/**` to backend in dev via Nuxt config
-- **All naming conventions** (DB, backend, frontend) are defined in `CONVENTIONS.md` — read it before implementing any module
+Slice order (per the spec): Foundation → Auth → **Jobs** → Dashboard/Kanban → Timeline/Reminders/Notifications → Filters/Search/List.
 
-## Implementation Plans
+## Environment variables
 
-Always read the relevant plan before implementing a module. Plans contain exact entity schemas, DTO definitions, endpoint specs, folder structures, and acceptance criteria:
-- `plans/backend/01-project-setup.md` through `08-extension-api.md`
-- `plans/frontend/01-project-setup.md` through `08-chrome-extension.md`
-- `project.md` — high-level feature requirements and user workflows
-
-## Agent System & Implementation Workflow
-
-This project uses custom Claude Code sub-agents. **When asked to implement a feature, you are the orchestrator** — follow the workflow below to delegate work to specialized agents.
-
-Alternatively, for dedicated orchestration sessions: `claude --agent project-manager`
-
-### Available Agents
-
-| Agent | Role | When to spawn |
-|---|---|---|
-| `designer` | UI/UX | When designs are missing or need updates (uses Stitch MCP) |
-| `backend` | Backend Dev | For all NestJS + MikroORM implementation tasks |
-| `frontend` | Frontend Dev | For all Nuxt 4 + Nuxt UI v4 implementation tasks |
-| `backend-tester` | Backend QA | After backend implementation to run Jest + Supertest tests |
-| `frontend-tester` | Frontend QA | After frontend implementation to run Vitest + Playwright tests |
-
-### Progress Status Protocol
-
-- `[ ]` Pending → `[-]` In Progress → `[T]` To Test → `[x]` Done
-- Implementation agents mark `[T]` when finished; only tester agents mark `[x]`
-
-### Dependency Diagram
-
-```
-BE-01 (Setup) → BE-02 (Auth) → BE-03 (Job) ─┬→ BE-04 (Dashboard)
-                     │              │         ├→ BE-05 (Timeline)
-                     │              │         └→ BE-08 (Extension)
-                     └→ BE-06 (Storage) → BE-07 (AI) → BE-05
-FE-01 (Setup) → FE-02 (Auth) → FE-03 (Kanban) → FE-04 (Jobs) → FE-05 (Filters)
-                                      └→ FE-06 (Timeline) → FE-07 (AI) → FE-08
-```
-
-### Implementation Order
-
-1. **Project Setup** — BE-01 → FE-01
-2. **Authentication** — BE-02 → FE-02
-3. **Job Management** — BE-03 → FE-04
-4. **Dashboard & Kanban** — BE-04 → FE-03
-5. **Timeline & Reminders** — BE-05 → FE-06
-6. **Filters & List View** — FE-05
-7. **File Storage & AI** — BE-06 → BE-07 → FE-07
-8. **Chrome Extension** — BE-08 → FE-08
-
-### Orchestration Workflow (FOLLOW THIS when asked to implement)
-
-1. **Read `progress.md`** — check current status of all tasks
-2. **Check dependencies** — do NOT start a feature if its prerequisites aren't `[x]` Done
-3. **Read the relevant plan(s)** from `plans/backend/` and/or `plans/frontend/`
-4. **Check designs** — if the relevant Stitch screen in progress.md isn't `[x]`, spawn the `designer` agent first
-5. **Spawn implementation agents**:
-   - Spawn `backend` agent with: plan path, tasks to update, context from prior features
-   - Spawn `frontend` agent with: plan path, Stitch screen IDs, backend API contracts, tasks to update
-   - Run in parallel if frontend doesn't depend on backend; otherwise backend first
-6. **After implementation** (tasks show `[T]`):
-   - Spawn `backend-tester` for backend `[T]` tasks
-   - Spawn `frontend-tester` for frontend `[T]` tasks
-7. **If tests fail**: spawn the original implementation agent with failure details to fix, then re-test
-8. **Only when all tests pass**: verify progress.md shows `[x]` for all tasks, then move to next feature
-
-### Orchestration Rules
-
-- NEVER skip the dependency check
-- NEVER proceed to the next feature until ALL tests pass for the current one
-- ALWAYS read `CONVENTIONS.md` before the first implementation in a session
-- ALWAYS pass the relevant plan file path when spawning an implementation agent
-- If asked to "implement next", find the first uncompleted feature whose dependencies are all `[x]`
-- If frontend needs backend help (e.g., missing endpoint), spawn the backend agent for that specific task
-- See `plans/sub-agents-plan.md` for the full agent architecture
-
-## Environment Variables
-
-Backend requires: `PORT`, `NODE_ENV`, `CORS_ORIGINS`, `DB_*` (host/port/user/password/name), `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALLBACK_URL`, `CLOUDINARY_*` (cloud_name/api_key/api_secret), `GEMINI_API_KEY`
-
-Frontend requires: `NUXT_PUBLIC_API_BASE` (default: `http://localhost:3000`)
+- **backend-express:** `NODE_ENV`, `PORT`, `CORS_ORIGINS`, `DATABASE_URL`, `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `LOG_LEVEL`; later `GOOGLE_*`, `CLOUDINARY_*`, `GEMINI_API_KEY` (optional, validated by Zod at startup).
+- **frontend-next:** `BACKEND_INTERNAL_URL` (server-side proxy target), `NEXT_PUBLIC_API_BASE` (legacy fallback).
