@@ -1,15 +1,43 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { StatusChip } from './status-chip'
+import { JOB_STATUSES, STATUS_META } from '@/lib/job-status'
 
 describe('StatusChip', () => {
-  it('renders the human label for a status', () => {
-    render(<StatusChip status="INTERVIEWING" />)
-    expect(screen.getByText('Interviewing')).toBeInTheDocument()
+  it('renders the human label for every status', () => {
+    for (const status of JOB_STATUSES) {
+      const { unmount } = render(<StatusChip status={status} />)
+      expect(screen.getByText(STATUS_META[status].label)).toBeInTheDocument()
+      unmount()
+    }
   })
 
-  it('renders an uppercase mono code for the terminal look', () => {
+  it('applies each status its own surface classes', () => {
+    for (const status of JOB_STATUSES) {
+      const { unmount } = render(<StatusChip status={status} />)
+      const chip = screen.getByTestId('status-chip')
+      for (const cls of STATUS_META[status].className.split(' ')) {
+        expect(chip.className).toContain(cls)
+      }
+      unmount()
+    }
+  })
+
+  it('never reuses the GhostMeter health palette (semantic separation)', () => {
+    for (const status of JOB_STATUSES) {
+      const { unmount } = render(<StatusChip status={status} />)
+      const chip = screen.getByTestId('status-chip')
+      expect(chip.className).not.toContain('ghost-active')
+      expect(chip.className).not.toContain('ghost-stale')
+      expect(chip.className).not.toContain('ghost-ghosted')
+      unmount()
+    }
+  })
+
+  it('renders an uppercase mono chip for the terminal look', () => {
     render(<StatusChip status="WISHLIST" />)
-    expect(screen.getByTestId('status-chip').className).toContain('uppercase')
+    const chip = screen.getByTestId('status-chip')
+    expect(chip.className).toContain('uppercase')
+    expect(chip.className).toContain('font-mono')
   })
 })

@@ -5,7 +5,7 @@ import { ComingSoon } from './coming-soon'
 describe('ComingSoon', () => {
   it('shows the page title and a coming-soon note', () => {
     render(<ComingSoon title="About" />)
-    expect(screen.getByRole('heading', { name: 'About' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'About' })).toBeInTheDocument()
     expect(screen.getByText(/coming soon/i)).toBeInTheDocument()
   })
 })

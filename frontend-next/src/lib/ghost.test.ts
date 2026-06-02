@@ -20,5 +20,6 @@ describe('ghostLabel', () => {
     expect(ghostLabel(0)).toBe('Active today')
     expect(ghostLabel(1)).toBe('Last activity: 1 day ago')
     expect(ghostLabel(5)).toBe('Last activity: 5 days ago')
+    expect(ghostLabel(100)).toBe('Last activity: 100 days ago')
   })
 })
