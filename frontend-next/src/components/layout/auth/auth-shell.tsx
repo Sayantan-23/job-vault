@@ -10,7 +10,7 @@ export function AuthShell({ children }: { children: ReactNode }) {
           <Logo />
         </div>
 
-        <div className="rounded-xl border border-border/70 bg-card p-8 text-card-foreground shadow-[0_1px_2px_rgba(17,17,17,0.04),0_20px_44px_-28px_rgba(17,17,17,0.16)]">
+        <div className="rounded-xl border border-border bg-card p-8 text-card-foreground shadow-[0_1px_2px_rgba(17,17,17,0.04),0_20px_44px_-28px_rgba(17,17,17,0.16)]">
           {children}
         </div>
 

@@ -36,8 +36,15 @@
   --radius-md: var(--radius);
 }
 
+/*
+ * Default border color. Reference the raw --border token directly (NOT the
+ * Tailwind --color-border theme key): --color-border is computed once at :root
+ * where --border is undefined, so it never picks up the per-scope value. --border
+ * re-resolves at each element, so bordered elements inside a theme scope get the
+ * scope's token instead of falling back to currentColor (which looked near-black).
+ */
 * {
-  border-color: var(--color-border);
+  border-color: var(--border, transparent);
 }
 
 html, body {
