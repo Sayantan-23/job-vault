@@ -1,7 +1,11 @@
 import { cookies } from 'next/headers'
 import { ApiError } from './api-client'
 
-const API_BASE = process.env['NEXT_PUBLIC_API_BASE'] ?? 'http://localhost:3000'
+// Server Components run inside the Next server process and reach the backend
+// directly (not through the browser-facing rewrite), so they use the server-only
+// internal URL (e.g. http://backend-express:3000 in Docker).
+const API_BASE =
+  process.env['BACKEND_INTERNAL_URL'] ?? process.env['NEXT_PUBLIC_API_BASE'] ?? 'http://localhost:3000'
 
 interface SuccessEnvelope<T> {
   data: T

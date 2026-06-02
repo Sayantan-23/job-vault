@@ -1,4 +1,7 @@
-const API_BASE = process.env['NEXT_PUBLIC_API_BASE'] ?? ''
+// The browser always calls the Next server same-origin (`/api/*`); next.config
+// rewrites proxy that to the backend. So there is no absolute base in the browser
+// (a Docker-internal hostname would be unreachable from the user's machine).
+const API_BASE = ''
 
 export class ApiError extends Error {
   public readonly statusCode: number
