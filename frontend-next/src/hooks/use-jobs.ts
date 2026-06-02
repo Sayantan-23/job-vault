@@ -1,0 +1,62 @@
+'use client'
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { apiClient } from '@/lib/api-client'
+import type { Job, ScrapeResult } from '@/types/job'
+import type { ManualJobValues, UpdateJobValues } from '@/schemas/job'
+
+export const JOBS_KEY = ['jobs'] as const
+export const jobKey = (id: string) => ['jobs', id] as const
+
+export function useJobs(initialData?: Job[]) {
+  return useQuery({
+    queryKey: JOBS_KEY,
+    queryFn: () => apiClient.get<Job[]>('/api/jobs'),
+    ...(initialData ? { initialData } : {}),
+  })
+}
+
+export function useJob(id: string | null) {
+  return useQuery({
+    queryKey: id ? jobKey(id) : ['jobs', '__none__'],
+    queryFn: () => apiClient.get<Job>(`/api/jobs/${id}`),
+    enabled: id !== null,
+  })
+}
+
+export function useCreateJob() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (values: ManualJobValues) => apiClient.post<Job>('/api/jobs', values),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: JOBS_KEY })
+    },
+  })
+}
+
+export function useScrapeJob() {
+  return useMutation({
+    mutationFn: (sourceUrl: string) => apiClient.post<ScrapeResult>('/api/jobs/scrape', { sourceUrl }),
+  })
+}
+
+export function useUpdateJob(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (values: UpdateJobValues) => apiClient.patch<Job>(`/api/jobs/${id}`, values),
+    onSuccess: (job) => {
+      qc.setQueryData(jobKey(id), job)
+      void qc.invalidateQueries({ queryKey: JOBS_KEY })
+    },
+  })
+}
+
+export function useDeleteJob() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => apiClient.delete<{ message: string }>(`/api/jobs/${id}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: JOBS_KEY })
+    },
+  })
+}
