@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
 import { getDb } from '@/db/client.js'
-import { users, type UserRow, type NewUserRow } from '@/db/schema/users.js'
+import { users, type UserRow, type NewUserRow, type UserPreferences } from '@/db/schema/users.js'
 import type { UpdateProfileInput } from './auth.schema.js'
 
 async function findByEmail(email: string): Promise<UserRow | null> {
@@ -37,7 +37,7 @@ async function clearRefreshTokenHash(id: string): Promise<void> {
 async function updateProfile(id: string, input: UpdateProfileInput): Promise<UserRow> {
   const patch: Partial<NewUserRow> = { updatedAt: new Date() }
   if (input.name !== undefined) patch.name = input.name
-  if (input.preferences !== undefined) patch.preferences = input.preferences
+  if (input.preferences !== undefined) patch.preferences = input.preferences as UserPreferences
   if (input.masterProfileJson !== undefined) patch.masterProfileJson = input.masterProfileJson
   const rows = await getDb().update(users).set(patch).where(eq(users.id, id)).returning()
   const row = rows[0]
