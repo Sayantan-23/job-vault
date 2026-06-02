@@ -31,4 +31,22 @@ describe('validate', () => {
     const arg = next.mock.calls[0]?.[0]
     expect(arg).toBeInstanceOf(z.ZodError)
   })
+
+  it('validates a non-body source (query) and coerces in place', () => {
+    const req = asType<Request>({ query: { page: '2' } })
+    const res = asType<Response>({})
+    const next = vi.fn() as unknown as NextFunction
+    validate(z.object({ page: z.coerce.number() }), 'query')(req, res, next)
+    expect((next as unknown as ReturnType<typeof vi.fn>).mock.calls[0]).toEqual([])
+    expect((req.query as unknown as { page: number }).page).toBe(2)
+  })
+
+  it('forwards a ZodError for an invalid query param', () => {
+    const req = asType<Request>({ query: { page: 'abc' } })
+    const res = asType<Response>({})
+    const next = vi.fn() as unknown as NextFunction
+    validate(z.object({ page: z.coerce.number() }), 'query')(req, res, next)
+    const arg = (next as unknown as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]
+    expect(arg).toBeInstanceOf(z.ZodError)
+  })
 })

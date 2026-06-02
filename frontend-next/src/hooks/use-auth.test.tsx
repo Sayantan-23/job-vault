@@ -12,7 +12,7 @@ vi.mock('@/lib/api-client', () => ({
 }))
 
 import { apiClient } from '@/lib/api-client'
-import { useLogin, useCurrentUser } from './use-auth'
+import { useLogin, useCurrentUser, useRegister, useLogout } from './use-auth'
 
 const api = vi.mocked(apiClient)
 
@@ -34,9 +34,35 @@ describe('useLogin', () => {
   })
 })
 
+describe('useRegister', () => {
+  it('registers, primes the current-user cache, and routes to the dashboard', async () => {
+    api.post.mockResolvedValue({ id: 'u1', email: 'a@b.co', name: 'Ada' })
+    const { result } = renderHook(() => useRegister(), { wrapper })
+    result.current.mutate({ name: 'Ada', email: 'a@b.co', password: 'longenough' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.post).toHaveBeenCalledWith('/api/auth/register', {
+      name: 'Ada',
+      email: 'a@b.co',
+      password: 'longenough',
+    })
+    expect(push).toHaveBeenCalledWith('/app/dashboard')
+  })
+})
+
+describe('useLogout', () => {
+  it('logs out and redirects to /login', async () => {
+    api.post.mockResolvedValue({ message: 'Logged out successfully' })
+    const { result } = renderHook(() => useLogout(), { wrapper })
+    result.current.mutate()
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.post).toHaveBeenCalledWith('/api/auth/logout')
+    expect(push).toHaveBeenCalledWith('/login')
+  })
+})
+
 describe('useCurrentUser', () => {
   it('fetches the current user from /api/auth/me', async () => {
-    api.get.mockResolvedValue({ id: 'u1', email: 'a@b.c', name: 'Ada' })
+    api.get.mockResolvedValue({ id: 'u1', email: 'a@b.co', name: 'Ada' })
     const { result } = renderHook(() => useCurrentUser(), { wrapper })
     await waitFor(() => expect(result.current.data?.id).toBe('u1'))
     expect(api.get).toHaveBeenCalledWith('/api/auth/me')

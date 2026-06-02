@@ -10,7 +10,24 @@ describe('auth schemas', () => {
   })
   it('rejects a short registration password', () => {
     expect(
-      RegisterSchema.safeParse({ name: 'Ada', email: 'a@b.c', password: 'short' }).success,
+      RegisterSchema.safeParse({ name: 'Ada', email: 'a@b.co', password: 'short' }).success,
+    ).toBe(false)
+  })
+  it('accepts a password at the 72-char max and rejects one over it', () => {
+    expect(
+      RegisterSchema.safeParse({ name: 'Ada', email: 'a@b.co', password: 'x'.repeat(72) }).success,
+    ).toBe(true)
+    expect(
+      RegisterSchema.safeParse({ name: 'Ada', email: 'a@b.co', password: 'x'.repeat(73) }).success,
+    ).toBe(false)
+  })
+  it('rejects an empty name and a name over 100 chars', () => {
+    expect(
+      RegisterSchema.safeParse({ name: '', email: 'a@b.co', password: 'longenough' }).success,
+    ).toBe(false)
+    expect(
+      RegisterSchema.safeParse({ name: 'x'.repeat(101), email: 'a@b.co', password: 'longenough' })
+        .success,
     ).toBe(false)
   })
 })

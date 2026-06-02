@@ -42,7 +42,7 @@ async function login(input: LoginInput): Promise<AuthResult> {
   const user = await authRepository.findByEmail(input.email)
   if (!user) throw new AppError('UNAUTHORIZED', 'Invalid email or password')
   if (!user.passwordHash) {
-    throw new AppError('UNAUTHORIZED', 'This account uses Google login.')
+    throw new AppError('UNAUTHORIZED', 'This account uses Google login. Please sign in with Google.')
   }
   const ok = await compareSecret(input.password, user.passwordHash)
   if (!ok) throw new AppError('UNAUTHORIZED', 'Invalid email or password')
