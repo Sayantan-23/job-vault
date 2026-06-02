@@ -11,6 +11,12 @@ import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import type { Job } from '@/types/job'
 
+// The <select> only renders valid options, but `e.target.value` is a plain
+// string — guard it so an unexpected value never reaches the mutation.
+function isJobStatus(value: string): value is JobStatus {
+  return (JOB_STATUSES as readonly string[]).includes(value)
+}
+
 export function JobDetails({ job, onDeleted }: { job: Job; onDeleted: () => void }) {
   const update = useUpdateJob(job.id)
   const remove = useDeleteJob()
@@ -39,7 +45,9 @@ export function JobDetails({ job, onDeleted }: { job: Job; onDeleted: () => void
         <Select
           id="job-status"
           value={job.status}
-          onChange={(e) => update.mutate({ status: e.target.value as JobStatus })}
+          onChange={(e) => {
+            if (isJobStatus(e.target.value)) update.mutate({ status: e.target.value })
+          }}
         >
           {JOB_STATUSES.map((s) => (
             <option key={s} value={s}>

@@ -16,7 +16,10 @@ vi.mock('@/lib/api-client', () => ({
   ApiError: class ApiError extends Error {},
 }))
 
+import { apiClient } from '@/lib/api-client'
 import { JobsBoard } from './jobs-board'
+
+const api = vi.mocked(apiClient)
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -29,7 +32,12 @@ const JOB: Job = {
   status: 'WISHLIST', kanbanOrder: 1, lastActivityAt: null, ghostDays: 0, notes: null,
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  // The board seeds the query with initialData; resolve the background refetch
+  // to an array so React Query never warns about an undefined query result.
+  api.get.mockResolvedValue([])
+})
 
 describe('JobsBoard', () => {
   it('renders the seeded jobs with a link that opens the drawer via ?job=', () => {

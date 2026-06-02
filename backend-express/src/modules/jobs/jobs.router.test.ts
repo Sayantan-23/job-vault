@@ -67,6 +67,17 @@ describe('GET /api/jobs', () => {
     expect(res.status).toBe(400)
     expect(res.body.error).toBe('VALIDATION_ERROR')
   })
+
+  it('forwards search/status/sort filters to the repository', async () => {
+    repo.findAll.mockResolvedValue({ rows: [], total: 0 })
+    await request(app)
+      .get('/api/jobs?search=rust&status=APPLIED&sortBy=updatedAt&sortOrder=asc')
+      .set('Cookie', [cookie])
+    expect(repo.findAll).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({ search: 'rust', status: 'APPLIED', sortBy: 'updatedAt', sortOrder: 'asc' }),
+    )
+  })
 })
 
 describe('POST /api/jobs', () => {
@@ -81,6 +92,17 @@ describe('POST /api/jobs', () => {
     const res = await request(app).post('/api/jobs').set('Cookie', [cookie]).send({ title: 'SWE', company: 'Acme' })
     expect(res.status).toBe(201)
     expect(res.body.data.id).toBe('j1')
+  })
+
+  it('201s and accepts optional fields', async () => {
+    repo.nextKanbanOrder.mockResolvedValue(1)
+    repo.create.mockResolvedValue(fakeJob({ location: 'Remote', salaryRange: '100-150k' }))
+    const res = await request(app)
+      .post('/api/jobs')
+      .set('Cookie', [cookie])
+      .send({ title: 'SWE', company: 'Acme', location: 'Remote', salaryRange: '100-150k' })
+    expect(res.status).toBe(201)
+    expect(res.body.data.location).toBe('Remote')
   })
 })
 
@@ -100,14 +122,46 @@ describe('POST /api/jobs/scrape', () => {
     const res = await request(app).post('/api/jobs/scrape').set('Cookie', [cookie]).send({ sourceUrl: 'nope' })
     expect(res.status).toBe(400)
   })
+
+  it('401s without an access token cookie', async () => {
+    const res = await request(app).post('/api/jobs/scrape').send({ sourceUrl: 'https://example.com/job' })
+    expect(res.status).toBe(401)
+  })
 })
 
 describe('GET /api/jobs/:id', () => {
+  it('200s and returns the job when found', async () => {
+    repo.findById.mockResolvedValue(fakeJob())
+    const res = await request(app).get('/api/jobs/j1').set('Cookie', [cookie])
+    expect(res.status).toBe(200)
+    expect(res.body.data.id).toBe('j1')
+  })
+
   it('404s when the job is missing', async () => {
     repo.findById.mockResolvedValue(null)
     const res = await request(app).get('/api/jobs/does-not-exist').set('Cookie', [cookie])
     expect(res.status).toBe(404)
     expect(res.body.error).toBe('NOT_FOUND')
+  })
+})
+
+describe('PATCH /api/jobs/:id', () => {
+  it('200s and returns the updated job', async () => {
+    repo.update.mockResolvedValue(fakeJob({ title: 'Updated' }))
+    const res = await request(app).patch('/api/jobs/j1').set('Cookie', [cookie]).send({ title: 'Updated' })
+    expect(res.status).toBe(200)
+    expect(res.body.data.title).toBe('Updated')
+  })
+
+  it('404s when the job is missing', async () => {
+    repo.update.mockResolvedValue(null)
+    const res = await request(app).patch('/api/jobs/missing').set('Cookie', [cookie]).send({ title: 'x' })
+    expect(res.status).toBe(404)
+  })
+
+  it('400s on an invalid status', async () => {
+    const res = await request(app).patch('/api/jobs/j1').set('Cookie', [cookie]).send({ status: 'NOPE' })
+    expect(res.status).toBe(400)
   })
 })
 
@@ -120,6 +174,19 @@ describe('PATCH /api/jobs/:id/move', () => {
       .send({ status: 'OFFER', kanbanOrder: 3 })
     expect(res.status).toBe(200)
     expect(res.body.data.status).toBe('OFFER')
+  })
+
+  it('400s on a missing kanbanOrder', async () => {
+    const res = await request(app).patch('/api/jobs/j1/move').set('Cookie', [cookie]).send({ status: 'OFFER' })
+    expect(res.status).toBe(400)
+  })
+
+  it('400s on an invalid status', async () => {
+    const res = await request(app)
+      .patch('/api/jobs/j1/move')
+      .set('Cookie', [cookie])
+      .send({ status: 'NOPE', kanbanOrder: 1 })
+    expect(res.status).toBe(400)
   })
 })
 
