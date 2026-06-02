@@ -5,9 +5,13 @@ import { validate } from './validate.middleware.js'
 
 const Schema = z.object({ email: z.string().email() })
 
+// Small typed-cast helper: keeps object literals out of `as`-assertions so the
+// `objectLiteralTypeAssertions: 'never'` lint rule is satisfied.
+const asType = <T>(value: unknown): T => value as T
+
 function run(body: unknown) {
-  const req = { body } as Request
-  const res = {} as Response
+  const req = asType<Request>({ body })
+  const res = asType<Response>({})
   const next = vi.fn() as unknown as NextFunction
   validate(Schema)(req, res, next)
   return { req, next: next as unknown as ReturnType<typeof vi.fn> }

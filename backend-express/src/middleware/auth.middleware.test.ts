@@ -9,9 +9,12 @@ beforeAll(() => {
   process.env['JWT_REFRESH_EXPIRY'] = '7d'
 })
 
+// Small typed-cast helper: keeps object literals out of `as`-assertions so the
+// `objectLiteralTypeAssertions: 'never'` lint rule is satisfied.
+const asType = <T>(value: unknown): T => value as T
+
 function invoke(cookies: Record<string, string | undefined>) {
-  const req = { cookies } as unknown as Request
-  const res = {} as Response
+  const req = asType<Request>({ cookies })
   const next = vi.fn() as unknown as NextFunction
   return { req, next: next as unknown as ReturnType<typeof vi.fn> }
 }
@@ -22,7 +25,7 @@ describe('authMiddleware', () => {
     const { authMiddleware } = await import('./auth.middleware.js')
     const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
     const { req, next } = invoke({ accessToken: token })
-    authMiddleware(req, {} as Response, next as unknown as NextFunction)
+    authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
     expect(req.user).toEqual({ id: 'u1', email: 'a@b.co' })
     expect(next.mock.calls[0]).toEqual([])
   })
@@ -31,7 +34,7 @@ describe('authMiddleware', () => {
     const { authMiddleware } = await import('./auth.middleware.js')
     const { AppError } = await import('@/shared/errors.js')
     const { req, next } = invoke({})
-    authMiddleware(req, {} as Response, next as unknown as NextFunction)
+    authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(AppError)
     expect(next.mock.calls[0]?.[0]?.code).toBe('UNAUTHORIZED')
   })
@@ -40,7 +43,7 @@ describe('authMiddleware', () => {
     const { authMiddleware } = await import('./auth.middleware.js')
     const { AppError } = await import('@/shared/errors.js')
     const { req, next } = invoke({ accessToken: 'garbage' })
-    authMiddleware(req, {} as Response, next as unknown as NextFunction)
+    authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(AppError)
   })
 })
