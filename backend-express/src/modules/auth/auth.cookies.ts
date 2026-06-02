@@ -13,16 +13,19 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
     maxAge: ACCESS_MAX_AGE,
     path: '/',
   })
+  // Site-wide path (not scoped to /api/auth) so the Next middleware can see the
+  // refresh token on /app/* requests and the browser sends it on the same-origin
+  // silent-refresh call. Still HttpOnly + SameSite=Lax + Secure(prod).
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure,
     sameSite: 'lax',
     maxAge: REFRESH_MAX_AGE,
-    path: '/api/auth',
+    path: '/',
   })
 }
 
 export function clearAuthCookies(res: Response): void {
   res.clearCookie('accessToken', { path: '/' })
-  res.clearCookie('refreshToken', { path: '/api/auth' })
+  res.clearCookie('refreshToken', { path: '/' })
 }

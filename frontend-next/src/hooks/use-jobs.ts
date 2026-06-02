@@ -12,6 +12,10 @@ export function useJobs(initialData?: Job[]) {
   return useQuery({
     queryKey: JOBS_KEY,
     queryFn: () => apiClient.get<Job[]>('/api/jobs'),
+    // Always refetch on mount: if the server-rendered list came back empty
+    // because the access token had just expired, this client fetch re-runs,
+    // silently refreshes the session (via the api-client), and shows live data.
+    refetchOnMount: 'always',
     ...(initialData ? { initialData } : {}),
   })
 }

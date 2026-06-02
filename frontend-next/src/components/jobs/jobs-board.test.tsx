@@ -41,6 +41,8 @@ beforeEach(() => {
 
 describe('JobsBoard', () => {
   it('renders the seeded jobs with a link that opens the drawer via ?job=', () => {
+    // useJobs refetches on mount; keep the refetch consistent with the seed.
+    api.get.mockResolvedValue([JOB])
     render(<JobsBoard initialJobs={[JOB]} />, { wrapper })
     const link = screen.getByRole('link', { name: /staff engineer/i })
     expect(link).toHaveAttribute('href', '/app/jobs?job=j1')

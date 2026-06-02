@@ -70,7 +70,9 @@ describe('POST /api/auth/register', () => {
     expect(access).toMatch(/Path=\//)
     expect(access).toMatch(/SameSite=Lax/i)
     expect(refresh).toMatch(/HttpOnly/i)
-    expect(refresh).toMatch(/Path=\/api\/auth/)
+    // Refresh cookie is site-wide (Path=/) so middleware + silent refresh can use it.
+    expect(refresh).toMatch(/Path=\/(?:;|$)/)
+    expect(refresh).not.toMatch(/Path=\/api\/auth/)
   })
 
   it('409s on duplicate email', async () => {

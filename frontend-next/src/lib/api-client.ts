@@ -29,11 +29,42 @@ interface ErrorEnvelope {
   details?: unknown
 }
 
+// --- Silent session refresh -------------------------------------------------
+// When a request 401s because the 15-minute access token expired, transparently
+// hit the refresh endpoint (which rotates the 7-day refresh token) and retry the
+// original request once. A single shared in-flight promise de-duplicates
+// concurrent refreshes so token rotation never races — two refreshes with the
+// same token would trip the backend's reuse-detection and log the user out.
+let refreshInFlight: Promise<boolean> | null = null
+
+function refreshSession(): Promise<boolean> {
+  if (!refreshInFlight) {
+    refreshInFlight = fetch(`${API_BASE}/api/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    })
+      .then((res) => res.ok)
+      .catch(() => false)
+      .finally(() => {
+        refreshInFlight = null
+      })
+  }
+  return refreshInFlight
+}
+
+// The auth endpoints themselves must not trigger a refresh: their 401s mean
+// "bad or absent credentials", not "expired access token".
+function isRefreshable(path: string): boolean {
+  return !/\/api\/auth\/(refresh|login|register)(?:$|[/?])/.test(path)
+}
+
 async function request<T>(
   method: string,
   path: string,
   body?: unknown,
   init?: RequestInit,
+  isRetry = false,
 ): Promise<T> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`
   const headers: Record<string, string> = {
@@ -51,6 +82,13 @@ async function request<T>(
   if (body !== undefined) fetchInit.body = JSON.stringify(body)
 
   const res = await fetch(url, fetchInit)
+
+  if (res.status === 401 && !isRetry && isRefreshable(path)) {
+    const refreshed = await refreshSession()
+    if (refreshed) return request<T>(method, path, body, init, true)
+    // The refresh token is gone/invalid — the session is unrecoverable.
+    if (typeof window !== 'undefined') window.location.assign('/login')
+  }
 
   const isJson = res.headers.get('content-type')?.includes('application/json') ?? false
   const payload = isJson ? ((await res.json()) as unknown) : null
