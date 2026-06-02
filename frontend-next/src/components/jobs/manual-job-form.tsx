@@ -58,12 +58,12 @@ export function ManualJobForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="title">Title</Label>
-          <Input id="title" {...register('title')} />
+          <Input id="title" placeholder="e.g. Senior Frontend Engineer" {...register('title')} />
           {errors.title ? <p className="text-xs text-destructive">{errors.title.message}</p> : null}
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="company">Company</Label>
-          <Input id="company" {...register('company')} />
+          <Input id="company" placeholder="e.g. Acme Inc" {...register('company')} />
           {errors.company ? <p className="text-xs text-destructive">{errors.company.message}</p> : null}
         </div>
       </div>
@@ -71,11 +71,11 @@ export function ManualJobForm({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label htmlFor="location">Location</Label>
-          <Input id="location" {...register('location')} />
+          <Input id="location" placeholder="e.g. Remote, Berlin" {...register('location')} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="salaryRange">Salary range</Label>
-          <Input id="salaryRange" {...register('salaryRange')} />
+          <Input id="salaryRange" placeholder="e.g. $120k–$150k" {...register('salaryRange')} />
         </div>
       </div>
 
@@ -98,7 +98,11 @@ export function ManualJobForm({
 
       <div className="space-y-1.5">
         <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" {...register('notes')} />
+        <Textarea
+          id="notes"
+          placeholder="Anything worth remembering — contacts, deadlines, prep…"
+          {...register('notes')}
+        />
       </div>
 
       <Button type="submit" className="w-full" disabled={create.isPending}>
