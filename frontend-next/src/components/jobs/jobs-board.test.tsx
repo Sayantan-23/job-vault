@@ -9,6 +9,7 @@ const { push } = vi.hoisted(() => ({ push: vi.fn() }))
 const { searchParams } = vi.hoisted(() => ({ searchParams: new URLSearchParams() }))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
+  usePathname: () => '/app/jobs',
   useSearchParams: () => searchParams,
 }))
 vi.mock('@/lib/api-client', () => ({

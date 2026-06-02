@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { useJob } from '@/hooks/use-jobs'
 import { JobDetails } from './job-details'
@@ -8,10 +8,17 @@ import { JobSnapshot } from './job-snapshot'
 
 export function JobDrawer({ jobId }: { jobId: string | null }) {
   const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { data: job, isLoading } = useJob(jobId)
   const open = jobId !== null
 
-  const close = () => router.push('/app/jobs')
+  const close = () => {
+    const params = new URLSearchParams(searchParams)
+    params.delete('job')
+    const qs = params.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname)
+  }
 
   return (
     <Sheet open={open} onOpenChange={(o) => (o ? undefined : close())}>
