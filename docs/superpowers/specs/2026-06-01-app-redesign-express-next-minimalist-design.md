@@ -119,6 +119,13 @@ Per parent spec §10: Vitest (both apps), RTL for components, Supertest for HTTP
 ## 9. Open questions for the implementation plan
 
 1. Env var naming — preserve current names vs. Express conventions.
-2. JobDrawer: parallel-route slot vs. intercepting routes vs. simple modal — decide in Slice 2.
+2. JobDrawer: parallel-route slot vs. intercepting routes vs. simple modal — ~~decide in Slice 2~~ **resolved (see below).**
 3. Zod schema sharing between backend/frontend — start by copying.
 4. Exact accent indigo shade + full token table — finalize in Slice 0.
+
+### Slice 2 resolutions (2026-06-02)
+
+- **Scraper / Gemini fallback:** Slice 2 ships the deterministic **Cheerio + Turndown** scraper only, structured with a typed *optional* `fallback?: (html) => Promise<Partial<ScrapeResult>>` seam. The Gemini implementation is **deferred to the AI slice** (no `@google/genai` dependency yet; `GEMINI_API_KEY` stays optional/unused). Rationale: matches the spec's AI deferral, stays fully testable without a key, and the `UrlPasteForm` manual-entry path is the real fallback for weak scrapes.
+- **JobDrawer routing:** **URL query param** `?job=<id>` on a new **`/app/jobs`** index page (a minimal list + "Jobs" nav item added in this slice, since Kanban is Slice 3 and List View is Slice 5). The drawer is a client island that reads `searchParams` and fetches via TanStack Query — back-button/deep-link/notification-link friendly without parallel/intercepting-route machinery.
+- **`drizzle.config.ts` schema path:** point `schema:` at the existing **`src/db/schema/index.ts` barrel** (which re-exports every table). Adding `jobs` is one `export *` line the app needs anyway; the config never changes again.
+- **Jobs schema specifics:** `status` as a `pgEnum('job_status', [...6])`; plain `string` ids (consistent with the Slice 1 auth module — no branded types introduced mid-migration); `kanbanOrder` float auto-incremented per-status on create and set explicitly on move; `lastActivityAt` updated on create/update/move; `ghostDays` stored (default 0) with its *population* (cron vs. derive) deferred to Slice 3/4; `/api/jobs/scrape` is **preview-only** (returns `ScrapeResult`, does not persist).
