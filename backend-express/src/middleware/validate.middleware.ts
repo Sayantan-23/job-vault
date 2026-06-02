@@ -12,11 +12,17 @@ export const validate =
       return
     }
     // `req.body` is writable; `req.query`/`req.params` are read-only getters in
-    // Express 5, so mutate them in place instead of reassigning.
+    // Express 5 whose returned object swallows mutations, so redefine the
+    // property on the request with the parsed (coerced + defaulted) value.
     if (source === 'body') {
       req.body = result.data
     } else {
-      Object.assign(req[source], result.data)
+      Object.defineProperty(req, source, {
+        value: result.data,
+        writable: true,
+        configurable: true,
+        enumerable: true,
+      })
     }
     next()
   }
