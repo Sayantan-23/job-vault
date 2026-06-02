@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { LayoutDashboard, Clock, Settings } from 'lucide-react'
+import { LogoutButton } from '@/components/auth/logout-button'
 
 const NAV = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-14 shrink-0 border-b border-border flex items-center justify-end gap-3 px-6">
-          <span className="text-sm text-muted-foreground">Account (Slice 1)</span>
+          <LogoutButton />
         </header>
         <main className="flex-1 p-6">{children}</main>
       </div>
