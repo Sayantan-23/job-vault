@@ -14,6 +14,9 @@ export const SheetDescription = DialogPrimitive.Description
 function SheetOverlay({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
+      // Radix portals to <body>, outside [data-theme-scope="app"]; re-apply the
+      // scope so the theme tokens (--card/--border/…) resolve inside the drawer.
+      data-theme-scope="app"
       className={cn('fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px]', className)}
       {...props}
     />
@@ -29,6 +32,7 @@ export function SheetContent({
     <DialogPrimitive.Portal>
       <SheetOverlay />
       <DialogPrimitive.Content
+        data-theme-scope="app"
         className={cn(
           'fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col overflow-y-auto border-l border-border bg-card text-card-foreground shadow-lg focus:outline-none',
           'sm:max-w-2xl',
