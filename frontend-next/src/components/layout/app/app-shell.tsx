@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, Clock, Settings } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Clock, Settings } from 'lucide-react'
 import { LogoutButton } from '@/components/auth/logout-button'
 
 const NAV = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/app/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/app/timeline', label: 'Timeline', icon: Clock },
   { href: '/app/settings', label: 'Settings', icon: Settings },
 ] as const
