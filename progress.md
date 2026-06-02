@@ -28,6 +28,33 @@
 - [x] /api/* proxies through frontend-next to backend-express
 - [x] Root docker-compose.yml runs postgres + backend-express + frontend-next
 
+## Migration Slice 0 — Foundation (Design System + App Shell + Backend Schema) (NEW)
+
+> **Plan**: `docs/superpowers/plans/2026-06-01-slice-0-foundation.md`
+> **Spec**: `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md`
+> **Design**: minimalist-ui — warm-stone base, flat muted-indigo accent, mono numerics, dark-mode first-class
+
+### Frontend design system
+- [x] Geist + Geist Mono fonts wired in root layout
+- [x] App theme tokens (warm-stone + muted indigo + dark mode) scoped to `[data-theme-scope="app"]`
+- [x] Status palette (`--ghost-active/stale/ghosted`) bridged into Tailwind; reserved for health only
+- [x] Ghost threshold logic (`lib/ghost.ts`: active ≤7, stale ≤14, ghosted >14)
+- [x] GhostMeter signature component (mono numerics, color + icon per level)
+- [x] StatusChip signature component (6 statuses; neutral + indigo ramp, **not** the health palette)
+- [x] Minimalist AppShell (sidebar nav: Dashboard/Timeline/Settings + header)
+- [x] Web placeholder pages via ComingSoon (about/faq/contact/privacy/terms)
+
+### Backend
+- [x] Drizzle `users` table mirroring the NestJS User entity (12 columns, unique email/googleId)
+- [x] Migration generated (`0000_new_spectrum.sql`) and applied to Postgres (verified `\d users`)
+
+### Verification
+- [x] Frontend: typecheck + lint + test (27) + build — all green
+- [x] Backend: typecheck + lint + test (27) — all green
+- [x] Adversarial multi-lens review run; semantic-color violation found and fixed, tests hardened
+- [ ] Manual browser smoke (`/app/dashboard` light/dark, `/about` placeholder) — pending
+- [ ] Slice 1 (Auth): update `drizzle.config.ts` schema path to handle multiple tables
+
 ---
 
 ## Dependency Diagram
