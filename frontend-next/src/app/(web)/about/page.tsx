@@ -1,5 +1,8 @@
 import type { Metadata } from 'next'
+import { ComingSoon } from '@/components/shared/coming-soon'
+
 export const metadata: Metadata = { title: 'About' }
+
 export default function AboutPage() {
-  return <section className="mx-auto max-w-5xl px-6 py-12"><h1>About</h1></section>
+  return <ComingSoon title="About" />
 }
