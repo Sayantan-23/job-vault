@@ -4,8 +4,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { AppShell } from './app-shell'
 
-// AppShell now renders LogoutButton, which uses useRouter + useQueryClient.
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+// AppShell renders LogoutButton (useRouter + useQueryClient) and SidebarNav (usePathname).
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/app/dashboard',
+}))
 
 function renderWithProviders(ui: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
