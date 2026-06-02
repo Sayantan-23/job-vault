@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-02-22
+> **Last Updated**: 2026-06-02
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -53,7 +53,7 @@
 - [x] Backend: typecheck + lint + test (27) — all green
 - [x] Adversarial multi-lens review run; semantic-color violation found and fixed, tests hardened
 - [ ] Manual browser smoke (`/app/dashboard` light/dark, `/about` placeholder) — pending
-- [ ] Slice 2 (Jobs): update `drizzle.config.ts` schema path to handle multiple tables
+- [x] Slice 2 (Jobs): `drizzle.config.ts` schema path generalized to the `src/db/schema/index.ts` barrel
 
 ## Migration Slice 1 — Authentication (email/password) (NEW)
 
@@ -83,6 +83,37 @@
 - [x] Adversarial multi-lens review (auth-security & contract-parity clean); test-coverage gaps then closed
 - [x] End-to-end smoke on the Docker stack: register→201+cookies, /me→200, login→200, dup→409, wrong-pw→401, `/login` renders the real form — all via the `:8080` browser proxy path
 - [ ] **Deferred — automatic token refresh:** the `/api/auth/refresh` endpoint (rotation + reuse detection) is built and tested, but nothing triggers it automatically yet. `middleware.ts` only checks for the `accessToken` cookie's presence and `api-client` does not retry-on-401. **Consequence: a session effectively ends when the 15-minute access token expires** (user is redirected to `/login`). Wiring auto-refresh (Next middleware edge-decode + Set-Cookie copy, and/or an `api-client` 401-retry) is a small follow-up.
+
+## Migration Slice 2 — Jobs (CRUD + scraper + AddJobModal/JobDrawer) (NEW)
+
+> **Plan**: `docs/superpowers/plans/2026-06-02-slice-2-jobs.md`
+> **Spec**: `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md` (§9 Slice 2 resolutions)
+> **Decisions**: Cheerio+Turndown scraper with an optional `fallback` seam (Gemini deferred to the AI slice); JobDrawer driven by the `?job=<id>` query param on a new `/app/jobs` page; `drizzle.config` points at the schema barrel; `status` is a pgEnum.
+
+### Backend (`backend-express`)
+- [x] `jobs` table (pgEnum `job_status`, FK→users cascade, 4 indexes) + migration `0001_stiff_scorpion`; `drizzle.config` generalized to the `index.ts` barrel (run via the `tsx` loader so drizzle-kit resolves NodeNext `.js` imports)
+- [x] Job Zod schemas (create/update/move/scrape/query) + inferred types
+- [x] HTML→Markdown (Turndown) + Cheerio scraper (JSON-LD + LinkedIn/Indeed/Greenhouse/Lever + generic) with optional `fallback` seam — no `@google/genai` dependency
+- [x] Jobs repository (user-scoped CRUD, ILIKE search, status/ghost filters, per-status kanbanOrder) — real-Postgres tested
+- [x] Jobs service (NOT_FOUND on missing/non-owned; scrape errors → VALIDATION_ERROR) + controller + router under `/api/jobs`
+- [x] HTTP integration tests (Supertest): list+meta, filter-forwarding, create (+optional fields), scrape preview-only + 401, GET/PATCH/move/delete, 404 + validation 400s
+- [x] Fixed a latent shared bug: `validate` middleware now persists coerced/defaulted `query`/`params` via `Object.defineProperty` (Express 5's `req.query` getter swallowed the old `Object.assign`)
+
+### Frontend (`frontend-next`)
+- [x] `Job`/`ScrapeResult` types + job Zod schemas
+- [x] Radix Dialog/Sheet + Textarea/Select primitives
+- [x] `use-jobs` hooks (list/single queries + create/scrape/update/delete)
+- [x] JobSnapshot (react-markdown), ManualJobForm, UrlPasteForm, AddJobModal (URL + manual tabs)
+- [x] JobDetails (status/notes/delete, guarded status cast), JobDrawer (URL-driven over `?job=`), JobsBoard (list + add)
+- [x] `/app/jobs` page (SSR initial fetch, Suspense-wrapped) + "Jobs" nav item
+
+### Verification
+- [x] Backend: typecheck + lint + test (124) — all green
+- [x] Frontend: typecheck + lint + test (73) + Docker production build — all green
+- [x] Adversarial six-lens review (security/contract/strict-TS/scraper/test-faithfulness/design); coverage gaps closed, status cast hardened
+- [x] Live end-to-end smoke on the Docker stack (via `:8080` proxy): register→201, create→201, list→`{data,meta}`, scrape `example.com`→ScrapeResult (preview-only, no persist)
+- [ ] **Deferred — timeline auto-entries:** the NestJS `JobService` wrote a timeline event on create/status-change; that integration lands with **Slice 4** (Timeline + Reminders + Notifications), so Slice 2 jobs create/move without timeline side-effects.
+- [ ] Manual browser pass (Add-Job modal tabs, drawer deep-link + Back, dark mode) — recommended before merge
 
 ---
 
