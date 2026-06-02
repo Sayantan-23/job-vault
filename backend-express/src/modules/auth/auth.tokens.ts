@@ -14,14 +14,14 @@ export interface JwtPayload {
 export function signAccessToken(user: { id: string; email: string }): string {
   const env = getEnv()
   return jwt.sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
-    expiresIn: env.JWT_ACCESS_EXPIRY as jwt.SignOptions['expiresIn'],
+    expiresIn: env.JWT_ACCESS_EXPIRY as NonNullable<jwt.SignOptions['expiresIn']>,
   })
 }
 
 export function signRefreshToken(userId: string): string {
   const env = getEnv()
   return jwt.sign({ sub: userId }, env.JWT_SECRET, {
-    expiresIn: env.JWT_REFRESH_EXPIRY as jwt.SignOptions['expiresIn'],
+    expiresIn: env.JWT_REFRESH_EXPIRY as NonNullable<jwt.SignOptions['expiresIn']>,
   })
 }
 
