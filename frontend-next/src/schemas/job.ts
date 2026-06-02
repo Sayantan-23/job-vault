@@ -7,6 +7,7 @@ export const ManualJobSchema = z.object({
   location: z.string().max(255).optional(),
   salaryRange: z.string().max(255).optional(),
   sourceUrl: z.union([z.string().url('Enter a valid URL'), z.literal('')]).optional(),
+  snapshotMarkdown: z.string().optional(),
   status: z.enum(JOB_STATUSES).optional(),
   notes: z.string().optional(),
 })
