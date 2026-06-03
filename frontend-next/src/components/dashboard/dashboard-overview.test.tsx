@@ -4,8 +4,13 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import type { DashboardStats } from '@/types/dashboard'
 
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/app/dashboard',
+  useSearchParams: () => new URLSearchParams(''),
+}))
 vi.mock('@/lib/api-client', () => ({
-  apiClient: { get: vi.fn() },
+  apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
   ApiError: class ApiError extends Error {},
 }))
 
@@ -26,7 +31,9 @@ function wrapper({ children }: { children: ReactNode }) {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(apiClient).get.mockResolvedValue(STATS)
+  vi.mocked(apiClient).get.mockImplementation((url: string) =>
+    url === '/api/notifications' ? Promise.resolve([]) : Promise.resolve(STATS),
+  )
 })
 
 describe('DashboardOverview', () => {

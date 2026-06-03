@@ -11,6 +11,7 @@ import { JobsList } from './jobs-list'
 import { AddJobModal } from './add-job-modal'
 import { JobDrawer } from './job-drawer'
 import { PageHeader } from '@/components/layout/app/page-header'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import type { Job } from '@/types/job'
 import type { KanbanBoard as Board } from '@/types/dashboard'
 
@@ -52,6 +53,7 @@ export function JobsWorkspace({
 
   const actions = (
     <>
+      <NotificationBell />
       <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
       <Button type="button" onClick={() => setAddOpen(true)}>
         <Plus className="size-4" aria-hidden="true" />

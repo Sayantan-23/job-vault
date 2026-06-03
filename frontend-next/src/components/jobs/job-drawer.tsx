@@ -6,6 +6,7 @@ import { useJob } from '@/hooks/use-jobs'
 import { JobDetails } from './job-details'
 import { JobSnapshot } from './job-snapshot'
 import { TimelineSection } from './timeline/timeline-section'
+import { RemindersSection } from './reminders/reminders-section'
 
 export function JobDrawer({ jobId }: { jobId: string | null }) {
   const router = useRouter()
@@ -36,6 +37,9 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
               </div>
               <div className="border-t border-border pt-5">
                 <TimelineSection jobId={job.id} />
+              </div>
+              <div className="border-t border-border pt-5">
+                <RemindersSection jobId={job.id} />
               </div>
             </>
           )}

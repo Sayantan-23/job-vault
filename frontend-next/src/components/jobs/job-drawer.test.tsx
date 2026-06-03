@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -10,8 +10,18 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/app/dashboard',
   useSearchParams: () => new URLSearchParams('job=j1'),
 }))
+const JOB = { id: 'j1', title: 'Role', company: 'Acme', status: 'APPLIED', ghostDays: 0, notes: null, snapshotMarkdown: null, sourceUrl: null, location: null, salaryRange: null }
+
 vi.mock('@/lib/api-client', () => ({
-  apiClient: { get: vi.fn().mockResolvedValue({ id: 'j1', title: 'Role', company: 'Acme', status: 'APPLIED', ghostDays: 0, notes: null, snapshotMarkdown: null, sourceUrl: null, location: null, salaryRange: null }), patch: vi.fn(), delete: vi.fn() },
+  apiClient: {
+    get: vi.fn().mockImplementation((url: string) => {
+      if (url === '/api/jobs/j1') return Promise.resolve(JOB)
+      return Promise.resolve([])
+    }),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
   ApiError: class ApiError extends Error {},
 }))
 
@@ -29,5 +39,10 @@ describe('JobDrawer', () => {
     render(<JobDrawer jobId="j1" />, { wrapper })
     await userEvent.keyboard('{Escape}')
     expect(push).toHaveBeenCalledWith('/app/dashboard')
+  })
+
+  it('renders the Reminders section for the open job', async () => {
+    render(<JobDrawer jobId="j1" />, { wrapper })
+    expect(await screen.findByRole('heading', { name: /reminders/i })).toBeInTheDocument()
   })
 })
