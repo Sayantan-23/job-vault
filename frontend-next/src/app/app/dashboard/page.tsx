@@ -1,31 +1,19 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
-import { DashboardView } from '@/components/dashboard/dashboard-view'
-import type { KanbanBoard } from '@/types/dashboard'
+import { DashboardOverview } from '@/components/dashboard/dashboard-overview'
+import { EMPTY_STATS } from '@/lib/dashboard-defaults'
+import type { DashboardStats } from '@/types/dashboard'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 
-const EMPTY_BOARD: KanbanBoard = {
-  columns: [
-    { status: 'WISHLIST', jobs: [] }, { status: 'APPLIED', jobs: [] }, { status: 'INTERVIEWING', jobs: [] },
-    { status: 'OFFER', jobs: [] }, { status: 'REJECTED', jobs: [] }, { status: 'ARCHIVED', jobs: [] },
-  ],
-  stats: { totalJobs: 0, byStatus: { WISHLIST: 0, APPLIED: 0, INTERVIEWING: 0, OFFER: 0, REJECTED: 0, ARCHIVED: 0 }, ghostAlerts: 0, recentActivity: 0 },
-}
-
 export default async function DashboardPage() {
-  let initialBoard: KanbanBoard = EMPTY_BOARD
+  let stats: DashboardStats = EMPTY_STATS
   try {
-    initialBoard = await apiServer.get<KanbanBoard>('/api/dashboard/kanban')
+    stats = await apiServer.get<DashboardStats>('/api/dashboard/stats')
   } catch {
-    initialBoard = EMPTY_BOARD
+    // Client `useStats` re-fetches (and silently refreshes the session) on mount.
+    stats = EMPTY_STATS
   }
 
-  // useSearchParams() in DashboardView requires a Suspense boundary.
-  return (
-    <Suspense fallback={null}>
-      <DashboardView initialBoard={initialBoard} />
-    </Suspense>
-  )
+  return <DashboardOverview initialStats={stats} />
 }
