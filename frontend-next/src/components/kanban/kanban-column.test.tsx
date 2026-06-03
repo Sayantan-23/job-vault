@@ -4,7 +4,11 @@ import { DndContext } from '@dnd-kit/core'
 import { KanbanColumn } from './kanban-column'
 import type { KanbanColumn as Column } from '@/types/dashboard'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => '/app/dashboard' }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/app/jobs',
+  useSearchParams: () => new URLSearchParams(),
+}))
 
 const COLUMN: Column = {
   status: 'APPLIED',

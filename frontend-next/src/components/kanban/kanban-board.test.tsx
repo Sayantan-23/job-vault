@@ -5,7 +5,11 @@ import type { ReactNode } from 'react'
 import { KanbanBoard } from './kanban-board'
 import type { KanbanBoard as Board } from '@/types/dashboard'
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }), usePathname: () => '/app/dashboard' }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn() }),
+  usePathname: () => '/app/jobs',
+  useSearchParams: () => new URLSearchParams(),
+}))
 vi.mock('@/lib/api-client', () => ({
   apiClient: { get: vi.fn(), patch: vi.fn() },
   ApiError: class ApiError extends Error {},

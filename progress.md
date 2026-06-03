@@ -141,6 +141,13 @@
 - [ ] **Note — ghost-days derived live; move events don't write timeline entries yet** (timeline auto-events land in Slice 4)
 - [ ] Manual browser pass (drag-and-drop, card → dashboard drawer, dark mode) — recommended before merge
 
+### Slice 3.5 — Jobs Workspace + Overview Dashboard (2026-06-03)
+- `/app/jobs` is now the unified workspace with a **Board ⇄ List** toggle (default List, `?view=board|list`, shareable; preserves `?job=`).
+- `/app/dashboard` is a **stats-only overview** (`GET /api/dashboard/stats`); the board + drawer moved to the workspace.
+- New `ui/SegmentedControl`; extracted `JobsList`; new `DashboardOverview`; new `lib/dashboard-defaults` (`EMPTY_STATS`/`EMPTY_BOARD`); removed `JobsBoard`/`DashboardView`.
+- `useStats` hook added; job create/update/delete + move now invalidate the stats key; kanban card preserves `?view` when opening the drawer. **No backend changes.** (Spec §9 → "Slice 3.5 resolutions".)
+- [x] Frontend: typecheck + lint + test (112) — all green; backend typecheck — green. Docker build + manual browser pass handled outside this slice.
+
 ---
 
 ## Dependency Diagram
