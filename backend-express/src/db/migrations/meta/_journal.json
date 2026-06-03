@@ -15,6 +15,13 @@
       "when": 1780388750288,
       "tag": "0001_stiff_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780485599658,
+      "tag": "0002_early_stryfe",
+      "breakpoints": true
     }
   ]
 }
