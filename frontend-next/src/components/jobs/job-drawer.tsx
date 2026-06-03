@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { useJob } from '@/hooks/use-jobs'
 import { JobDetails } from './job-details'
 import { JobSnapshot } from './job-snapshot'
+import { TimelineSection } from './timeline/timeline-section'
 
 export function JobDrawer({ jobId }: { jobId: string | null }) {
   const router = useRouter()
@@ -32,6 +33,9 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
               <JobDetails job={job} onDeleted={close} />
               <div className="border-t border-border pt-5">
                 <JobSnapshot markdown={job.snapshotMarkdown} sourceUrl={job.sourceUrl} />
+              </div>
+              <div className="border-t border-border pt-5">
+                <TimelineSection jobId={job.id} />
               </div>
             </>
           )}
