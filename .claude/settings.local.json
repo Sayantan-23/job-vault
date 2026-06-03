@@ -20,5 +20,6 @@
   },
   "enabledPlugins": {
     "superpowers@claude-plugins-official": true
-  }
+  },
+  "includeCoAuthoredBy": false
 }
