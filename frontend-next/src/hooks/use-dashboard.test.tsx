@@ -40,16 +40,22 @@ describe('useMoveJob', () => {
 })
 
 describe('useStats', () => {
-  it('useStats fetches /api/dashboard/stats and seeds from initialData', async () => {
+  it('renders from initialData synchronously, then refetches /api/dashboard/stats', async () => {
     const seed = {
       totalJobs: 4,
       byStatus: { WISHLIST: 0, APPLIED: 2, INTERVIEWING: 1, OFFER: 1, REJECTED: 0, ARCHIVED: 0 },
       ghostAlerts: 1,
       recentActivity: 0,
     }
-    vi.mocked(apiClient).get.mockResolvedValue(seed)
+    // The fetch resolves a DIFFERENT object than the seed so the two sources are
+    // distinguishable: the synchronous value can only come from initialData, and
+    // the post-refetch value can only come from the queryFn. (If the initialData
+    // spread were dropped, the first assertion would see `undefined` and fail.)
+    const fetched = { ...seed, totalJobs: 9, ghostAlerts: 2 }
+    api.get.mockResolvedValue(fetched)
     const { result } = renderHook(() => useStats(seed), { wrapper })
-    expect(result.current.data).toEqual(seed)
-    await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/dashboard/stats'))
+    expect(result.current.data).toEqual(seed) // from initialData, before any fetch
+    await waitFor(() => expect(result.current.data).toEqual(fetched)) // refetchOnMount: 'always'
+    expect(api.get).toHaveBeenCalledWith('/api/dashboard/stats')
   })
 })

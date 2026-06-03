@@ -72,6 +72,14 @@ describe('JobsWorkspace', () => {
     expect(replace).toHaveBeenCalledWith('/app/jobs?view=board', { scroll: false })
   })
 
+  it('toggling back to List removes ?view and emits a clean URL', async () => {
+    searchParams.set('view', 'board')
+    render(<JobsWorkspace initialJobs={[JOB]} initialBoard={EMPTY_BOARD} />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: 'List' }))
+    // List is the default, so the param is dropped entirely — no `?`, no `view=list`.
+    expect(replace).toHaveBeenCalledWith('/app/jobs', { scroll: false })
+  })
+
   it('opens the Add-Job modal from the toolbar', async () => {
     render(<JobsWorkspace initialJobs={[]} initialBoard={EMPTY_BOARD} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: /add job/i }))

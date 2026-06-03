@@ -9,13 +9,25 @@ vi.mock('@/lib/api-client', () => ({
 }))
 
 import { apiClient } from '@/lib/api-client'
-import { useJobs, useCreateJob, useScrapeJob, useDeleteJob } from './use-jobs'
+import { useJobs, useCreateJob, useScrapeJob, useUpdateJob, useDeleteJob } from './use-jobs'
+import { JOBS_KEY, DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY } from '@/lib/query-keys'
 
 const api = vi.mocked(apiClient)
 
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+}
+
+// A wrapper that exposes a spy on the client's invalidateQueries so a test can
+// assert which caches a mutation refreshes on success.
+function spiedClient() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const invalidate = vi.spyOn(client, 'invalidateQueries')
+  const Wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  )
+  return { Wrapper, invalidate }
 }
 
 beforeEach(() => vi.clearAllMocks())
@@ -56,5 +68,42 @@ describe('useDeleteJob', () => {
     result.current.mutate('j1')
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(api.delete).toHaveBeenCalledWith('/api/jobs/j1')
+  })
+})
+
+// The dashboard overview (stats) and the kanban board are separate queries from
+// the jobs list, so every write must refresh all three or counts/board go stale.
+describe('job mutations refresh the jobs, kanban and stats caches', () => {
+  it('useCreateJob invalidates jobs + kanban + stats on success', async () => {
+    api.post.mockResolvedValue({ id: 'j1' })
+    const { Wrapper, invalidate } = spiedClient()
+    const { result } = renderHook(() => useCreateJob(), { wrapper: Wrapper })
+    result.current.mutate({ title: 'SWE', company: 'Acme' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: JOBS_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_KANBAN_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_STATS_KEY })
+  })
+
+  it('useUpdateJob invalidates jobs + kanban + stats on success', async () => {
+    api.patch.mockResolvedValue({ id: 'j1' })
+    const { Wrapper, invalidate } = spiedClient()
+    const { result } = renderHook(() => useUpdateJob('j1'), { wrapper: Wrapper })
+    result.current.mutate({ title: 'SWE' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: JOBS_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_KANBAN_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_STATS_KEY })
+  })
+
+  it('useDeleteJob invalidates jobs + kanban + stats on success', async () => {
+    api.delete.mockResolvedValue({ message: 'ok' })
+    const { Wrapper, invalidate } = spiedClient()
+    const { result } = renderHook(() => useDeleteJob(), { wrapper: Wrapper })
+    result.current.mutate('j1')
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: JOBS_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_KANBAN_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_STATS_KEY })
   })
 })
