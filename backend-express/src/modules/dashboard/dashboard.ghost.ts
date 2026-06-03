@@ -1,21 +1,15 @@
-import type { DashboardQueryInput } from './dashboard.schema.js'
+import { GHOST_STALE_DAYS, GHOST_GHOST_DAYS, deriveGhostDays, type GhostFilter } from '@/shared/ghost.js'
 
-const DAY_MS = 86_400_000
+export { deriveGhostDays }
 
-/** Days of inactivity, derived from the last activity (or creation) date. */
-export function deriveGhostDays(job: { lastActivityAt: Date | null; createdAt: Date }, now: number): number {
-  const activity = (job.lastActivityAt ?? job.createdAt).getTime()
-  return Math.max(0, Math.floor((now - activity) / DAY_MS))
-}
-
-export function passesGhostFilter(ghostDays: number, filter: DashboardQueryInput['ghostFilter']): boolean {
+export function passesGhostFilter(ghostDays: number, filter: GhostFilter): boolean {
   switch (filter) {
     case 'active':
-      return ghostDays <= 7
+      return ghostDays <= GHOST_STALE_DAYS
     case 'stale':
-      return ghostDays > 7 && ghostDays <= 14
+      return ghostDays > GHOST_STALE_DAYS && ghostDays <= GHOST_GHOST_DAYS
     case 'ghost':
-      return ghostDays > 14
+      return ghostDays > GHOST_GHOST_DAYS
     default:
       return true
   }
