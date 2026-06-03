@@ -15,6 +15,9 @@ vi.mock('./jobs.repository.js', () => ({
   },
 }))
 vi.mock('./scraper.js', () => ({ scrapeUrl: vi.fn() }))
+vi.mock('@/modules/timeline/timeline.service.js', () => ({
+  timelineService: { addAutoEntry: vi.fn() },
+}))
 
 import { jobsRepository } from './jobs.repository.js'
 import { scrapeUrl } from './scraper.js'
@@ -147,6 +150,7 @@ describe('GET /api/jobs/:id', () => {
 
 describe('PATCH /api/jobs/:id', () => {
   it('200s and returns the updated job', async () => {
+    repo.findById.mockResolvedValue(fakeJob({ status: 'WISHLIST' }))
     repo.update.mockResolvedValue(fakeJob({ title: 'Updated' }))
     const res = await request(app).patch('/api/jobs/j1').set('Cookie', [cookie]).send({ title: 'Updated' })
     expect(res.status).toBe(200)
@@ -167,6 +171,7 @@ describe('PATCH /api/jobs/:id', () => {
 
 describe('PATCH /api/jobs/:id/move', () => {
   it('200s and returns the moved job', async () => {
+    repo.findById.mockResolvedValue(fakeJob({ status: 'WISHLIST' }))
     repo.move.mockResolvedValue(fakeJob({ status: 'OFFER', kanbanOrder: 3 }))
     const res = await request(app)
       .patch('/api/jobs/j1/move')
@@ -187,6 +192,22 @@ describe('PATCH /api/jobs/:id/move', () => {
       .set('Cookie', [cookie])
       .send({ status: 'NOPE', kanbanOrder: 1 })
     expect(res.status).toBe(400)
+  })
+
+  it('triggers the status-change auto-event through the service', async () => {
+    repo.findById.mockResolvedValue(fakeJob({ status: 'WISHLIST' }))
+    repo.move.mockResolvedValue(fakeJob({ status: 'OFFER', kanbanOrder: 3 }))
+    const { timelineService } = await import('@/modules/timeline/timeline.service.js')
+    await request(app)
+      .patch('/api/jobs/j1/move')
+      .set('Cookie', [cookie])
+      .send({ status: 'OFFER', kanbanOrder: 3 })
+    expect(vi.mocked(timelineService.addAutoEntry)).toHaveBeenCalledWith({
+      userId: 'u1',
+      jobId: 'j1',
+      title: 'Status changed to OFFER',
+      description: 'Moved from WISHLIST to OFFER',
+    })
   })
 })
 
