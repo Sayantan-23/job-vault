@@ -118,7 +118,7 @@ export function KanbanBoard({ board: initial }: { board: Board }) {
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
-      <div className="flex gap-3 overflow-x-auto pb-4">
+      <div className="flex h-full gap-3 overflow-x-auto pb-4">
         {board.columns.map((column) => (
           <KanbanColumn key={column.status} column={column} />
         ))}

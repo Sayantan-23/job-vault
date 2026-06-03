@@ -10,6 +10,7 @@ import { KanbanBoard } from '@/components/kanban/kanban-board'
 import { JobsList } from './jobs-list'
 import { AddJobModal } from './add-job-modal'
 import { JobDrawer } from './job-drawer'
+import { cn } from '@/lib/utils'
 import type { Job } from '@/types/job'
 import type { KanbanBoard as Board } from '@/types/dashboard'
 
@@ -50,27 +51,37 @@ export function JobsWorkspace({
   }
 
   return (
-    <section className="space-y-5">
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <h1 className="text-xl font-semibold">Jobs</h1>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-mono tabular-nums">{jobs.length}</span> tracked
-          </p>
+    <>
+      {/* Board view fills the available height (each column scrolls its own cards);
+          list view flows naturally and the main region scrolls. */}
+      <section className={cn('flex flex-col gap-5', view === 'board' && 'h-full')}>
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <h1 className="text-xl font-semibold">Jobs</h1>
+            <p className="text-sm text-muted-foreground">
+              <span className="font-mono tabular-nums">{jobs.length}</span> tracked
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
+            <Button type="button" onClick={() => setAddOpen(true)}>
+              <Plus className="size-4" aria-hidden="true" />
+              Add job
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
-          <Button type="button" onClick={() => setAddOpen(true)}>
-            <Plus className="size-4" aria-hidden="true" />
-            Add job
-          </Button>
-        </div>
-      </div>
 
-      {view === 'board' ? <KanbanBoard board={initialBoard} /> : <JobsList jobs={jobs} />}
+        {view === 'board' ? (
+          <div className="min-h-0 flex-1">
+            <KanbanBoard board={initialBoard} />
+          </div>
+        ) : (
+          <JobsList jobs={jobs} />
+        )}
+      </section>
 
       <AddJobModal open={addOpen} onOpenChange={setAddOpen} />
       <JobDrawer jobId={jobId} />
-    </section>
+    </>
   )
 }
