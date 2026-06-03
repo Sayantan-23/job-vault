@@ -1,6 +1,7 @@
 'use client'
 
 import { useStats } from '@/hooks/use-dashboard'
+import { PageHeader } from '@/components/layout/app/page-header'
 import { DashboardStats } from './dashboard-stats'
 import type { DashboardStats as Stats } from '@/types/dashboard'
 
@@ -9,12 +10,11 @@ export function DashboardOverview({ initialStats }: { initialStats: Stats }) {
   const stats = data ?? initialStats
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-0.5">
-        <h1 className="text-xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Your job search at a glance.</p>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PageHeader title="Dashboard" description="Your job search at a glance." />
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <DashboardStats stats={stats} />
       </div>
-      <DashboardStats stats={stats} />
-    </section>
+    </div>
   )
 }

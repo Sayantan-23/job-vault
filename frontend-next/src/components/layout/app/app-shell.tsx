@@ -4,17 +4,19 @@ import { SidebarNav } from './sidebar-nav'
 
 export function AppShell({ children }: { children: ReactNode }) {
   return (
-    <div className="h-screen overflow-hidden bg-background text-foreground flex">
-      <aside className="w-60 shrink-0 border-r border-border flex flex-col">
-        <div className="h-14 flex items-center px-5 font-semibold tracking-tight">JobVault</div>
+    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+      <aside className="flex w-60 shrink-0 flex-col border-r border-border">
+        <div className="flex h-16 shrink-0 items-center border-b border-border px-5 font-semibold tracking-tight">
+          JobVault
+        </div>
         <SidebarNav />
-      </aside>
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-14 shrink-0 border-b border-border flex items-center justify-end gap-3 px-6">
+        <div className="mt-auto border-t border-border p-3">
           <LogoutButton />
-        </header>
-        <main className="flex-1 min-h-0 overflow-y-auto p-6">{children}</main>
-      </div>
+        </div>
+      </aside>
+      {/* The page owns its own header (PageHeader) + scroll region, so the chrome
+          stays fixed while each page supplies its own title/actions. */}
+      <main className="flex min-w-0 flex-1 flex-col">{children}</main>
     </div>
   )
 }

@@ -10,7 +10,7 @@ import { KanbanBoard } from '@/components/kanban/kanban-board'
 import { JobsList } from './jobs-list'
 import { AddJobModal } from './add-job-modal'
 import { JobDrawer } from './job-drawer'
-import { cn } from '@/lib/utils'
+import { PageHeader } from '@/components/layout/app/page-header'
 import type { Job } from '@/types/job'
 import type { KanbanBoard as Board } from '@/types/dashboard'
 
@@ -50,35 +50,40 @@ export function JobsWorkspace({
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
+  const actions = (
+    <>
+      <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
+      <Button type="button" onClick={() => setAddOpen(true)}>
+        <Plus className="size-4" aria-hidden="true" />
+        Add job
+      </Button>
+    </>
+  )
+
   return (
     <>
       {/* Board view fills the available height (each column scrolls its own cards);
-          list view flows naturally and the main region scrolls. */}
-      <section className={cn('flex flex-col gap-5', view === 'board' && 'h-full')}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-0.5">
-            <h1 className="text-xl font-semibold">Jobs</h1>
-            <p className="text-sm text-muted-foreground">
+          list view flows naturally and its region scrolls. */}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <PageHeader
+          title="Jobs"
+          description={
+            <>
               <span className="font-mono tabular-nums">{jobs.length}</span> tracked
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
-            <Button type="button" onClick={() => setAddOpen(true)}>
-              <Plus className="size-4" aria-hidden="true" />
-              Add job
-            </Button>
-          </div>
-        </div>
-
+            </>
+          }
+          actions={actions}
+        />
         {view === 'board' ? (
-          <div className="min-h-0 flex-1">
+          <div className="min-h-0 flex-1 p-6">
             <KanbanBoard board={initialBoard} />
           </div>
         ) : (
-          <JobsList jobs={jobs} />
+          <div className="min-h-0 flex-1 overflow-y-auto p-6">
+            <JobsList jobs={jobs} />
+          </div>
         )}
-      </section>
+      </div>
 
       <AddJobModal open={addOpen} onOpenChange={setAddOpen} />
       <JobDrawer jobId={jobId} />
