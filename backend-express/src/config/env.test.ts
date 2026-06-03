@@ -55,3 +55,24 @@ describe('getEnv', () => {
     }
   })
 })
+
+describe('ENABLE_SCHEDULER', () => {
+  const base = {
+    CORS_ORIGINS: 'http://localhost:8080',
+    DATABASE_URL: 'postgres://x:x@x:5432/x',
+    JWT_SECRET: 'a'.repeat(32),
+  }
+
+  it('defaults to false when absent', () => {
+    expect(parseEnv(base).ENABLE_SCHEDULER).toBe(false)
+  })
+  it('parses the string "true" -> true', () => {
+    expect(parseEnv({ ...base, ENABLE_SCHEDULER: 'true' }).ENABLE_SCHEDULER).toBe(true)
+  })
+  it('parses the string "1" -> true', () => {
+    expect(parseEnv({ ...base, ENABLE_SCHEDULER: '1' }).ENABLE_SCHEDULER).toBe(true)
+  })
+  it('parses the string "false" -> false (NOT a footgun-coerced true)', () => {
+    expect(parseEnv({ ...base, ENABLE_SCHEDULER: 'false' }).ENABLE_SCHEDULER).toBe(false)
+  })
+})

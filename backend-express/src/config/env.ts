@@ -19,6 +19,12 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
+  // Safe boolean parse: z.coerce.boolean() would coerce the string 'false' to
+  // TRUE. Treat only 'true'/'1' as true; anything else (incl. absent) is false.
+  ENABLE_SCHEDULER: z
+    .string()
+    .default('false')
+    .transform((v) => v === 'true' || v === '1'),
 })
 
 export type Env = z.infer<typeof envSchema>

@@ -15,6 +15,11 @@ import type { ReminderRow } from '@/db/schema/reminders.js'
 const repo = vi.mocked(remindersRepository)
 const notifications = vi.mocked(notificationsService)
 
+// The sweep never reads the created notification, so its shape is irrelevant.
+// Asserted via an identifier (not an inline object literal) to satisfy the
+// consistent-type-assertions lint rule (objectLiteralTypeAssertions: 'never').
+const emptyRow: Record<string, never> = {}
+
 function fakeReminder(over: Partial<ReminderRow> = {}): ReminderRow {
   return {
     id: 'r1', createdAt: new Date(), updatedAt: new Date(), userId: 'u1', jobId: 'j1',
@@ -30,7 +35,7 @@ describe('sweepDueReminders', () => {
       fakeReminder({ id: 'r1', userId: 'u1', jobId: 'j1', message: 'A' }),
       fakeReminder({ id: 'r2', userId: 'u2', jobId: 'j2', message: 'B' }),
     ])
-    notifications.create.mockResolvedValue({} as never)
+    notifications.create.mockResolvedValue(emptyRow as never)
     const now = new Date('2026-06-20T00:00:00Z')
 
     const count = await sweepDueReminders(now)

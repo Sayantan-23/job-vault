@@ -3,6 +3,7 @@ import { createApp } from './app.js'
 import { getEnv } from './config/env.js'
 import { logger } from './shared/logger.js'
 import { closeDb } from './db/client.js'
+import { startScheduler, stopScheduler } from './scheduler/scheduler.js'
 
 const env = getEnv()
 const app = createApp()
@@ -11,8 +12,15 @@ const server = app.listen(env.PORT, () => {
   logger.info({ port: env.PORT, env: env.NODE_ENV }, 'backend-express started')
 })
 
+// Started only after listen() (never inside createApp), so supertest/vitest never
+// spin live timers. Gated on ENABLE_SCHEDULER and off in test.
+if (env.ENABLE_SCHEDULER && env.NODE_ENV !== 'test') {
+  startScheduler()
+}
+
 function shutdown(signal: string) {
   logger.info({ signal }, 'shutting down')
+  stopScheduler()
   const forceExit = setTimeout(() => {
     logger.error('forced exit after 10s')
     process.exit(1)

@@ -16,6 +16,11 @@ const jobs = vi.mocked(schedulerRepository)
 const notifications = vi.mocked(notificationsService)
 const day = 86_400_000
 
+// The sweep never reads the created notification, so its shape is irrelevant.
+// Asserted via an identifier (not an inline object literal) to satisfy the
+// consistent-type-assertions lint rule (objectLiteralTypeAssertions: 'never').
+const emptyRow: Record<string, never> = {}
+
 function fakeJob(over: Partial<JobRow> = {}): JobRow {
   return {
     id: 'j1', createdAt: new Date(), updatedAt: new Date(), userId: 'u1', title: 'SWE', company: 'Acme',
@@ -32,7 +37,7 @@ describe('sweepGhostAlerts', () => {
     jobs.findAllNonArchivedJobs.mockResolvedValue([
       fakeJob({ id: 'j1', userId: 'u1', company: 'Acme', title: 'SWE', ghostDays: 7, lastActivityAt: new Date(now.getTime() - 8 * day) }),
     ])
-    notifications.create.mockResolvedValue({} as never)
+    notifications.create.mockResolvedValue(emptyRow as never)
 
     const fired = await sweepGhostAlerts(now)
 
@@ -63,7 +68,7 @@ describe('sweepGhostAlerts', () => {
     jobs.findAllNonArchivedJobs.mockResolvedValue([
       fakeJob({ id: 'j1', userId: 'u1', company: 'Acme', title: 'SWE', ghostDays: 14, lastActivityAt: new Date(now.getTime() - 15 * day) }),
     ])
-    notifications.create.mockResolvedValue({} as never)
+    notifications.create.mockResolvedValue(emptyRow as never)
 
     const fired = await sweepGhostAlerts(now)
 
@@ -83,7 +88,7 @@ describe('sweepGhostAlerts', () => {
     jobs.findAllNonArchivedJobs.mockResolvedValue([
       fakeJob({ id: 'j1', userId: 'u1', company: 'Acme', title: 'SWE', ghostDays: 3, lastActivityAt: new Date(now.getTime() - 20 * day) }),
     ])
-    notifications.create.mockResolvedValue({} as never)
+    notifications.create.mockResolvedValue(emptyRow as never)
 
     const fired = await sweepGhostAlerts(now)
 
@@ -127,7 +132,7 @@ describe('sweepGhostAlerts', () => {
     jobs.findAllNonArchivedJobs.mockResolvedValueOnce([
       fakeJob({ id: 'j1', userId: 'u1', company: 'Acme', title: 'SWE', ghostDays: 0, lastActivityAt: lastActivity }),
     ])
-    notifications.create.mockResolvedValue({} as never)
+    notifications.create.mockResolvedValue(emptyRow as never)
 
     const firedDay1 = await sweepGhostAlerts(day1Now)
     expect(firedDay1).toBe(1)
