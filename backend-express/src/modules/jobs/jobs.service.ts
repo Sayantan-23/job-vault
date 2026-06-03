@@ -1,8 +1,26 @@
 import { AppError } from '@/shared/errors.js'
+import { logger } from '@/shared/logger.js'
 import { jobsRepository } from './jobs.repository.js'
+import { timelineService } from '@/modules/timeline/timeline.service.js'
 import { scrapeUrl, type ScrapeResult } from './scraper.js'
 import type { JobRow, NewJobRow } from '@/db/schema/jobs.js'
 import type { CreateJobInput, UpdateJobInput, MoveJobInput, JobQueryInput } from './jobs.schema.js'
+
+// The auto-event is a follow-on write after the job mutation has already
+// committed. The job mutation is the source of truth, so a timeline write
+// failure is logged and swallowed — it must never roll back the mutation.
+async function emitAutoEntry(entry: {
+  userId: string
+  jobId: string
+  title: string
+  description?: string
+}): Promise<void> {
+  try {
+    await timelineService.addAutoEntry(entry)
+  } catch (err) {
+    logger.error({ err, jobId: entry.jobId }, 'failed to write timeline auto-event')
+  }
+}
 
 async function create(userId: string, input: CreateJobInput): Promise<JobRow> {
   const status = input.status ?? 'WISHLIST'
@@ -22,7 +40,14 @@ async function create(userId: string, input: CreateJobInput): Promise<JobRow> {
   if (input.snapshotMarkdown !== undefined) values.snapshotMarkdown = input.snapshotMarkdown
   if (input.notes !== undefined) values.notes = input.notes
 
-  return jobsRepository.create(values)
+  const job = await jobsRepository.create(values)
+  await emitAutoEntry({
+    userId,
+    jobId: job.id,
+    title: 'Job added to vault',
+    description: `Added to ${job.status} column`,
+  })
+  return job
 }
 
 async function list(
@@ -40,14 +65,40 @@ async function get(userId: string, id: string): Promise<JobRow> {
 }
 
 async function update(userId: string, id: string, input: UpdateJobInput): Promise<JobRow> {
+  // Read the current status first so we can detect a status change after the
+  // repo update (the repository stays pure — it never reads the prior row).
+  const current = await jobsRepository.findById(userId, id)
+  const oldStatus = current?.status
+
   const job = await jobsRepository.update(userId, id, input)
   if (!job) throw new AppError('NOT_FOUND', 'Job not found')
+
+  if (input.status !== undefined && oldStatus !== undefined && input.status !== oldStatus) {
+    await emitAutoEntry({
+      userId,
+      jobId: job.id,
+      title: `Status changed to ${job.status}`,
+      description: `Moved from ${oldStatus} to ${job.status}`,
+    })
+  }
   return job
 }
 
 async function move(userId: string, id: string, input: MoveJobInput): Promise<JobRow> {
+  const current = await jobsRepository.findById(userId, id)
+  const oldStatus = current?.status
+
   const job = await jobsRepository.move(userId, id, input.status, input.kanbanOrder)
   if (!job) throw new AppError('NOT_FOUND', 'Job not found')
+
+  if (oldStatus !== undefined && input.status !== oldStatus) {
+    await emitAutoEntry({
+      userId,
+      jobId: job.id,
+      title: `Status changed to ${job.status}`,
+      description: `Moved from ${oldStatus} to ${job.status}`,
+    })
+  }
   return job
 }
 
