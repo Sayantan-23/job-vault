@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { JOBS_KEY, jobKey, DASHBOARD_KANBAN_KEY } from '@/lib/query-keys'
+import { JOBS_KEY, jobKey, DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY } from '@/lib/query-keys'
 import type { Job, ScrapeResult } from '@/types/job'
 import type { ManualJobValues, UpdateJobValues } from '@/schemas/job'
 
@@ -34,6 +34,8 @@ export function useCreateJob() {
     mutationFn: (values: ManualJobValues) => apiClient.post<Job>('/api/jobs', values),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: JOBS_KEY })
+      void qc.invalidateQueries({ queryKey: DASHBOARD_KANBAN_KEY })
+      void qc.invalidateQueries({ queryKey: DASHBOARD_STATS_KEY })
     },
   })
 }
@@ -52,6 +54,7 @@ export function useUpdateJob(id: string) {
       qc.setQueryData(jobKey(id), job)
       void qc.invalidateQueries({ queryKey: JOBS_KEY })
       void qc.invalidateQueries({ queryKey: DASHBOARD_KANBAN_KEY })
+      void qc.invalidateQueries({ queryKey: DASHBOARD_STATS_KEY })
     },
   })
 }
@@ -63,6 +66,7 @@ export function useDeleteJob() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: JOBS_KEY })
       void qc.invalidateQueries({ queryKey: DASHBOARD_KANBAN_KEY })
+      void qc.invalidateQueries({ queryKey: DASHBOARD_STATS_KEY })
     },
   })
 }

@@ -9,7 +9,7 @@ vi.mock('@/lib/api-client', () => ({
 }))
 
 import { apiClient } from '@/lib/api-client'
-import { useKanban, useMoveJob } from './use-dashboard'
+import { useKanban, useMoveJob, useStats } from './use-dashboard'
 
 const api = vi.mocked(apiClient)
 
@@ -36,5 +36,20 @@ describe('useMoveJob', () => {
     result.current.mutate({ id: 'j1', status: 'OFFER', kanbanOrder: 3 })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(api.patch).toHaveBeenCalledWith('/api/jobs/j1/move', { status: 'OFFER', kanbanOrder: 3 })
+  })
+})
+
+describe('useStats', () => {
+  it('useStats fetches /api/dashboard/stats and seeds from initialData', async () => {
+    const seed = {
+      totalJobs: 4,
+      byStatus: { WISHLIST: 0, APPLIED: 2, INTERVIEWING: 1, OFFER: 1, REJECTED: 0, ARCHIVED: 0 },
+      ghostAlerts: 1,
+      recentActivity: 0,
+    }
+    vi.mocked(apiClient).get.mockResolvedValue(seed)
+    const { result } = renderHook(() => useStats(seed), { wrapper })
+    expect(result.current.data).toEqual(seed)
+    await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/api/dashboard/stats'))
   })
 })
