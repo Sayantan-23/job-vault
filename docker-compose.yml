@@ -41,6 +41,7 @@ services:
       JWT_REFRESH_EXPIRY: 7d
       LOG_LEVEL: ${LOG_LEVEL:-info}
       ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
+      ENABLE_REALTIME: ${ENABLE_REALTIME:-true}
       CHOKIDAR_USEPOLLING: "true"
     depends_on:
       postgres:
