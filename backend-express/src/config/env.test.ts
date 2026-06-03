@@ -76,3 +76,27 @@ describe('ENABLE_SCHEDULER', () => {
     expect(parseEnv({ ...base, ENABLE_SCHEDULER: 'false' }).ENABLE_SCHEDULER).toBe(false)
   })
 })
+
+describe('parseEnv ENABLE_REALTIME', () => {
+  const base = {
+    CORS_ORIGINS: 'http://localhost:8080',
+    DATABASE_URL: 'postgres://user:pw@localhost:5432/db',
+    JWT_SECRET: 'a'.repeat(32),
+  }
+
+  it('defaults ENABLE_REALTIME to false when unset', () => {
+    expect(parseEnv(base).ENABLE_REALTIME).toBe(false)
+  })
+
+  it('parses the string "false" as boolean false (not the z.coerce.boolean footgun)', () => {
+    expect(parseEnv({ ...base, ENABLE_REALTIME: 'false' }).ENABLE_REALTIME).toBe(false)
+  })
+
+  it('parses the string "true" as boolean true', () => {
+    expect(parseEnv({ ...base, ENABLE_REALTIME: 'true' }).ENABLE_REALTIME).toBe(true)
+  })
+
+  it('parses the string "1" as boolean true', () => {
+    expect(parseEnv({ ...base, ENABLE_REALTIME: '1' }).ENABLE_REALTIME).toBe(true)
+  })
+})
