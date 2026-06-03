@@ -1,7 +1,8 @@
-import { and, or, eq, ilike, gt, lte, asc, desc, max, count } from 'drizzle-orm'
+import { and, or, eq, ilike, asc, desc, max, count, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { getDb } from '@/db/client.js'
 import { jobs, type JobRow, type NewJobRow, type JobStatus } from '@/db/schema/jobs.js'
+import { GHOST_STALE_DAYS, GHOST_GHOST_DAYS } from '@/shared/ghost.js'
 import type { JobQueryInput, JobSortField, UpdateJobInput } from './jobs.schema.js'
 
 const SORT_COLUMNS = {
@@ -13,14 +14,19 @@ const SORT_COLUMNS = {
   lastActivityAt: jobs.lastActivityAt,
 } as const satisfies Record<JobSortField, unknown>
 
+// Ghost-days derived live in SQL (now - COALESCE(lastActivityAt, createdAt))/day,
+// so the filter matches the dashboard's derive-live behavior. The stored
+// jobs.ghostDays column is never used for display — it is the cron's anchor only.
+const ghostDaysExpr = sql`floor(extract(epoch from (now() - coalesce(${jobs.lastActivityAt}, ${jobs.createdAt}))) / 86400)`
+
 function ghostCondition(filter: JobQueryInput['ghostFilter']): SQL | undefined {
   switch (filter) {
     case 'active':
-      return lte(jobs.ghostDays, 7)
+      return sql`${ghostDaysExpr} <= ${GHOST_STALE_DAYS}`
     case 'stale':
-      return and(gt(jobs.ghostDays, 7), lte(jobs.ghostDays, 14))
+      return sql`${ghostDaysExpr} > ${GHOST_STALE_DAYS} and ${ghostDaysExpr} <= ${GHOST_GHOST_DAYS}`
     case 'ghost':
-      return gt(jobs.ghostDays, 14)
+      return sql`${ghostDaysExpr} > ${GHOST_GHOST_DAYS}`
     default:
       return undefined
   }

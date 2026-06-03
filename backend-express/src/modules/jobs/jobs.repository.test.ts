@@ -109,4 +109,44 @@ describe('jobsRepository (real DB)', () => {
     expect(await jobsRepository.findById(userId, created.id)).toBeNull()
     expect(await jobsRepository.remove(userId, created.id)).toBe(false)
   })
+
+  it('ghostFilter derives days live from lastActivityAt (stale/ghost now match)', async () => {
+    const now = Date.now()
+    const stale = await jobsRepository.create({
+      userId,
+      title: 'Stale Role',
+      company: 'StaleCo',
+      status: 'APPLIED',
+      kanbanOrder: 50,
+      lastActivityAt: new Date(now - 10 * 86_400_000), // 10 days -> stale (8..14)
+    })
+    const ghost = await jobsRepository.create({
+      userId,
+      title: 'Ghost Role',
+      company: 'GhostCo',
+      status: 'APPLIED',
+      kanbanOrder: 51,
+      lastActivityAt: new Date(now - 30 * 86_400_000), // 30 days -> ghost (>14)
+    })
+
+    const staleRows = await jobsRepository.findAll(userId, {
+      page: 1,
+      limit: 100,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      ghostFilter: 'stale',
+    })
+    expect(staleRows.rows.some((j) => j.id === stale.id)).toBe(true)
+    expect(staleRows.rows.some((j) => j.id === ghost.id)).toBe(false)
+
+    const ghostRows = await jobsRepository.findAll(userId, {
+      page: 1,
+      limit: 100,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+      ghostFilter: 'ghost',
+    })
+    expect(ghostRows.rows.some((j) => j.id === ghost.id)).toBe(true)
+    expect(ghostRows.rows.some((j) => j.id === stale.id)).toBe(false)
+  })
 })
