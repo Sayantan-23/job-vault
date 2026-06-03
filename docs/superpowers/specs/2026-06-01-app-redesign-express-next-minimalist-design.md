@@ -138,5 +138,17 @@ Per parent spec §10: Vitest (both apps), RTL for components, Supertest for HTTP
 - **Stats shown:** 5 cards — **Total · Applied · Interviewing · Offers · Ghost alerts** (mono numerics).
 - **Ghost data:** **derived at read-time** from `lastActivityAt` (fallback `createdAt`) in the dashboard service — `ghostDays`, `ghostAlerts` (>14d) and `ghostFilter` computed live so the signature feature works in Slice 3 without the Slice 4 cron. (Stored `ghostDays` column stays; the cron may persist it later for DB-level sorting.)
 - **Card → drawer:** reuse the Slice 2 `JobDrawer` on the dashboard via `/app/dashboard?job=<id>`; generalize its close to return to the **current pathname** (works on `/app/dashboard` and `/app/jobs`). The drawer is the full detail view (info + status + notes + snapshot) — no separate detail page.
-- **ViewToggle:** **deferred to Slice 5** (ships with the List View). Slice 3 = stats + Kanban board only.
+- **ViewToggle:** **deferred to Slice 5** (ships with the List View). Slice 3 = stats + Kanban board only. *(Superseded by the Slice 3.5 IA refinement below — the toggle is pulled forward.)*
 - **Column label/color:** derived on the frontend from `STATUS_META`/`JOB_STATUSES`; the backend kanban columns carry `status` + `jobs` only (no presentation).
+
+### Slice 3.5 resolutions — workspace / overview split (2026-06-03)
+
+Follow-on refinement to Slice 3 (decided before the Slice 3 branch merged). Slice 3 left the Kanban board on `/app/dashboard` and the jobs list on `/app/jobs` as two disconnected pages of the same data — the board read as "odd" under a stats row because a dashboard wants to be a *scannable overview* while a board wants to be a *workspace*. This restores the original app's single-workspace + view-toggle intent.
+
+- **IA:** `/app/jobs` becomes the **unified Jobs workspace** with a **Board ⇄ List** view toggle (the board and the list are two views of one surface). `/app/dashboard` becomes a **stats-only overview**. **No new sidebar item** — Board is a *mode of* Jobs, not a route sibling. (The deferred-to-Slice-5 `ViewToggle` from §3 is pulled forward to here.)
+- **Default view:** **List**. The board is opt-in via the toggle.
+- **View persistence:** **URL query param** `?view=board|list` on `/app/jobs` (consistent with `?job=`, shareable, survives refresh; toggling preserves any `?job=`). No localStorage.
+- **Dashboard scope (now):** the **5 stat cards only** (Total · Applied · Interviewing · Offers · Ghost alerts), fed by the existing `GET /api/dashboard/stats`. **Charts and a recent-activity feed are explicitly deferred** (recent-activity needs an activity log we don't track yet — natural fit alongside Slice 4 timeline/Slice 5). No needs-attention list in this slice.
+- **Backend:** **no changes.** Board view reuses `GET /api/dashboard/kanban`; list view reuses `GET /api/jobs`; dashboard reuses `GET /api/dashboard/stats`.
+- **Add Job:** the toolbar action moves onto the Jobs-workspace toolbar (next to the toggle). The `?job=` drawer continues to work in both views.
+- **Component hygiene:** the segmented toggle is a reusable `ui/segmented-control` primitive (not inline markup); the list rows are extracted into a `JobsList` component; the dashboard becomes a `DashboardOverview` component.
