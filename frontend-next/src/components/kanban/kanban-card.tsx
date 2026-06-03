@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GhostMeter } from '@/components/kanban/ghost-meter'
@@ -11,6 +11,7 @@ import type { KanbanCard as Card } from '@/types/dashboard'
 export function KanbanCard({ card }: { card: Card }) {
   const router = useRouter()
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: card.id })
 
   const style = { transform: CSS.Translate.toString(transform), transition }
@@ -20,7 +21,11 @@ export function KanbanCard({ card }: { card: Card }) {
   // drag listeners (which can swallow the synthetic click once a drag activates);
   // the movement threshold distinguishes a click from a drag-release.
   const downAt = useRef<{ x: number; y: number } | null>(null)
-  const open = () => router.push(`${pathname}?job=${card.id}`)
+  const open = () => {
+    const params = new URLSearchParams(searchParams)
+    params.set('job', card.id)
+    router.push(`${pathname}?${params.toString()}`)
+  }
 
   return (
     <button
