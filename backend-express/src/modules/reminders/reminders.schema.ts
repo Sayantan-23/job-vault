@@ -13,9 +13,5 @@ export const UpdateReminderSchema = z
   })
   .partial()
 
-export const ReminderIdParamSchema = z.object({
-  id: z.string().uuid(),
-})
-
 export type CreateReminderInput = z.infer<typeof CreateReminderSchema>
 export type UpdateReminderInput = z.infer<typeof UpdateReminderSchema>

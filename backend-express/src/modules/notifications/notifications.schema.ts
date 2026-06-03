@@ -7,8 +7,4 @@ export const NotificationQuerySchema = z.object({
     .transform((v) => v === 'true'),
 })
 
-export const NotificationIdParamSchema = z.object({
-  id: z.string().uuid(),
-})
-
 export type NotificationQueryInput = z.infer<typeof NotificationQuerySchema>

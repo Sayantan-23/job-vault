@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { CreateReminderSchema, UpdateReminderSchema, ReminderIdParamSchema } from './reminders.schema.js'
+import { CreateReminderSchema, UpdateReminderSchema } from './reminders.schema.js'
 
 describe('CreateReminderSchema', () => {
   it('coerces remindAt to a Date', () => {
@@ -25,12 +25,5 @@ describe('UpdateReminderSchema', () => {
   it('coerces remindAt when present', () => {
     const parsed = UpdateReminderSchema.parse({ remindAt: '2026-07-01T00:00:00Z' })
     expect(parsed.remindAt).toBeInstanceOf(Date)
-  })
-})
-
-describe('ReminderIdParamSchema', () => {
-  it('requires a uuid id', () => {
-    expect(ReminderIdParamSchema.safeParse({ id: 'nope' }).success).toBe(false)
-    expect(ReminderIdParamSchema.safeParse({ id: '00000000-0000-0000-0000-000000000000' }).success).toBe(true)
   })
 })
