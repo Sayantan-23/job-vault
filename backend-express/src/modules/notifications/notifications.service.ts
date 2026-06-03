@@ -1,4 +1,5 @@
 import { AppError } from '@/shared/errors.js'
+import { emitToUser } from '@/realtime/socket.js'
 import { notificationsRepository } from './notifications.repository.js'
 import type { NotificationRow, NotificationType } from '@/db/schema/notifications.js'
 
@@ -18,7 +19,11 @@ async function create(input: CreateNotificationInput): Promise<NotificationRow> 
     relatedJobId?: string
   } = { userId: input.userId, message: input.message, type: input.type }
   if (input.relatedJobId !== undefined) values.relatedJobId = input.relatedJobId
-  return notificationsRepository.create(values)
+  const notification = await notificationsRepository.create(values)
+  // Best-effort real-time push to the owner's open tabs. emitToUser is a safe
+  // no-op when the socket server is unset (e.g. under test / realtime disabled).
+  emitToUser(notification.userId, 'notification', notification)
+  return notification
 }
 
 async function list(userId: string, unreadOnly: boolean): Promise<NotificationRow[]> {

@@ -10,11 +10,15 @@ vi.mock('./notifications.repository.js', () => ({
   },
 }))
 
+vi.mock('@/realtime/socket.js', () => ({ emitToUser: vi.fn() }))
+
 import { notificationsRepository } from './notifications.repository.js'
 import { notificationsService } from './notifications.service.js'
+import { emitToUser } from '@/realtime/socket.js'
 import type { NotificationRow } from '@/db/schema/notifications.js'
 
 const repo = vi.mocked(notificationsRepository)
+const emit = vi.mocked(emitToUser)
 
 function fakeNotification(over: Partial<NotificationRow> = {}): NotificationRow {
   return {
@@ -72,5 +76,24 @@ describe('notificationsService.list', () => {
     repo.list.mockResolvedValue([fakeNotification()])
     await notificationsService.list('u1', true)
     expect(repo.list).toHaveBeenCalledWith('u1', true)
+  })
+})
+
+describe('notificationsService.create emits over socket.io', () => {
+  it('pushes the persisted notification to the owner after saving', async () => {
+    const created = fakeNotification({ id: 'n1', userId: 'u1', message: 'due', type: 'REMINDER' })
+    repo.create.mockResolvedValue(created)
+    const result = await notificationsService.create({ userId: 'u1', message: 'due', type: 'REMINDER' })
+    expect(result.id).toBe('n1')
+    expect(emit).toHaveBeenCalledWith('u1', 'notification', created)
+  })
+
+  it('still resolves when realtime is a no-op (emit never throws)', async () => {
+    const created = fakeNotification({ id: 'n2', userId: 'u1' })
+    repo.create.mockResolvedValue(created)
+    emit.mockImplementation(() => {})
+    await expect(
+      notificationsService.create({ userId: 'u1', message: 'x', type: 'GENERAL' }),
+    ).resolves.toMatchObject({ id: 'n2' })
   })
 })
