@@ -152,3 +152,15 @@ Follow-on refinement to Slice 3 (decided before the Slice 3 branch merged). Slic
 - **Backend:** **no changes.** Board view reuses `GET /api/dashboard/kanban`; list view reuses `GET /api/jobs`; dashboard reuses `GET /api/dashboard/stats`.
 - **Add Job:** the toolbar action moves onto the Jobs-workspace toolbar (next to the toggle). The `?job=` drawer continues to work in both views.
 - **Component hygiene:** the segmented toggle is a reusable `ui/segmented-control` primitive (not inline markup); the list rows are extracted into a `JobsList` component; the dashboard becomes a `DashboardOverview` component.
+
+### Slice 4 resolutions (2026-06-03)
+
+Full design: [`2026-06-03-slice-4-timeline-reminders-notifications-design.md`](./2026-06-03-slice-4-timeline-reminders-notifications-design.md). Headlines:
+
+- **Split into 4a / 4b / 4c** (different risk profiles): **4a** = `timeline` module + jobs-service auto-events + JobDrawer timeline section (request-time only); **4b** = `reminders` + `notifications` modules + `node-cron` scheduler + bell/popover + reminders UI; **4c** = **socket.io** real-time delivery. Migrations stay **per-slice** (4a: `timeline_events`; 4b: `reminders` + `notifications`).
+- **Timeline:** legacy parity — AUTO events on **create** and **status-change** (both `PATCH /jobs/:id` and `/move`), none for notes/other edits; service-centralized (`jobs.service` → `timelineService.addAutoEntry`, repo stays pure). `timeline_events` carries `userId` (uniform with the other two tables + the scoping convention).
+- **Reminders:** legacy parity — `message`/`remindAt`(UTC)/`isCompleted`; one-time; hard delete. Reminder-due cron runs **every 5 min** → REMINDER notification + `isCompleted=true` (idempotent).
+- **Ghost sweep:** daily @midnight persists `jobs.ghostDays` as a **bookkeeping-only crossing-detection anchor** and fires `GHOST_ALERT` on 7/14-day crossings — **user-facing ghost stays derived-live** (Slice 3's decision is intact). Also **fixes the `/api/jobs` ghostFilter bug** (it reads the always-0 stored column) by deriving live in SQL, with shared `GHOST_STALE_DAYS`/`GHOST_GHOST_DAYS` constants.
+- **Notifications:** `GET /api/notifications?unreadOnly=` (capped 50), `PATCH /read-all` (routed before `:id/read`), `PATCH /:id/read`; `relatedJobId` is `ON DELETE SET NULL`; **unread count derived client-side**. Bell + popover live in the **PageHeader actions region**; click-through reuses the `?job=` drawer.
+- **Delivery: no app-level polling.** Real-time via **socket.io** (cookie-auth on upgrade, per-user rooms, long-polling fallback kept as the Next/Docker proxy safety net). **This overrides the migration spec §11.1 "real-time deferred / 60s polling" baseline** — pulled forward into 4c. 4b interim liveness = event-driven refetch-on-window-focus (not interval polling).
+- **Scheduler lifecycle:** singleton started **after `app.listen()`** (never in `createApp`), stopped before `server.close()`; gated by `ENABLE_SCHEDULER` (off in test).
