@@ -153,4 +153,11 @@ describe('apiClient', () => {
     )
     expect(refreshCalls).toBe(0)
   })
+
+  it('getPage returns the full {data, meta} envelope without unwrapping', async () => {
+    mockFetch({ status: 200, body: { data: [{ id: 'j1' }], meta: { total: 1, page: 1, limit: 20, totalPages: 1 } } })
+    const page = await apiClient.getPage<{ id: string }>('/api/jobs')
+    expect(page.data[0]?.id).toBe('j1')
+    expect(page.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 })
+  })
 })

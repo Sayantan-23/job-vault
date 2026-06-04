@@ -1,3 +1,5 @@
+import type { Paginated } from '@/types/filters'
+
 // The browser always calls the Next server same-origin (`/api/*`); next.config
 // rewrites proxy that to the backend. So there is no absolute base in the browser
 // (a Docker-internal hostname would be unreachable from the user's machine).
@@ -65,6 +67,7 @@ async function request<T>(
   body?: unknown,
   init?: RequestInit,
   isRetry = false,
+  unwrap = true,
 ): Promise<T> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path}`
   const headers: Record<string, string> = {
@@ -85,7 +88,7 @@ async function request<T>(
 
   if (res.status === 401 && !isRetry && isRefreshable(path)) {
     const refreshed = await refreshSession()
-    if (refreshed) return request<T>(method, path, body, init, true)
+    if (refreshed) return request<T>(method, path, body, init, true, unwrap)
     // The refresh token is gone/invalid — the session is unrecoverable.
     if (typeof window !== 'undefined') window.location.assign('/login')
   }
@@ -101,7 +104,7 @@ async function request<T>(
     throw new ApiError(res.status, res.statusText || 'Request failed', 'UNKNOWN')
   }
 
-  if (payload && typeof payload === 'object' && 'data' in payload) {
+  if (unwrap && payload && typeof payload === 'object' && 'data' in payload) {
     return (payload as SuccessEnvelope<T>).data
   }
   return payload as T
@@ -109,6 +112,8 @@ async function request<T>(
 
 export const apiClient = {
   get: <T>(path: string, init?: RequestInit) => request<T>('GET', path, undefined, init),
+  getPage: <T>(path: string, init?: RequestInit) =>
+    request<Paginated<T>>('GET', path, undefined, init, false, false),
   post: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('POST', path, body, init),
   patch: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('PATCH', path, body, init),
   put: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('PUT', path, body, init),

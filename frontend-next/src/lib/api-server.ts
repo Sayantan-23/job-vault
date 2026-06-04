@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers'
 import { ApiError } from './api-client'
+import type { Paginated } from '@/types/filters'
 
 // Server Components run inside the Next server process and reach the backend
 // directly (not through the browser-facing rewrite), so they use the server-only
@@ -24,6 +25,7 @@ async function request<T>(
   path: string,
   body?: unknown,
   init?: RequestInit,
+  unwrap = true,
 ): Promise<T> {
   const cookieStore = await cookies()
   const cookieHeader = cookieStore
@@ -60,7 +62,7 @@ async function request<T>(
     throw new ApiError(res.status, res.statusText || 'Request failed', 'UNKNOWN')
   }
 
-  if (payload && typeof payload === 'object' && 'data' in payload) {
+  if (unwrap && payload && typeof payload === 'object' && 'data' in payload) {
     return (payload as SuccessEnvelope<T>).data
   }
   return payload as T
@@ -68,5 +70,7 @@ async function request<T>(
 
 export const apiServer = {
   get: <T>(path: string, init?: RequestInit) => request<T>('GET', path, undefined, init),
+  getPage: <T>(path: string, init?: RequestInit) =>
+    request<Paginated<T>>('GET', path, undefined, init, false),
   post: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('POST', path, body, init),
 }
