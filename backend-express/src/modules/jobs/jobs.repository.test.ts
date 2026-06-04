@@ -149,4 +149,23 @@ describe('jobsRepository (real DB)', () => {
     expect(ghostRows.rows.some((j) => j.id === ghost.id)).toBe(true)
     expect(ghostRows.rows.some((j) => j.id === stale.id)).toBe(false)
   })
+
+  it('filters by createdAt date range, with createdTo inclusive of that day', async () => {
+    const mk = (title: string, createdAt: Date) =>
+      jobsRepository.create({
+        userId, title, company: 'Range', status: 'WISHLIST', kanbanOrder: 1, lastActivityAt: new Date(), createdAt,
+      })
+    await mk('Old', new Date('2020-06-15T12:00:00.000Z'))
+    await mk('Mid', new Date('2022-06-15T12:00:00.000Z'))
+    await mk('New', new Date('2024-06-15T12:00:00.000Z'))
+
+    const q = (extra: Record<string, unknown>) =>
+      jobsRepository.findAll(userId, { page: 1, limit: 50, sortBy: 'createdAt', sortOrder: 'desc', search: 'Range', ...extra })
+
+    expect((await q({ createdFrom: '2021-01-01' })).rows.map((r) => r.title).sort()).toEqual(['Mid', 'New'])
+    expect((await q({ createdTo: '2023-01-01' })).rows.map((r) => r.title).sort()).toEqual(['Mid', 'Old'])
+    expect((await q({ createdFrom: '2021-01-01', createdTo: '2023-01-01' })).rows.map((r) => r.title)).toEqual(['Mid'])
+    // createdTo equal to a job's own day still includes it (end-of-day inclusive)
+    expect((await q({ createdTo: '2022-06-15' })).rows.map((r) => r.title).sort()).toEqual(['Mid', 'Old'])
+  })
 })

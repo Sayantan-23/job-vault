@@ -71,14 +71,17 @@ describe('GET /api/jobs', () => {
     expect(res.body.error).toBe('VALIDATION_ERROR')
   })
 
-  it('forwards search/status/sort filters to the repository', async () => {
+  it('forwards search/status/sort/date filters to the repository', async () => {
     repo.findAll.mockResolvedValue({ rows: [], total: 0 })
     await request(app)
-      .get('/api/jobs?search=rust&status=APPLIED&sortBy=updatedAt&sortOrder=asc')
+      .get('/api/jobs?search=rust&status=APPLIED&sortBy=updatedAt&sortOrder=asc&createdFrom=2022-01-01&createdTo=2022-12-31')
       .set('Cookie', [cookie])
     expect(repo.findAll).toHaveBeenCalledWith(
       'u1',
-      expect.objectContaining({ search: 'rust', status: 'APPLIED', sortBy: 'updatedAt', sortOrder: 'asc' }),
+      expect.objectContaining({
+        search: 'rust', status: 'APPLIED', sortBy: 'updatedAt', sortOrder: 'asc',
+        createdFrom: '2022-01-01', createdTo: '2022-12-31',
+      }),
     )
   })
 })

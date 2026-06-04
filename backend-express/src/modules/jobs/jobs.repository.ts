@@ -1,4 +1,4 @@
-import { and, or, eq, ilike, asc, desc, max, count, sql } from 'drizzle-orm'
+import { and, or, eq, ilike, asc, desc, max, count, sql, gte, lte } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { getDb } from '@/db/client.js'
 import { jobs, type JobRow, type NewJobRow, type JobStatus } from '@/db/schema/jobs.js'
@@ -64,6 +64,8 @@ async function findAll(userId: string, query: JobQueryInput): Promise<{ rows: Jo
       : undefined,
     query.status ? eq(jobs.status, query.status) : undefined,
     ghostCondition(query.ghostFilter),
+    query.createdFrom ? gte(jobs.createdAt, new Date(`${query.createdFrom}T00:00:00.000Z`)) : undefined,
+    query.createdTo ? lte(jobs.createdAt, new Date(`${query.createdTo}T23:59:59.999Z`)) : undefined,
   )
 
   const sortColumn = SORT_COLUMNS[query.sortBy]

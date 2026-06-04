@@ -33,6 +33,8 @@ export const JobQuerySchema = z.object({
   search: z.string().optional(),
   status: z.enum(JOB_STATUSES).optional(),
   ghostFilter: z.enum(['all', 'active', 'stale', 'ghost']).optional(),
+  createdFrom: z.string().date().optional(),
+  createdTo: z.string().date().optional(),
 })
 
 export type CreateJobInput = z.infer<typeof CreateJobSchema>
