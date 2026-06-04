@@ -41,7 +41,7 @@ function SortHeader({
     <button
       type="button"
       onClick={() => onSort(field)}
-      className={cn('inline-flex items-center gap-1 text-left transition-colors hover:text-foreground', active ? 'text-foreground' : '', className)}
+      className={cn('inline-flex items-center gap-1 text-left uppercase transition-colors hover:text-foreground', active ? 'text-foreground' : '', className)}
     >
       {label}
       {active ? <Icon className="size-3" aria-label={sortOrder === 'asc' ? 'sorted ascending' : 'sorted descending'} /> : null}
