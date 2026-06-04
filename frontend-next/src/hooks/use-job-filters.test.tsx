@@ -104,6 +104,15 @@ describe('useJobFilters', () => {
     expect(back.has('dir')).toBe(false)
   })
 
+  it('cycleSort: switching into Added from another active sort goes to asc', () => {
+    searchParams.set('sort', 'company'); searchParams.set('dir', 'asc')
+    const { result } = renderHook(() => useJobFilters())
+    act(() => result.current.cycleSort('createdAt'))
+    const u = new URL(lastUrl(), 'http://x').searchParams
+    expect(u.get('sort')).toBe('createdAt')
+    expect(u.get('dir')).toBe('asc')
+  })
+
   it('setDateRange sets/clears from+to, resets page, preserves view', () => {
     searchParams.set('page', '3'); searchParams.set('view', 'board')
     const { result } = renderHook(() => useJobFilters())

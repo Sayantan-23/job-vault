@@ -9,8 +9,8 @@ export function DateRangeMenu({
   to,
   onApply,
 }: {
-  from?: string
-  to?: string
+  from?: string | undefined
+  to?: string | undefined
   onApply: (from?: string, to?: string) => void
 }) {
   const [localFrom, setLocalFrom] = useState(from ?? '')

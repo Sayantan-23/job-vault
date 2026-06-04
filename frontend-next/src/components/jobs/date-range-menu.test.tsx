@@ -17,4 +17,11 @@ describe('DateRangeMenu', () => {
     fireEvent.click(screen.getByRole('button', { name: /clear/i }))
     expect(onApply).toHaveBeenCalledWith(undefined, undefined)
   })
+  it('bounds the inputs so From cannot exceed To', () => {
+    render(<DateRangeMenu onApply={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText(/from/i), { target: { value: '2022-03-01' } })
+    fireEvent.change(screen.getByLabelText(/to/i), { target: { value: '2022-09-01' } })
+    expect(screen.getByLabelText(/to/i)).toHaveAttribute('min', '2022-03-01')
+    expect(screen.getByLabelText(/from/i)).toHaveAttribute('max', '2022-09-01')
+  })
 })

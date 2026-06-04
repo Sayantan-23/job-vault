@@ -167,5 +167,9 @@ describe('jobsRepository (real DB)', () => {
     expect((await q({ createdFrom: '2021-01-01', createdTo: '2023-01-01' })).rows.map((r) => r.title)).toEqual(['Mid'])
     // createdTo equal to a job's own day still includes it (end-of-day inclusive)
     expect((await q({ createdTo: '2022-06-15' })).rows.map((r) => r.title).sort()).toEqual(['Mid', 'Old'])
+    // createdFrom equal to a job's own day still includes it (start-of-day inclusive)
+    expect((await q({ createdFrom: '2022-06-15' })).rows.map((r) => r.title).sort()).toEqual(['Mid', 'New'])
+    // the date range narrows the total/count query too, not just the rows
+    expect((await q({ createdFrom: '2021-01-01', createdTo: '2023-01-01' })).total).toBe(1)
   })
 })

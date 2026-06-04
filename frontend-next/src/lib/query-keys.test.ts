@@ -12,6 +12,14 @@ describe('jobsListKey', () => {
   it('differs when any filter differs', () => {
     expect(jobsListKey(DEFAULT_FILTERS)).not.toEqual(jobsListKey({ ...DEFAULT_FILTERS, page: 2 }))
   })
+
+  it('differs when only the date range differs (so the Added filter refetches)', () => {
+    expect(jobsListKey(DEFAULT_FILTERS)).not.toEqual(jobsListKey({ ...DEFAULT_FILTERS, createdFrom: '2022-01-01' }))
+    expect(jobsListKey(DEFAULT_FILTERS)).not.toEqual(jobsListKey({ ...DEFAULT_FILTERS, createdTo: '2022-12-31' }))
+    expect(jobsListKey({ ...DEFAULT_FILTERS, createdFrom: '2022-01-01' })).not.toEqual(
+      jobsListKey({ ...DEFAULT_FILTERS, createdFrom: '2023-01-01' }),
+    )
+  })
 })
 
 describe('kanbanKey', () => {

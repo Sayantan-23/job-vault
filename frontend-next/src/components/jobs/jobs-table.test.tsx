@@ -72,4 +72,11 @@ describe('JobsTable', () => {
     const { container } = render(<JobsTable jobs={[]} onSort={vi.fn()} {...base} loading />)
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(8)
   })
+
+  it('marks the column funnels active when their filter is set', () => {
+    const { rerender } = render(<JobsTable jobs={[JOB]} onSort={vi.fn()} {...base} status="APPLIED" />)
+    expect(screen.getByRole('button', { name: /filter by status/i })).toHaveAttribute('data-active', 'true')
+    rerender(<JobsTable jobs={[JOB]} onSort={vi.fn()} {...base} createdFrom="2022-01-01" />)
+    expect(screen.getByRole('button', { name: /filter by date added/i })).toHaveAttribute('data-active', 'true')
+  })
 })

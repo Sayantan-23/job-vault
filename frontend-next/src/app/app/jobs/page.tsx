@@ -10,7 +10,7 @@ import type { KanbanBoard } from '@/types/dashboard'
 
 export const metadata: Metadata = { title: 'Jobs' }
 
-const FILTER_PARAMS = ['search', 'status', 'ghost', 'sort', 'dir', 'page'] as const
+const FILTER_PARAMS = ['search', 'status', 'ghost', 'sort', 'dir', 'page', 'from', 'to'] as const
 
 export default async function JobsPage({
   searchParams,

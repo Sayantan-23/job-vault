@@ -68,8 +68,8 @@ function Header({
   onSort: (f: SortField) => void
   status: JobStatus | undefined
   onStatus: (v: JobStatus | undefined) => void
-  createdFrom?: string
-  createdTo?: string
+  createdFrom?: string | undefined
+  createdTo?: string | undefined
   onDateRange: (from?: string, to?: string) => void
 }) {
   return (
@@ -146,8 +146,8 @@ export function JobsTable({
   onReset: () => void
   status: JobStatus | undefined
   onStatus: (value: JobStatus | undefined) => void
-  createdFrom?: string
-  createdTo?: string
+  createdFrom?: string | undefined
+  createdTo?: string | undefined
   onDateRange: (from?: string, to?: string) => void
 }) {
   const searchParams = useSearchParams()
