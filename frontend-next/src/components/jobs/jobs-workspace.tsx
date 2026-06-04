@@ -4,14 +4,19 @@ import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, Plus } from 'lucide-react'
 import { useJobs } from '@/hooks/use-jobs'
+import { useKanban } from '@/hooks/use-dashboard'
+import { useJobFilters } from '@/hooks/use-job-filters'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { KanbanBoard } from '@/components/kanban/kanban-board'
-import { JobsList } from './jobs-list'
+import { JobsToolbar } from './jobs-toolbar'
+import { JobsTable } from './jobs-table'
+import { JobsPagination } from './jobs-pagination'
 import { AddJobModal } from './add-job-modal'
 import { JobDrawer } from './job-drawer'
 import { PageHeader } from '@/components/layout/app/page-header'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import type { Paginated } from '@/types/filters'
 import type { Job } from '@/types/job'
 import type { KanbanBoard as Board } from '@/types/dashboard'
 
@@ -30,26 +35,34 @@ export function JobsWorkspace({
   initialJobs,
   initialBoard,
 }: {
-  initialJobs: Job[]
+  initialJobs: Paginated<Job>
   initialBoard: Board
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const viewParam = searchParams.get('view')
-  const view: View = isView(viewParam) ? viewParam : 'list'
+  const view: View = isView(searchParams.get('view')) ? (searchParams.get('view') as View) : 'list'
   const jobId = searchParams.get('job')
 
-  const { data: jobs = [] } = useJobs(initialJobs)
+  const { filters, isFiltered, setSearch, setStatus, setGhost, setSort, setPage, resetAll } = useJobFilters()
+  const boardFilters = { search: filters.search, ghost: filters.ghost }
+
+  const listQuery = useJobs(filters, initialJobs)
+  const page = listQuery.data ?? initialJobs
+  const boardQuery = useKanban(boardFilters, initialBoard)
+  const board = boardQuery.data ?? initialBoard
+
   const [addOpen, setAddOpen] = useState(false)
 
   function setView(next: View) {
-    const params = new URLSearchParams(searchParams)
+    const params = new URLSearchParams(searchParams.toString())
     if (next === 'list') params.delete('view')
     else params.set('view', next)
     const qs = params.toString()
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
+
+  const count = view === 'board' ? board.stats.totalJobs : page.meta.total
 
   const actions = (
     <>
@@ -64,25 +77,42 @@ export function JobsWorkspace({
 
   return (
     <>
-      {/* Board view fills the available height (each column scrolls its own cards);
-          list view flows naturally and its region scrolls. */}
       <div className="flex min-h-0 flex-1 flex-col">
         <PageHeader
           title="Jobs"
           description={
             <>
-              <span className="font-mono tabular-nums">{jobs.length}</span> tracked
+              <span className="font-mono tabular-nums">{count}</span> {isFiltered ? 'matching' : 'tracked'}
             </>
           }
           actions={actions}
         />
+        <JobsToolbar
+          view={view}
+          filters={filters}
+          isFiltered={isFiltered}
+          onSearch={setSearch}
+          onStatus={setStatus}
+          onGhost={setGhost}
+          onSort={setSort}
+          onReset={resetAll}
+        />
         {view === 'board' ? (
           <div className="min-h-0 flex-1 p-6">
-            <KanbanBoard board={initialBoard} />
+            <KanbanBoard board={board} filters={boardFilters} isFiltered={isFiltered} />
           </div>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto p-6">
-            <JobsList jobs={jobs} />
+            <JobsTable
+              jobs={page.data}
+              sortBy={filters.sortBy}
+              sortOrder={filters.sortOrder}
+              onSort={setSort}
+              loading={listQuery.isLoading}
+              isFiltered={isFiltered}
+              onReset={resetAll}
+            />
+            <JobsPagination meta={page.meta} onPage={setPage} />
           </div>
         )}
       </div>
