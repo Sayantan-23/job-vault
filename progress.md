@@ -175,6 +175,25 @@
 - [ ] Deferred — full backlog + rationale in [`docs/deferred-tasks.md`](docs/deferred-tasks.md): **email reminders (likely next)**, recurring reminders, soft-delete/`completedAt`, `STATUS_CHANGE`/`GENERAL` notifications, `/unread-count` endpoint, retention/auto-archive, global activity feed (`/app/timeline`), production WS-upgrade proxy, socket.io Redis adapter (multi-instance tripwire), web/mobile push. (Real-time works in dev on the long-polling fallback.)
 - [ ] Manual browser pass + **merge to master** (user merges).
 
+## Migration Slice 5 — Filters + Search + List View (NEW) (2026-06-04)
+
+> **Spec**: `docs/superpowers/specs/2026-06-04-slice-5-filters-search-list-design.md`
+> **Plan**: `docs/superpowers/plans/2026-06-04-slice-5-filters-search-list.md`
+> Built on branch `slice-5-filters-search-list` (**not yet merged to master**). Orchestrated via the `Workflow` tool: 4 sequential TDD batches → ground-truth gate → 5-lens adversarial review → review-fix pass.
+> **Decisions**: filters on **both** views, **server-driven** (zero backend changes — `GET /api/jobs` and `GET /api/dashboard/kanban` already filter/sort/paginate; ghostFilter fix shipped in Slice 4b); URL-synced via a single `useJobFilters` (+ shared pure `parseFilters`); list toolbar search with **Cmd/⌘K** focus; **borderless aligned** sortable list (not a spreadsheet table); **hybrid board drag** (cross-column status moves stay enabled while filtered, within-column reorder suppressed) via pure `resolveDrop`.
+
+### Frontend (`frontend-next`)
+- [x] `types/filters.ts` + pure `lib/filters.ts` (`parseFilters`/`isFiltered`/`buildListQuery`/`buildBoardQuery`); filter-encoded query keys (`jobsListKey`/`kanbanKey`) nested under existing prefixes so current invalidations still match; `apiClient/apiServer.getPage` preserve pagination `meta` (incl. through the 401-refresh retry); `useDebouncedValue`; `shortDate`.
+- [x] `useJobFilters` (URL↔filter source of truth — clean-URL + reset-page rules, preserves `view`/`job`); filter-aware `useJobs` (→ `{data, meta}`, `keepPreviousData`) + `useKanban` (search+ghost, gated to the board view).
+- [x] `SearchInput` (debounced + Cmd/⌘K + clear, loop-safe vs external value changes), `SortControl`, `JobsToolbar` (per-view controls + reset), `JobsTable` (sortable borderless list with responsive columns, replaces `JobsList`), `JobsPagination`, `ReorderPausedHint`.
+- [x] Hybrid board drag (`resolveDrop` pure helper; controlled `KanbanBoard` writing the active `kanbanKey`; restores snapshot on unresolved/cancelled drops); `JobsWorkspace` owns both queries; `page.tsx` SSR-seeds the filtered list/board from URL params (array-param safe) for deep links.
+
+### Verification
+- [x] Frontend: typecheck + lint + **216 tests** + **production Docker build** — all green.
+- [x] Adversarial 5-lens review (strict-TS/cache-keys · URL-sync/data-flow · hybrid-drag · test-faithfulness · design/a11y/conventions); fixes applied: search-input debounce loop, responsive table columns, unresolved-drop snapshot restore, dynamic sort aria-label, list-view board-fetch gating, +getPage-refresh / setSort-toggle / active-arrow / skeleton tests.
+- [ ] **Known testing boundary:** dnd-kit drag is not exercised at the component level (jsdom can't resolve drop targets); the drop decision is covered exhaustively by `resolveDrop` unit tests + the live smoke. The Ghost column shows the `GhostMeter` ("Nd") rather than a separate relative-activity label (accepted simplification).
+- [ ] Manual browser pass (search/sort/paginate/reset, deep-link SSR, board hybrid drag while filtered, toggle preserves filters) + **merge to master** (user merges).
+
 ---
 
 ## Dependency Diagram
