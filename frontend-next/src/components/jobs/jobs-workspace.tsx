@@ -53,12 +53,12 @@ export function JobsWorkspace({
 
   const actions = (
     <>
-      <NotificationBell />
       <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
       <Button type="button" onClick={() => setAddOpen(true)}>
         <Plus className="size-4" aria-hidden="true" />
         Add job
       </Button>
+      <NotificationBell />
     </>
   )
 
