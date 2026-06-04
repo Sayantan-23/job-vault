@@ -150,6 +150,31 @@
 - [x] Adversarial six-lens review (behavior-parity/strict-TS/dead-code/test-quality/conventions/data-flow); coverage gaps closed (view→List clean-URL, job-mutation cache invalidations, useStats initialData isolation).
 - [ ] Manual browser pass (toggle Board⇄List, `?view=` survives refresh, open-from-board returns to board, stats reflect adds) — recommended before merge.
 
+## Migration Slice 4 — Timeline + Reminders + Notifications + Real-time (NEW) (2026-06-04)
+
+> **Spec**: `docs/superpowers/specs/2026-06-03-slice-4-timeline-reminders-notifications-design.md` (+ app-redesign §9 "Slice 4 resolutions").
+> **Plans**: `docs/superpowers/plans/2026-06-03-slice-4{a,b,c}-*.md`. Built as 3 sub-slices on branch `slice-4-timeline-reminders-notifications` (56 commits; **not yet merged to master**).
+
+**Slice 4a — Timeline + auto-events**
+- [x] `timeline_events` table (migration `0002`; `userId`+`jobId` cascade, `type` AUTO|MANUAL, `title`, nullable `description`) + `timeline` module (router→controller→service→repository→Zod). `GET`/`POST /api/jobs/:jobId/timeline` (ordered `createdAt DESC`; manual POST bumps `lastActivityAt`).
+- [x] `jobs.service` emits AUTO events on **create** ("Job added to vault") and **status-change** on PATCH + move ("Status changed to {new}"), as a logged follow-on write (never rolls back the job mutation).
+- [x] Frontend `useTimeline`/`useAddTimelineEntry` (optimistic prepend + 5-key invalidation) + `TimelineSection` in the JobDrawer. **Live smoke verified** end-to-end.
+
+**Slice 4b — Reminders + Notifications + node-cron + ghost-filter fix**
+- [x] `reminders` (`message`/`remindAt`/`isCompleted`) + `notifications` (`type` enum; `relatedJobId` **ON DELETE SET NULL**) tables (migration `0003`) + both modules. Notifications route order `read-all` before `:id/read`; unread derived client-side.
+- [x] `node-cron` scheduler (system-wide repo + pure sweeps): **reminder sweep `*/5`** (due → REMINDER notification, idempotent) and **daily ghost sweep** (persists `ghostDays` as a bookkeeping anchor only; fires GHOST_ALERT once per 7/14-day crossing — two independent ifs). Started after `app.listen()` gated by `ENABLE_SCHEDULER`, stopped before `server.close()`, never in `createApp`; safe-boolean env parse.
+- [x] **Fixed the latent `/api/jobs?ghostFilter` bug** — now derives ghost-days live in SQL (shared `GHOST_STALE_DAYS`/`GHOST_GHOST_DAYS` constants in `src/shared/ghost.ts`), matching the dashboard.
+- [x] Frontend `use-notifications`/`use-reminders` hooks, `ui/popover` primitive, NotificationBell (in page headers) + RemindersSection (in JobDrawer). **Live smoke verified**: reminders CRUD, ghost-filter, both cron sweeps → notifications, read-all.
+
+**Slice 4c — Real-time delivery (socket.io)**
+- [x] socket.io gateway on the shared `http.Server` (cookie-auth `io.use()` handshake → per-user rooms); `emitToUser` seam in `notificationService.create`; `index.ts` runs **both** scheduler + socket lifecycles (gated by `ENABLE_SCHEDULER`/`ENABLE_REALTIME`, off in test). Frontend `socket.io-client` singleton + `RealtimeProvider` (pushes into the `NOTIFICATIONS_KEY` cache, dedupe-by-id, StrictMode-safe). **No app-level polling** (`useNotifications` = `staleTime 30s` + focus-refetch fallback). *(This overrides the migration spec §11.1 "real-time deferred / polling" baseline.)*
+- [x] Next `/socket.io` proxy fixed (`skipTrailingSlashRedirect` + exact-slash rewrite — the handshake needs the trailing slash); dashboard page wrapped in `Suspense` for the header bell's `useSearchParams` (caught by the production build).
+- [x] **Real-time verified end-to-end**: a socket.io client through the Next proxy received the cron-pushed REMINDER notification the instant the in-process `*/5` cron fired.
+
+**Gates (all green):** backend `typecheck`+`lint`+**248 tests**; frontend `typecheck`+`lint`+**164 tests**+**production Docker build**. Per-chunk implementer→ground-truth-gate→adversarial-review loop; final whole-slice review APPROVE. No `git push`, no "Claude" in commit messages.
+- [ ] Deferred (per spec): recurring reminders, `STATUS_CHANGE`/`GENERAL` notifications, `/unread-count` endpoint, global activity feed, socket.io Redis adapter, production WS-upgrade proxy (nginx/Traefik) — long-polling fallback covers dev.
+- [ ] Manual browser pass + **merge to master** (user merges).
+
 ---
 
 ## Dependency Diagram
