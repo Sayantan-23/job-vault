@@ -8,14 +8,15 @@ JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: th
 
 - **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 15). **Build here.**
 - **Reference only:** `backend/` (NestJS) and `frontend/` (Nuxt) — kept to read the original behavior/contracts. **Do not edit; delete only at the final cleanup slice.**
-- **Done:** Slice 0 (Foundation), Slice 1 (Auth — email/password, JWT cookies, **+ silent token refresh**), Slice 2 (Jobs — CRUD + Cheerio/Turndown scraper, AddJobModal + URL-driven JobDrawer via `?job=`).
-- **Next:** Slice 3 (Dashboard & Kanban — `@dnd-kit` board + `GET /api/dashboard/kanban`/`stats` endpoints; `PATCH /api/jobs/:id/move` is already built). **Plan not yet written** — brainstorm the open decisions, then write `docs/superpowers/plans/YYYY-MM-DD-slice-3-dashboard-kanban.md`.
+- **Done:** Slice 0 (Foundation), Slice 1 (Auth — email/password, JWT cookies, **+ silent token refresh**), Slice 2 (Jobs — CRUD + Cheerio/Turndown scraper, AddJobModal + URL-driven JobDrawer via `?job=`), Slice 3 (Dashboard & Kanban — `@dnd-kit` board + `GET /api/dashboard/kanban`/`stats`, optimistic `move`, ghost-days **derived live**), Slice 3.5 (unified Jobs workspace with Board⇄List toggle + stats-only Dashboard overview), Slice 4 (Timeline + Reminders + Notifications — per-job timeline in the JobDrawer + auto-events, `node-cron` scheduler [reminder sweep + daily ghost sweep], notifications bell, and **socket.io real-time** delivery [overrides the spec's "60s polling" placeholder; long-polling fallback through the Next proxy in dev]).
+- **Next:** Slice 5 (Filters + Search + List View) — URL-synced filters (status/ghost/sort), debounced search, a sortable/paginated list table. **Mostly frontend:** `GET /api/jobs` already supports `page/limit/sortBy/sortOrder/search/status/ghostFilter` (and `ghostFilter` was fixed in Slice 4b to derive ghost-days live in SQL). **Plan not yet written** — brainstorm the open decisions, then write `docs/superpowers/plans/YYYY-MM-DD-slice-5-filters-search-list.md`. *(Alternative pickup: **email reminders** was flagged as a possible earlier priority — see `docs/deferred-tasks.md`.)*
 
 ### Where to look (source of truth)
 - `progress.md` — **status of every slice; read this first.**
 - `docs/superpowers/specs/2026-04-26-nest-to-express-nuxt-to-next-migration-design.md` — overall migration architecture + the slice roadmap.
 - `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md` — scope of this effort (app surface + Express), design direction, decisions.
-- `docs/superpowers/plans/2026-06-01-slice-0-foundation.md`, `…/slice-1-auth.md`, `…/2026-06-02-slice-2-jobs.md` — the executed slice plans (use as the pattern for new slices).
+- `docs/superpowers/plans/` — the executed slice plans (Slices 0–4, incl. `2026-06-03-slice-4{a,b,c}-*.md`); use the latest as the pattern for new slices.
+- `docs/deferred-tasks.md` — backlog of intentionally-deferred work (email reminders, recurring/soft-delete reminders, production WS-upgrade proxy, socket.io Redis adapter for multi-instance, global `/app/timeline` feed).
 - `docs/best-practices/{express,nextjs,typescript}.md` — the standards a reviewer checks against.
 - `CONVENTIONS.md` — DB/backend/frontend naming conventions.
 
