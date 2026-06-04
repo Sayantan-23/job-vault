@@ -172,7 +172,7 @@
 - [x] **Real-time verified end-to-end**: a socket.io client through the Next proxy received the cron-pushed REMINDER notification the instant the in-process `*/5` cron fired.
 
 **Gates (all green):** backend `typecheck`+`lint`+**248 tests**; frontend `typecheck`+`lint`+**164 tests**+**production Docker build**. Per-chunk implementer→ground-truth-gate→adversarial-review loop; final whole-slice review APPROVE. No `git push`, no "Claude" in commit messages.
-- [ ] Deferred (per spec): recurring reminders, `STATUS_CHANGE`/`GENERAL` notifications, `/unread-count` endpoint, global activity feed, socket.io Redis adapter, production WS-upgrade proxy (nginx/Traefik) — long-polling fallback covers dev.
+- [ ] Deferred — full backlog + rationale in [`docs/deferred-tasks.md`](docs/deferred-tasks.md): **email reminders (likely next)**, recurring reminders, soft-delete/`completedAt`, `STATUS_CHANGE`/`GENERAL` notifications, `/unread-count` endpoint, retention/auto-archive, global activity feed (`/app/timeline`), production WS-upgrade proxy, socket.io Redis adapter (multi-instance tripwire), web/mobile push. (Real-time works in dev on the long-polling fallback.)
 - [ ] Manual browser pass + **merge to master** (user merges).
 
 ---
