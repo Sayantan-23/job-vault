@@ -32,11 +32,18 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>
 }
 
+const FILTERS = { search: '', ghost: 'all' as const }
+
 describe('KanbanBoard', () => {
   it('renders all six columns and the seeded card', () => {
-    render(<KanbanBoard board={BOARD} />, { wrapper })
+    render(<KanbanBoard board={BOARD} filters={FILTERS} isFiltered={false} />, { wrapper })
     expect(screen.getByText('Wishlist')).toBeInTheDocument()
     expect(screen.getByText('Archived')).toBeInTheDocument()
     expect(screen.getByText('Wished')).toBeInTheDocument()
+  })
+
+  it('shows the reorder-paused hint when filtered', () => {
+    render(<KanbanBoard board={BOARD} filters={{ search: 'x', ghost: 'all' }} isFiltered />, { wrapper })
+    expect(screen.getByText(/reordering is paused/i)).toBeInTheDocument()
   })
 })

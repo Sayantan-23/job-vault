@@ -15,30 +15,27 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
-import { useKanban, useMoveJob } from '@/hooks/use-dashboard'
-import { DASHBOARD_KANBAN_KEY } from '@/lib/query-keys'
-import { calculateKanbanOrder, findCard, moveCardToColumn } from '@/lib/kanban'
-import { JOB_STATUSES, type JobStatus } from '@/lib/job-status'
+import { useMoveJob } from '@/hooks/use-dashboard'
+import { kanbanKey } from '@/lib/query-keys'
+import { findCard, moveCardToColumn, resolveDrop, isStatus } from '@/lib/kanban'
 import { KanbanColumn } from './kanban-column'
 import { GhostMeter } from '@/components/kanban/ghost-meter'
+import { ReorderPausedHint } from './reorder-paused-hint'
+import type { GhostFilter } from '@/types/filters'
 import type { KanbanBoard as Board, KanbanCard as Card } from '@/types/dashboard'
 
-function isStatus(value: string): value is JobStatus {
-  return (JOB_STATUSES as readonly string[]).includes(value)
-}
-
-/** The droppable id is either a column status, or a card id (resolve to its column). */
-function resolveTargetStatus(board: Board, overId: string): JobStatus | null {
-  if (isStatus(overId)) return overId
-  const located = findCard(board, overId)
-  return located ? located.status : null
-}
-
-export function KanbanBoard({ board: initial }: { board: Board }) {
+export function KanbanBoard({
+  board,
+  filters,
+  isFiltered,
+}: {
+  board: Board
+  filters: { search: string; ghost: GhostFilter }
+  isFiltered: boolean
+}) {
   const qc = useQueryClient()
   const move = useMoveJob()
-  const { data } = useKanban(initial)
-  const board = data ?? initial
+  const key = kanbanKey(filters)
   const snapshot = useRef<Board | null>(null)
   const [activeCard, setActiveCard] = useState<Card | null>(null)
 
@@ -48,7 +45,7 @@ export function KanbanBoard({ board: initial }: { board: Board }) {
   )
 
   function setBoard(next: Board) {
-    qc.setQueryData(DASHBOARD_KANBAN_KEY, next)
+    qc.setQueryData(key, next)
   }
 
   function onDragStart(event: DragStartEvent) {
@@ -64,12 +61,11 @@ export function KanbanBoard({ board: initial }: { board: Board }) {
     const { active, over } = event
     if (!over) return
     const activeId = String(active.id)
-    const targetStatus = resolveTargetStatus(board, String(over.id))
+    const overId = String(over.id)
+    const targetStatus = isStatus(overId) ? overId : (findCard(board, overId)?.status ?? null)
     if (!targetStatus) return
     const from = findCard(board, activeId)
-    if (!from) return
-    if (from.status === targetStatus) return // within-column handled on drag end
-
+    if (!from || from.status === targetStatus) return // within-column handled on drag end
     const targetColumn = board.columns.find((c) => c.status === targetStatus)
     const index = targetColumn ? targetColumn.jobs.length : 0
     setBoard(moveCardToColumn(board, activeId, targetStatus, index))
@@ -82,30 +78,22 @@ export function KanbanBoard({ board: initial }: { board: Board }) {
       if (snapshot.current) setBoard(snapshot.current)
       return
     }
-    const activeId = String(active.id)
-    const targetStatus = resolveTargetStatus(board, String(over.id))
-    const from = findCard(board, activeId)
-    if (!targetStatus || !from) return
-
-    // Determine the drop index within the target column.
-    const overIsCard = !isStatus(String(over.id))
-    const targetColumn = board.columns.find((c) => c.status === targetStatus)
-    const overIndex = overIsCard
-      ? (targetColumn?.jobs.findIndex((j) => j.id === String(over.id)) ?? 0)
-      : (targetColumn?.jobs.length ?? 0)
-
-    const placed = moveCardToColumn(board, activeId, targetStatus, overIndex)
-    setBoard(placed)
-
-    // Compute the persisted order from the new neighbours (excluding the moved card).
-    const placedColumn = placed.columns.find((c) => c.status === targetStatus)
-    const finalIndex = placedColumn?.jobs.findIndex((j) => j.id === activeId) ?? 0
-    const siblings = (placedColumn?.jobs ?? []).filter((j) => j.id !== activeId)
-    const kanbanOrder = calculateKanbanOrder(siblings, finalIndex)
-
+    const result = resolveDrop({
+      snapshot: snapshot.current ?? board,
+      board,
+      activeId: String(active.id),
+      overId: String(over.id),
+      isFiltered,
+    })
+    if (!result) return
+    if (result.kind === 'cancel') {
+      if (snapshot.current) setBoard(snapshot.current)
+      return
+    }
+    setBoard(result.board)
     const before = snapshot.current
     move.mutate(
-      { id: activeId, status: targetStatus, kanbanOrder },
+      { id: String(active.id), status: result.status, kanbanOrder: result.kanbanOrder },
       { onError: () => { if (before) setBoard(before) } },
     )
   }
@@ -118,6 +106,7 @@ export function KanbanBoard({ board: initial }: { board: Board }) {
       onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
+      {isFiltered ? <ReorderPausedHint /> : null}
       <div className="flex h-full gap-3 overflow-x-auto pb-4">
         {board.columns.map((column) => (
           <KanbanColumn key={column.status} column={column} />
