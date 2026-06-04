@@ -13,8 +13,12 @@ import type { SortField, SortOrder } from '@/types/filters'
 
 // Mobile keeps Title / Company / Status / Ghost; Location + Added appear at md+
 // (their cells are `hidden md:*`, and the grid template gains the two columns at md).
+// Every column gets a proportional `fr` share so the row width is distributed
+// evenly — text columns can shrink+truncate (minmax(0,…)); the metadata columns
+// keep a content-floor (minmax(<rem>,…)) so the chip/meter/date never clip. This
+// stops the slack piling into one flexible column and clustering the rest at the edge.
 const GRID =
-  'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_auto_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_auto] items-center gap-4'
+  'grid grid-cols-[minmax(0,2.5fr)_minmax(0,2fr)_minmax(7rem,1fr)_minmax(5rem,0.8fr)] md:grid-cols-[minmax(0,2.5fr)_minmax(0,2fr)_minmax(0,1.5fr)_minmax(7rem,1fr)_minmax(5rem,0.8fr)_minmax(5rem,0.8fr)] items-center gap-4'
 
 function SortHeader({
   label,
