@@ -11,7 +11,10 @@ import { shortDate } from '@/lib/relative-time'
 import type { Job } from '@/types/job'
 import type { SortField, SortOrder } from '@/types/filters'
 
-const GRID = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_auto] items-center gap-4'
+// Mobile keeps Title / Company / Status / Ghost; Location + Added appear at md+
+// (their cells are `hidden md:*`, and the grid template gains the two columns at md).
+const GRID =
+  'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_auto_auto] md:grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_auto] items-center gap-4'
 
 function SortHeader({
   label,
@@ -47,10 +50,39 @@ function Header({ sortBy, sortOrder, onSort }: { sortBy: SortField; sortOrder: S
     <div className={cn(GRID, 'border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground')}>
       <SortHeader label="Title" field="title" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
       <SortHeader label="Company" field="company" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-      <span>Location</span>
+      <span className="hidden md:block">Location</span>
       <span>Status</span>
       <SortHeader label="Ghost" field="lastActivityAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-      <SortHeader label="Added" field="createdAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+      <SortHeader label="Added" field="createdAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} className="hidden md:inline-flex" />
+    </div>
+  )
+}
+
+function TableSkeleton() {
+  return (
+    <div className="rounded-xl border border-border">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="h-12 animate-pulse border-b border-border bg-muted/30 last:border-b-0" />
+      ))}
+    </div>
+  )
+}
+
+function EmptyState({ filtered, onReset }: { filtered: boolean; onReset: () => void }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border p-10 text-center">
+      {filtered ? (
+        <>
+          <p className="text-sm font-medium">No jobs match your filters</p>
+          <p className="mt-1 text-sm text-muted-foreground">Try widening or clearing them.</p>
+          <Button type="button" variant="outline" size="sm" onClick={onReset} className="mt-4">Reset filters</Button>
+        </>
+      ) : (
+        <>
+          <p className="text-sm font-medium">No jobs yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">Add your first application to start tracking it.</p>
+        </>
+      )}
     </div>
   )
 }
@@ -79,54 +111,26 @@ export function JobsTable({
     return `/app/jobs?${p.toString()}`
   }
 
-  if (loading && jobs.length === 0) {
-    return (
-      <div className="rounded-xl border border-border">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="h-12 animate-pulse border-b border-border bg-muted/30 last:border-b-0" />
-        ))}
-      </div>
-    )
-  }
-
-  if (jobs.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border p-10 text-center">
-        {isFiltered ? (
-          <>
-            <p className="text-sm font-medium">No jobs match your filters</p>
-            <p className="mt-1 text-sm text-muted-foreground">Try widening or clearing them.</p>
-            <Button type="button" variant="outline" size="sm" onClick={onReset} className="mt-4">Reset filters</Button>
-          </>
-        ) : (
-          <>
-            <p className="text-sm font-medium">No jobs yet</p>
-            <p className="mt-1 text-sm text-muted-foreground">Add your first application to start tracking it.</p>
-          </>
-        )}
-      </div>
-    )
-  }
+  if (loading && jobs.length === 0) return <TableSkeleton />
+  if (jobs.length === 0) return <EmptyState filtered={isFiltered} onReset={onReset} />
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border">
-      <div className="min-w-[680px]">
-        <Header sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-        <ul className="divide-y divide-border">
-          {jobs.map((job) => (
-            <li key={job.id}>
-              <Link href={hrefFor(job.id)} scroll={false} className={cn(GRID, 'px-4 py-3 text-sm transition-colors hover:bg-accent')}>
-                <span className="truncate font-medium">{job.title}</span>
-                <span className="truncate text-muted-foreground">{job.company}</span>
-                <span className="truncate text-muted-foreground">{job.location ?? '—'}</span>
-                <StatusChip status={job.status} />
-                <GhostMeter days={job.ghostDays} />
-                <span className="font-mono text-xs tabular-nums text-muted-foreground">{shortDate(job.createdAt)}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <Header sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+      <ul className="divide-y divide-border">
+        {jobs.map((job) => (
+          <li key={job.id}>
+            <Link href={hrefFor(job.id)} scroll={false} className={cn(GRID, 'px-4 py-3 text-sm transition-colors hover:bg-accent')}>
+              <span className="truncate font-medium">{job.title}</span>
+              <span className="truncate text-muted-foreground">{job.company}</span>
+              <span className="hidden truncate text-muted-foreground md:block">{job.location ?? '—'}</span>
+              <StatusChip status={job.status} />
+              <GhostMeter days={job.ghostDays} />
+              <span className="hidden font-mono text-xs tabular-nums text-muted-foreground md:block">{shortDate(job.createdAt)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

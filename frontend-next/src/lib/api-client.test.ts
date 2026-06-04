@@ -160,4 +160,26 @@ describe('apiClient', () => {
     expect(page.data[0]?.id).toBe('j1')
     expect(page.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 })
   })
+
+  it('getPage refreshes and retries once on a 401, still returning the unwrapped {data, meta} envelope', async () => {
+    let dataCalls = 0
+    let refreshCalls = 0
+    sequencedFetch((url) => {
+      if (url.includes('/api/auth/refresh')) {
+        refreshCalls++
+        return { status: 200, body: { data: { id: 'u1' } } }
+      }
+      dataCalls++
+      return dataCalls === 1
+        ? { status: 401, body: UNAUTH }
+        : { status: 200, body: { data: [{ id: 'j1' }], meta: { total: 1, page: 1, limit: 20, totalPages: 1 } } }
+    })
+    // Guards that the `unwrap=false` flag survives the retry recursion: the
+    // retried request must still return the full envelope, not the unwrapped data.
+    const page = await apiClient.getPage<{ id: string }>('/api/jobs')
+    expect(page.data[0]?.id).toBe('j1')
+    expect(page.meta.total).toBe(1)
+    expect(refreshCalls).toBe(1)
+    expect(dataCalls).toBe(2)
+  })
 })

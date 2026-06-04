@@ -21,7 +21,10 @@ export default async function JobsPage({
   const params = new URLSearchParams()
   for (const k of FILTER_PARAMS) {
     const v = sp[k]
+    // Mirror useSearchParams().get() semantics so the SSR-seeded query key matches
+    // the client key on first render even for a (malformed) duplicated param.
     if (typeof v === 'string') params.set(k, v)
+    else if (Array.isArray(v) && typeof v[0] === 'string') params.set(k, v[0])
   }
   const filters = parseFilters(params)
   const view = sp['view']

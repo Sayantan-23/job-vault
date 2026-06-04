@@ -21,11 +21,14 @@ export function SearchInput({
   // Keep the field in sync when the URL value changes externally (back/forward, reset).
   useEffect(() => setLocal(value), [value])
 
-  // Push the debounced value up, but never echo a value already in the URL
-  // (prevents a write loop).
+  // Push the debounced value up only once the debounce has settled on the user's
+  // own input (debounced === local) and it actually differs from the URL. Without
+  // the `debounced === local` guard, an EXTERNAL value change (clear button,
+  // back/forward, resetAll) that lands inside the 300ms window would see a stale
+  // `debounced` and re-emit the old term — fighting the user's clear/navigation.
   useEffect(() => {
-    if (debounced !== value) onChange(debounced)
-  }, [debounced, value, onChange])
+    if (debounced === local && debounced !== value) onChange(debounced)
+  }, [debounced, local, value, onChange])
 
   // Cmd/Ctrl+K focuses the search field.
   useEffect(() => {

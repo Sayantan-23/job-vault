@@ -78,7 +78,7 @@ export function resolveDrop(args: {
   const targetColumn = board.columns.find((c) => c.status === targetStatus)
   const overIsCard = !isStatus(overId)
   const overIndex = isFiltered
-    ? (targetColumn?.jobs.length ?? 0) // force append-to-end when filtered (collision-safe)
+    ? (targetColumn?.jobs.length ?? 0) // when filtered, append after the last VISIBLE card — distinct vs visible siblings; may tie a hidden card, self-heals on the next unfiltered reorder
     : overIsCard
       ? (targetColumn?.jobs.findIndex((j) => j.id === overId) ?? 0)
       : (targetColumn?.jobs.length ?? 0)

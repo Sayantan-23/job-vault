@@ -74,27 +74,29 @@ export function KanbanBoard({
   function onDragEnd(event: DragEndEvent) {
     setActiveCard(null)
     const { active, over } = event
-    if (!over) {
-      if (snapshot.current) setBoard(snapshot.current)
+    const before = snapshot.current
+    const restore = () => { if (before) setBoard(before) }
+    // No drop target, no drag-start snapshot, an unresolved target, or a
+    // suppressed reorder all undo any optimistic preview onDragOver may have left.
+    if (!over || !before) {
+      restore()
       return
     }
     const result = resolveDrop({
-      snapshot: snapshot.current ?? board,
+      snapshot: before,
       board,
       activeId: String(active.id),
       overId: String(over.id),
       isFiltered,
     })
-    if (!result) return
-    if (result.kind === 'cancel') {
-      if (snapshot.current) setBoard(snapshot.current)
+    if (!result || result.kind === 'cancel') {
+      restore()
       return
     }
     setBoard(result.board)
-    const before = snapshot.current
     move.mutate(
       { id: String(active.id), status: result.status, kanbanOrder: result.kanbanOrder },
-      { onError: () => { if (before) setBoard(before) } },
+      { onError: restore },
     )
   }
 

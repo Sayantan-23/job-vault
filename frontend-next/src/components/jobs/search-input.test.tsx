@@ -32,4 +32,16 @@ describe('SearchInput', () => {
     fireEvent.keyDown(window, { key: 'k', metaKey: true })
     expect(input).toHaveFocus()
   })
+
+  it('does not re-emit the stale term after clearing within the debounce window', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(<SearchInput value="rust" onChange={onChange} />)
+    fireEvent.click(screen.getByRole('button', { name: /clear search/i }))
+    expect(onChange).toHaveBeenCalledWith('')
+    // The URL/prop catches up to the cleared value while the 300ms debounce of the
+    // old term is still pending — the component must NOT restore the old search.
+    rerender(<SearchInput value="" onChange={onChange} />)
+    act(() => vi.advanceTimersByTime(300))
+    expect(onChange).not.toHaveBeenCalledWith('rust')
+  })
 })

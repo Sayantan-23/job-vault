@@ -31,7 +31,11 @@ export function SortControl({
         type="button"
         variant="outline"
         size="icon"
-        aria-label="Toggle sort direction"
+        aria-label={
+          sortOrder === 'asc'
+            ? 'Sorted ascending, click to sort descending'
+            : 'Sorted descending, click to sort ascending'
+        }
         onClick={() => onSort(sortBy)}
       >
         <DirIcon className="size-4" aria-hidden="true" />

@@ -47,4 +47,14 @@ describe('JobsTable', () => {
     render(<JobsTable jobs={[]} onSort={vi.fn()} {...base} />)
     expect(screen.getByText(/no jobs yet/i)).toBeInTheDocument()
   })
+
+  it('shows the active-sort arrow on the sorted column', () => {
+    render(<JobsTable jobs={[JOB]} onSort={vi.fn()} {...base} sortBy="company" sortOrder="asc" />)
+    expect(screen.getByLabelText(/sorted ascending/i)).toBeInTheDocument()
+  })
+
+  it('renders skeleton rows while loading with no jobs', () => {
+    const { container } = render(<JobsTable jobs={[]} onSort={vi.fn()} {...base} loading />)
+    expect(container.querySelectorAll('.animate-pulse')).toHaveLength(8)
+  })
 })

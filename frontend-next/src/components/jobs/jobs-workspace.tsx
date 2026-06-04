@@ -49,7 +49,7 @@ export function JobsWorkspace({
 
   const listQuery = useJobs(filters, initialJobs)
   const page = listQuery.data ?? initialJobs
-  const boardQuery = useKanban(boardFilters, initialBoard)
+  const boardQuery = useKanban(boardFilters, initialBoard, view === 'board')
   const board = boardQuery.data ?? initialBoard
 
   const [addOpen, setAddOpen] = useState(false)

@@ -13,7 +13,7 @@ describe('SortControl', () => {
   it('toggles direction by calling onSort with the active field', () => {
     const onSort = vi.fn()
     render(<SortControl sortBy="company" sortOrder="asc" onSort={onSort} />)
-    fireEvent.click(screen.getByRole('button', { name: /toggle sort direction/i }))
+    fireEvent.click(screen.getByRole('button', { name: /click to sort/i }))
     expect(onSort).toHaveBeenCalledWith('company')
   })
 })

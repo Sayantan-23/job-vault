@@ -8,10 +8,17 @@ import type { KanbanBoard, DashboardStats } from '@/types/dashboard'
 import type { GhostFilter } from '@/types/filters'
 import type { JobStatus } from '@/lib/job-status'
 
-export function useKanban(filters: { search: string; ghost: GhostFilter }, initialData?: KanbanBoard) {
+export function useKanban(
+  filters: { search: string; ghost: GhostFilter },
+  initialData?: KanbanBoard,
+  enabled = true,
+) {
   return useQuery({
     queryKey: kanbanKey(filters),
     queryFn: () => apiClient.get<KanbanBoard>(`/api/dashboard/kanban${buildBoardQuery(filters)}`),
+    // Only the Board view needs this query; gating it off on the List view avoids
+    // a wasted /api/dashboard/kanban fetch on every list-view mount.
+    enabled,
     placeholderData: keepPreviousData,
     refetchOnMount: 'always',
     ...(initialData ? { initialData } : {}),

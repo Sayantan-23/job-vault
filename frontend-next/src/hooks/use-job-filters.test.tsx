@@ -84,6 +84,16 @@ describe('useJobFilters', () => {
     expect(new URL(lastUrl(), 'http://x').searchParams.get('dir')).toBe('asc')
   })
 
+  it('setSort on an asc-active field toggles back to desc and drops the dir param', () => {
+    searchParams.set('sort', 'company')
+    searchParams.set('dir', 'asc')
+    const { result } = renderHook(() => useJobFilters())
+    act(() => result.current.setSort('company'))
+    const url = new URL(lastUrl(), 'http://x')
+    expect(url.searchParams.get('sort')).toBe('company')
+    expect(url.searchParams.has('dir')).toBe(false) // back to default desc → omitted
+  })
+
   it('resetAll clears filter params but keeps view/job', () => {
     searchParams.set('search', 'x')
     searchParams.set('status', 'APPLIED')
