@@ -9,7 +9,7 @@ vi.mock('@/lib/api-client', () => ({
 }))
 
 import { apiClient } from '@/lib/api-client'
-import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead } from './use-notifications'
+import { useNotifications, useMarkNotificationRead, useMarkAllNotificationsRead, notificationsQueryOptions } from './use-notifications'
 import { NOTIFICATIONS_KEY } from '@/lib/query-keys'
 
 const api = vi.mocked(apiClient)
@@ -60,5 +60,13 @@ describe('useMarkAllNotificationsRead', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(api.patch).toHaveBeenCalledWith('/api/notifications/read-all')
     expect(invalidate).toHaveBeenCalledWith({ queryKey: NOTIFICATIONS_KEY })
+  })
+})
+
+describe('useNotifications freshness', () => {
+  it('uses a 30s staleTime and keeps focus refetch as a fallback', () => {
+    const opts = notificationsQueryOptions()
+    expect(opts.staleTime).toBe(30_000)
+    expect(opts.refetchOnWindowFocus).toBe(true)
   })
 })

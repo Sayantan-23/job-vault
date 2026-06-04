@@ -5,16 +5,21 @@ import { apiClient } from '@/lib/api-client'
 import { NOTIFICATIONS_KEY } from '@/lib/query-keys'
 import type { Notification } from '@/types/notification'
 
-// Event-driven liveness: refetch on window focus + invalidate-on-mutation. No
-// refetchInterval — real-time push lands in Slice 4c. The whole list is fetched
-// (no unreadOnly query param); the bell derives the unread count client-side.
-export function useNotifications() {
-  return useQuery({
+// The socket push (RealtimeProvider) is the primary freshness path now, so the
+// list no longer needs to be perpetually stale. A 30s staleTime matches the app
+// default; refetch-on-focus stays on as a fallback for the initial load and any
+// notifications that arrived while the socket was disconnected.
+export function notificationsQueryOptions() {
+  return {
     queryKey: NOTIFICATIONS_KEY,
     queryFn: () => apiClient.get<Notification[]>('/api/notifications'),
+    staleTime: 30_000,
     refetchOnWindowFocus: true,
-    staleTime: 0,
-  })
+  } as const
+}
+
+export function useNotifications() {
+  return useQuery(notificationsQueryOptions())
 }
 
 export function useMarkNotificationRead() {
