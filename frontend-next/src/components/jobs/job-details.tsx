@@ -26,7 +26,9 @@ export function JobDetails({ job, onDeleted }: { job: Job; onDeleted: () => void
   return (
     <div className="space-y-5">
       <header className="space-y-2">
-        <div className="flex items-start justify-between gap-3">
+        {/* pr-8 keeps the status chip + ghost meter clear of the drawer's
+            absolutely-positioned close (✕) button in the top-right corner. */}
+        <div className="flex items-start justify-between gap-3 pr-8">
           <div className="space-y-0.5">
             <h2 className="text-lg font-semibold leading-tight">{job.title}</h2>
             <p className="text-sm text-muted-foreground">{job.company}</p>
