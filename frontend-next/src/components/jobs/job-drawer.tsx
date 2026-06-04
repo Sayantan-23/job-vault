@@ -24,14 +24,14 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
 
   return (
     <Sheet open={open} onOpenChange={(o) => (o ? undefined : close())}>
-      <SheetContent>
+      <SheetContent hideClose>
         <SheetTitle className="sr-only">Job details</SheetTitle>
         <div className="space-y-6 p-6">
           {isLoading || !job ? (
             <p className="text-sm text-muted-foreground">Loading…</p>
           ) : (
             <>
-              <JobDetails job={job} onDeleted={close} />
+              <JobDetails job={job} onDeleted={close} onClose={close} />
               <div className="border-t border-border pt-5">
                 <JobSnapshot markdown={job.snapshotMarkdown} sourceUrl={job.sourceUrl} />
               </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { useUpdateJob, useDeleteJob } from '@/hooks/use-jobs'
 import { JOB_STATUSES, STATUS_META, type JobStatus } from '@/lib/job-status'
 import { StatusChip } from '@/components/kanban/status-chip'
@@ -17,7 +18,15 @@ function isJobStatus(value: string): value is JobStatus {
   return (JOB_STATUSES as readonly string[]).includes(value)
 }
 
-export function JobDetails({ job, onDeleted }: { job: Job; onDeleted: () => void }) {
+export function JobDetails({
+  job,
+  onDeleted,
+  onClose,
+}: {
+  job: Job
+  onDeleted: () => void
+  onClose?: () => void
+}) {
   const update = useUpdateJob(job.id)
   const remove = useDeleteJob()
   const [notes, setNotes] = useState(job.notes ?? '')
@@ -25,22 +34,39 @@ export function JobDetails({ job, onDeleted }: { job: Job; onDeleted: () => void
 
   return (
     <div className="space-y-5">
-      <header className="space-y-2">
-        {/* pr-8 keeps the status chip + ghost meter clear of the drawer's
-            absolutely-positioned close (✕) button in the top-right corner. */}
-        <div className="flex items-start justify-between gap-3 pr-8">
-          <div className="space-y-0.5">
+      {/* Sticky drawer header: identity (title + status badge + ghost days) grouped
+          on the left, close on the right, aligned in one row. -mx-6/-mt-6 negate the
+          drawer body's p-6 so the bar is full-bleed and stays pinned to the top of
+          the scroll area on long content (snapshot/timeline/reminders). */}
+      <header className="sticky top-0 z-10 -mx-6 -mt-6 flex items-start justify-between gap-3 border-b border-border bg-card px-6 py-4">
+        <div className="min-w-0 space-y-0.5">
+          <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-semibold leading-tight">{job.title}</h2>
-            <p className="text-sm text-muted-foreground">{job.company}</p>
-          </div>
-          <div className="flex items-center gap-2">
             <StatusChip status={job.status} />
             <GhostMeter days={job.ghostDays} />
           </div>
+          <p className="text-sm text-muted-foreground">{job.company}</p>
         </div>
-        {job.location ? <p className="text-sm text-muted-foreground">{job.location}</p> : null}
-        {job.salaryRange ? <p className="font-mono text-xs text-muted-foreground">{job.salaryRange}</p> : null}
+        {onClose ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={onClose}
+            aria-label="Close"
+            className="-mr-1 size-8 shrink-0 text-muted-foreground"
+          >
+            <X className="size-4" />
+          </Button>
+        ) : null}
       </header>
+
+      {job.location || job.salaryRange ? (
+        <div className="space-y-0.5">
+          {job.location ? <p className="text-sm text-muted-foreground">{job.location}</p> : null}
+          {job.salaryRange ? <p className="font-mono text-xs text-muted-foreground">{job.salaryRange}</p> : null}
+        </div>
+      ) : null}
 
       <div className="space-y-1.5">
         <Label htmlFor="job-status">Status</Label>
