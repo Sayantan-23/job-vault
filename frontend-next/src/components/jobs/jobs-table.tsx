@@ -128,8 +128,9 @@ export function JobsTable({
               <span className="truncate font-medium">{job.title}</span>
               <span className="truncate text-muted-foreground">{job.company}</span>
               <span className="hidden truncate text-muted-foreground md:block">{job.location ?? '—'}</span>
-              <StatusChip status={job.status} />
-              <GhostMeter days={job.ghostDays} />
+              {/* justify-self-start stops the grid cell stretching the chip/meter to the full column width */}
+              <span className="justify-self-start"><StatusChip status={job.status} /></span>
+              <span className="justify-self-start"><GhostMeter days={job.ghostDays} /></span>
               <span className="hidden font-mono text-xs tabular-nums text-muted-foreground md:block">{shortDate(job.createdAt)}</span>
             </Link>
           </li>
