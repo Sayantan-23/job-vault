@@ -4,13 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
 vi.mock('@/lib/api-client', () => ({
-  apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+  apiClient: { get: vi.fn(), getPage: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
   ApiError: class ApiError extends Error {},
 }))
 
 import { apiClient } from '@/lib/api-client'
 import { useJobs, useCreateJob, useScrapeJob, useUpdateJob, useDeleteJob } from './use-jobs'
 import { JOBS_KEY, DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY } from '@/lib/query-keys'
+import { DEFAULT_FILTERS } from '@/types/filters'
 
 const api = vi.mocked(apiClient)
 
@@ -33,11 +34,19 @@ function spiedClient() {
 beforeEach(() => vi.clearAllMocks())
 
 describe('useJobs', () => {
-  it('fetches the job list from /api/jobs', async () => {
-    api.get.mockResolvedValue([{ id: 'j1', title: 'SWE' }])
-    const { result } = renderHook(() => useJobs(), { wrapper })
-    await waitFor(() => expect(result.current.data?.[0]?.id).toBe('j1'))
-    expect(api.get).toHaveBeenCalledWith('/api/jobs')
+  it('fetches the filtered page from /api/jobs and returns {data, meta}', async () => {
+    api.getPage.mockResolvedValue({ data: [{ id: 'j1', title: 'SWE' }], meta: { total: 1, page: 1, limit: 20, totalPages: 1 } })
+    const { result } = renderHook(() => useJobs(DEFAULT_FILTERS), { wrapper })
+    await waitFor(() => expect(result.current.data?.data[0]?.id).toBe('j1'))
+    expect(api.getPage).toHaveBeenCalledWith('/api/jobs')
+    expect(result.current.data?.meta.total).toBe(1)
+  })
+
+  it('appends the built query string for active filters', async () => {
+    api.getPage.mockResolvedValue({ data: [], meta: { total: 0, page: 2, limit: 20, totalPages: 0 } })
+    renderHook(() => useJobs({ ...DEFAULT_FILTERS, search: 'rust', page: 2 }), { wrapper })
+    await waitFor(() => expect(api.getPage).toHaveBeenCalled())
+    expect(api.getPage).toHaveBeenCalledWith('/api/jobs?search=rust&page=2')
   })
 })
 

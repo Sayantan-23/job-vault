@@ -1,20 +1,24 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { JOBS_KEY, jobKey, DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY } from '@/lib/query-keys'
+import { JOBS_KEY, jobKey, jobsListKey, DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY } from '@/lib/query-keys'
+import { buildListQuery } from '@/lib/filters'
 import type { Job, ScrapeResult } from '@/types/job'
+import type { JobFilters, Paginated } from '@/types/filters'
 import type { ManualJobValues, UpdateJobValues } from '@/schemas/job'
 
 export { JOBS_KEY, jobKey }
 
-export function useJobs(initialData?: Job[]) {
+export function useJobs(filters: JobFilters, initialData?: Paginated<Job>) {
   return useQuery({
-    queryKey: JOBS_KEY,
-    queryFn: () => apiClient.get<Job[]>('/api/jobs'),
-    // Always refetch on mount: if the server-rendered list came back empty
-    // because the access token had just expired, this client fetch re-runs,
-    // silently refreshes the session (via the api-client), and shows live data.
+    queryKey: jobsListKey(filters),
+    queryFn: () => apiClient.getPage<Job>(`/api/jobs${buildListQuery(filters)}`),
+    // Keep showing the previous page while the next one loads (no empty flash on
+    // paging/sorting/filtering).
+    placeholderData: keepPreviousData,
+    // Always refetch on mount: a server render that came back empty due to a
+    // just-expired access token re-runs here and silently refreshes the session.
     refetchOnMount: 'always',
     ...(initialData ? { initialData } : {}),
   })
