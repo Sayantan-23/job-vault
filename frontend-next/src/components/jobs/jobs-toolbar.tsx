@@ -31,8 +31,11 @@ export function JobsToolbar({
   const hasAny =
     isFiltered || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || filters.page > 1
 
+  // A Fragment (not a wrapping div) so each control is a direct flex item of the
+  // page-header actions row — keeps them on one line with the toggle/add instead
+  // of behaving as one nested block that wraps and floats.
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <>
       <SearchInput value={filters.search} onChange={onSearch} />
 
       {isList ? (
@@ -67,6 +70,6 @@ export function JobsToolbar({
           Reset
         </Button>
       ) : null}
-    </div>
+    </>
   )
 }
