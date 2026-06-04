@@ -57,3 +57,52 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: 'rlig' 1, 'calt' 1;
 }
+
+/*
+ * Overlay/surface motion for Radix-Dialog-based primitives (Sheet drawer, Dialog
+ * modal, Popover dropdown). Driven by Radix's [data-state=open|closed]; Radix keeps
+ * the node mounted through a CSS exit animation, so the *-out variants play on close.
+ * Subtle + fast on purpose (minimalist-ui), and fully disabled under reduced-motion.
+ */
+@theme {
+  --animate-jv-overlay-in: jv-overlay-in 0.25s ease both;
+  --animate-jv-overlay-out: jv-overlay-out 0.2s ease both;
+  --animate-jv-sheet-in: jv-sheet-in 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-jv-sheet-out: jv-sheet-out 0.22s ease-in both;
+  --animate-jv-surface-in: jv-surface-in 0.18s ease-out both;
+  --animate-jv-surface-out: jv-surface-out 0.14s ease-in both;
+
+  @keyframes jv-overlay-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes jv-overlay-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  @keyframes jv-sheet-in {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes jv-sheet-out {
+    from { transform: translateX(0); }
+    to { transform: translateX(100%); }
+  }
+  /* `scale`/`opacity` only (not `transform`), so it never fights the modal's
+     translate-based centering or the popover's transform-origin anchor. */
+  @keyframes jv-surface-in {
+    from { opacity: 0; scale: 0.96; }
+    to { opacity: 1; scale: 1; }
+  }
+  @keyframes jv-surface-out {
+    from { opacity: 1; scale: 1; }
+    to { opacity: 0; scale: 0.96; }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-state='open'],
+  [data-state='closed'] {
+    animation: none !important;
+  }
+}

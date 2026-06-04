@@ -17,7 +17,11 @@ function DialogOverlay({ className, ...props }: React.ComponentProps<typeof Dial
       // Radix portals to <body>, outside [data-theme-scope="app"]; re-apply the
       // scope so the theme tokens (--card/--border/…) resolve inside the modal.
       data-theme-scope="app"
-      className={cn('fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px]', className)}
+      className={cn(
+        'fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px]',
+        'data-[state=open]:animate-jv-overlay-in data-[state=closed]:animate-jv-overlay-out',
+        className,
+      )}
       {...props}
     />
   )
@@ -36,6 +40,7 @@ export function DialogContent({
         className={cn(
           'fixed left-1/2 top-1/2 z-50 grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4',
           'rounded-xl border border-border bg-card p-6 text-card-foreground shadow-lg focus:outline-none',
+          'data-[state=open]:animate-jv-surface-in data-[state=closed]:animate-jv-surface-out',
           className,
         )}
         {...props}

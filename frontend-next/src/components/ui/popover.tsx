@@ -36,6 +36,7 @@ export function PopoverContent({
         data-theme-scope="app"
         className={cn(
           'fixed right-4 top-16 z-50 flex max-h-[70vh] w-80 flex-col overflow-hidden rounded-xl border border-border bg-card text-card-foreground shadow-lg focus:outline-none',
+          'origin-top-right data-[state=open]:animate-jv-surface-in data-[state=closed]:animate-jv-surface-out',
           className,
         )}
         {...props}

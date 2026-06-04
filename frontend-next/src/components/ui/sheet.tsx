@@ -17,7 +17,11 @@ function SheetOverlay({ className, ...props }: React.ComponentProps<typeof Dialo
       // Radix portals to <body>, outside [data-theme-scope="app"]; re-apply the
       // scope so the theme tokens (--card/--border/…) resolve inside the drawer.
       data-theme-scope="app"
-      className={cn('fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px]', className)}
+      className={cn(
+        'fixed inset-0 z-50 bg-black/40 backdrop-blur-[1px]',
+        'data-[state=open]:animate-jv-overlay-in data-[state=closed]:animate-jv-overlay-out',
+        className,
+      )}
       {...props}
     />
   )
@@ -36,6 +40,7 @@ export function SheetContent({
         className={cn(
           'fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col overflow-y-auto border-l border-border bg-card text-card-foreground shadow-lg focus:outline-none',
           'sm:max-w-2xl',
+          'data-[state=open]:animate-jv-sheet-in data-[state=closed]:animate-jv-sheet-out',
           className,
         )}
         {...props}
