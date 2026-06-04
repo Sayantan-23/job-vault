@@ -89,4 +89,12 @@ describe('JobsWorkspace', () => {
     await userEvent.click(screen.getByRole('button', { name: /add job/i }))
     expect(screen.getByLabelText(/job posting url/i)).toBeInTheDocument()
   })
+
+  it('keeps status filtering on the column funnel, not the header', () => {
+    render(<JobsWorkspace initialJobs={PAGE} initialBoard={EMPTY_BOARD} />, { wrapper })
+    // header: search + activity only
+    expect(screen.getByRole('searchbox')).toBeInTheDocument()
+    // the Status column funnel renders in the default list view
+    expect(screen.getByRole('button', { name: /filter by status/i })).toBeInTheDocument()
+  })
 })

@@ -44,7 +44,10 @@ export function JobsWorkspace({
   const view: View = isView(searchParams.get('view')) ? (searchParams.get('view') as View) : 'list'
   const jobId = searchParams.get('job')
 
-  const { filters, isFiltered, setSearch, setStatus, setGhost, setSort, setPage, resetAll } = useJobFilters()
+  const {
+    filters, isBoardFiltered, isListFiltered,
+    setSearch, setStatus, setGhost, setDateRange, cycleSort, setPage, resetAll,
+  } = useJobFilters()
   const boardFilters = { search: filters.search, ghost: filters.ghost }
 
   const listQuery = useJobs(filters, initialJobs)
@@ -63,19 +66,12 @@ export function JobsWorkspace({
   }
 
   const count = view === 'board' ? board.stats.totalJobs : page.meta.total
+  const filtered = view === 'board' ? isBoardFiltered : isListFiltered
+  const showReset = isListFiltered || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || filters.page > 1
 
   const actions = (
     <>
-      <JobsToolbar
-        view={view}
-        filters={filters}
-        isFiltered={isFiltered}
-        onSearch={setSearch}
-        onStatus={setStatus}
-        onGhost={setGhost}
-        onSort={setSort}
-        onReset={resetAll}
-      />
+      <JobsToolbar filters={filters} showReset={showReset} onSearch={setSearch} onGhost={setGhost} onReset={resetAll} />
       {/* primary page actions; the flex-1 search above pushes them to the right. hairline divides them from the filters */}
       <div className="flex shrink-0 items-center gap-2">
         <div className="hidden h-6 w-px bg-border lg:block" aria-hidden="true" />
@@ -96,14 +92,14 @@ export function JobsWorkspace({
           title="Jobs"
           description={
             <>
-              <span className="font-mono tabular-nums">{count}</span> {isFiltered ? 'matching' : 'tracked'}
+              <span className="font-mono tabular-nums">{count}</span> {filtered ? 'matching' : 'tracked'}
             </>
           }
           actions={actions}
         />
         {view === 'board' ? (
           <div className="min-h-0 flex-1 p-6">
-            <KanbanBoard board={board} filters={boardFilters} isFiltered={isFiltered} />
+            <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
           </div>
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto p-6">
@@ -111,10 +107,15 @@ export function JobsWorkspace({
               jobs={page.data}
               sortBy={filters.sortBy}
               sortOrder={filters.sortOrder}
-              onSort={setSort}
+              onSort={cycleSort}
               loading={listQuery.isLoading}
-              isFiltered={isFiltered}
+              isFiltered={isListFiltered}
               onReset={resetAll}
+              status={filters.status}
+              onStatus={setStatus}
+              createdFrom={filters.createdFrom}
+              createdTo={filters.createdTo}
+              onDateRange={setDateRange}
             />
             <JobsPagination meta={page.meta} onPage={setPage} />
           </div>
