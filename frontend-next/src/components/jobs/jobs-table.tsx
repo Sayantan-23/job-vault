@@ -1,0 +1,132 @@
+'use client'
+
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { ArrowDown, ArrowUp } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { StatusChip } from '@/components/kanban/status-chip'
+import { GhostMeter } from '@/components/kanban/ghost-meter'
+import { shortDate } from '@/lib/relative-time'
+import type { Job } from '@/types/job'
+import type { SortField, SortOrder } from '@/types/filters'
+
+const GRID = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto_auto] items-center gap-4'
+
+function SortHeader({
+  label,
+  field,
+  sortBy,
+  sortOrder,
+  onSort,
+  className,
+}: {
+  label: string
+  field: SortField
+  sortBy: SortField
+  sortOrder: SortOrder
+  onSort: (field: SortField) => void
+  className?: string
+}) {
+  const active = sortBy === field
+  const Icon = sortOrder === 'asc' ? ArrowUp : ArrowDown
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(field)}
+      className={cn('inline-flex items-center gap-1 text-left transition-colors hover:text-foreground', active ? 'text-foreground' : '', className)}
+    >
+      {label}
+      {active ? <Icon className="size-3" aria-label={sortOrder === 'asc' ? 'sorted ascending' : 'sorted descending'} /> : null}
+    </button>
+  )
+}
+
+function Header({ sortBy, sortOrder, onSort }: { sortBy: SortField; sortOrder: SortOrder; onSort: (f: SortField) => void }) {
+  return (
+    <div className={cn(GRID, 'border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground')}>
+      <SortHeader label="Title" field="title" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+      <SortHeader label="Company" field="company" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+      <span>Location</span>
+      <span>Status</span>
+      <SortHeader label="Ghost" field="lastActivityAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+      <SortHeader label="Added" field="createdAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+    </div>
+  )
+}
+
+export function JobsTable({
+  jobs,
+  sortBy,
+  sortOrder,
+  onSort,
+  loading,
+  isFiltered,
+  onReset,
+}: {
+  jobs: Job[]
+  sortBy: SortField
+  sortOrder: SortOrder
+  onSort: (field: SortField) => void
+  loading: boolean
+  isFiltered: boolean
+  onReset: () => void
+}) {
+  const searchParams = useSearchParams()
+  const hrefFor = (id: string) => {
+    const p = new URLSearchParams(searchParams.toString())
+    p.set('job', id)
+    return `/app/jobs?${p.toString()}`
+  }
+
+  if (loading && jobs.length === 0) {
+    return (
+      <div className="rounded-xl border border-border">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-12 animate-pulse border-b border-border bg-muted/30 last:border-b-0" />
+        ))}
+      </div>
+    )
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div className="rounded-xl border border-dashed border-border p-10 text-center">
+        {isFiltered ? (
+          <>
+            <p className="text-sm font-medium">No jobs match your filters</p>
+            <p className="mt-1 text-sm text-muted-foreground">Try widening or clearing them.</p>
+            <Button type="button" variant="outline" size="sm" onClick={onReset} className="mt-4">Reset filters</Button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm font-medium">No jobs yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add your first application to start tracking it.</p>
+          </>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <div className="min-w-[680px]">
+        <Header sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+        <ul className="divide-y divide-border">
+          {jobs.map((job) => (
+            <li key={job.id}>
+              <Link href={hrefFor(job.id)} scroll={false} className={cn(GRID, 'px-4 py-3 text-sm transition-colors hover:bg-accent')}>
+                <span className="truncate font-medium">{job.title}</span>
+                <span className="truncate text-muted-foreground">{job.company}</span>
+                <span className="truncate text-muted-foreground">{job.location ?? '—'}</span>
+                <StatusChip status={job.status} />
+                <GhostMeter days={job.ghostDays} />
+                <span className="font-mono text-xs tabular-nums text-muted-foreground">{shortDate(job.createdAt)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
