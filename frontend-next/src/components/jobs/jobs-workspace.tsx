@@ -66,6 +66,18 @@ export function JobsWorkspace({
 
   const actions = (
     <>
+      <JobsToolbar
+        view={view}
+        filters={filters}
+        isFiltered={isFiltered}
+        onSearch={setSearch}
+        onStatus={setStatus}
+        onGhost={setGhost}
+        onSort={setSort}
+        onReset={resetAll}
+      />
+      {/* hairline separating the filter group from the primary page actions */}
+      <div className="hidden h-6 w-px bg-border lg:block" aria-hidden="true" />
       <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
       <Button type="button" onClick={() => setAddOpen(true)}>
         <Plus className="size-4" aria-hidden="true" />
@@ -86,16 +98,6 @@ export function JobsWorkspace({
             </>
           }
           actions={actions}
-        />
-        <JobsToolbar
-          view={view}
-          filters={filters}
-          isFiltered={isFiltered}
-          onSearch={setSearch}
-          onStatus={setStatus}
-          onGhost={setGhost}
-          onSort={setSort}
-          onReset={resetAll}
         />
         {view === 'board' ? (
           <div className="min-h-0 flex-1 p-6">

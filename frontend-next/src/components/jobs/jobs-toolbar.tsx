@@ -32,7 +32,7 @@ export function JobsToolbar({
     isFiltered || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || filters.page > 1
 
   return (
-    <div className="flex flex-wrap items-center gap-2 border-b border-border px-6 py-3">
+    <div className="flex flex-wrap items-center gap-2">
       <SearchInput value={filters.search} onChange={onSearch} />
 
       {isList ? (
@@ -63,7 +63,7 @@ export function JobsToolbar({
       {isList ? <SortControl sortBy={filters.sortBy} sortOrder={filters.sortOrder} onSort={onSort} /> : null}
 
       {hasAny ? (
-        <Button type="button" variant="ghost" size="sm" onClick={onReset} className="ml-auto">
+        <Button type="button" variant="ghost" size="sm" onClick={onReset}>
           Reset
         </Button>
       ) : null}
