@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { DashboardOverview } from '@/components/dashboard/dashboard-overview'
 import { EMPTY_STATS } from '@/lib/dashboard-defaults'
@@ -15,5 +16,11 @@ export default async function DashboardPage() {
     stats = EMPTY_STATS
   }
 
-  return <DashboardOverview initialStats={stats} />
+  // The header's NotificationBell calls useSearchParams(), so the client subtree
+  // needs a Suspense boundary to prerender (matches the /app/jobs page).
+  return (
+    <Suspense fallback={null}>
+      <DashboardOverview initialStats={stats} />
+    </Suspense>
+  )
 }
