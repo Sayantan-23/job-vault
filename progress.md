@@ -194,6 +194,14 @@
 - [ ] **Known testing boundary:** dnd-kit drag is not exercised at the component level (jsdom can't resolve drop targets); the drop decision is covered exhaustively by `resolveDrop` unit tests + the live smoke. The Ghost column shows the `GhostMeter` ("Nd") rather than a separate relative-activity label (accepted simplification).
 - [ ] Manual browser pass (search/sort/paginate/reset, deep-link SSR, board hybrid drag while filtered, toggle preserves filters) + **merge to master** (user merges).
 
+### Slice 5 follow-up — List column filters (Notion-style) (2026-06-04)
+> **Spec**: `docs/superpowers/specs/2026-06-04-list-column-filters-redesign-design.md` · **Plan**: `docs/superpowers/plans/2026-06-04-list-column-filters-redesign.md`. Orchestrated via the `Workflow` tool (sequential TDD batches → ground-truth gate → 5-lens adversarial review → review-fix pass).
+- Filters moved off the header onto the columns: **Search + Activity** are the only header controls; **Status** filter + **Added date-range** live in per-column hover **funnels** (new `@radix-ui/react-popover` anchored popover, `StatusFilterMenu`/`DateRangeMenu`); tap a column to sort with a **3-state cycle** (asc → desc → off→default `createdAt` desc; Added toggles).
+- Backend (additive, no migration): `createdFrom`/`createdTo` on `GET /api/jobs` (schema + repo SQL, UTC day boundaries, end-of-day-inclusive `createdTo`).
+- `isFiltered` split into `isBoardFiltered` (search+ghost) and `isListFiltered` (all list filters) — also fixes the earlier nit where a status-only filter paused board reordering. `SortControl` + `SORT_OPTIONS` removed. `jobsListKey` extended with the date params so the Added filter refetches; SSR `FILTER_PARAMS` includes `from`/`to`.
+- [x] Backend typecheck+lint+tests; frontend typecheck+lint+**231 tests** + Docker prod build — all green. Adversarial 5-lens review; blockers (date in cache key, exactOptional build break) + major (SSR date params) + cleanups fixed.
+- [ ] **Known minor:** the Status/Date funnel menus don't auto-close on select (Escape/outside-click closes them); easy follow-up to wire `AnchoredPopoverClose`. Manual browser pass + **merge to master** (user merges).
+
 ---
 
 ## Dependency Diagram
