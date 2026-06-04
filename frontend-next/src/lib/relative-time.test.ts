@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { relativeTime } from './relative-time'
+import { relativeTime, shortDate } from './relative-time'
 
 describe('relativeTime', () => {
   const now = new Date('2026-06-03T12:00:00.000Z')
@@ -18,5 +18,15 @@ describe('relativeTime', () => {
 
   it('renders days', () => {
     expect(relativeTime('2026-06-01T12:00:00.000Z', now)).toBe('2 days ago')
+  })
+})
+
+describe('shortDate', () => {
+  it('formats an ISO date as "Mon D"', () => {
+    expect(shortDate('2026-05-28T10:00:00.000Z')).toMatch(/May\s+28/)
+  })
+  it('returns an em dash for empty/invalid input', () => {
+    expect(shortDate('')).toBe('—')
+    expect(shortDate('not-a-date')).toBe('—')
   })
 })

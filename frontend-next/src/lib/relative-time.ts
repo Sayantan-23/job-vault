@@ -13,3 +13,11 @@ export function relativeTime(iso: string, now: Date = new Date()): string {
   if (diff < DAY) return rtf.format(-Math.floor(diff / HOUR), 'hour')
   return rtf.format(-Math.floor(diff / DAY), 'day')
 }
+
+// Short calendar date, e.g. "May 28". Returns an em dash for empty/invalid input.
+export function shortDate(iso: string): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return '—'
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
