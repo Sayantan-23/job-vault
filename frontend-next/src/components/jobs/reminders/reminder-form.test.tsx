@@ -9,11 +9,13 @@ describe('ReminderForm', () => {
   it('submits the message + remindAt and clears the message', async () => {
     const onSubmit = vi.fn()
     render(<ReminderForm onSubmit={onSubmit} isPending={false} />)
-    await userEvent.type(screen.getByLabelText(/reminder/i), 'Ping recruiter')
+    const input = screen.getByLabelText(/reminder/i)
+    await userEvent.type(input, 'Ping recruiter')
     const dt = screen.getByLabelText(/when/i)
     await userEvent.type(dt, '2026-07-01T09:00')
     await userEvent.click(screen.getByRole('button', { name: /add reminder/i }))
     expect(onSubmit).toHaveBeenCalledWith({ message: 'Ping recruiter', remindAt: new Date('2026-07-01T09:00').toISOString() })
+    expect(input).toHaveValue('')
   })
 
   it('does not submit an empty message', async () => {
