@@ -43,7 +43,7 @@ export function SearchInput({
   }, [])
 
   return (
-    <div className="relative w-full max-w-xs">
+    <div className="relative min-w-[8rem] flex-1">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
       <Input
         ref={ref}

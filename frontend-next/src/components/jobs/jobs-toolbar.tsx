@@ -43,7 +43,7 @@ export function JobsToolbar({
           aria-label="Filter by status"
           value={filters.status ?? ''}
           onChange={(e) => onStatus(e.target.value ? (e.target.value as JobStatus) : undefined)}
-          className="h-10 w-44"
+          className="h-10 w-44 shrink-0"
         >
           <option value="">All statuses</option>
           {JOB_STATUSES.map((s) => (
@@ -56,7 +56,7 @@ export function JobsToolbar({
         aria-label="Filter by activity"
         value={filters.ghost}
         onChange={(e) => onGhost(e.target.value as GhostFilter)}
-        className="h-10 w-40"
+        className="h-10 w-40 shrink-0"
       >
         {GHOST_OPTIONS.map((o) => (
           <option key={o.value} value={o.value}>{o.label}</option>
@@ -66,7 +66,7 @@ export function JobsToolbar({
       {isList ? <SortControl sortBy={filters.sortBy} sortOrder={filters.sortOrder} onSort={onSort} /> : null}
 
       {hasAny ? (
-        <Button type="button" variant="ghost" size="sm" onClick={onReset}>
+        <Button type="button" variant="ghost" size="sm" onClick={onReset} className="shrink-0">
           Reset
         </Button>
       ) : null}

@@ -76,8 +76,8 @@ export function JobsWorkspace({
         onSort={setSort}
         onReset={resetAll}
       />
-      {/* primary page actions, pushed to the right; hairline divides them from the filters */}
-      <div className="ml-auto flex items-center gap-2">
+      {/* primary page actions; the flex-1 search above pushes them to the right. hairline divides them from the filters */}
+      <div className="flex shrink-0 items-center gap-2">
         <div className="hidden h-6 w-px bg-border lg:block" aria-hidden="true" />
         <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
         <Button type="button" onClick={() => setAddOpen(true)}>

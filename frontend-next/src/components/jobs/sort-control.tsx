@@ -16,7 +16,7 @@ export function SortControl({
 }) {
   const DirIcon = sortOrder === 'asc' ? ArrowUp : ArrowDown
   return (
-    <div className="flex items-center gap-1.5">
+    <div className="flex shrink-0 items-center gap-1.5">
       <Select
         aria-label="Sort by"
         value={sortBy}
