@@ -44,4 +44,14 @@ describe('SearchInput', () => {
     act(() => vi.advanceTimersByTime(300))
     expect(onChange).not.toHaveBeenCalledWith('rust')
   })
+
+  it('clears the field and does not re-emit when the value is reset externally (Clear all)', () => {
+    const onChange = vi.fn()
+    const { rerender } = render(<SearchInput value="rust" onChange={onChange} />)
+    // "Clear all" wipes the URL externally — value goes to '' without touching the field.
+    rerender(<SearchInput value="" onChange={onChange} />)
+    act(() => vi.advanceTimersByTime(300))
+    expect(screen.getByRole('searchbox')).toHaveValue('')
+    expect(onChange).not.toHaveBeenCalledWith('rust')
+  })
 })

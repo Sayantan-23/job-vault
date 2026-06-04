@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { useDebouncedValue } from '@/hooks/use-debounced-value'
 
 export function SearchInput({
   value,
@@ -15,20 +14,26 @@ export function SearchInput({
   placeholder?: string
 }) {
   const [local, setLocal] = useState(value)
-  const debounced = useDebouncedValue(local, 300)
   const ref = useRef<HTMLInputElement>(null)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Keep the field in sync when the URL value changes externally (back/forward, reset).
-  useEffect(() => setLocal(value), [value])
+  function cancelPending() {
+    if (timer.current) {
+      clearTimeout(timer.current)
+      timer.current = null
+    }
+  }
 
-  // Push the debounced value up only once the debounce has settled on the user's
-  // own input (debounced === local) and it actually differs from the URL. Without
-  // the `debounced === local` guard, an EXTERNAL value change (clear button,
-  // back/forward, resetAll) that lands inside the 300ms window would see a stale
-  // `debounced` and re-emit the old term — fighting the user's clear/navigation.
+  // When the URL value changes from OUTSIDE the field (back/forward, Clear all,
+  // resetAll), resync the field and cancel any pending debounced emit — otherwise
+  // a still-pending keystroke would re-push the stale term and undo the reset.
   useEffect(() => {
-    if (debounced === local && debounced !== value) onChange(debounced)
-  }, [debounced, local, value, onChange])
+    setLocal(value)
+    cancelPending()
+  }, [value])
+
+  // Cancel a pending timer on unmount.
+  useEffect(() => () => cancelPending(), [])
 
   // Cmd/Ctrl+K focuses the search field.
   useEffect(() => {
@@ -42,24 +47,40 @@ export function SearchInput({
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  // Debounce only the user's own typing (300ms), driven from the input handler —
+  // never from a derived effect, so it can't race an external value change.
+  function handleInput(next: string) {
+    setLocal(next)
+    cancelPending()
+    timer.current = setTimeout(() => onChange(next), 300)
+  }
+
+  function clear() {
+    cancelPending()
+    setLocal('')
+    onChange('')
+  }
+
   return (
+    // type="text" (not "search") so the browser doesn't add its own native clear
+    // button alongside ours; role="searchbox" keeps the search a11y semantics.
     <div className="relative min-w-[8rem] flex-1">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
       <Input
         ref={ref}
-        type="search"
+        type="text"
         role="searchbox"
         aria-label="Search jobs"
         placeholder={placeholder}
         value={local}
-        onChange={(e) => setLocal(e.target.value)}
+        onChange={(e) => handleInput(e.target.value)}
         className="pl-9 pr-9"
       />
       {local ? (
         <button
           type="button"
           aria-label="Clear search"
-          onClick={() => { setLocal(''); onChange('') }}
+          onClick={clear}
           className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
         >
           <X className="size-4" aria-hidden="true" />
