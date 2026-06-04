@@ -10,6 +10,10 @@ import { GhostMeter } from '@/components/kanban/ghost-meter'
 import { shortDate } from '@/lib/relative-time'
 import type { Job } from '@/types/job'
 import type { SortField, SortOrder } from '@/types/filters'
+import { ColumnFunnel } from './column-funnel'
+import { StatusFilterMenu } from './status-filter-menu'
+import { DateRangeMenu } from './date-range-menu'
+import type { JobStatus } from '@/lib/job-status'
 
 // Mobile keeps Title / Company / Status / Ghost; Location + Added appear at md+
 // (their cells are `hidden md:*`, and the grid template gains the two columns at md).
@@ -49,15 +53,43 @@ function SortHeader({
   )
 }
 
-function Header({ sortBy, sortOrder, onSort }: { sortBy: SortField; sortOrder: SortOrder; onSort: (f: SortField) => void }) {
+function Header({
+  sortBy,
+  sortOrder,
+  onSort,
+  status,
+  onStatus,
+  createdFrom,
+  createdTo,
+  onDateRange,
+}: {
+  sortBy: SortField
+  sortOrder: SortOrder
+  onSort: (f: SortField) => void
+  status: JobStatus | undefined
+  onStatus: (v: JobStatus | undefined) => void
+  createdFrom?: string
+  createdTo?: string
+  onDateRange: (from?: string, to?: string) => void
+}) {
   return (
-    <div className={cn(GRID, 'border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground')}>
+    <div className={cn(GRID, 'group/header border-b border-border px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground')}>
       <SortHeader label="Title" field="title" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
       <SortHeader label="Company" field="company" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
       <span className="hidden md:block">Location</span>
-      <span>Status</span>
+      <span className="inline-flex items-center gap-1">
+        Status
+        <ColumnFunnel label="Filter by status" active={status !== undefined}>
+          <StatusFilterMenu value={status} onChange={onStatus} />
+        </ColumnFunnel>
+      </span>
       <SortHeader label="Ghost" field="lastActivityAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
-      <SortHeader label="Added" field="createdAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} className="hidden md:inline-flex" />
+      <span className="hidden items-center gap-1 md:inline-flex">
+        <SortHeader label="Added" field="createdAt" sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+        <ColumnFunnel label="Filter by date added" active={createdFrom !== undefined || createdTo !== undefined}>
+          <DateRangeMenu from={createdFrom} to={createdTo} onApply={onDateRange} />
+        </ColumnFunnel>
+      </span>
     </div>
   )
 }
@@ -99,6 +131,11 @@ export function JobsTable({
   loading,
   isFiltered,
   onReset,
+  status,
+  onStatus,
+  createdFrom,
+  createdTo,
+  onDateRange,
 }: {
   jobs: Job[]
   sortBy: SortField
@@ -107,6 +144,11 @@ export function JobsTable({
   loading: boolean
   isFiltered: boolean
   onReset: () => void
+  status: JobStatus | undefined
+  onStatus: (value: JobStatus | undefined) => void
+  createdFrom?: string
+  createdTo?: string
+  onDateRange: (from?: string, to?: string) => void
 }) {
   const searchParams = useSearchParams()
   const hrefFor = (id: string) => {
@@ -120,7 +162,16 @@ export function JobsTable({
 
   return (
     <div className="overflow-x-auto rounded-xl border border-border">
-      <Header sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
+        <Header
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+          onSort={onSort}
+          status={status}
+          onStatus={onStatus}
+          createdFrom={createdFrom}
+          createdTo={createdTo}
+          onDateRange={onDateRange}
+        />
       <ul className="divide-y divide-border">
         {jobs.map((job) => (
           <li key={job.id}>

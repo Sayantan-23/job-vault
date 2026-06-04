@@ -16,7 +16,10 @@ const JOB: Job = {
   lastActivityAt: null, ghostDays: 3, notes: null,
 }
 
-const base = { sortBy: 'createdAt' as const, sortOrder: 'desc' as const, loading: false, isFiltered: false, onReset: vi.fn() }
+const base = {
+  sortBy: 'createdAt' as const, sortOrder: 'desc' as const, loading: false, isFiltered: false,
+  onReset: vi.fn(), status: undefined, onStatus: vi.fn(), createdFrom: undefined, createdTo: undefined, onDateRange: vi.fn(),
+}
 
 describe('JobsTable', () => {
   it('renders a row linking to the drawer via ?job=', () => {
@@ -26,6 +29,18 @@ describe('JobsTable', () => {
     expect(screen.getByText('Acme')).toBeInTheDocument()
     expect(screen.getByTestId('status-chip')).toBeInTheDocument()
     expect(screen.getByTestId('ghost-meter')).toBeInTheDocument()
+  })
+
+  it('opens the Status filter menu from its column funnel', () => {
+    render(<JobsTable jobs={[JOB]} onSort={vi.fn()} {...base} />)
+    fireEvent.click(screen.getByRole('button', { name: /filter by status/i }))
+    expect(screen.getByRole('option', { name: /all statuses/i })).toBeInTheDocument()
+  })
+
+  it('opens the Added date-range menu from its column funnel', () => {
+    render(<JobsTable jobs={[JOB]} onSort={vi.fn()} {...base} />)
+    fireEvent.click(screen.getByRole('button', { name: /filter by date added/i }))
+    expect(screen.getByRole('button', { name: /apply/i })).toBeInTheDocument()
   })
 
   it('clicking the Company header sorts by company', () => {
