@@ -2,23 +2,25 @@
 
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { parseFilters, isFiltered as computeIsFiltered } from '@/lib/filters'
+import { parseFilters, isBoardFiltered as computeBoardFiltered, isListFiltered as computeListFiltered } from '@/lib/filters'
 import type { GhostFilter, JobFilters, SortField } from '@/types/filters'
 import type { JobStatus } from '@/lib/job-status'
 
 export interface UseJobFilters {
   filters: JobFilters
-  isFiltered: boolean
+  isBoardFiltered: boolean
+  isListFiltered: boolean
   setSearch: (value: string) => void
   setStatus: (value: JobStatus | undefined) => void
   setGhost: (value: GhostFilter) => void
-  /** Sets `field` (desc by default), or toggles direction when `field` is already active. */
-  setSort: (field: SortField) => void
+  setDateRange: (from?: string, to?: string) => void
+  /** Tap-to-sort 3-state cycle: asc -> desc -> off(default createdAt desc); createdAt toggles asc<->desc. */
+  cycleSort: (field: SortField) => void
   setPage: (page: number) => void
   resetAll: () => void
 }
 
-const FILTER_KEYS = ['search', 'status', 'ghost', 'sort', 'dir', 'page'] as const
+const FILTER_KEYS = ['search', 'status', 'ghost', 'sort', 'dir', 'page', 'from', 'to'] as const
 
 export function useJobFilters(): UseJobFilters {
   const router = useRouter()
@@ -26,8 +28,6 @@ export function useJobFilters(): UseJobFilters {
   const searchParams = useSearchParams()
   const filters = parseFilters(searchParams)
 
-  // Clones the current params, applies `mutate`, optionally resets page, and
-  // replaces the URL — always preserving non-filter params (view/job).
   const commit = useCallback(
     (mutate: (p: URLSearchParams) => void, resetPage = true) => {
       const p = new URLSearchParams(searchParams.toString())
@@ -51,15 +51,33 @@ export function useJobFilters(): UseJobFilters {
     (value: GhostFilter) => commit((p) => { if (value !== 'all') p.set('ghost', value); else p.delete('ghost') }),
     [commit],
   )
-  const setSort = useCallback(
+  const setDateRange = useCallback(
+    (from?: string, to?: string) => commit((p) => {
+      if (from) p.set('from', from); else p.delete('from')
+      if (to) p.set('to', to); else p.delete('to')
+    }),
+    [commit],
+  )
+  const cycleSort = useCallback(
     (field: SortField) =>
       commit((p) => {
-        const current = parseFilters(searchParams)
-        const nextOrder = current.sortBy === field && current.sortOrder === 'desc' ? 'asc' : 'desc'
-        if (field === 'createdAt') p.delete('sort')
-        else p.set('sort', field)
-        if (nextOrder === 'asc') p.set('dir', 'asc')
-        else p.delete('dir')
+        const f = parseFilters(searchParams)
+        if (field === 'createdAt') {
+          // Added is the default sort: toggle asc <-> desc (off == cleared default desc).
+          if (f.sortBy === 'createdAt' && f.sortOrder === 'asc') {
+            p.delete('sort'); p.delete('dir')
+          } else {
+            p.set('sort', 'createdAt'); p.set('dir', 'asc')
+          }
+          return
+        }
+        if (f.sortBy !== field) {           // inactive -> asc
+          p.set('sort', field); p.set('dir', 'asc')
+        } else if (f.sortOrder === 'asc') { // asc -> desc (dir omitted = default desc)
+          p.set('sort', field); p.delete('dir')
+        } else {                            // desc -> off -> default createdAt desc
+          p.delete('sort'); p.delete('dir')
+        }
       }),
     [commit, searchParams],
   )
@@ -74,11 +92,13 @@ export function useJobFilters(): UseJobFilters {
 
   return {
     filters,
-    isFiltered: computeIsFiltered(filters),
+    isBoardFiltered: computeBoardFiltered(filters),
+    isListFiltered: computeListFiltered(filters),
     setSearch,
     setStatus,
     setGhost,
-    setSort,
+    setDateRange,
+    cycleSort,
     setPage,
     resetAll,
   }

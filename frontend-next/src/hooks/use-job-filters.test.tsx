@@ -15,7 +15,7 @@ import { useJobFilters } from './use-job-filters'
 
 beforeEach(() => {
   vi.clearAllMocks()
-  for (const k of ['search', 'status', 'ghost', 'sort', 'dir', 'page', 'view', 'job']) searchParams.delete(k)
+  for (const k of ['search', 'status', 'ghost', 'sort', 'dir', 'page', 'from', 'to', 'view', 'job']) searchParams.delete(k)
 })
 
 function lastUrl(): string {
@@ -27,7 +27,8 @@ describe('useJobFilters', () => {
   it('parses defaults and reports not-filtered', () => {
     const { result } = renderHook(() => useJobFilters())
     expect(result.current.filters.sortBy).toBe('createdAt')
-    expect(result.current.isFiltered).toBe(false)
+    expect(result.current.isBoardFiltered).toBe(false)
+    expect(result.current.isListFiltered).toBe(false)
   })
 
   it('setSearch writes search and emits scroll:false', () => {
@@ -72,37 +73,63 @@ describe('useJobFilters', () => {
     expect(new URL(lastUrl(), 'http://x').searchParams.has('page')).toBe(false) // page 1 is the default
   })
 
-  it('setSort sets a new field (default dir) and toggles dir on the active field', () => {
+  it('cycleSort: a non-default column goes inactive -> asc -> desc -> off(default)', () => {
     const { result, rerender } = renderHook(() => useJobFilters())
-    act(() => result.current.setSort('company'))
+    act(() => result.current.cycleSort('company'))
     expect(new URL(lastUrl(), 'http://x').searchParams.get('sort')).toBe('company')
-    expect(new URL(lastUrl(), 'http://x').searchParams.has('dir')).toBe(false) // desc default → omitted
-    // Simulate the URL now reflecting sort=company, then re-click the same field.
-    searchParams.set('sort', 'company')
-    rerender()
-    act(() => result.current.setSort('company'))
     expect(new URL(lastUrl(), 'http://x').searchParams.get('dir')).toBe('asc')
+
+    searchParams.set('sort', 'company'); searchParams.set('dir', 'asc'); rerender()
+    act(() => result.current.cycleSort('company'))
+    expect(new URL(lastUrl(), 'http://x').searchParams.get('sort')).toBe('company')
+    expect(new URL(lastUrl(), 'http://x').searchParams.has('dir')).toBe(false) // desc (omitted)
+
+    searchParams.delete('dir'); rerender() // now sort=company, desc
+    act(() => result.current.cycleSort('company'))
+    const off = new URL(lastUrl(), 'http://x').searchParams
+    expect(off.has('sort')).toBe(false) // off -> default createdAt desc
+    expect(off.has('dir')).toBe(false)
   })
 
-  it('setSort on an asc-active field toggles back to desc and drops the dir param', () => {
-    searchParams.set('sort', 'company')
-    searchParams.set('dir', 'asc')
+  it('cycleSort: the Added (createdAt) column toggles asc<->desc', () => {
+    const { result, rerender } = renderHook(() => useJobFilters())
+    act(() => result.current.cycleSort('createdAt')) // default desc -> asc
+    expect(new URL(lastUrl(), 'http://x').searchParams.get('sort')).toBe('createdAt')
+    expect(new URL(lastUrl(), 'http://x').searchParams.get('dir')).toBe('asc')
+
+    searchParams.set('sort', 'createdAt'); searchParams.set('dir', 'asc'); rerender()
+    act(() => result.current.cycleSort('createdAt')) // asc -> default desc (cleared)
+    const back = new URL(lastUrl(), 'http://x').searchParams
+    expect(back.has('sort')).toBe(false)
+    expect(back.has('dir')).toBe(false)
+  })
+
+  it('setDateRange sets/clears from+to, resets page, preserves view', () => {
+    searchParams.set('page', '3'); searchParams.set('view', 'board')
     const { result } = renderHook(() => useJobFilters())
-    act(() => result.current.setSort('company'))
-    const url = new URL(lastUrl(), 'http://x')
-    expect(url.searchParams.get('sort')).toBe('company')
-    expect(url.searchParams.has('dir')).toBe(false) // back to default desc → omitted
+    act(() => result.current.setDateRange('2022-01-01', '2022-12-31'))
+    let u = new URL(lastUrl(), 'http://x')
+    expect(u.searchParams.get('from')).toBe('2022-01-01')
+    expect(u.searchParams.get('to')).toBe('2022-12-31')
+    expect(u.searchParams.has('page')).toBe(false)
+    expect(u.searchParams.get('view')).toBe('board')
+    act(() => result.current.setDateRange(undefined, undefined))
+    u = new URL(lastUrl(), 'http://x')
+    expect(u.searchParams.has('from')).toBe(false)
+    expect(u.searchParams.has('to')).toBe(false)
   })
 
   it('resetAll clears filter params but keeps view/job', () => {
     searchParams.set('search', 'x')
     searchParams.set('status', 'APPLIED')
+    searchParams.set('from', '2022-01-01')
     searchParams.set('view', 'board')
     const { result } = renderHook(() => useJobFilters())
     act(() => result.current.resetAll())
     const url = new URL(lastUrl(), 'http://x')
     expect(url.searchParams.has('search')).toBe(false)
     expect(url.searchParams.has('status')).toBe(false)
+    expect(url.searchParams.has('from')).toBe(false)
     expect(url.searchParams.get('view')).toBe('board')
   })
 })
