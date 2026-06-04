@@ -7,6 +7,8 @@ export type SortOrder = 'asc' | 'desc'
 export interface JobFilters {
   search: string
   status?: JobStatus
+  createdFrom?: string
+  createdTo?: string
   ghost: GhostFilter
   sortBy: SortField
   sortOrder: SortOrder

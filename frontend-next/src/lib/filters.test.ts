@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseFilters, isFiltered, buildListQuery, buildBoardQuery } from './filters'
+import { parseFilters, isBoardFiltered, isListFiltered, buildListQuery, buildBoardQuery } from './filters'
 import { DEFAULT_FILTERS } from '@/types/filters'
 
 describe('parseFilters', () => {
@@ -26,16 +26,20 @@ describe('parseFilters', () => {
   })
 })
 
-describe('isFiltered', () => {
-  it('is false for defaults and true for any narrowing filter', () => {
-    expect(isFiltered(DEFAULT_FILTERS)).toBe(false)
-    expect(isFiltered({ ...DEFAULT_FILTERS, search: 'x' })).toBe(true)
-    expect(isFiltered({ ...DEFAULT_FILTERS, status: 'APPLIED' })).toBe(true)
-    expect(isFiltered({ ...DEFAULT_FILTERS, ghost: 'ghost' })).toBe(true)
+describe('isBoardFiltered / isListFiltered', () => {
+  it('board cares only about search + ghost', () => {
+    expect(isBoardFiltered(DEFAULT_FILTERS)).toBe(false)
+    expect(isBoardFiltered({ ...DEFAULT_FILTERS, status: 'APPLIED' })).toBe(false)        // status doesn't affect the board
+    expect(isBoardFiltered({ ...DEFAULT_FILTERS, createdFrom: '2022-01-01' })).toBe(false) // nor does a date range
+    expect(isBoardFiltered({ ...DEFAULT_FILTERS, search: 'x' })).toBe(true)
+    expect(isBoardFiltered({ ...DEFAULT_FILTERS, ghost: 'ghost' })).toBe(true)
   })
-
-  it('ignores sort/page (they are not narrowing filters)', () => {
-    expect(isFiltered({ ...DEFAULT_FILTERS, sortBy: 'title', sortOrder: 'asc', page: 4 })).toBe(false)
+  it('list counts every list filter', () => {
+    expect(isListFiltered(DEFAULT_FILTERS)).toBe(false)
+    expect(isListFiltered({ ...DEFAULT_FILTERS, status: 'APPLIED' })).toBe(true)
+    expect(isListFiltered({ ...DEFAULT_FILTERS, createdFrom: '2022-01-01' })).toBe(true)
+    expect(isListFiltered({ ...DEFAULT_FILTERS, createdTo: '2022-12-31' })).toBe(true)
+    expect(isListFiltered({ ...DEFAULT_FILTERS, sortBy: 'title' })).toBe(false) // sort isn't a "filter"
   })
 })
 
@@ -65,5 +69,33 @@ describe('buildBoardQuery', () => {
     expect(p.get('ghostFilter')).toBe('active')
     expect(p.has('status')).toBe(false)
     expect(p.has('sortBy')).toBe(false)
+  })
+})
+
+describe('parseFilters date range', () => {
+  it('reads from/to as createdFrom/createdTo when well-formed', () => {
+    const f = parseFilters(new URLSearchParams('from=2022-01-01&to=2022-12-31'))
+    expect(f.createdFrom).toBe('2022-01-01')
+    expect(f.createdTo).toBe('2022-12-31')
+  })
+  it('ignores malformed dates', () => {
+    const f = parseFilters(new URLSearchParams('from=nope&to=2022/12/31'))
+    expect(f.createdFrom).toBeUndefined()
+    expect(f.createdTo).toBeUndefined()
+  })
+})
+
+describe('buildListQuery date range', () => {
+  it('maps from/to to createdFrom/createdTo', () => {
+    const p = new URLSearchParams(buildListQuery({ ...DEFAULT_FILTERS, createdFrom: '2022-01-01', createdTo: '2022-12-31' }).replace(/^\?/, ''))
+    expect(p.get('createdFrom')).toBe('2022-01-01')
+    expect(p.get('createdTo')).toBe('2022-12-31')
+  })
+})
+
+describe('buildBoardQuery ignores date range', () => {
+  it('never emits createdFrom/createdTo', () => {
+    const qs = buildBoardQuery({ search: 'x', ghost: 'all' })
+    expect(qs).not.toMatch(/created/i)
   })
 })
