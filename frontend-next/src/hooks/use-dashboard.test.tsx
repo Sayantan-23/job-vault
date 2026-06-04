@@ -21,11 +21,18 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => vi.clearAllMocks())
 
 describe('useKanban', () => {
-  it('fetches the board from /api/dashboard/kanban', async () => {
+  it('fetches the board from /api/dashboard/kanban for default filters', async () => {
     api.get.mockResolvedValue({ columns: [], stats: { totalJobs: 0 } })
-    const { result } = renderHook(() => useKanban(), { wrapper })
+    const { result } = renderHook(() => useKanban({ search: '', ghost: 'all' }), { wrapper })
     await waitFor(() => expect(result.current.data?.stats.totalJobs).toBe(0))
     expect(api.get).toHaveBeenCalledWith('/api/dashboard/kanban')
+  })
+
+  it('appends search + ghostFilter when filtered', async () => {
+    api.get.mockResolvedValue({ columns: [], stats: { totalJobs: 0 } })
+    renderHook(() => useKanban({ search: 'acme', ghost: 'ghost' }), { wrapper })
+    await waitFor(() => expect(api.get).toHaveBeenCalled())
+    expect(api.get).toHaveBeenCalledWith('/api/dashboard/kanban?search=acme&ghostFilter=ghost')
   })
 })
 

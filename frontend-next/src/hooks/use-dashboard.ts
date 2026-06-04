@@ -1,15 +1,18 @@
 'use client'
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY, JOBS_KEY } from '@/lib/query-keys'
+import { DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY, JOBS_KEY, kanbanKey } from '@/lib/query-keys'
+import { buildBoardQuery } from '@/lib/filters'
 import type { KanbanBoard, DashboardStats } from '@/types/dashboard'
+import type { GhostFilter } from '@/types/filters'
 import type { JobStatus } from '@/lib/job-status'
 
-export function useKanban(initialData?: KanbanBoard) {
+export function useKanban(filters: { search: string; ghost: GhostFilter }, initialData?: KanbanBoard) {
   return useQuery({
-    queryKey: DASHBOARD_KANBAN_KEY,
-    queryFn: () => apiClient.get<KanbanBoard>('/api/dashboard/kanban'),
+    queryKey: kanbanKey(filters),
+    queryFn: () => apiClient.get<KanbanBoard>(`/api/dashboard/kanban${buildBoardQuery(filters)}`),
+    placeholderData: keepPreviousData,
     refetchOnMount: 'always',
     ...(initialData ? { initialData } : {}),
   })
