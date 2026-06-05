@@ -15,7 +15,9 @@ beforeAll(async () => {
   process.env['CORS_ORIGINS'] = 'http://localhost:8080'
   process.env['JWT_SECRET'] = 'a'.repeat(32)
   const rows = await getDb().insert(users).values({ name: 'P', email: EMAIL, passwordHash: 'h' }).returning()
-  userId = rows[0]!.id
+  const row = rows[0]
+  if (!row) throw new Error('failed to seed user')
+  userId = row.id
 })
 
 afterAll(async () => {
