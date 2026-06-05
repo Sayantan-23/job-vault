@@ -111,15 +111,15 @@ describe('parseEnv AI/persona settings', () => {
   it('defaults model, rate limit and persona cap; AI key is optional', () => {
     const env = parseEnv(BASE)
     expect(env.GEMINI_API_KEY).toBeUndefined()
-    expect(env.GEMINI_MODEL).toBe('gemini-2.0-flash')
+    expect(env.GEMINI_MODEL).toBe('gemini-2.5-flash')
     expect(env.AI_RATE_LIMIT_PER_HOUR).toBe(10)
     expect(env.MAX_PERSONAS).toBe(5)
   })
 
   it('reads overrides', () => {
-    const env = parseEnv({ ...BASE, GEMINI_API_KEY: 'k', GEMINI_MODEL: 'gemini-2.5-flash', AI_RATE_LIMIT_PER_HOUR: '3', MAX_PERSONAS: '8' })
+    const env = parseEnv({ ...BASE, GEMINI_API_KEY: 'k', GEMINI_MODEL: 'gemini-3.5-flash', AI_RATE_LIMIT_PER_HOUR: '3', MAX_PERSONAS: '8' })
     expect(env.GEMINI_API_KEY).toBe('k')
-    expect(env.GEMINI_MODEL).toBe('gemini-2.5-flash')
+    expect(env.GEMINI_MODEL).toBe('gemini-3.5-flash')
     expect(env.AI_RATE_LIMIT_PER_HOUR).toBe(3)
     expect(env.MAX_PERSONAS).toBe(8)
   })

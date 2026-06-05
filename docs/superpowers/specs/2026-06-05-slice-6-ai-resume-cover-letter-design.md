@@ -215,7 +215,7 @@ Validated by `config/env.ts` (Zod, fail-fast) — all optional with sane default
 | Var | Default | Meaning |
 |---|---|---|
 | `GEMINI_API_KEY` | (unset) | Enables AI. Unset ⇒ `ai/status.enabled=false`, generation 503s. |
-| `GEMINI_MODEL` | `gemini-2.0-flash` | Generation model; swappable to a newer Flash. |
+| `GEMINI_MODEL` | `gemini-2.5-flash` | Generation model; swappable (e.g. `gemini-3.5-flash`). **Note:** `gemini-2.0-flash` is deprecated; free-tier quota is per-model/project so the working model varies by key (verified 2026-06: a free key ran `gemini-3.5-flash` and `gemini-2.5-flash-lite` but not `gemini-2.0-flash`). |
 | `AI_RATE_LIMIT_PER_HOUR` | `10` | Max résumé+cover-letter generations/user/trailing-hour. |
 | `MAX_PERSONAS` | `5` | Persona cap per user. |
 
