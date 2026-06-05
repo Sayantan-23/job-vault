@@ -1,4 +1,5 @@
 import type { PersonaInputs } from '@/modules/personas/personas.schema.js'
+import type { ResumeContent } from '@/shared/resume-content.schema.js'
 
 const SCHEMA_GUIDE = `Return ONLY a JSON object with this exact shape (omit unknown optional fields, never invent facts):
 {
@@ -19,5 +20,25 @@ export function buildStructurePrompt(inputs: PersonaInputs): string {
   if (inputs.pastedResume) parts.push(`PASTED RESUME:\n${inputs.pastedResume}`)
   if (inputs.freeText) parts.push(`ADDITIONAL NOTES:\n${inputs.freeText}`)
   if (inputs.fields) parts.push(`KNOWN FIELDS (authoritative, prefer these):\n${JSON.stringify(inputs.fields)}`)
+  return parts.join('\n\n')
+}
+
+export function buildResumePrompt(
+  background: ResumeContent,
+  job: { title: string; company: string; snapshot?: string | null } | null,
+  instructions?: string,
+): string {
+  const parts: string[] = [
+    'You are an expert résumé writer. Produce a polished, ATS-clean résumé as structured JSON from the candidate background below.',
+    SCHEMA_GUIDE,
+    `CANDIDATE BACKGROUND (authoritative facts):\n${JSON.stringify(background)}`,
+  ]
+  if (job) {
+    parts.push(
+      `TAILOR FOR THIS JOB — reorder and emphasize the most relevant experience, projects, skills, and keywords:\nTitle: ${job.title}\nCompany: ${job.company}${job.snapshot ? `\nDescription:\n${job.snapshot}` : ''}`,
+    )
+  }
+  if (instructions) parts.push(`EXTRA INSTRUCTIONS:\n${instructions}`)
+  parts.push('Stay truthful to the background — do not invent employers, titles, dates, or degrees. Reword and prioritize for impact only.')
   return parts.join('\n\n')
 }

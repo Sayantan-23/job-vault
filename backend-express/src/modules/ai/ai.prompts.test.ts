@@ -1,5 +1,28 @@
 import { describe, it, expect } from 'vitest'
 import { buildStructurePrompt } from './ai.prompts.js'
+import { buildResumePrompt } from './ai.prompts.js'
+import type { ResumeContent } from '@/shared/resume-content.schema.js'
+
+const BG: ResumeContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
+
+describe('buildResumePrompt', () => {
+  it('embeds the background and asks for the ResumeContent JSON', () => {
+    const p = buildResumePrompt(BG, null)
+    expect(p).toContain('"name":"A"')
+    expect(p).toMatch(/JSON/i)
+    expect(p).toMatch(/double asterisks/i)
+  })
+  it('includes the job when tailoring, and instructions', () => {
+    const p = buildResumePrompt(BG, { title: 'Backend Engineer', company: 'Acme', snapshot: 'Go + k8s' }, 'emphasize leadership')
+    expect(p).toContain('Backend Engineer')
+    expect(p).toContain('Acme')
+    expect(p).toContain('Go + k8s')
+    expect(p).toContain('emphasize leadership')
+  })
+  it('never invents facts (guardrail present)', () => {
+    expect(buildResumePrompt(BG, null)).toMatch(/do not invent|truthful/i)
+  })
+})
 
 describe('buildStructurePrompt', () => {
   it('embeds all provided inputs and asks for the ResumeContent JSON shape', () => {
