@@ -15,7 +15,9 @@ export function usePersonas(initialData?: Persona[]) {
   return useQuery({
     queryKey: PERSONAS_KEY,
     queryFn: () => apiClient.get<Persona[]>('/api/personas'),
-    refetchOnMount: 'always',
+    // SSR-hydrated; treat as fresh on mount so we don't clobber it with an
+    // immediate refetch. Mutations (create/delete) still invalidate and refetch.
+    staleTime: 30_000,
     ...(initialData ? { initialData } : {}),
   })
 }

@@ -7,7 +7,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
-import { CreatePersonaFormSchema, type CreatePersonaFormValues } from '@/schemas/persona'
+import {
+  CreatePersonaFormSchema,
+  type CreatePersonaFormInput,
+  type CreatePersonaFormValues,
+} from '@/schemas/persona'
 import { useCreatePersona } from '@/hooks/use-personas'
 
 interface Props {
@@ -22,7 +26,7 @@ export function CreatePersonaWizard({ open, onOpenChange }: Props) {
     handleSubmit,
     reset,
     formState: { errors },
-  } = useForm<CreatePersonaFormValues>({
+  } = useForm<CreatePersonaFormInput, unknown, CreatePersonaFormValues>({
     resolver: zodResolver(CreatePersonaFormSchema),
     defaultValues: { name: '', pastedResume: '', freeText: '' },
   })

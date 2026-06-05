@@ -18,12 +18,12 @@ export function ResumeContentEditor({ value, onChange }: Props) {
     const experience = value.experience.map((e, idx) => (idx === i ? { ...e, ...partial } : e))
     patch({ experience })
   }
-  const addBullet = (i: number) =>
-    setExperience(i, { bullets: [...value.experience[i]!.bullets, ''] })
+  const bulletsAt = (i: number): string[] => value.experience[i]?.bullets ?? []
+  const addBullet = (i: number) => setExperience(i, { bullets: [...bulletsAt(i), ''] })
   const setBullet = (i: number, b: number, text: string) =>
-    setExperience(i, { bullets: value.experience[i]!.bullets.map((x, idx) => (idx === b ? text : x)) })
+    setExperience(i, { bullets: bulletsAt(i).map((x, idx) => (idx === b ? text : x)) })
   const removeBullet = (i: number, b: number) =>
-    setExperience(i, { bullets: value.experience[i]!.bullets.filter((_, idx) => idx !== b) })
+    setExperience(i, { bullets: bulletsAt(i).filter((_, idx) => idx !== b) })
   const removeExperience = (i: number) => patch({ experience: value.experience.filter((_, idx) => idx !== i) })
 
   return (

@@ -11,4 +11,5 @@ export const CreatePersonaFormSchema = z
     path: ['pastedResume'],
   })
 
+export type CreatePersonaFormInput = z.input<typeof CreatePersonaFormSchema>
 export type CreatePersonaFormValues = z.infer<typeof CreatePersonaFormSchema>
