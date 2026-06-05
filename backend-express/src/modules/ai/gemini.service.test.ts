@@ -51,10 +51,19 @@ describe('geminiService', () => {
     await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' })
   })
 
-  it('wraps SDK/provider errors as INTERNAL_ERROR (no leak)', async () => {
+  it('wraps generic SDK/provider errors as INTERNAL_ERROR (no leak)', async () => {
     loadEnv({ GEMINI_API_KEY: 'k' })
-    generateContent.mockRejectedValue(new Error('429 quota exceeded'))
+    generateContent.mockRejectedValue(new Error('socket hang up'))
     const { geminiService } = await import('./gemini.service.js')
     await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'INTERNAL_ERROR' })
+  })
+
+  it('maps provider 429 / quota errors to RATE_LIMITED', async () => {
+    loadEnv({ GEMINI_API_KEY: 'k' })
+    generateContent.mockRejectedValue(
+      Object.assign(new Error('{"error":{"code":429,"status":"RESOURCE_EXHAUSTED"}}'), { status: 429 }),
+    )
+    const { geminiService } = await import('./gemini.service.js')
+    await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'RATE_LIMITED' })
   })
 })

@@ -32,6 +32,14 @@ async function callModel(
     })
   } catch (err) {
     if (err instanceof AppError) throw err
+    // A provider quota/rate-limit (HTTP 429 / RESOURCE_EXHAUSTED) is retry-able —
+    // surface it as our RATE_LIMITED (429), not a 500. Provider detail stays in
+    // the logged `cause`; the client message is generic.
+    const status = (err as { status?: unknown }).status
+    const message = err instanceof Error ? err.message : ''
+    if (status === 429 || /RESOURCE_EXHAUSTED|quota|rate.?limit/i.test(message)) {
+      throw new AppError('RATE_LIMITED', 'The AI service is busy or out of quota. Please try again shortly.', err)
+    }
     throw new AppError('INTERNAL_ERROR', 'AI service request failed', err)
   }
 }
