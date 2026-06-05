@@ -22,3 +22,7 @@ export const kanbanKey = (f: { search: string; ghost: GhostFilter }) =>
 export const AI_STATUS_KEY = ['ai', 'status'] as const
 export const PERSONAS_KEY = ['personas'] as const
 export const personaKey = (id: string) => ['personas', id] as const
+
+export const RESUMES_KEY = ['resumes'] as const
+export const resumeKey = (id: string) => ['resumes', id] as const
+export const resumesByJobKey = (jobId: string) => ['resumes', 'job', jobId] as const

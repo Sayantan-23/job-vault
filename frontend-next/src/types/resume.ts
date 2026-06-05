@@ -38,3 +38,14 @@ export interface ResumeContent {
   skills: ResumeSkillGroup[]
   education: ResumeEducation[]
 }
+export interface GeneratedResume {
+  id: string
+  createdAt: string
+  updatedAt: string
+  userId: string
+  personaId: string
+  jobId: string | null
+  title: string | null
+  instructions: string | null
+  content: ResumeContent
+}
