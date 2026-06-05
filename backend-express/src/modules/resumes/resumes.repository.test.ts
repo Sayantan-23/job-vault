@@ -16,8 +16,14 @@ beforeAll(async () => {
   if (!process.env['DATABASE_URL']) process.env['DATABASE_URL'] = 'postgres://postgres:postgres@localhost:5433/jobvault'
   process.env['CORS_ORIGINS'] = 'http://localhost:8080'
   process.env['JWT_SECRET'] = 'a'.repeat(32)
-  userId = (await getDb().insert(users).values({ name: 'R', email: EMAIL, passwordHash: 'h' }).returning())[0]!.id
-  personaId = (await getDb().insert(personas).values({ userId, name: 'Backend', data: C }).returning())[0]!.id
+  const userRows = await getDb().insert(users).values({ name: 'R', email: EMAIL, passwordHash: 'h' }).returning()
+  const userRow = userRows[0]
+  if (!userRow) throw new Error('failed to seed user')
+  userId = userRow.id
+  const personaRows = await getDb().insert(personas).values({ userId, name: 'Backend', data: C }).returning()
+  const personaRow = personaRows[0]
+  if (!personaRow) throw new Error('failed to seed persona')
+  personaId = personaRow.id
 })
 afterAll(async () => {
   await getDb().delete(generatedResumes).where(eq(generatedResumes.userId, userId))
