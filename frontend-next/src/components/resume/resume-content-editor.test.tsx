@@ -16,9 +16,9 @@ const DATA: ResumeContent = {
   basics: { name: 'Kartick', email: 'k@x.com', links: [] },
   summary: 'Backend engineer.',
   experience: [{ company: 'Weloin', title: 'SWE', date: '2024', bullets: ['Built CI/CD'] }],
-  projects: [],
+  projects: [{ name: 'MaxFlow', tagline: 'SaaS', bullets: [] }],
   skills: [{ category: 'Languages', items: ['TypeScript'] }],
-  education: [],
+  education: [{ degree: 'MCA', institution: 'Brainware', period: '2022-2024' }],
 }
 
 describe('ResumeContentEditor', () => {
@@ -35,7 +35,8 @@ describe('ResumeContentEditor', () => {
   it('adds a bullet to an experience entry', async () => {
     const onChange = vi.fn()
     render(<ResumeContentEditor value={DATA} onChange={onChange} />)
-    await userEvent.click(screen.getByRole('button', { name: /add bullet/i }))
+    const [experienceAddBullet] = screen.getAllByRole('button', { name: /add bullet/i })
+    await userEvent.click(experienceAddBullet as HTMLElement)
     const next = lastChange(onChange)
     expect(next.experience[0]?.bullets).toHaveLength(2)
   })
@@ -46,5 +47,27 @@ describe('ResumeContentEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: /remove experience/i }))
     const next = lastChange(onChange)
     expect(next.experience).toHaveLength(0)
+  })
+
+  it('edits a skill group category', async () => {
+    const onChange = vi.fn()
+    render(<ResumeContentEditor value={DATA} onChange={onChange} />)
+    await userEvent.type(screen.getByLabelText(/skill group 1 category/i), 'X')
+    const next = lastChange(onChange)
+    expect((next.skills[0]?.category.length ?? 0)).toBeGreaterThan(DATA.skills[0]?.category.length ?? 0)
+  })
+
+  it('removes a project entry', async () => {
+    const onChange = vi.fn()
+    render(<ResumeContentEditor value={DATA} onChange={onChange} />)
+    await userEvent.click(screen.getByRole('button', { name: /remove project 1/i }))
+    expect(lastChange(onChange).projects).toHaveLength(DATA.projects.length - 1)
+  })
+
+  it('removes an education entry', async () => {
+    const onChange = vi.fn()
+    render(<ResumeContentEditor value={DATA} onChange={onChange} />)
+    await userEvent.click(screen.getByRole('button', { name: /remove education 1/i }))
+    expect(lastChange(onChange).education).toHaveLength(DATA.education.length - 1)
   })
 })
