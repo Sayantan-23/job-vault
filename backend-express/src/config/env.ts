@@ -23,6 +23,9 @@ const envSchema = z.object({
   CLOUDINARY_API_KEY: z.string().optional(),
   CLOUDINARY_API_SECRET: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-2.0-flash'),
+  AI_RATE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
+  MAX_PERSONAS: z.coerce.number().int().positive().default(5),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
   // Safe boolean parse: z.coerce.boolean() would coerce the string 'false' to
   // TRUE. Treat only 'true'/'1' as true; anything else (incl. absent) is false.

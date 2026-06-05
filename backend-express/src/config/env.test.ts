@@ -100,3 +100,27 @@ describe('parseEnv ENABLE_REALTIME', () => {
     expect(parseEnv({ ...base, ENABLE_REALTIME: '1' }).ENABLE_REALTIME).toBe(true)
   })
 })
+
+const BASE = {
+  DATABASE_URL: 'postgres://u:p@localhost:5432/db',
+  CORS_ORIGINS: 'http://localhost:8080',
+  JWT_SECRET: 'a'.repeat(32),
+}
+
+describe('parseEnv AI/persona settings', () => {
+  it('defaults model, rate limit and persona cap; AI key is optional', () => {
+    const env = parseEnv(BASE)
+    expect(env.GEMINI_API_KEY).toBeUndefined()
+    expect(env.GEMINI_MODEL).toBe('gemini-2.0-flash')
+    expect(env.AI_RATE_LIMIT_PER_HOUR).toBe(10)
+    expect(env.MAX_PERSONAS).toBe(5)
+  })
+
+  it('reads overrides', () => {
+    const env = parseEnv({ ...BASE, GEMINI_API_KEY: 'k', GEMINI_MODEL: 'gemini-2.5-flash', AI_RATE_LIMIT_PER_HOUR: '3', MAX_PERSONAS: '8' })
+    expect(env.GEMINI_API_KEY).toBe('k')
+    expect(env.GEMINI_MODEL).toBe('gemini-2.5-flash')
+    expect(env.AI_RATE_LIMIT_PER_HOUR).toBe(3)
+    expect(env.MAX_PERSONAS).toBe(8)
+  })
+})
