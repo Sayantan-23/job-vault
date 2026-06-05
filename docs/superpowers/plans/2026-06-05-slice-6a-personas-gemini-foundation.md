@@ -1914,7 +1914,7 @@ export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
         <div>
           <h1 className="font-serif text-2xl tracking-tight">Personas</h1>
           <p className="text-sm text-muted-foreground">
-            <span className="font-mono">{personas.length}</span> / <span className="font-mono">{status.maxPersonas}</span> role-focused backgrounds
+            <span className="font-mono">{`${personas.length} / ${status.maxPersonas}`}</span> role-focused backgrounds
           </p>
         </div>
         <Button type="button" disabled={!canCreate} onClick={() => setOpen(true)}>
