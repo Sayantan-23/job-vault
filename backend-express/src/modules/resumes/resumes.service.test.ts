@@ -36,9 +36,10 @@ describe('resumesService.generate', () => {
     ai.isAiEnabled.mockReturnValue(false)
     await expect(resumesService.generate('u1', { personaId: 'p1' })).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' })
   })
-  it('NOT_FOUND when the persona is not owned', async () => {
+  it('NOT_FOUND when the persona is not owned (and does NOT spend rate limit)', async () => {
     personas.findById.mockResolvedValue(null)
     await expect(resumesService.generate('u1', { personaId: 'pX' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(rl).not.toHaveBeenCalled()
   })
   it('NOT_FOUND when a jobId is given but not owned', async () => {
     personas.findById.mockResolvedValue(persona)

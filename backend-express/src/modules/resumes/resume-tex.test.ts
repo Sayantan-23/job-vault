@@ -40,6 +40,18 @@ describe('renderResumeTex', () => {
     expect(tex).toContain('\\href{mailto:k@example.com}{k@example.com}')
     expect(tex).toContain('\\href{https://github.com/x}{github.com/x}')
   })
+  it('escapes LaTeX specials inside \\href URL args and a backslash in text (no double-escape)', () => {
+    const t = renderResumeTex({
+      ...CONTENT,
+      basics: { ...CONTENT.basics, email: 'a%b@c_d.com', links: [{ label: 'GH', url: 'github.com/u#r&v' }] },
+      summary: 'path C:\\temp and 50% off',
+    })
+    expect(t).toContain('\\href{mailto:a\\%b@c\\_d.com}')
+    expect(t).toContain('github.com/u\\#r\\&v}')
+    expect(t).toContain('\\textbackslash{}')
+    expect(t).not.toContain('\\textbackslash\\{\\}')
+    expect(t).toContain('50\\% off')
+  })
   it('omits empty sections', () => {
     const tex2 = renderResumeTex({ ...CONTENT, projects: [], skills: [], education: [] })
     expect(tex2).not.toContain('\\section{Projects}')

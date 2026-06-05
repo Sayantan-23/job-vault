@@ -1,12 +1,27 @@
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
 
-/** Escape LaTeX special characters in plain user text. */
+const LATEX_ESCAPES: Record<string, string> = {
+  '\\': '\\textbackslash{}',
+  '&': '\\&',
+  '%': '\\%',
+  $: '\\$',
+  '#': '\\#',
+  _: '\\_',
+  '{': '\\{',
+  '}': '\\}',
+  '~': '\\textasciitilde{}',
+  '^': '\\textasciicircum{}',
+}
+
+/** Escape LaTeX special characters in plain user text. Single pass — braces
+ *  inserted by \textbackslash{} etc. are NOT re-scanned (avoids double-escape). */
 export function escapeLatex(s: string): string {
-  return s
-    .replace(/\\/g, '\\textbackslash{}')
-    .replace(/([&%$#_{}])/g, '\\$1')
-    .replace(/~/g, '\\textasciitilde{}')
-    .replace(/\^/g, '\\textasciicircum{}')
+  return s.replace(/[\\&%$#_{}~^]/g, (c) => LATEX_ESCAPES[c] ?? c)
+}
+
+/** Escape only the chars that break a \href URL argument (keeps / : ? = ~ etc.). */
+export function escapeLatexUrl(url: string): string {
+  return url.replace(/[\\%#&_{}$]/g, (c) => (c === '\\' ? '\\textbackslash{}' : `\\${c}`))
 }
 
 /** Escape, then expand **bold** markup into \textbf{...}. Assumes balanced **. */
@@ -54,9 +69,9 @@ export function renderResumeTex(content: ResumeContent): string {
   // Contact line: phone | mailto-email | location | links…
   const contact: string[] = []
   if (basics.phone) contact.push(escapeLatex(basics.phone))
-  if (basics.email) contact.push(`\\href{mailto:${basics.email}}{${escapeLatex(basics.email)}}`)
+  if (basics.email) contact.push(`\\href{mailto:${escapeLatexUrl(basics.email)}}{${escapeLatex(basics.email)}}`)
   if (basics.location) contact.push(escapeLatex(basics.location))
-  for (const l of basics.links) contact.push(`\\href{${ensureHttp(l.url)}}{${escapeLatex(l.url)}}`)
+  for (const l of basics.links) contact.push(`\\href{${escapeLatexUrl(ensureHttp(l.url))}}{${escapeLatex(l.url)}}`)
   if (contact.length) {
     out.push(`{\\centering \\small ${contact.join(' \\hspace{6pt}|\\hspace{6pt} ')} \\par}`, '\\vspace{8pt}', '')
   }
@@ -81,7 +96,7 @@ export function renderResumeTex(content: ResumeContent): string {
     for (const p of content.projects) {
       const right = p.tagline ? ` \\hfill \\textit{${escapeLatex(p.tagline)}}` : ''
       out.push(`\\noindent\\textbf{${escapeLatex(p.name)}}${right} \\\\`)
-      if (p.url) out.push(`\\href{${ensureHttp(p.url)}}{${escapeLatex(p.url)}}`)
+      if (p.url) out.push(`\\href{${escapeLatexUrl(ensureHttp(p.url))}}{${escapeLatex(p.url)}}`)
       const b = bullets(p.bullets)
       if (b) out.push(b)
       out.push('')

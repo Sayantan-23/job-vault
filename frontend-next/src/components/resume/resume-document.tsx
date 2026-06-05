@@ -1,3 +1,5 @@
+'use client'
+
 import { Document, Page, View, Text, Link, StyleSheet } from '@react-pdf/renderer'
 import type { Style } from '@react-pdf/types'
 import type { ResumeContent } from '@/types/resume'
@@ -101,6 +103,11 @@ export function ResumeDocument({ content }: { content: ResumeContent }) {
                   {p.tagline ? <Text style={s.italic}>{p.tagline}</Text> : <Text />}
                 </View>
                 <Bullets items={p.bullets} />
+                {p.url ? (
+                  <Link style={s.link} src={/^https?:\/\//i.test(p.url) ? p.url : `https://${p.url}`}>
+                    {p.url}
+                  </Link>
+                ) : null}
               </View>
             ))}
           </View>

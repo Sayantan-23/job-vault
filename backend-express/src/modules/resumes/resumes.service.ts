@@ -12,7 +12,6 @@ import type { GenerateResumeInput, UpdateResumeInput } from './resumes.schema.js
 
 async function generate(userId: string, input: GenerateResumeInput): Promise<GeneratedResumeRow> {
   if (!geminiService.isAiEnabled()) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
-  await assertWithinRateLimit(userId)
 
   const persona = await personasRepository.findById(userId, input.personaId)
   if (!persona) throw new AppError('NOT_FOUND', 'Persona not found')
@@ -25,6 +24,10 @@ async function generate(userId: string, input: GenerateResumeInput): Promise<Gen
     job = { title: j.title, company: j.company, snapshot: j.snapshotMarkdown }
     jobId = j.id
   }
+
+  // Spend the hourly rate-limit budget only after ownership is confirmed, so bad
+  // input (unknown persona/job) can't burn a user's quota.
+  await assertWithinRateLimit(userId)
 
   const content = await geminiService.generateStructured(
     buildResumePrompt(persona.data, job, input.instructions),

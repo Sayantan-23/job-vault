@@ -10,7 +10,7 @@ const SCHEMA_GUIDE = `Return ONLY a JSON object with this exact shape (omit unkn
   "skills": [{ "category": string, "items": string[] }],
   "education": [{ "degree": string, "institution": string, "period"?: string }]
 }
-In bullet and summary text, wrap the most impactful 1-3 phrases in **double asterisks** for emphasis. Keep bullets achievement-oriented and concise. Do not include markdown fences.`
+In bullet and summary text, wrap the most impactful 1-3 phrases in **double asterisks** for emphasis (always use ** in balanced pairs). Keep bullets achievement-oriented and concise. Do not include markdown fences.`
 
 export function buildStructurePrompt(inputs: PersonaInputs): string {
   const parts: string[] = [
