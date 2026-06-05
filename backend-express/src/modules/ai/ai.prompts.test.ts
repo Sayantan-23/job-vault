@@ -10,7 +10,7 @@ describe('buildStructurePrompt', () => {
     // schema guidance
     expect(p).toMatch(/basics/)
     expect(p).toMatch(/experience/)
-    expect(p).toMatch(/\*\*bold\*\*|bold/i)
+    expect(p).toMatch(/double asterisks/i)
     expect(p).toMatch(/JSON/i)
   })
 

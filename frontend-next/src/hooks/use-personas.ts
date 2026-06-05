@@ -8,7 +8,7 @@ import type { ResumeContent } from '@/types/resume'
 
 interface CreatePersonaBody {
   name: string
-  inputs: { pastedResume?: string; freeText?: string }
+  inputs: { pastedResume?: string; freeText?: string; fields?: Partial<ResumeContent> }
 }
 
 export function usePersonas(initialData?: Persona[]) {

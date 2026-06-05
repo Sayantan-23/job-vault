@@ -29,7 +29,7 @@ describe('ResumeContentEditor', () => {
     await userEvent.type(summary, '!')
     expect(onChange).toHaveBeenCalled()
     const next = lastChange(onChange)
-    expect(next.summary.startsWith('Backend engineer.')).toBe(true)
+    expect(next.summary).toBe('Backend engineer.!')
   })
 
   it('adds a bullet to an experience entry', async () => {

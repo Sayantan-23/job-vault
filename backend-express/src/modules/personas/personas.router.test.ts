@@ -93,4 +93,15 @@ describe('personas routes', () => {
     const res = await request(app).delete('/api/personas/p1').set('Cookie', [cookie])
     expect(res.status).toBe(204)
   })
+  it('gets one persona (200)', async () => {
+    repo.findById.mockResolvedValue(fakePersona())
+    const res = await request(app).get('/api/personas/p1').set('Cookie', [cookie])
+    expect(res.status).toBe(200)
+    expect(res.body.data.id).toBe('p1')
+  })
+  it('404s getting a missing persona', async () => {
+    repo.findById.mockResolvedValue(null)
+    const res = await request(app).get('/api/personas/x').set('Cookie', [cookie])
+    expect(res.status).toBe(404)
+  })
 })

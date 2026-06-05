@@ -50,4 +50,11 @@ describe('geminiService', () => {
     const { geminiService } = await import('./gemini.service.js')
     await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' })
   })
+
+  it('wraps SDK/provider errors as INTERNAL_ERROR (no leak)', async () => {
+    loadEnv({ GEMINI_API_KEY: 'k' })
+    generateContent.mockRejectedValue(new Error('429 quota exceeded'))
+    const { geminiService } = await import('./gemini.service.js')
+    await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'INTERNAL_ERROR' })
+  })
 })

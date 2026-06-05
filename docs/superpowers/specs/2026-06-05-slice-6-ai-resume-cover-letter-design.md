@@ -162,8 +162,8 @@ Success envelope `{ data, meta? }`, error envelope `{ statusCode, message, error
 
 | Method & path | Body / query | Behavior | Returns |
 |---|---|---|---|
-| `GET /api/ai/status` | — | capability probe | `{ enabled: boolean }` (false when no key) |
-| `GET /api/personas` | — | list user's personas | `{ data: Persona[], meta: { count, max } }` |
+| `GET /api/ai/status` | — | capability probe | `{ enabled: boolean, maxPersonas: number }` (enabled=false when no key; the persona cap rides here so the list endpoint stays a plain collection) |
+| `GET /api/personas` | — | list user's personas | `{ data: Persona[] }` (count derived client-side as `length`; cap from `/api/ai/status`) |
 | `POST /api/personas` | `{ name, inputs: { fields?, freeText?, pastedResume? } }` | **AI-structures** inputs → enforces cap → saves | `201 { data: Persona }` |
 | `GET /api/personas/:id` | — | one (owned) | `{ data: Persona }` |
 | `PATCH /api/personas/:id` | `{ name?, data? }` | user's manual edits to structured background | `{ data: Persona }` |

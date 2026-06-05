@@ -1,4 +1,4 @@
-import { GoogleGenAI } from '@google/genai'
+import { GoogleGenAI, type GenerateContentResponse } from '@google/genai'
 import type { z } from 'zod'
 import { getEnv } from '@/config/env.js'
 import { AppError } from '@/shared/errors.js'
@@ -16,19 +16,37 @@ function isAiEnabled(): boolean {
   return Boolean(getEnv().GEMINI_API_KEY)
 }
 
+// Wraps the SDK call so a provider error (auth, quota, network) surfaces as a
+// generic INTERNAL_ERROR instead of leaking provider internals to the client.
+// getClient() stays outside the try so its SERVICE_UNAVAILABLE propagates as-is.
+async function callModel(
+  prompt: string,
+  config?: { responseMimeType: string },
+): Promise<GenerateContentResponse> {
+  const client = getClient()
+  try {
+    return await client.models.generateContent({
+      model: getEnv().GEMINI_MODEL,
+      contents: prompt,
+      ...(config ? { config } : {}),
+    })
+  } catch (err) {
+    if (err instanceof AppError) throw err
+    throw new AppError('INTERNAL_ERROR', 'AI service request failed', err)
+  }
+}
+
 async function generateText(prompt: string): Promise<string> {
-  const res = await getClient().models.generateContent({ model: getEnv().GEMINI_MODEL, contents: prompt })
+  const res = await callModel(prompt)
   const text = res.text
   if (!text) throw new AppError('INTERNAL_ERROR', 'AI returned an empty response')
   return text
 }
 
-async function generateStructured<T>(prompt: string, schema: z.ZodType<T>): Promise<T> {
-  const res = await getClient().models.generateContent({
-    model: getEnv().GEMINI_MODEL,
-    contents: prompt,
-    config: { responseMimeType: 'application/json' },
-  })
+// Input param fixed to `unknown` so T binds to the schema's OUTPUT type (with
+// defaults applied), not its input type — callers get a fully-formed value.
+async function generateStructured<T>(prompt: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>): Promise<T> {
+  const res = await callModel(prompt, { responseMimeType: 'application/json' })
   let parsed: unknown
   try {
     parsed = JSON.parse(res.text ?? '')

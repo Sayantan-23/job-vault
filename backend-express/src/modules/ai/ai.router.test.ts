@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect, beforeAll, vi } from 'vitest'
 import request from 'supertest'
 import type { Express } from 'express'
 
@@ -23,5 +23,16 @@ describe('GET /api/ai/status', () => {
     const res = await request(app).get('/api/ai/status')
     expect(res.status).toBe(200)
     expect(res.body.data).toEqual({ enabled: false, maxPersonas: 5 })
+  })
+
+  it('reports enabled with the persona cap when a key is set', async () => {
+    vi.resetModules()
+    process.env['GEMINI_API_KEY'] = 'test-key'
+    const enabledApp = (await import('@/app.js')).createApp()
+    const res = await request(enabledApp).get('/api/ai/status')
+    expect(res.status).toBe(200)
+    expect(res.body.data).toEqual({ enabled: true, maxPersonas: 5 })
+    delete process.env['GEMINI_API_KEY']
+    vi.resetModules()
   })
 })
