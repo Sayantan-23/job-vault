@@ -6,6 +6,7 @@ import { dashboardRouter } from '@/modules/dashboard/dashboard.router.js'
 import { timelineRouter } from '@/modules/timeline/timeline.router.js'
 import { notificationsRouter } from '@/modules/notifications/notifications.router.js'
 import { remindersJobRouter, remindersRouter } from '@/modules/reminders/reminders.router.js'
+import { aiRouter } from '@/modules/ai/ai.router.js'
 
 const router = Router()
 
@@ -21,5 +22,6 @@ router.use('/jobs/:jobId/reminders', remindersJobRouter)
 router.use('/reminders', remindersRouter)
 router.use('/dashboard', dashboardRouter)
 router.use('/notifications', notificationsRouter)
+router.use('/ai', aiRouter)
 
 export { router as apiRouter }
