@@ -18,3 +18,7 @@ export const jobsListKey = (f: JobFilters) =>
 // prefix invalidations still match.
 export const kanbanKey = (f: { search: string; ghost: GhostFilter }) =>
   ['dashboard', 'kanban', f.search, f.ghost] as const
+
+export const AI_STATUS_KEY = ['ai', 'status'] as const
+export const PERSONAS_KEY = ['personas'] as const
+export const personaKey = (id: string) => ['personas', id] as const
