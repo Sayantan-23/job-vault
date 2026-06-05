@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import type { Persona } from '@/types/persona'
 import { Button } from '@/components/ui/button'
 import { useDeletePersona } from '@/hooks/use-personas'
@@ -19,16 +20,24 @@ export function PersonaList({ personas }: { personas: Persona[] }) {
               {p.data.experience.length} roles · {p.data.skills.length} skill groups
             </p>
           </div>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            aria-label={`Delete ${p.name}`}
-            disabled={del.isPending}
-            onClick={() => del.mutate(p.id)}
-          >
-            Delete
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/app/resumes?persona=${p.id}`}
+              className="inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-sm font-medium hover:bg-accent"
+            >
+              Generate résumé
+            </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              aria-label={`Delete ${p.name}`}
+              disabled={del.isPending}
+              onClick={() => del.mutate(p.id)}
+            >
+              Delete
+            </Button>
+          </div>
         </li>
       ))}
     </ul>
