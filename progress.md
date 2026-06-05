@@ -202,6 +202,18 @@
 - [x] Backend typecheck+lint+tests; frontend typecheck+lint+**231 tests** + Docker prod build — all green. Adversarial 5-lens review; blockers (date in cache key, exactOptional build break) + major (SSR date params) + cleanups fixed.
 - [ ] **Known minor:** the Status/Date funnel menus don't auto-close on select (Escape/outside-click closes them); easy follow-up to wire `AnchoredPopoverClose`. Manual browser pass + **merge to master** (user merges).
 
+## Migration Slice 6 — File Storage + AI / Gemini (**re-scoped**) (2026-06-05)
+
+> **Spec**: `docs/superpowers/specs/2026-06-05-slice-6-ai-resume-cover-letter-design.md`. **Re-scope** (vs the original BE-06/07 roadmap): **no file storage** (Cloudinary/Multer/PDFKit/resume-upload-parsing all dropped) — everything persisted is **text/JSON in Postgres**; PDFs render **client-side** (react-pdf), never stored. The AI emits **content as JSON/Markdown**, the app owns formatting in code → a `.tex` (Copy/Overleaf) and a PDF both derive deterministically with **zero backend rendering toolchain**. Built as 3 sub-slices (6a/6b/6c) on branch `slice-6-ai-resume-cover-letter` (**not yet merged to master**).
+
+**Slice 6a — Personas + Gemini foundation (DONE)**
+> **Plan**: `docs/superpowers/plans/2026-06-05-slice-6a-personas-gemini-foundation.md`. Orchestrated via the `Workflow` tool: sequential per-task TDD implementation → solo ground-truth gates → 5-lens adversarial review → review-fix → live smoke.
+- [x] Backend: `@google/genai` Gemini wrapper (`isAiEnabled`/`generateText`/`generateStructured` — structured-JSON output, Zod-validated, output-typed generic; provider errors wrapped, **429/quota → `RATE_LIMITED`**); shared `ResumeContent` schema (mapped from the example `.tex`); `GET /api/ai/status` → `{ enabled, maxPersonas }`; `personas` table (migration `0004`) + module (router→controller→service→repository→Zod) with cap enforcement + AI-structuring; env knobs `GEMINI_API_KEY`/`GEMINI_MODEL`(`gemini-2.0-flash`)/`AI_RATE_LIMIT_PER_HOUR`/`MAX_PERSONAS`; new `SERVICE_UNAVAILABLE` (503) code.
+- [x] Frontend: `Persona`/`ResumeContent` types + `usePersonas`/`useAiStatus` hooks; reusable **`ResumeContentEditor`** (text · add/remove bullets · remove entry — extended in 6b); `CreatePersonaWizard` (paste résumé/notes → AI-structure); `/app/personas` page + workspace (cap counter, AI-disabled state) + **Personas** sidebar nav.
+- [x] **Gates green:** backend `typecheck`+`lint`+**289 tests**; frontend `typecheck`+`lint`+**246 tests**+**production Docker build**. Adversarial 5-lens review (0 blockers; majors/minors fixed: Gemini error-wrap, output-typed generic, GET `/:id` + `ai/status`-enabled tests, frontend `fields` contract, spec §7 reconciled).
+- [x] **Live smoke (Docker, real key):** `/api/ai/status` → `enabled:true`; auth + Gemini call reach the provider and the error path maps a real provider **429 → clean `RATE_LIMITED`** (no leak). **Note:** actual persona creation is blocked only by the test key's quota (`limit: 0` for `gemini-2.0-flash` on free tier) — a key/billing matter, not a code defect.
+- [ ] **Next:** **6b — Résumé generation** (`.tex` deriver + react-pdf `ResumeDocument` preview/PDF + extend `ResumeContentEditor`; persona-only + job modes; DB-derived rate limit lands here), then **6c — Cover letters + JobDrawer wiring**. Manual browser pass + **merge to master** (user merges).
+
 ---
 
 ## Dependency Diagram
