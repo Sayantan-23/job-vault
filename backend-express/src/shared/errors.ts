@@ -5,6 +5,7 @@ export type AppErrorCode =
   | 'VALIDATION_ERROR'
   | 'CONFLICT'
   | 'RATE_LIMITED'
+  | 'SERVICE_UNAVAILABLE'
   | 'INTERNAL_ERROR'
 
 const STATUS_BY_CODE: Record<AppErrorCode, number> = {
@@ -14,6 +15,7 @@ const STATUS_BY_CODE: Record<AppErrorCode, number> = {
   VALIDATION_ERROR: 400,
   CONFLICT: 409,
   RATE_LIMITED: 429,
+  SERVICE_UNAVAILABLE: 503,
   INTERNAL_ERROR: 500,
 }
 

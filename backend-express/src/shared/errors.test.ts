@@ -31,3 +31,12 @@ describe('httpStatusForCode', () => {
     expect(httpStatusForCode(code)).toBe(status)
   })
 })
+
+describe('AppError SERVICE_UNAVAILABLE', () => {
+  it('maps to 503', () => {
+    expect(httpStatusForCode('SERVICE_UNAVAILABLE')).toBe(503)
+  })
+  it('constructs with the code', () => {
+    expect(new AppError('SERVICE_UNAVAILABLE', 'off').code).toBe('SERVICE_UNAVAILABLE')
+  })
+})
