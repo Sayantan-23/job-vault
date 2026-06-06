@@ -230,6 +230,7 @@
 ### ✅ Slice 6 complete (6a + 6b + 6c) — branch `slice-6-ai-resume-cover-letter`
 Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + client-side react-pdf preview/PDF, persona-only or job-tailored) → per-job **cover letters** (Markdown + PDF), all on **Gemini 3.5 Flash**, **zero file storage** (text/JSON in Postgres; PDFs render client-side), shared DB-derived hourly rate limit, env-gated. Migrations `0004`–`0006`. **Not yet merged to master.**
 - [ ] **Next:** user manual browser pass + **merge to master**. Then the remaining migration backlog: Chrome extension (Slice 8), public-pages redesign, Google OAuth, email reminders (`docs/deferred-tasks.md`).
+- [ ] **Planned follow-up (user-requested 2026-06-06): Personas + User Master-Profile redesign.** Add a reusable **user master-profile** (skills/education/projects/experience) and give persona creation **two modes** — *manual* (curate per section; pick from profile **or** add persona-specific; **education shared across personas**) and *auto* (name + résumé → AI scrape; clarify paste-vs-file-upload). Notes on both. Requirements brief: `docs/superpowers/specs/2026-06-06-personas-profile-redesign-brief.md` → **brainstorm first** (not a small task; it's a persona data-model redesign).
 
 ---
 
