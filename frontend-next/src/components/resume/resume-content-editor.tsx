@@ -96,8 +96,10 @@ export function ResumeContentEditor({ value, onChange }: Props) {
             />
             <ul className="space-y-1">
               {exp.bullets.map((b, bi) => (
-                <li key={bi} className="flex items-center gap-2">
-                  <Input
+                <li key={bi} className="flex items-start gap-2">
+                  <Textarea
+                    rows={2}
+                    className="field-sizing-content min-h-0"
                     aria-label={`Experience ${i + 1} bullet ${bi + 1}`}
                     value={b}
                     onChange={(e) => setBullet(i, bi, e.target.value)}
@@ -126,8 +128,14 @@ export function ResumeContentEditor({ value, onChange }: Props) {
             <Input aria-label={`Project ${i + 1} tagline`} value={p.tagline ?? ''} onChange={(e) => setProject(i, { tagline: e.target.value })} />
             <ul className="space-y-1">
               {p.bullets.map((b, bi) => (
-                <li key={bi} className="flex items-center gap-2">
-                  <Input aria-label={`Project ${i + 1} bullet ${bi + 1}`} value={b} onChange={(e) => setProjectBullet(i, bi, e.target.value)} />
+                <li key={bi} className="flex items-start gap-2">
+                  <Textarea
+                    rows={2}
+                    className="field-sizing-content min-h-0"
+                    aria-label={`Project ${i + 1} bullet ${bi + 1}`}
+                    value={b}
+                    onChange={(e) => setProjectBullet(i, bi, e.target.value)}
+                  />
                   <Button type="button" variant="ghost" size="sm" aria-label={`Remove project ${i + 1} bullet ${bi + 1}`} onClick={() => removeProjectBullet(i, bi)}>✕</Button>
                 </li>
               ))}

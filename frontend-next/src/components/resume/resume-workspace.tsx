@@ -52,27 +52,28 @@ export function ResumeWorkspace({ personas, initialPersonaId, initialJobId }: Pr
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
-          <div className="max-w-xl">
-            <GenerateResumeBar
-              personas={personas}
-              personaId={personaId}
-              onPersonaChange={setPersonaId}
-              jobs={jobs}
-              jobId={jobId}
-              onJobChange={setJobId}
-              onGenerate={onGenerate}
-              isPending={generate.isPending}
-            />
-            {generate.error ? (
-              <p role="alert" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {generate.error.message}
-              </p>
-            ) : null}
-          </div>
+          <GenerateResumeBar
+            personas={personas}
+            personaId={personaId}
+            onPersonaChange={setPersonaId}
+            jobs={jobs}
+            jobId={jobId}
+            onJobChange={setJobId}
+            onGenerate={onGenerate}
+            isPending={generate.isPending}
+          />
+          {generate.error ? (
+            <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {generate.error.message}
+            </p>
+          ) : null}
 
           {resume && content ? (
-            <div className="grid gap-6 xl:grid-cols-2">
-              <div className="space-y-3">
+            <div className="grid gap-6 lg:grid-cols-2">
+              {/* Editor — scrolls with the page. */}
+              <ResumeContentEditor value={content} onChange={setContent} />
+              {/* Preview + actions — sticky so they stay in view while you edit on the left. */}
+              <div className="space-y-3 self-start lg:sticky lg:top-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <ResumeOutputBar resumeId={resume.id} />
                   <DownloadPdfButton content={content} fileName={`${(resume.title ?? 'resume').replace(/\s+/g, '-')}.pdf`} />
@@ -80,9 +81,8 @@ export function ResumeWorkspace({ personas, initialPersonaId, initialJobId }: Pr
                     {save.isPending ? 'Saving…' : 'Save edits'}
                   </Button>
                 </div>
-                <ResumeContentEditor value={content} onChange={setContent} />
+                <ResumePreview content={content} />
               </div>
-              <ResumePreview content={content} />
             </div>
           ) : null}
         </div>
