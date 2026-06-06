@@ -49,4 +49,11 @@ describe('PersonasWorkspace', () => {
     await userEvent.click(screen.getByRole('button', { name: /delete backend/i }))
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/personas/p1'))
   })
+
+  it('opens the edit sheet for a persona', async () => {
+    render(<PersonasWorkspace initialPersonas={[PERSONA]} initialStatus={{ enabled: true, maxPersonas: 5 }} />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: /edit backend/i }))
+    expect(await screen.findByRole('heading', { name: /edit persona/i })).toBeInTheDocument()
+    expect(screen.getByLabelText('Persona name')).toHaveValue('Backend')
+  })
 })

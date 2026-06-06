@@ -9,6 +9,7 @@ import { usePersonas } from '@/hooks/use-personas'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { PersonaList } from './persona-list'
 import { CreatePersonaWizard } from './create-persona-wizard'
+import { EditPersonaSheet } from './edit-persona-sheet'
 
 interface Props {
   initialPersonas: Persona[]
@@ -16,7 +17,8 @@ interface Props {
 }
 
 export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
-  const [open, setOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editing, setEditing] = useState<Persona | null>(null)
   const { data: personas = initialPersonas } = usePersonas(initialPersonas)
   const { data: status = initialStatus } = useAiStatus(initialStatus)
   const atCap = personas.length >= status.maxPersonas
@@ -32,14 +34,14 @@ export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
           </>
         }
         actions={
-          <Button type="button" disabled={!canCreate} onClick={() => setOpen(true)}>
+          <Button type="button" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" aria-hidden="true" />
             New persona
           </Button>
         }
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="max-w-3xl space-y-4">
+        <div className="space-y-4">
           {!status.enabled ? (
             <p role="status" className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
               AI features are not configured. Set <span className="font-mono">GEMINI_API_KEY</span> to create personas.
@@ -49,10 +51,18 @@ export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
               You&rsquo;ve reached the maximum of {status.maxPersonas} personas. Delete one to add another.
             </p>
           ) : null}
-          <PersonaList personas={personas} />
+          <PersonaList personas={personas} onEdit={setEditing} />
         </div>
       </div>
-      <CreatePersonaWizard open={open} onOpenChange={setOpen} />
+
+      <CreatePersonaWizard open={createOpen} onOpenChange={setCreateOpen} />
+      <EditPersonaSheet
+        persona={editing}
+        open={editing !== null}
+        onOpenChange={(o) => {
+          if (!o) setEditing(null)
+        }}
+      />
     </div>
   )
 }
