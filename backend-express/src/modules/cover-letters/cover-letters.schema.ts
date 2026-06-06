@@ -9,7 +9,7 @@ export const GenerateCoverLetterSchema = z.object({
 export const UpdateCoverLetterSchema = z
   .object({
     title: z.string().max(200).optional(),
-    bodyMarkdown: z.string().min(1).optional(),
+    bodyMarkdown: z.string().min(1).max(50000).optional(),
   })
   .refine((v) => v.title !== undefined || v.bodyMarkdown !== undefined, { message: 'Nothing to update' })
 

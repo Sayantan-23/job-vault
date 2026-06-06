@@ -174,7 +174,7 @@ Success envelope `{ data, meta? }`, error envelope `{ statusCode, message, error
 | `GET /api/resumes/:id/tex` | — | derived `.tex` for Copy/Overleaf/download | `{ data: { tex: string } }` |
 | `PATCH /api/resumes/:id` | `{ title?, content? }` | save user edits to `content` | `{ data: Resume }` |
 | `DELETE /api/resumes/:id` | — | delete | `204` |
-| `POST /api/cover-letters` | `{ jobId, personaId?, instructions? }` | **generate** (rate-limited) → save | `201 { data: CoverLetter }` |
+| `POST /api/cover-letters` | `{ jobId, personaId, instructions? }` | **generate** (rate-limited) → save. `personaId` is **required** — a cover letter is "drawn from a persona" (§2.4), so it needs that background. (The stored row's `personaId` is nullable only to survive `ON DELETE SET NULL` if the persona is later deleted.) | `201 { data: CoverLetter }` |
 | `GET /api/cover-letters` | `?jobId=` | list (optionally by job) | `{ data: CoverLetter[] }` |
 | `GET /api/cover-letters/:id` | — | one | `{ data: CoverLetter }` |
 | `PATCH /api/cover-letters/:id` | `{ title?, bodyMarkdown? }` | save edits | `{ data: CoverLetter }` |
