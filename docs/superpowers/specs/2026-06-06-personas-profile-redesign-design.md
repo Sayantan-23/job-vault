@@ -215,8 +215,8 @@ Replace the current persona editor (`edit-persona-sheet.tsx` + flat `ResumeConte
 - **Smoke:** against the Docker stack with `GEMINI_API_KEY` — create profile, build a persona from it, import a PDF résumé, generate a résumé + cover letter end-to-end (verifies the unchanged generation pipeline still works off `ProfileContent`).
 
 ## 10. Suggested sub-slicing
-- **Slice 7a** — `ProfileContent` schema + `user_profiles` table (migration `0007`) + `profile` module (`GET`/`PUT`) + `/app/profile` page with the rich `ProfileEditor` and shared primitives. Persona up-conversion function + lazy normalization land here (so `personas.data` reads stay safe).
-- **Slice 7b** — persona redesign: two creation modes ("Build from profile" pickers + "Import a résumé" with `parse-resume`/`pdf-parse`/`multer`), AI structuring retarget to `ProfileContent`, persona editor swap to the rich editor, generation-prompt note tweak, backfill script.
+- **Slice 7a** — `ProfileContent` schema + `ensureIds` + `user_profiles` table (migration `0007`) + `profile` module (`GET`/`PUT`) + `/app/profile` page with the rich `ProfileEditor` and shared primitives. **Does not touch personas**, so it ships independently. (Plan: `docs/superpowers/plans/2026-06-06-slice-7a-master-profile.md`.)
+- **Slice 7b** — persona redesign: `personas.data` retype to `ProfileContent` + `resumeContentToProfileContent` up-conversion + lazy normalization + backfill; two creation modes ("Build from profile" pickers + "Import a résumé" with `parse-resume`/`pdf-parse`/`multer`); AI structuring retarget to `ProfileContent`; persona editor swap to the rich editor; generation-prompt note tweak.
 
 ## 11. Deferred / out of scope
 - Onboarding flow that collects profile data (separate, later — this slice gives it a home).
