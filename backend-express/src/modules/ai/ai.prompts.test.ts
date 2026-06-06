@@ -43,3 +43,19 @@ describe('buildStructurePrompt', () => {
     expect(p).not.toContain('PASTED RESUME')
   })
 })
+
+import { buildCoverLetterPrompt } from './ai.prompts.js'
+
+describe('buildCoverLetterPrompt', () => {
+  const bg: ResumeContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
+  it('asks for a Markdown letter tailored to the job, no invention', () => {
+    const p = buildCoverLetterPrompt(bg, { title: 'Backend Engineer', company: 'Acme', snapshot: 'Go' }, 'be concise')
+    expect(p).toMatch(/markdown/i)
+    expect(p).toContain('Backend Engineer')
+    expect(p).toContain('Acme')
+    expect(p).toContain('Go')
+    expect(p).toContain('be concise')
+    expect(p).toMatch(/do not invent|truthful/i)
+    expect(p).toContain('"name":"A"')
+  })
+})

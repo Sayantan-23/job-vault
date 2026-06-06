@@ -42,3 +42,17 @@ export function buildResumePrompt(
   parts.push('Stay truthful to the background — do not invent employers, titles, dates, or degrees. Reword and prioritize for impact only.')
   return parts.join('\n\n')
 }
+
+export function buildCoverLetterPrompt(
+  background: ResumeContent,
+  job: { title: string; company: string; snapshot?: string | null },
+  instructions?: string,
+): string {
+  const parts: string[] = [
+    'Write a concise, professional cover letter in Markdown for the job below, drawing on the candidate background. 3-4 short first-person paragraphs, specific and truthful — do not invent facts. Output ONLY the letter body in Markdown (no preamble, no code fences).',
+    `JOB:\nTitle: ${job.title}\nCompany: ${job.company}${job.snapshot ? `\nDescription:\n${job.snapshot}` : ''}`,
+    `CANDIDATE BACKGROUND (authoritative facts):\n${JSON.stringify(background)}`,
+  ]
+  if (instructions) parts.push(`EXTRA INSTRUCTIONS:\n${instructions}`)
+  return parts.join('\n\n')
+}
