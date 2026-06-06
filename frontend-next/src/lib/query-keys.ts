@@ -26,3 +26,6 @@ export const personaKey = (id: string) => ['personas', id] as const
 export const RESUMES_KEY = ['resumes'] as const
 export const resumeKey = (id: string) => ['resumes', id] as const
 export const resumesByJobKey = (jobId: string) => ['resumes', 'job', jobId] as const
+
+export const COVER_LETTERS_KEY = ['cover-letters'] as const
+export const coverLettersByJobKey = (jobId: string) => ['cover-letters', 'job', jobId] as const
