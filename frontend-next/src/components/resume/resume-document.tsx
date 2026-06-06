@@ -8,8 +8,11 @@ import { splitBold } from '@/lib/resume-markup'
 const RULE = '#2B6CB0'
 const s = StyleSheet.create({
   page: { paddingVertical: 29, paddingHorizontal: 36, fontFamily: 'Helvetica', fontSize: 9.5, color: '#000', lineHeight: 1.3 },
-  name: { fontFamily: 'Helvetica-Bold', fontSize: 22, textAlign: 'center' },
-  contact: { textAlign: 'center', fontSize: 8.5, marginTop: 3, marginBottom: 8, color: '#222' },
+  // Explicit lineHeight so the 22pt name reserves its own line box (without it,
+  // react-pdf sizes the line to the 9.5pt page default and the contact row
+  // overlaps the name). marginBottom adds the gap before the contact line.
+  name: { fontFamily: 'Helvetica-Bold', fontSize: 22, lineHeight: 1.25, textAlign: 'center', marginBottom: 6 },
+  contact: { textAlign: 'center', fontSize: 8.5, lineHeight: 1.3, marginBottom: 10, color: '#222' },
   link: { color: '#0645AD', textDecoration: 'none' },
   sectionTitle: { fontFamily: 'Helvetica-Bold', fontSize: 12, marginTop: 8, paddingBottom: 2, borderBottomWidth: 1, borderBottomColor: RULE },
   para: { marginTop: 3 },
