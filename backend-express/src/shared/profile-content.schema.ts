@@ -93,7 +93,7 @@ export type ProfileContent = z.infer<typeof ProfileContentSchema>
 // Assign a stable id to every entry/link that lacks one. The AI and legacy
 // rows never carry ids; the editor relies on them. Pure — returns a new object.
 export function ensureIds(content: ProfileContent): ProfileContent {
-  const withId = <T extends { id?: string }>(x: T): T => (x.id ? x : { ...x, id: randomUUID() })
+  const withId = <T extends { id?: string | undefined }>(x: T): T => (x.id ? x : { ...x, id: randomUUID() })
   return {
     ...content,
     basics: { ...content.basics, links: content.basics.links.map(withId) },
