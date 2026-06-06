@@ -10,6 +10,7 @@ import { ResumeContentEditor } from './resume-content-editor'
 import { ResumeOutputBar } from './resume-output-bar'
 import { DownloadPdfButton } from './download-pdf-button'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/app/page-header'
 
 interface Props {
   personas: Persona[]
@@ -41,31 +42,45 @@ export function ResumeWorkspace({ personas, initialPersonaId, initialJobId }: Pr
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <h1 className="font-serif text-2xl tracking-tight">Generate résumé</h1>
-      {initialJobId ? (
-        <p className="text-sm text-muted-foreground">Tailoring this résumé to the selected job.</p>
-      ) : null}
-      <GenerateResumeBar personas={personas} personaId={personaId} onPersonaChange={setPersonaId} onGenerate={onGenerate} isPending={generate.isPending} />
-      {generate.error ? (
-        <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{generate.error.message}</p>
-      ) : null}
-
-      {resume && content ? (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <ResumeOutputBar resumeId={resume.id} />
-              <DownloadPdfButton content={content} fileName={`${(resume.title ?? 'resume').replace(/\s+/g, '-')}.pdf`} />
-              <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ content })}>
-                {save.isPending ? 'Saving…' : 'Save edits'}
-              </Button>
-            </div>
-            <ResumeContentEditor value={content} onChange={setContent} />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PageHeader
+        title="Generate résumé"
+        description={initialJobId ? 'Tailoring to the selected job' : 'From one of your personas'}
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <div className="space-y-6">
+          <div className="max-w-xl">
+            <GenerateResumeBar
+              personas={personas}
+              personaId={personaId}
+              onPersonaChange={setPersonaId}
+              onGenerate={onGenerate}
+              isPending={generate.isPending}
+            />
+            {generate.error ? (
+              <p role="alert" className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {generate.error.message}
+              </p>
+            ) : null}
           </div>
-          <ResumePreview content={content} />
+
+          {resume && content ? (
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ResumeOutputBar resumeId={resume.id} />
+                  <DownloadPdfButton content={content} fileName={`${(resume.title ?? 'resume').replace(/\s+/g, '-')}.pdf`} />
+                  <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ content })}>
+                    {save.isPending ? 'Saving…' : 'Save edits'}
+                  </Button>
+                </div>
+                <ResumeContentEditor value={content} onChange={setContent} />
+              </div>
+              <ResumePreview content={content} />
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </div>
   )
 }
