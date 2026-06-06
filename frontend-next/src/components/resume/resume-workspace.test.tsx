@@ -37,4 +37,14 @@ describe('ResumeWorkspace', () => {
     await userEvent.click(screen.getByRole('button', { name: /generate résumé|generate resume/i }))
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/resumes', { personaId: 'p1', jobId: 'job1' }))
   })
+
+  it('lets you pick a job to tailor to from the form', async () => {
+    api.get.mockResolvedValue([{ id: 'job1', title: 'SWE', company: 'Acme' }])
+    api.post.mockResolvedValue({ id: 'res1', personaId: 'p1', jobId: 'job1', title: 'SWE — Acme', instructions: null, content: C, userId: 'u1', createdAt: '', updatedAt: '' })
+    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" />, { wrapper })
+    await screen.findByRole('option', { name: /SWE — Acme/i })
+    await userEvent.selectOptions(screen.getByLabelText(/tailor to a job/i), 'job1')
+    await userEvent.click(screen.getByRole('button', { name: /generate résumé|generate resume/i }))
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/resumes', { personaId: 'p1', jobId: 'job1' }))
+  })
 })
