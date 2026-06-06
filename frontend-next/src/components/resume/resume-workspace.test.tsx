@@ -30,4 +30,11 @@ describe('ResumeWorkspace', () => {
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/resumes', { personaId: 'p1' }))
     expect(await screen.findByTestId('preview')).toBeInTheDocument()
   })
+
+  it('includes jobId in the generate call when given', async () => {
+    api.post.mockResolvedValue({ id: 'res1', personaId: 'p1', jobId: 'job1', title: 'SWE — Acme', instructions: null, content: C, userId: 'u1', createdAt: '', updatedAt: '' })
+    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialJobId="job1" />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: /generate résumé|generate resume/i }))
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/resumes', { personaId: 'p1', jobId: 'job1' }))
+  })
 })

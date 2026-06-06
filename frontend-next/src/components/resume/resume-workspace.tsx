@@ -14,9 +14,10 @@ import { Button } from '@/components/ui/button'
 interface Props {
   personas: Persona[]
   initialPersonaId: string
+  initialJobId?: string
 }
 
-export function ResumeWorkspace({ personas, initialPersonaId }: Props) {
+export function ResumeWorkspace({ personas, initialPersonaId, initialJobId }: Props) {
   const [personaId, setPersonaId] = useState(initialPersonaId || personas[0]?.id || '')
   const [resume, setResume] = useState<GeneratedResume | null>(null)
   const [content, setContent] = useState<ResumeContent | null>(null)
@@ -25,7 +26,11 @@ export function ResumeWorkspace({ personas, initialPersonaId }: Props) {
 
   const onGenerate = (instructions: string) => {
     generate.mutate(
-      { personaId, ...(instructions.trim() ? { instructions: instructions.trim() } : {}) },
+      {
+        personaId,
+        ...(initialJobId ? { jobId: initialJobId } : {}),
+        ...(instructions.trim() ? { instructions: instructions.trim() } : {}),
+      },
       {
         onSuccess: (r) => {
           setResume(r)
@@ -38,6 +43,9 @@ export function ResumeWorkspace({ personas, initialPersonaId }: Props) {
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <h1 className="font-serif text-2xl tracking-tight">Generate résumé</h1>
+      {initialJobId ? (
+        <p className="text-sm text-muted-foreground">Tailoring this résumé to the selected job.</p>
+      ) : null}
       <GenerateResumeBar personas={personas} personaId={personaId} onPersonaChange={setPersonaId} onGenerate={onGenerate} isPending={generate.isPending} />
       {generate.error ? (
         <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{generate.error.message}</p>
