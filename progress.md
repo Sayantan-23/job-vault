@@ -220,7 +220,16 @@
 - [x] **Live smoke (Docker, real key):** persona→résumé→`.tex` end-to-end on Gemini (validated on `gemini-2.5-flash-lite` when `gemini-3.5-flash` was transiently overloaded; the path is model-agnostic). `GEMINI_MODEL` restored to `gemini-3.5-flash`.
 - [ ] **Known boundaries:** react-pdf renders to PDF not the DOM, so `ResumeDocument`/preview/download are covered by `splitBold` units + element-build smoke + the live manual smoke (no `pdf()` in CI); job-tailored résumé reachable via `?job=` until the **JobDrawer tab wires in 6c**.
 
-- [ ] **Next:** **6c — Cover letters + JobDrawer wiring** (per-job Markdown cover letters, `cover_letters` table, rate limit extended to count both tables, `CoverLetterEditor`, and the **Résumé + Cover-letter tabs in the JobDrawer**). Manual browser pass + **merge to master** (user merges).
+**Slice 6c — Cover letters + JobDrawer wiring (DONE)**
+> **Plan**: `docs/superpowers/plans/2026-06-06-slice-6c-cover-letters-jobdrawer.md`. Orchestrated via the `Workflow` tool: sequential per-task TDD → solo gates → 5-lens adversarial review → review-fix → live smoke.
+- [x] Backend: `cover_letters` table (migration `0006`; `userId`+`jobId` cascade, `personaId` **ON DELETE SET NULL**); `buildCoverLetterPrompt` (Markdown letter, per job + persona + instructions, no-invent guardrail, via `generateText`); **rate-limit count now sums résumés + cover letters** (`ai-usage.repository`, shared hourly budget); `cover-letters` module — `POST /api/cover-letters` (generate; **job + persona ownership** then rate-limit), `GET ?jobId=`, `GET/:id`, `PATCH/:id`, `DELETE/:id`. (`personaId` is **required** at generation — a letter is drawn from a persona; spec §7 corrected to match.)
+- [x] Frontend: `CoverLetter` type + `useCoverLetters` hooks; `CoverLetterEditor` (textarea + **react-markdown** preview + Copy text + Download PDF via a react-pdf paragraph doc); job-tailored résumé wired via **`?job=`** in the workspace; **JobDrawer** gains a **Résumé launcher** (deep-links `/app/resumes?job=…`) and an in-drawer **Cover-letter section** (persona pick → generate → edit/preview → copy/PDF/save).
+- [x] **Gates green:** backend `typecheck`+`lint`+**334 tests**; frontend `typecheck`+`lint`+**267 tests**+**production Docker build**. Adversarial 5-lens review (security/scoping rated clean, rate-limit-after-ownership confirmed); the only substantive finding was a spec-vs-code `personaId` optionality mismatch → resolved by correcting the spec (impl was right) + a `bodyMarkdown` max-length guard.
+- [x] **Live smoke (Docker, real key):** persona + job → cover letter generated on Gemini (tailored 1243-char Markdown letter naming the role/company), list-by-job works. (Validated on `gemini-2.5-flash-lite`; `GEMINI_MODEL` restored to `gemini-3.5-flash`.)
+
+### ✅ Slice 6 complete (6a + 6b + 6c) — branch `slice-6-ai-resume-cover-letter`
+Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + client-side react-pdf preview/PDF, persona-only or job-tailored) → per-job **cover letters** (Markdown + PDF), all on **Gemini 3.5 Flash**, **zero file storage** (text/JSON in Postgres; PDFs render client-side), shared DB-derived hourly rate limit, env-gated. Migrations `0004`–`0006`. **Not yet merged to master.**
+- [ ] **Next:** user manual browser pass + **merge to master**. Then the remaining migration backlog: Chrome extension (Slice 8), public-pages redesign, Google OAuth, email reminders (`docs/deferred-tasks.md`).
 
 ---
 
