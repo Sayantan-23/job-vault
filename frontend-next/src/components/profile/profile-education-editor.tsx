@@ -4,6 +4,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { MonthYearPicker } from './month-year-picker'
 import { newEducation } from '@/lib/profile'
 import type { ProfileEducation } from '@/types/profile'
@@ -70,8 +71,7 @@ export function ProfileEducationEditor({ value, onChange }: Props) {
               />
             </div>
             <label className="flex items-center gap-2 pb-2.5 text-sm text-foreground">
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label={`Education ${i + 1} currently studying`}
                 checked={edu.current}
                 onChange={(e) => setAt(i, { current: e.target.checked, endDate: e.target.checked ? null : edu.endDate })}

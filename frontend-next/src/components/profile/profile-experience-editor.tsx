@@ -4,6 +4,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { MonthYearPicker } from './month-year-picker'
 import { BulletListEditor } from './bullet-list-editor'
 import { newExperience } from '@/lib/profile'
@@ -69,8 +70,7 @@ export function ProfileExperienceEditor({ value, onChange }: Props) {
               />
             </div>
             <label className="flex items-center gap-2 pb-2.5 text-sm text-foreground">
-              <input
-                type="checkbox"
+              <Checkbox
                 aria-label={`Experience ${i + 1} currently working here`}
                 checked={exp.current}
                 onChange={(e) => setAt(i, { current: e.target.checked, endDate: e.target.checked ? null : exp.endDate })}

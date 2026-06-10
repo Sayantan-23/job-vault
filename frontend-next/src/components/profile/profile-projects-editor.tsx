@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ChipInput } from './chip-input'
 import { BulletListEditor } from './bullet-list-editor'
 import { LinksEditor } from './links-editor'
+import { MonthYearPicker } from './month-year-picker'
 import { newProject } from '@/lib/profile'
 import type { ProfileProject } from '@/types/profile'
 
@@ -62,6 +64,29 @@ export function ProfileProjectsEditor({ value, onChange }: Props) {
               ariaLabel={`Project ${i + 1} technologies`}
               onChange={(technologies) => setAt(i, { technologies })}
             />
+          </div>
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="space-y-1.5">
+              <Label>Start</Label>
+              <MonthYearPicker value={proj.startDate} ariaPrefix={`Project ${i + 1} start`} onChange={(startDate) => setAt(i, { startDate })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>End</Label>
+              <MonthYearPicker
+                value={proj.endDate}
+                disabled={proj.inProgress}
+                ariaPrefix={`Project ${i + 1} end`}
+                onChange={(endDate) => setAt(i, { endDate })}
+              />
+            </div>
+            <label className="flex items-center gap-2 pb-2.5 text-sm text-foreground">
+              <Checkbox
+                aria-label={`Project ${i + 1} ongoing`}
+                checked={proj.inProgress}
+                onChange={(e) => setAt(i, { inProgress: e.target.checked, endDate: e.target.checked ? null : proj.endDate })}
+              />
+              Ongoing
+            </label>
           </div>
           <div className="space-y-1.5">
             <Label>Highlights</Label>

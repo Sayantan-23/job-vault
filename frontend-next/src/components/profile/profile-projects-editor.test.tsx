@@ -27,4 +27,20 @@ describe('ProfileProjectsEditor', () => {
     const next = onChange.mock.calls[0]?.[0] as ProfileProject[]
     expect(next[0]?.technologies).toEqual(['NATS', 'Go'])
   })
+  it('sets a start year via the date picker', async () => {
+    const onChange = vi.fn()
+    render(<ProfileProjectsEditor value={[PROJ]} onChange={onChange} />)
+    await userEvent.selectOptions(screen.getByLabelText('Project 1 start year'), '2023')
+    const next = onChange.mock.calls[0]?.[0] as ProfileProject[]
+    expect(next[0]?.startDate).toEqual({ month: null, year: 2023 })
+  })
+  it('toggling “Ongoing” clears the end date', async () => {
+    const onChange = vi.fn()
+    const withEnd: ProfileProject = { ...PROJ, endDate: { month: 6, year: 2024 }, inProgress: false }
+    render(<ProfileProjectsEditor value={[withEnd]} onChange={onChange} />)
+    await userEvent.click(screen.getByLabelText('Project 1 ongoing'))
+    const next = onChange.mock.calls[0]?.[0] as ProfileProject[]
+    expect(next[0]?.inProgress).toBe(true)
+    expect(next[0]?.endDate).toBeNull()
+  })
 })
