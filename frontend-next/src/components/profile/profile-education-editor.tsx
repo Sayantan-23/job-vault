@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { MonthYearPicker } from './month-year-picker'
+import { BulletListEditor } from './bullet-list-editor'
 import { newEducation } from '@/lib/profile'
 import type { ProfileEducation } from '@/types/profile'
 
@@ -50,6 +51,12 @@ export function ProfileEducationEditor({ value, onChange }: Props) {
               onChange={(e) => setAt(i, { fieldOfStudy: e.target.value })}
             />
             <Input
+              aria-label={`Education ${i + 1} location`}
+              placeholder="Location"
+              value={edu.location ?? ''}
+              onChange={(e) => setAt(i, { location: e.target.value })}
+            />
+            <Input
               aria-label={`Education ${i + 1} grade`}
               placeholder="Grade (e.g. 8.5/10 CGPA, 85%)"
               value={edu.grade ?? ''}
@@ -78,6 +85,14 @@ export function ProfileEducationEditor({ value, onChange }: Props) {
               />
               Currently studying
             </label>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Highlights</Label>
+            <BulletListEditor
+              value={edu.bullets}
+              ariaPrefix={`Education ${i + 1} bullet`}
+              onChange={(bullets) => setAt(i, { bullets })}
+            />
           </div>
         </div>
       ))}

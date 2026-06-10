@@ -5,10 +5,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Select } from '@/components/ui/select'
 import { MonthYearPicker } from './month-year-picker'
 import { BulletListEditor } from './bullet-list-editor'
 import { newExperience } from '@/lib/profile'
-import type { ProfileExperience } from '@/types/profile'
+import type { ProfileExperience, EmploymentType } from '@/types/profile'
+
+const EMPLOYMENT_TYPES: { value: EmploymentType; label: string }[] = [
+  { value: 'full-time', label: 'Full-time' },
+  { value: 'part-time', label: 'Part-time' },
+  { value: 'contract', label: 'Contract' },
+  { value: 'freelance', label: 'Freelance' },
+  { value: 'internship', label: 'Internship' },
+  { value: 'self-employed', label: 'Self-employed' },
+]
 
 interface Props {
   value: ProfileExperience[]
@@ -18,6 +28,20 @@ interface Props {
 export function ProfileExperienceEditor({ value, onChange }: Props) {
   const setAt = (i: number, partial: Partial<ProfileExperience>) =>
     onChange(value.map((e, idx) => (idx === i ? { ...e, ...partial } : e)))
+  // employmentType is optional; clearing it omits the key (exactOptionalPropertyTypes
+  // forbids assigning `undefined` to an optional-but-non-undefined property).
+  const setEmploymentType = (i: number, raw: string) =>
+    onChange(
+      value.map((e, idx) => {
+        if (idx !== i) return e
+        if (!raw) {
+          const rest = { ...e }
+          delete rest.employmentType
+          return rest
+        }
+        return { ...e, employmentType: raw as EmploymentType }
+      }),
+    )
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
   const add = () => onChange([...value, newExperience()])
 
@@ -50,6 +74,18 @@ export function ProfileExperienceEditor({ value, onChange }: Props) {
               value={exp.location ?? ''}
               onChange={(e) => setAt(i, { location: e.target.value })}
             />
+            <Select
+              aria-label={`Experience ${i + 1} employment type`}
+              value={exp.employmentType ?? ''}
+              onChange={(e) => setEmploymentType(i, e.target.value)}
+            >
+              <option value="">Employment type</option>
+              {EMPLOYMENT_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </Select>
           </div>
           <div className="flex flex-wrap items-end gap-4">
             <div className="space-y-1.5">

@@ -34,4 +34,11 @@ describe('ProfileExperienceEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove experience 1' }))
     expect(onChange).toHaveBeenCalledWith([])
   })
+  it('sets the employment type', async () => {
+    const onChange = vi.fn()
+    render(<ProfileExperienceEditor value={[EXP]} onChange={onChange} />)
+    await userEvent.selectOptions(screen.getByLabelText('Experience 1 employment type'), 'internship')
+    const next = onChange.mock.calls[0]?.[0] as ProfileExperience[]
+    expect(next[0]?.employmentType).toBe('internship')
+  })
 })

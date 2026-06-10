@@ -27,4 +27,18 @@ describe('ProfileEducationEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Remove education 1' }))
     expect(onChange).toHaveBeenCalledWith([])
   })
+  it('edits the location', async () => {
+    const onChange = vi.fn()
+    render(<ProfileEducationEditor value={[EDU]} onChange={onChange} />)
+    await userEvent.type(screen.getByLabelText('Education 1 location'), 'B')
+    const next = onChange.mock.calls[0]?.[0] as ProfileEducation[]
+    expect(next[0]?.location).toBe('B')
+  })
+  it('adds a highlight bullet', async () => {
+    const onChange = vi.fn()
+    render(<ProfileEducationEditor value={[EDU]} onChange={onChange} />)
+    await userEvent.click(screen.getByRole('button', { name: /add bullet/i }))
+    const next = onChange.mock.calls[0]?.[0] as ProfileEducation[]
+    expect(next[0]?.bullets).toEqual([''])
+  })
 })
