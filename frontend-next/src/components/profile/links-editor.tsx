@@ -1,6 +1,7 @@
 // frontend-next/src/components/profile/links-editor.tsx
 'use client'
 
+import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { newLink } from '@/lib/profile'
@@ -34,12 +35,20 @@ export function LinksEditor({ value, onChange }: Props) {
             value={link.url}
             onChange={(e) => setAt(i, { url: e.target.value })}
           />
-          <Button type="button" variant="ghost" size="sm" aria-label={`Remove link ${i + 1}`} onClick={() => remove(i)}>
-            Remove
+          <Button
+            type="button"
+            variant="softDestructive"
+            size="iconSm"
+            className="shrink-0"
+            aria-label={`Remove link ${i + 1}`}
+            onClick={() => remove(i)}
+          >
+            <Trash2 className="size-4" aria-hidden="true" />
           </Button>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={add}>
+      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+        <Plus className="size-4" aria-hidden="true" />
         Add link
       </Button>
     </div>

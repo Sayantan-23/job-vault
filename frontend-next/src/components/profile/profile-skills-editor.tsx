@@ -1,6 +1,7 @@
 // frontend-next/src/components/profile/profile-skills-editor.tsx
 'use client'
 
+import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ChipInput } from './chip-input'
@@ -34,8 +35,15 @@ export function ProfileSkillsEditor({ value, onChange }: Props) {
               onChange={(e) => setAt(i, { category: e.target.value })}
               className="w-48"
             />
-            <Button type="button" variant="ghost" size="sm" aria-label={`Remove skill group ${i + 1}`} onClick={() => remove(i)}>
-              Remove
+            <Button
+              type="button"
+              variant="softDestructive"
+              size="iconSm"
+              className="shrink-0"
+              aria-label={`Remove skill group ${i + 1}`}
+              onClick={() => remove(i)}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
             </Button>
           </div>
           <ChipInput
@@ -46,7 +54,8 @@ export function ProfileSkillsEditor({ value, onChange }: Props) {
           />
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={add}>
+      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+        <Plus className="size-4" aria-hidden="true" />
         Add category
       </Button>
     </div>

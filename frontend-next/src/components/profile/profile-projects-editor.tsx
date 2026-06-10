@@ -1,6 +1,7 @@
 // frontend-next/src/components/profile/profile-projects-editor.tsx
 'use client'
 
+import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -30,8 +31,14 @@ export function ProfileProjectsEditor({ value, onChange }: Props) {
         <div key={proj.id ?? i} className="space-y-3 rounded-lg border border-border p-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-muted-foreground">Project {i + 1}</h4>
-            <Button type="button" variant="ghost" size="sm" aria-label={`Remove project ${i + 1}`} onClick={() => remove(i)}>
-              Remove
+            <Button
+              type="button"
+              variant="softDestructive"
+              size="iconSm"
+              aria-label={`Remove project ${i + 1}`}
+              onClick={() => remove(i)}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
             </Button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -52,6 +59,7 @@ export function ProfileProjectsEditor({ value, onChange }: Props) {
             <Label>Description</Label>
             <Textarea
               aria-label={`Project ${i + 1} description`}
+              placeholder="What the project does and your contribution."
               rows={2}
               value={proj.description ?? ''}
               onChange={(e) => setAt(i, { description: e.target.value })}
@@ -62,6 +70,7 @@ export function ProfileProjectsEditor({ value, onChange }: Props) {
             <ChipInput
               value={proj.technologies}
               ariaLabel={`Project ${i + 1} technologies`}
+              placeholder="Add a technology and press Enter"
               onChange={(technologies) => setAt(i, { technologies })}
             />
           </div>
@@ -98,7 +107,8 @@ export function ProfileProjectsEditor({ value, onChange }: Props) {
           </div>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={add}>
+      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+        <Plus className="size-4" aria-hidden="true" />
         Add project
       </Button>
     </div>

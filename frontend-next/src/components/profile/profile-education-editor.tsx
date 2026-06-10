@@ -1,6 +1,7 @@
 // frontend-next/src/components/profile/profile-education-editor.tsx
 'use client'
 
+import { Plus, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -27,8 +28,14 @@ export function ProfileEducationEditor({ value, onChange }: Props) {
         <div key={edu.id ?? i} className="space-y-3 rounded-lg border border-border p-4">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-muted-foreground">Education {i + 1}</h4>
-            <Button type="button" variant="ghost" size="sm" aria-label={`Remove education ${i + 1}`} onClick={() => remove(i)}>
-              Remove
+            <Button
+              type="button"
+              variant="softDestructive"
+              size="iconSm"
+              aria-label={`Remove education ${i + 1}`}
+              onClick={() => remove(i)}
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
             </Button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -52,7 +59,7 @@ export function ProfileEducationEditor({ value, onChange }: Props) {
             />
             <Input
               aria-label={`Education ${i + 1} location`}
-              placeholder="Location"
+              placeholder="City, State"
               value={edu.location ?? ''}
               onChange={(e) => setAt(i, { location: e.target.value })}
             />
@@ -96,7 +103,8 @@ export function ProfileEducationEditor({ value, onChange }: Props) {
           </div>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" onClick={add}>
+      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+        <Plus className="size-4" aria-hidden="true" />
         Add education
       </Button>
     </div>

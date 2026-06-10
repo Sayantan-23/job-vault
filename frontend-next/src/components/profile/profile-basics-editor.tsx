@@ -19,15 +19,15 @@ export function ProfileBasicsEditor({ value, onChange }: Props) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="pb-name">Full name</Label>
-          <Input id="pb-name" aria-label="Full name" value={value.name} onChange={(e) => set({ name: e.target.value })} />
+          <Input id="pb-name" aria-label="Full name" placeholder="Your full name" value={value.name} onChange={(e) => set({ name: e.target.value })} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="pb-email">Email</Label>
-          <Input id="pb-email" aria-label="Email" value={value.email ?? ''} onChange={(e) => set({ email: e.target.value })} />
+          <Input id="pb-email" aria-label="Email" placeholder="you@example.com" value={value.email ?? ''} onChange={(e) => set({ email: e.target.value })} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="pb-phone">Phone</Label>
-          <Input id="pb-phone" aria-label="Phone" value={value.phone ?? ''} onChange={(e) => set({ phone: e.target.value })} />
+          <Input id="pb-phone" aria-label="Phone" placeholder="+1 555 000 1234" value={value.phone ?? ''} onChange={(e) => set({ phone: e.target.value })} />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="pb-location">Location</Label>

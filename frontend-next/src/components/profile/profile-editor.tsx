@@ -38,6 +38,7 @@ export function ProfileEditor({ value, onChange }: Props) {
           <Textarea
             id="pe-summary"
             aria-label="Professional summary"
+            placeholder="A short summary of your focus, strengths, and what you're looking for."
             rows={4}
             value={value.summary}
             onChange={(e) => patch({ summary: e.target.value })}

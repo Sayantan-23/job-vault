@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/app/page-header'
 import { ProfileEditor } from './profile-editor'
 import { useProfile, useUpdateProfile } from '@/hooks/use-profile'
 import { emptyProfileContent, validateProfileContent } from '@/lib/profile'
@@ -28,38 +29,39 @@ export function ProfileWorkspace() {
   const nameMissing = !draft.basics.name.trim()
 
   return (
-    <div className="mx-auto w-full max-w-3xl">
-      <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background py-4">
-        <div>
-          <h1 className="text-xl font-semibold text-foreground">Your profile</h1>
-          <p className="text-sm text-muted-foreground">Your master record — reused when you build personas.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {update.isSuccess ? <span className="text-sm text-muted-foreground">Saved</span> : null}
-          <Button type="button" onClick={save} disabled={update.isPending || nameMissing}>
-            {update.isPending ? 'Saving…' : 'Save'}
-          </Button>
-        </div>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <PageHeader
+        title="Profile"
+        description="Your master record — reused when you build personas."
+        actions={
+          <>
+            {update.isSuccess ? <span className="text-sm text-muted-foreground">Saved</span> : null}
+            <Button type="button" onClick={save} disabled={update.isPending || nameMissing}>
+              {update.isPending ? 'Saving…' : 'Save'}
+            </Button>
+          </>
+        }
+      />
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
+          {errors.length > 0 ? (
+            <div role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              <p className="font-medium">Please fix the following:</p>
+              <ul className="mt-1 list-inside list-disc">
+                {errors.map((e) => (
+                  <li key={e}>{e}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {update.error ? (
+            <p role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
+              {update.error.message}
+            </p>
+          ) : null}
 
-      {errors.length > 0 ? (
-        <div role="alert" className="my-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <p className="font-medium">Please fix the following:</p>
-          <ul className="mt-1 list-inside list-disc">
-            {errors.map((e) => (
-              <li key={e}>{e}</li>
-            ))}
-          </ul>
+          <ProfileEditor value={draft} onChange={setDraft} />
         </div>
-      ) : null}
-      {update.error ? (
-        <p role="alert" className="my-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {update.error.message}
-        </p>
-      ) : null}
-
-      <div className="py-6">
-        <ProfileEditor value={draft} onChange={setDraft} />
       </div>
     </div>
   )
