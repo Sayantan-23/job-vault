@@ -2,16 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Users, UserRound, Clock, Settings } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// Profile + Settings live in the account menu at the bottom of the sidebar.
 const NAV = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/app/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/app/personas', label: 'Personas', icon: Users },
-  { href: '/app/profile', label: 'Profile', icon: UserRound },
   { href: '/app/timeline', label: 'Timeline', icon: Clock },
-  { href: '/app/settings', label: 'Settings', icon: Settings },
 ] as const
 
 export function SidebarNav() {
