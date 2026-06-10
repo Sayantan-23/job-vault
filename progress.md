@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-06-02
+> **Last Updated**: 2026-06-10
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -230,7 +230,22 @@
 ### ✅ Slice 6 complete (6a + 6b + 6c) — branch `slice-6-ai-resume-cover-letter`
 Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + client-side react-pdf preview/PDF, persona-only or job-tailored) → per-job **cover letters** (Markdown + PDF), all on **Gemini 3.5 Flash**, **zero file storage** (text/JSON in Postgres; PDFs render client-side), shared DB-derived hourly rate limit, env-gated. Migrations `0004`–`0006`. **Merged to master 2026-06-06** (+ persona/résumé UI polish: card grid + edit sheet, full-width-controls/sticky-preview résumé workspace, job-picker on the résumé form, PDF name/contact gap fix). Local master is ahead of `origin/master` — user pushes.
 - [ ] **Next:** user manual browser pass + **merge to master**. Then the remaining migration backlog: Chrome extension (Slice 8), public-pages redesign, Google OAuth, email reminders (`docs/deferred-tasks.md`).
-- [ ] **Planned follow-up (user-requested 2026-06-06): Personas + User Master-Profile redesign.** Add a reusable **user master-profile** (skills/education/projects/experience) and give persona creation **two modes** — *manual* (curate per section; pick from profile **or** add persona-specific; **education shared across personas**) and *auto* (name + résumé → AI scrape; clarify paste-vs-file-upload). Notes on both. Requirements brief: `docs/superpowers/specs/2026-06-06-personas-profile-redesign-brief.md` → **brainstorm first** (not a small task; it's a persona data-model redesign).
+- [x] **Follow-up (user-requested 2026-06-06): Personas + User Master-Profile redesign — brainstormed + approved.** See **Slice 7** below (design spec + 7a/7b plans). Brief `docs/superpowers/specs/2026-06-06-personas-profile-redesign-brief.md` superseded by the design spec `…-personas-profile-redesign-design.md`.
+
+---
+
+## Migration Slice 7 — Personas + User Master-Profile Redesign (2026-06-10)
+
+> **Spec**: `docs/superpowers/specs/2026-06-06-personas-profile-redesign-design.md` (brainstormed + approved 2026-06-06; supersedes the brief). **Branch**: `slice-7-personas-profile-redesign` (off master). Built in two sub-slices: **7a** (master profile foundation, DONE) + **7b** (persona redesign, next).
+>
+> **Model decisions:** new rich shared **`ProfileContent`** schema (structured month+year dates, project technologies/links, education grade, employment type, current/ongoing flags) — **lenient at rest** (nullable dates + optional ids so AI-parsed/legacy data validate) with requiredness enforced in the form; backend **`ensureIds`** assigns ids on every write. Persona sections are **copied** snapshots editable per-persona **except education** (pick-from-profile; Edu-B snapshot + re-pick). Two persona modes — **"Build from profile"** + **"Import a résumé"** (paste or in-memory PDF). **Personas are never rendered directly** → the `.tex`/react-pdf pipeline stays untouched (a flattener is unnecessary).
+
+**Slice 7a — Master Profile foundation (DONE)**
+> **Plan**: `docs/superpowers/plans/2026-06-06-slice-7a-master-profile.md`. Orchestrated via the `Workflow` tool: sequential per-task TDD (backend chain → frontend chunks) → solo ground-truth gates → 4-lens adversarial review (find → verify) → review-fix.
+- [x] Backend: shared **`ProfileContent`** Zod schema + `ensureIds` + `emptyProfileContent` (`src/shared/profile-content.schema.ts`); **`user_profiles`** table (1/user, migration `0007`); `profile` module (router→controller→service→repository→Zod) — **`GET /api/profile`** (saved content, else an unpersisted empty default) + **`PUT /api/profile`** (validate → `ensureIds` → upsert). **No persona changes** (deferred to 7b).
+- [x] Frontend: `@/types/profile` mirror + `@/lib/profile` factories/`validateProfileContent`; `useProfile`/`useUpdateProfile` hooks (`PROFILE_KEY`); reusable primitives **`MonthYearPicker`**, **`ChipInput`**, **`BulletListEditor`**, **`LinksEditor`** + a styled **`Checkbox`** ui primitive; per-section editors (Basics/Experience/Projects/Skills/Education) composed into **`ProfileEditor`**; **`ProfileWorkspace`** (load/edit/validate/save) on a new **`/app/profile`** page + **Profile** sidebar nav.
+- [x] **Gates green:** backend `typecheck`+`lint`+**353 tests**; frontend `typecheck`+`lint`+**320 tests**+**production Docker build** (`/app/profile` in the route manifest). Adversarial 4-lens review (22 raw findings → 1 confirmed: education `bullets` editor missing); a follow-up self-audit caught two more editor field-coverage gaps (experience `employmentType`, education `location`) → all fixed so every editor covers 100% of its schema fields.
+- [ ] **Next:** user manual browser pass of `/app/profile`. Then **Slice 7b** — persona `data` retype to `ProfileContent` + `resumeContentToProfileContent` up-converter + lazy normalization + backfill; the two persona creation modes (pickers + PDF import via `pdf-parse`/`multer`); AI structuring retarget to `ProfileContent`; persona editor swap to the rich editor.
 
 ---
 
