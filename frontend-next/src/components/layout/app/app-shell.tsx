@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LogoutButton } from '@/components/auth/logout-button'
+import { AccountMenu } from './account-menu'
 import { SidebarNav } from './sidebar-nav'
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -11,7 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <SidebarNav />
         <div className="mt-auto border-t border-border p-3">
-          <LogoutButton />
+          <AccountMenu />
         </div>
       </aside>
       {/* The page owns its own header (PageHeader) + scroll region, so the chrome

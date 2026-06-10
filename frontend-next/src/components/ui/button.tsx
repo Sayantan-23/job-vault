@@ -12,6 +12,10 @@ const buttonVariants = cva(
         outline: 'border bg-background hover:bg-accent hover:text-accent-foreground',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
         destructive: 'bg-destructive text-destructive-foreground hover:opacity-90',
+        // Tonal accents: soft fills that read as a secondary action on the warm-stone
+        // canvas (the plain secondary/muted/accent tokens are near-background).
+        softPrimary: 'bg-primary/10 text-primary hover:bg-primary/15',
+        softDestructive: 'bg-destructive/10 text-destructive hover:bg-destructive/15',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
@@ -19,6 +23,7 @@ const buttonVariants = cva(
         sm: 'h-9 rounded-md px-3',
         lg: 'h-11 rounded-md px-8',
         icon: 'h-10 w-10',
+        iconSm: 'h-8 w-8',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },
