@@ -43,7 +43,7 @@ export function ProfileWorkspace() {
         }
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="mx-auto w-full max-w-5xl space-y-6">
+        <div className="w-full max-w-5xl space-y-6">
           {errors.length > 0 ? (
             <div role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
               <p className="font-medium">Please fix the following:</p>
