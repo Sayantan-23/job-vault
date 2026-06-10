@@ -1,7 +1,7 @@
 // frontend-next/src/components/profile/profile-editor.tsx
 'use client'
 
-import { Label } from '@/components/ui/label'
+import type { ReactNode } from 'react'
 import { Textarea } from '@/components/ui/textarea'
 import { ProfileBasicsEditor } from './profile-basics-editor'
 import { ProfileExperienceEditor } from './profile-experience-editor'
@@ -15,11 +15,24 @@ interface Props {
   onChange: (next: ProfileContent) => void
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+// Two-column "settings" section: meta on the left, fields on the right, with a
+// hairline divider between sections. Stacks to one column on narrow screens.
+function Section({
+  title,
+  description,
+  children,
+}: {
+  title: string
+  description: string
+  children: ReactNode
+}) {
   return (
-    <section className="space-y-4">
-      <h3 className="text-base font-semibold text-foreground">{title}</h3>
-      {children}
+    <section className="grid gap-x-10 gap-y-4 border-t border-border py-8 first:border-t-0 first:pt-0 sm:grid-cols-[15rem_1fr]">
+      <div className="space-y-1">
+        <h3 className="text-base font-semibold text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="min-w-0">{children}</div>
     </section>
   )
 }
@@ -28,33 +41,34 @@ export function ProfileEditor({ value, onChange }: Props) {
   const patch = (partial: Partial<ProfileContent>) => onChange({ ...value, ...partial })
 
   return (
-    <div className="space-y-10">
-      <Section title="Basics">
+    <div>
+      <Section title="Basics" description="Your name, contact details, and links.">
         <ProfileBasicsEditor value={value.basics} onChange={(basics) => patch({ basics })} />
       </Section>
-      <Section title="Summary">
-        <div className="space-y-1.5">
-          <Label htmlFor="pe-summary">Professional summary</Label>
-          <Textarea
-            id="pe-summary"
-            aria-label="Professional summary"
-            placeholder="A short summary of your focus, strengths, and what you're looking for."
-            rows={4}
-            value={value.summary}
-            onChange={(e) => patch({ summary: e.target.value })}
-          />
-        </div>
+
+      <Section title="Summary" description="A short professional pitch shown at the top of a résumé.">
+        <Textarea
+          aria-label="Professional summary"
+          placeholder="A short summary of your focus, strengths, and what you're looking for."
+          rows={4}
+          value={value.summary}
+          onChange={(e) => patch({ summary: e.target.value })}
+        />
       </Section>
-      <Section title="Experience">
+
+      <Section title="Experience" description="Roles you've held, most recent first.">
         <ProfileExperienceEditor value={value.experience} onChange={(experience) => patch({ experience })} />
       </Section>
-      <Section title="Projects">
+
+      <Section title="Projects" description="Notable projects, with the technologies you used.">
         <ProfileProjectsEditor value={value.projects} onChange={(projects) => patch({ projects })} />
       </Section>
-      <Section title="Skills">
+
+      <Section title="Skills" description="Group them by category, or keep one flat list.">
         <ProfileSkillsEditor value={value.skills} onChange={(skills) => patch({ skills })} />
       </Section>
-      <Section title="Education">
+
+      <Section title="Education" description="Degrees, schools, and grades.">
         <ProfileEducationEditor value={value.education} onChange={(education) => patch({ education })} />
       </Section>
     </div>
