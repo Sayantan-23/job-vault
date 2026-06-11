@@ -76,11 +76,29 @@ export function formatMonthYearRange(
   return [start, end].filter(Boolean).join(' – ')
 }
 
-// Mirrors the backend's min(1) requirements plus form-level date requiredness
-// (experience: start + end-unless-current; education: start + end-unless-current).
-export function validateProfileContent(c: ProfileContent): string[] {
+// Mirrors the backend's min(1) requirements (incl. link label/url) plus form-level
+// date requiredness (experience: start + end-unless-current; education: same).
+// `requireEducationDates: false` skips the education *date* checks only — for the
+// persona sheets, where education is pick-only/read-only and imported/legacy
+// entries legitimately carry null dates (degree/institution stay required).
+export interface ValidateProfileContentOptions {
+  requireEducationDates?: boolean
+}
+
+const validateLinks = (links: ProfileLink[], tag: (i: number) => string, errors: string[]) => {
+  links.forEach((l, i) => {
+    if (!l.label.trim()) errors.push(`${tag(i)}: label is required`)
+    if (!l.url.trim()) errors.push(`${tag(i)}: URL is required`)
+  })
+}
+
+export function validateProfileContent(
+  c: ProfileContent,
+  { requireEducationDates = true }: ValidateProfileContentOptions = {},
+): string[] {
   const errors: string[] = []
   if (!c.basics.name.trim()) errors.push('Your name is required')
+  validateLinks(c.basics.links, (i) => `Link ${i + 1}`, errors)
 
   c.experience.forEach((e, i) => {
     const tag = `Experience ${i + 1}`
@@ -94,12 +112,15 @@ export function validateProfileContent(c: ProfileContent): string[] {
     const tag = `Education ${i + 1}`
     if (!e.degree.trim()) errors.push(`${tag}: degree is required`)
     if (!e.institution.trim()) errors.push(`${tag}: institution is required`)
-    if (!e.startDate?.year) errors.push(`${tag}: start date is required`)
-    if (!e.current && !e.endDate?.year) errors.push(`${tag}: end date is required (or mark “current”)`)
+    if (requireEducationDates) {
+      if (!e.startDate?.year) errors.push(`${tag}: start date is required`)
+      if (!e.current && !e.endDate?.year) errors.push(`${tag}: end date is required (or mark “current”)`)
+    }
   })
 
   c.projects.forEach((p, i) => {
     if (!p.name.trim()) errors.push(`Project ${i + 1}: name is required`)
+    validateLinks(p.links, (j) => `Project ${i + 1}, link ${j + 1}`, errors)
   })
 
   return errors

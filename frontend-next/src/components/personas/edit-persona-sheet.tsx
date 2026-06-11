@@ -36,7 +36,8 @@ export function EditPersonaSheet({ persona, profile, open, onOpenChange }: Props
 
   const save = () => {
     if (!data || !name.trim()) return
-    const found = validateProfileContent(data)
+    // Education is pick-only here; imported/legacy entries may legitimately lack dates.
+    const found = validateProfileContent(data, { requireEducationDates: false })
     setErrors(found)
     if (found.length > 0) return
     update.mutate({ name: name.trim(), data }, { onSuccess: () => onOpenChange(false) })

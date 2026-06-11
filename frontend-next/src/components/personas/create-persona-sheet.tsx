@@ -82,7 +82,8 @@ export function CreatePersonaSheet({ open, onOpenChange, profile, aiEnabled }: P
 
   const save = () => {
     if (!draft || !name.trim()) return
-    const found = validateProfileContent(draft)
+    // Education is pick-only here; imported/legacy entries may legitimately lack dates.
+    const found = validateProfileContent(draft, { requireEducationDates: false })
     setErrors(found)
     if (found.length > 0) return
     create.mutate(
