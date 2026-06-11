@@ -7,26 +7,38 @@ vi.mock('@/modules/personas/personas.repository.js', () => ({ personasRepository
 vi.mock('@/modules/jobs/jobs.repository.js', () => ({ jobsRepository: { findById: vi.fn() } }))
 vi.mock('@/modules/ai/gemini.service.js', () => ({ geminiService: { isAiEnabled: vi.fn(() => true), generateText: vi.fn() } }))
 vi.mock('@/modules/ai/ai.rate-limit.js', () => ({ assertWithinRateLimit: vi.fn() }))
+vi.mock('@/modules/profile/profile.service.js', () => ({ profileService: { getSavedBasics: vi.fn() } }))
+vi.mock('@/modules/ai/ai.prompts.js', () => ({ buildCoverLetterPrompt: vi.fn(() => 'PROMPT') }))
 
 import { coverLettersRepository } from './cover-letters.repository.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
 import { geminiService } from '@/modules/ai/gemini.service.js'
 import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
+import { profileService } from '@/modules/profile/profile.service.js'
+import { buildCoverLetterPrompt } from '@/modules/ai/ai.prompts.js'
 import { coverLettersService } from './cover-letters.service.js'
-import type { ProfileContent } from '@/shared/profile-content.schema.js'
+import type { ProfileBasics, ProfileContent } from '@/shared/profile-content.schema.js'
 
 const repo = vi.mocked(coverLettersRepository)
 const personas = vi.mocked(personasRepository)
 const jobs = vi.mocked(jobsRepository)
 const ai = vi.mocked(geminiService)
 const rl = vi.mocked(assertWithinRateLimit)
+const profile = vi.mocked(profileService)
+const prompt = vi.mocked(buildCoverLetterPrompt)
 const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
 const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: P, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
 const job = { id: 'j1', userId: 'u1', title: 'SWE', company: 'Acme', location: null, salaryRange: null, sourceUrl: null, snapshotMarkdown: 'Go', status: 'APPLIED' as const, kanbanOrder: 1, lastActivityAt: new Date(), ghostDays: 0, notes: null, createdAt: new Date(), updatedAt: new Date() }
 const row = { id: 'cl1', userId: 'u1', jobId: 'j1', personaId: 'p1', title: 'Acme', instructions: null, bodyMarkdown: 'Dear…', createdAt: new Date(), updatedAt: new Date() }
 
-beforeEach(() => { vi.clearAllMocks(); ai.isAiEnabled.mockReturnValue(true); rl.mockResolvedValue(undefined) })
+beforeEach(() => {
+  vi.clearAllMocks()
+  ai.isAiEnabled.mockReturnValue(true)
+  rl.mockResolvedValue(undefined)
+  profile.getSavedBasics.mockResolvedValue(null)
+  prompt.mockReturnValue('PROMPT')
+})
 
 describe('coverLettersService.generate', () => {
   it('503 when AI disabled', async () => {
@@ -52,6 +64,26 @@ describe('coverLettersService.generate', () => {
     expect(rl).toHaveBeenCalledWith('u1')
     expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1', jobId: 'j1', personaId: 'p1', bodyMarkdown: expect.stringContaining('Dear') }))
     expect(out.id).toBe('cl1')
+  })
+  it('prompts with the master-profile basics merged over the persona data when saved', async () => {
+    const masterBasics: ProfileBasics = { name: 'Master Name', email: 'master@example.com', phone: '+1 555', links: [] }
+    jobs.findById.mockResolvedValue(job)
+    personas.findById.mockResolvedValue(persona)
+    profile.getSavedBasics.mockResolvedValue(masterBasics)
+    ai.generateText.mockResolvedValue('Dear…')
+    repo.create.mockResolvedValue(row)
+    await coverLettersService.generate('u1', { jobId: 'j1', personaId: 'p1' })
+    expect(profile.getSavedBasics).toHaveBeenCalledWith('u1')
+    expect(prompt).toHaveBeenCalledWith({ ...P, basics: masterBasics }, { title: 'SWE', company: 'Acme', snapshot: 'Go' }, undefined)
+  })
+  it("prompts with the persona's own basics when no master-profile basics are saved", async () => {
+    jobs.findById.mockResolvedValue(job)
+    personas.findById.mockResolvedValue(persona)
+    profile.getSavedBasics.mockResolvedValue(null)
+    ai.generateText.mockResolvedValue('Dear…')
+    repo.create.mockResolvedValue(row)
+    await coverLettersService.generate('u1', { jobId: 'j1', personaId: 'p1' })
+    expect(prompt).toHaveBeenCalledWith(P, { title: 'SWE', company: 'Acme', snapshot: 'Go' }, undefined)
   })
 })
 

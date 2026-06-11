@@ -84,6 +84,7 @@ export const ProfileContentSchema = z.object({
 
 export type MonthYear = z.infer<typeof MonthYearSchema>
 export type ProfileLink = z.infer<typeof ProfileLinkSchema>
+export type ProfileBasics = z.infer<typeof ProfileBasicsSchema>
 export type ProfileExperience = z.infer<typeof ProfileExperienceSchema>
 export type ProfileProject = z.infer<typeof ProfileProjectSchema>
 export type ProfileSkillGroup = z.infer<typeof ProfileSkillGroupSchema>

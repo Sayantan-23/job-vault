@@ -12,6 +12,7 @@ vi.mock('@/modules/personas/personas.repository.js', () => ({ personasRepository
 vi.mock('@/modules/jobs/jobs.repository.js', () => ({ jobsRepository: { findById: vi.fn() } }))
 vi.mock('@/modules/ai/gemini.service.js', () => ({ geminiService: { isAiEnabled: vi.fn(() => true), generateStructured: vi.fn() } }))
 vi.mock('@/modules/ai/ai-usage.repository.js', () => ({ aiUsageRepository: { countRecentGenerations: vi.fn().mockResolvedValue(0) } }))
+vi.mock('@/modules/profile/profile.repository.js', () => ({ profileRepository: { findByUserId: vi.fn().mockResolvedValue(null), upsert: vi.fn() } }))
 
 import { resumesRepository } from './resumes.repository.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'

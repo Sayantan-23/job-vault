@@ -4,6 +4,7 @@ import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
 import { buildCoverLetterPrompt } from '@/modules/ai/ai.prompts.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
+import { profileService } from '@/modules/profile/profile.service.js'
 import { coverLettersRepository } from './cover-letters.repository.js'
 import type { CoverLetterRow } from '@/db/schema/cover-letters.js'
 import type { GenerateCoverLetterInput, UpdateCoverLetterInput } from './cover-letters.schema.js'
@@ -19,8 +20,15 @@ async function generate(userId: string, input: GenerateCoverLetterInput): Promis
   // Spend the shared hourly budget only after ownership is confirmed.
   await assertWithinRateLimit(userId)
 
+  // Contact identity lives on the master profile: merge its saved basics over
+  // the persona's own (which remain the fallback when no profile is saved).
+  const savedBasics = await profileService.getSavedBasics(userId)
   const bodyMarkdown = await geminiService.generateText(
-    buildCoverLetterPrompt(persona.data, { title: job.title, company: job.company, snapshot: job.snapshotMarkdown }, input.instructions),
+    buildCoverLetterPrompt(
+      { ...persona.data, basics: savedBasics ?? persona.data.basics },
+      { title: job.title, company: job.company, snapshot: job.snapshotMarkdown },
+      input.instructions,
+    ),
   )
   return coverLettersRepository.create({
     userId,

@@ -61,6 +61,23 @@ describe('profileService.getForUser', () => {
   })
 })
 
+describe('profileService.getSavedBasics', () => {
+  it('returns the saved basics when a row exists with a non-blank name', async () => {
+    repo.findByUserId.mockResolvedValue(row(CONTENT))
+    expect(await profileService.getSavedBasics('u1')).toEqual(CONTENT.basics)
+  })
+  it('returns null when the saved name is blank', async () => {
+    const blank: ProfileContent = { ...CONTENT, basics: { ...CONTENT.basics, name: '   ' } }
+    repo.findByUserId.mockResolvedValue(row(blank))
+    expect(await profileService.getSavedBasics('u1')).toBeNull()
+  })
+  it('returns null when no row exists (no registered-user seeding)', async () => {
+    repo.findByUserId.mockResolvedValue(null)
+    expect(await profileService.getSavedBasics('u1')).toBeNull()
+    expect(auth.findById).not.toHaveBeenCalled()
+  })
+})
+
 describe('profileService.update', () => {
   it('assigns ids then upserts, returning the stored content', async () => {
     const incoming = ProfileContentSchema.parse({
