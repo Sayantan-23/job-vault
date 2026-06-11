@@ -12,6 +12,12 @@ vi.mock('./personas.repository.js', () => ({
 vi.mock('@/modules/ai/gemini.service.js', () => ({
   geminiService: { isAiEnabled: vi.fn(() => true), generateStructured: vi.fn(), generateText: vi.fn() },
 }))
+vi.mock('@/modules/ai/ai.rate-limit.js', () => ({ assertWithinRateLimit: vi.fn() }))
+vi.mock('@/modules/ai/ai-usage.repository.js', () => ({
+  aiUsageRepository: { countRecentGenerations: vi.fn(), recordResumeParse: vi.fn() },
+}))
+// pdf-parse is intentionally NOT mocked here: importing the app exercises the
+// real import chain (service → pdf-parse), catching ESM/CJS import breakage.
 
 import { personasRepository } from './personas.repository.js'
 import { geminiService } from '@/modules/ai/gemini.service.js'
@@ -123,5 +129,59 @@ describe('personas routes', () => {
     repo.findById.mockResolvedValue(null)
     const res = await request(app).get('/api/personas/x').set('Cookie', [cookie])
     expect(res.status).toBe(404)
+  })
+})
+
+describe('POST /api/personas/parse-resume', () => {
+  it('401s without a cookie', async () => {
+    expect((await request(app).post('/api/personas/parse-resume')).status).toBe(401)
+  })
+
+  it('200s on multipart text-only and returns content + rawText', async () => {
+    repo.countForUser.mockResolvedValue(0)
+    ai.generateStructured.mockResolvedValue(DATA)
+    const res = await request(app)
+      .post('/api/personas/parse-resume')
+      .set('Cookie', [cookie])
+      .field('text', 'My pasted résumé')
+    expect(res.status).toBe(200)
+    expect(res.body.data.rawText).toBe('My pasted résumé')
+    expect(res.body.data.content.basics.name).toBe('Ada')
+  })
+
+  it('200s on a JSON text body too', async () => {
+    repo.countForUser.mockResolvedValue(0)
+    ai.generateStructured.mockResolvedValue(DATA)
+    const res = await request(app)
+      .post('/api/personas/parse-resume')
+      .set('Cookie', [cookie])
+      .send({ text: 'My pasted résumé' })
+    expect(res.status).toBe(200)
+    expect(res.body.data.rawText).toBe('My pasted résumé')
+  })
+
+  it('400s a non-PDF upload with the standard envelope', async () => {
+    const res = await request(app)
+      .post('/api/personas/parse-resume')
+      .set('Cookie', [cookie])
+      .attach('file', Buffer.from('plain text'), { filename: 'resume.txt', contentType: 'text/plain' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('VALIDATION_ERROR')
+  })
+
+  it('400s an oversized PDF with the standard envelope', async () => {
+    const res = await request(app)
+      .post('/api/personas/parse-resume')
+      .set('Cookie', [cookie])
+      .attach('file', Buffer.alloc(5 * 1024 * 1024 + 1), { filename: 'resume.pdf', contentType: 'application/pdf' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('VALIDATION_ERROR')
+  })
+
+  it('400s when neither file nor text is provided', async () => {
+    repo.countForUser.mockResolvedValue(0)
+    const res = await request(app).post('/api/personas/parse-resume').set('Cookie', [cookie]).field('text', '   ')
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('VALIDATION_ERROR')
   })
 })

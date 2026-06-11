@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { AppError } from '@/shared/errors.js'
 import { personasService } from './personas.service.js'
-import type { CreatePersonaInput, UpdatePersonaInput } from './personas.schema.js'
+import type { CreatePersonaInput, UpdatePersonaInput, ParseResumeInput } from './personas.schema.js'
 
 function requireUserId(req: Request): string {
   const id = req.user?.id
@@ -37,4 +37,13 @@ async function remove(req: Request, res: Response): Promise<void> {
   res.status(204).end()
 }
 
-export const personasController = { list, get, create, update, remove }
+async function parseResume(req: Request, res: Response): Promise<void> {
+  const { text } = req.body as ParseResumeInput
+  const parsed = await personasService.parseResume(requireUserId(req), {
+    text,
+    fileBuffer: req.file?.buffer,
+  })
+  res.status(200).json({ data: parsed })
+}
+
+export const personasController = { list, get, create, update, remove, parseResume }

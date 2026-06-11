@@ -14,5 +14,11 @@ export const UpdatePersonaSchema = z
   })
   .refine((v) => v.name !== undefined || v.data !== undefined, { message: 'Nothing to update' })
 
+// parse-resume body — `text` may arrive as a multipart field (multer) or as a
+// JSON body; the PDF itself comes through multer (`req.file`), not this schema.
+// `.default({})` covers requests that carry only a file (no parsed body).
+export const ParseResumeSchema = z.object({ text: z.string().optional() }).default({})
+
 export type CreatePersonaInput = z.infer<typeof CreatePersonaSchema>
 export type UpdatePersonaInput = z.infer<typeof UpdatePersonaSchema>
+export type ParseResumeInput = z.infer<typeof ParseResumeSchema>
