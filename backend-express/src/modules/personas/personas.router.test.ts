@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest'
 import request from 'supertest'
 import type { Express } from 'express'
 import type { PersonaRow } from '@/db/schema/personas.js'
-import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 vi.mock('./personas.repository.js', () => ({
   personasRepository: {
@@ -20,7 +20,14 @@ const repo = vi.mocked(personasRepository)
 const ai = vi.mocked(geminiService)
 let app: Express
 let cookie: string
-const DATA: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
+const DATA: ProfileContent = {
+  basics: { name: 'Ada', links: [] },
+  summary: '',
+  experience: [],
+  projects: [],
+  skills: [],
+  education: [],
+}
 function fakePersona(over: Partial<PersonaRow> = {}): PersonaRow {
   return { id: 'p1', createdAt: new Date(), updatedAt: new Date(), userId: 'u1', name: 'Backend', data: DATA, rawInput: null, ...over }
 }
@@ -55,33 +62,46 @@ describe('personas routes', () => {
     expect(res.status).toBe(200)
     expect(res.body.data).toHaveLength(1)
   })
-  it('creates a persona (201)', async () => {
+  it('creates a persona from data (201, no AI)', async () => {
     repo.countForUser.mockResolvedValue(0)
-    ai.generateStructured.mockResolvedValue(DATA)
     repo.create.mockResolvedValue(fakePersona())
-    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', inputs: { pastedResume: 'R' } })
+    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', data: DATA })
     expect(res.status).toBe(201)
     expect(res.body.data.id).toBe('p1')
+    expect(ai.generateStructured).not.toHaveBeenCalled()
   })
-  it('400s on empty inputs', async () => {
-    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', inputs: {} })
+  it('creates even when AI is disabled (201)', async () => {
+    ai.isAiEnabled.mockReturnValue(false)
+    repo.countForUser.mockResolvedValue(0)
+    repo.create.mockResolvedValue(fakePersona())
+    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', data: DATA })
+    expect(res.status).toBe(201)
+  })
+  it('400s on invalid data', async () => {
+    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', data: { basics: { links: [] } } })
+    expect(res.status).toBe(400)
+  })
+  it('400s on missing data', async () => {
+    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend' })
     expect(res.status).toBe(400)
   })
   it('409s on the cap', async () => {
     repo.countForUser.mockResolvedValue(5)
-    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', inputs: { freeText: 'x' } })
+    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', data: DATA })
     expect(res.status).toBe(409)
-  })
-  it('503s when AI is disabled', async () => {
-    ai.isAiEnabled.mockReturnValue(false)
-    const res = await request(app).post('/api/personas').set('Cookie', [cookie]).send({ name: 'Backend', inputs: { freeText: 'x' } })
-    expect(res.status).toBe(503)
   })
   it('patches a persona', async () => {
     repo.update.mockResolvedValue(fakePersona({ name: 'Full-stack' }))
     const res = await request(app).patch('/api/personas/p1').set('Cookie', [cookie]).send({ name: 'Full-stack' })
     expect(res.status).toBe(200)
     expect(res.body.data.name).toBe('Full-stack')
+  })
+  it('400s patching with invalid ProfileContent', async () => {
+    const res = await request(app)
+      .patch('/api/personas/p1')
+      .set('Cookie', [cookie])
+      .send({ data: { ...DATA, experience: [{ company: 'Acme' }] } })
+    expect(res.status).toBe(400)
   })
   it('404s patching a missing persona', async () => {
     repo.update.mockResolvedValue(null)

@@ -1,8 +1,6 @@
 import { AppError } from '@/shared/errors.js'
 import { getEnv } from '@/config/env.js'
-import { geminiService } from '@/modules/ai/gemini.service.js'
-import { buildStructurePrompt } from '@/modules/ai/ai.prompts.js'
-import { ResumeContentSchema, type ResumeContent } from '@/shared/resume-content.schema.js'
+import { ensureIds, type ProfileContent } from '@/shared/profile-content.schema.js'
 import { personasRepository } from './personas.repository.js'
 import type { PersonaRow } from '@/db/schema/personas.js'
 import type { CreatePersonaInput, UpdatePersonaInput } from './personas.schema.js'
@@ -17,25 +15,27 @@ async function get(userId: string, id: string): Promise<PersonaRow> {
   return persona
 }
 
+// Plain save — manual creation needs no AI. The only AI persona path is
+// POST /personas/parse-resume, which pre-fills `data` before this runs.
 async function create(userId: string, input: CreatePersonaInput): Promise<PersonaRow> {
-  if (!geminiService.isAiEnabled()) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
   const max = getEnv().MAX_PERSONAS
   // Read-then-check cap: a tolerable race for a single-user personal tool (two
   // concurrent creates could both pass at count = max - 1). Tighten with a DB
   // constraint if it ever matters.
   const current = await personasRepository.countForUser(userId)
   if (current >= max) throw new AppError('CONFLICT', `Persona limit reached (max ${max})`)
-  // generateStructured already Zod-validates against ResumeContentSchema, so its
-  // result is a ready-to-store ResumeContent — no second parse needed.
-  const data = await geminiService.generateStructured(buildStructurePrompt(input.inputs), ResumeContentSchema)
-  const rawInput = [input.inputs.pastedResume, input.inputs.freeText].filter(Boolean).join('\n\n') || null
-  return personasRepository.create({ userId, name: input.name, data, rawInput })
+  return personasRepository.create({
+    userId,
+    name: input.name,
+    data: ensureIds(input.data),
+    rawInput: input.rawInput ?? null,
+  })
 }
 
 async function update(userId: string, id: string, input: UpdatePersonaInput): Promise<PersonaRow> {
-  const patch: { name?: string; data?: ResumeContent } = {}
+  const patch: { name?: string; data?: ProfileContent } = {}
   if (input.name !== undefined) patch.name = input.name
-  if (input.data !== undefined) patch.data = input.data
+  if (input.data !== undefined) patch.data = ensureIds(input.data)
   const updated = await personasRepository.update(userId, id, patch)
   if (!updated) throw new AppError('NOT_FOUND', 'Persona not found')
   return updated
