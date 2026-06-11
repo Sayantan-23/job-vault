@@ -37,7 +37,7 @@ export function BulletListEditor({
             type="button"
             variant="softDestructive"
             size="iconSm"
-            className="mt-1 shrink-0"
+            className="shrink-0"
             aria-label={`Remove bullet ${i + 1}`}
             onClick={() => remove(i)}
           >
