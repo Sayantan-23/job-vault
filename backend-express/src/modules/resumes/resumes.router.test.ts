@@ -3,6 +3,7 @@ import request from 'supertest'
 import type { Express } from 'express'
 import type { GeneratedResumeRow } from '@/db/schema/generated-resumes.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 vi.mock('./resumes.repository.js', () => ({
   resumesRepository: { create: vi.fn(), listForUser: vi.fn(), findById: vi.fn(), update: vi.fn(), remove: vi.fn() },
@@ -11,6 +12,7 @@ vi.mock('@/modules/personas/personas.repository.js', () => ({ personasRepository
 vi.mock('@/modules/jobs/jobs.repository.js', () => ({ jobsRepository: { findById: vi.fn() } }))
 vi.mock('@/modules/ai/gemini.service.js', () => ({ geminiService: { isAiEnabled: vi.fn(() => true), generateStructured: vi.fn() } }))
 vi.mock('@/modules/ai/ai-usage.repository.js', () => ({ aiUsageRepository: { countRecentGenerations: vi.fn().mockResolvedValue(0) } }))
+vi.mock('@/modules/profile/profile.repository.js', () => ({ profileRepository: { findByUserId: vi.fn().mockResolvedValue(null), upsert: vi.fn() } }))
 
 import { resumesRepository } from './resumes.repository.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'
@@ -20,10 +22,11 @@ const repo = vi.mocked(resumesRepository)
 const personas = vi.mocked(personasRepository)
 const ai = vi.mocked(geminiService)
 const C: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
+const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
 function row(over: Partial<GeneratedResumeRow> = {}): GeneratedResumeRow {
   return { id: 'res1', userId: 'u1', personaId: 'p1', jobId: null, title: 'Backend', instructions: null, content: C, createdAt: new Date(), updatedAt: new Date(), ...over }
 }
-const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: C, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
+const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: P, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
 let app: Express
 let cookie: string
 

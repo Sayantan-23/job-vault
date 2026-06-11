@@ -74,7 +74,11 @@ async function request<T>(
     Accept: 'application/json',
     ...((init?.headers as Record<string, string> | undefined) ?? {}),
   }
-  if (body !== undefined) headers['Content-Type'] = 'application/json'
+  // A FormData body passes through untouched: the browser sets the multipart
+  // Content-Type (with its boundary) itself — a manual JSON header would
+  // corrupt the body.
+  const isForm = typeof FormData !== 'undefined' && body instanceof FormData
+  if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json'
 
   const fetchInit: RequestInit = {
     method,
@@ -82,7 +86,7 @@ async function request<T>(
     headers,
     ...init,
   }
-  if (body !== undefined) fetchInit.body = JSON.stringify(body)
+  if (body !== undefined) fetchInit.body = isForm ? (body as FormData) : JSON.stringify(body)
 
   const res = await fetch(url, fetchInit)
 
@@ -115,6 +119,7 @@ export const apiClient = {
   getPage: <T>(path: string, init?: RequestInit) =>
     request<Paginated<T>>('GET', path, undefined, init, false, false),
   post: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('POST', path, body, init),
+  postForm: <T>(path: string, form: FormData, init?: RequestInit) => request<T>('POST', path, form, init),
   patch: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('PATCH', path, body, init),
   put: <T>(path: string, body?: unknown, init?: RequestInit) => request<T>('PUT', path, body, init),
   delete: <T>(path: string, init?: RequestInit) => request<T>('DELETE', path, undefined, init),

@@ -7,28 +7,38 @@ vi.mock('@/modules/personas/personas.repository.js', () => ({ personasRepository
 vi.mock('@/modules/jobs/jobs.repository.js', () => ({ jobsRepository: { findById: vi.fn() } }))
 vi.mock('@/modules/ai/gemini.service.js', () => ({ geminiService: { isAiEnabled: vi.fn(() => true), generateStructured: vi.fn() } }))
 vi.mock('@/modules/ai/ai.rate-limit.js', () => ({ assertWithinRateLimit: vi.fn() }))
+vi.mock('@/modules/profile/profile.service.js', () => ({ profileService: { getSavedBasics: vi.fn() } }))
+vi.mock('@/modules/ai/ai.prompts.js', () => ({ buildResumePrompt: vi.fn(() => 'PROMPT') }))
 
 import { resumesRepository } from './resumes.repository.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
 import { geminiService } from '@/modules/ai/gemini.service.js'
 import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
+import { profileService } from '@/modules/profile/profile.service.js'
+import { buildResumePrompt } from '@/modules/ai/ai.prompts.js'
 import { resumesService } from './resumes.service.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileBasics, ProfileContent } from '@/shared/profile-content.schema.js'
 
 const repo = vi.mocked(resumesRepository)
 const personas = vi.mocked(personasRepository)
 const jobs = vi.mocked(jobsRepository)
 const ai = vi.mocked(geminiService)
 const rl = vi.mocked(assertWithinRateLimit)
+const profile = vi.mocked(profileService)
+const prompt = vi.mocked(buildResumePrompt)
 const C: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
-const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: C, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
+const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
+const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: P, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
 const resumeRow = { id: 'res1', userId: 'u1', personaId: 'p1', jobId: null, title: 'Backend', instructions: null, content: C, createdAt: new Date(), updatedAt: new Date() }
 
 beforeEach(() => {
   vi.clearAllMocks()
   ai.isAiEnabled.mockReturnValue(true)
   rl.mockResolvedValue(undefined)
+  profile.getSavedBasics.mockResolvedValue(null)
+  prompt.mockReturnValue('PROMPT')
 })
 
 describe('resumesService.generate', () => {
@@ -54,6 +64,24 @@ describe('resumesService.generate', () => {
     expect(rl).toHaveBeenCalledWith('u1')
     expect(repo.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'u1', personaId: 'p1', jobId: null, title: 'Backend', content: C }))
     expect(out.id).toBe('res1')
+  })
+  it('prompts with the master-profile basics merged over the persona data when saved', async () => {
+    const masterBasics: ProfileBasics = { name: 'Master Name', email: 'master@example.com', phone: '+1 555', links: [] }
+    personas.findById.mockResolvedValue(persona)
+    profile.getSavedBasics.mockResolvedValue(masterBasics)
+    ai.generateStructured.mockResolvedValue(C)
+    repo.create.mockResolvedValue(resumeRow)
+    await resumesService.generate('u1', { personaId: 'p1' })
+    expect(profile.getSavedBasics).toHaveBeenCalledWith('u1')
+    expect(prompt).toHaveBeenCalledWith({ ...P, basics: masterBasics }, null, undefined)
+  })
+  it("prompts with the persona's own basics when no master-profile basics are saved", async () => {
+    personas.findById.mockResolvedValue(persona)
+    profile.getSavedBasics.mockResolvedValue(null)
+    ai.generateStructured.mockResolvedValue(C)
+    repo.create.mockResolvedValue(resumeRow)
+    await resumesService.generate('u1', { personaId: 'p1' })
+    expect(prompt).toHaveBeenCalledWith(P, null, undefined)
   })
 })
 

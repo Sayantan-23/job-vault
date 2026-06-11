@@ -5,6 +5,7 @@ import { buildResumePrompt } from '@/modules/ai/ai.prompts.js'
 import { ResumeContentSchema } from '@/shared/resume-content.schema.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
+import { profileService } from '@/modules/profile/profile.service.js'
 import { resumesRepository } from './resumes.repository.js'
 import { renderResumeTex } from './resume-tex.js'
 import type { GeneratedResumeRow } from '@/db/schema/generated-resumes.js'
@@ -29,8 +30,11 @@ async function generate(userId: string, input: GenerateResumeInput): Promise<Gen
   // input (unknown persona/job) can't burn a user's quota.
   await assertWithinRateLimit(userId)
 
+  // Contact identity lives on the master profile: merge its saved basics over
+  // the persona's own (which remain the fallback when no profile is saved).
+  const savedBasics = await profileService.getSavedBasics(userId)
   const content = await geminiService.generateStructured(
-    buildResumePrompt(persona.data, job, input.instructions),
+    buildResumePrompt({ ...persona.data, basics: savedBasics ?? persona.data.basics }, job, input.instructions),
     ResumeContentSchema,
   )
   const title = job ? `${job.title} — ${job.company}` : persona.name

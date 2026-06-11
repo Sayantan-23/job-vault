@@ -1,13 +1,22 @@
 import { and, eq, desc, count } from 'drizzle-orm'
 import { getDb } from '@/db/client.js'
 import { personas, type PersonaRow, type NewPersonaRow } from '@/db/schema/personas.js'
-import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
+import { normalizePersonaData } from '@/shared/resume-to-profile.js'
+
+// Read-time normalization: legacy rows (pre-7b ResumeContent) up-convert to
+// ProfileContent lazily; persistence happens via the one-off backfill script.
+// Every row the repository returns goes through this — including create/update
+// `.returning()` rows, so a name-only patch on a legacy row can't leak the old shape.
+function normalizeRow(row: PersonaRow): PersonaRow {
+  return { ...row, data: normalizePersonaData(row.data) }
+}
 
 async function create(values: NewPersonaRow): Promise<PersonaRow> {
   const rows = await getDb().insert(personas).values(values).returning()
   const row = rows[0]
   if (!row) throw new Error('insert returned no row')
-  return row
+  return normalizeRow(row)
 }
 
 async function countForUser(userId: string): Promise<number> {
@@ -16,7 +25,12 @@ async function countForUser(userId: string): Promise<number> {
 }
 
 async function listForUser(userId: string): Promise<PersonaRow[]> {
-  return getDb().select().from(personas).where(eq(personas.userId, userId)).orderBy(desc(personas.createdAt))
+  const rows = await getDb()
+    .select()
+    .from(personas)
+    .where(eq(personas.userId, userId))
+    .orderBy(desc(personas.createdAt))
+  return rows.map(normalizeRow)
 }
 
 async function findById(userId: string, id: string): Promise<PersonaRow | null> {
@@ -25,13 +39,14 @@ async function findById(userId: string, id: string): Promise<PersonaRow | null> 
     .from(personas)
     .where(and(eq(personas.id, id), eq(personas.userId, userId)))
     .limit(1)
-  return rows[0] ?? null
+  const row = rows[0]
+  return row ? normalizeRow(row) : null
 }
 
 async function update(
   userId: string,
   id: string,
-  patch: { name?: string; data?: ResumeContent },
+  patch: { name?: string; data?: ProfileContent },
 ): Promise<PersonaRow | null> {
   const set: Partial<NewPersonaRow> = { updatedAt: new Date() }
   if (patch.name !== undefined) set.name = patch.name
@@ -41,7 +56,8 @@ async function update(
     .set(set)
     .where(and(eq(personas.id, id), eq(personas.userId, userId)))
     .returning()
-  return rows[0] ?? null
+  const row = rows[0]
+  return row ? normalizeRow(row) : null
 }
 
 async function remove(userId: string, id: string): Promise<boolean> {

@@ -19,6 +19,7 @@
     "test:watch": "vitest",
     "db:generate": "tsx ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "tsx ./node_modules/drizzle-kit/bin.cjs migrate",
+    "db:backfill-personas": "tsx src/scripts/backfill-personas.ts",
     "db:studio": "tsx ./node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
@@ -33,7 +34,9 @@
     "express-rate-limit": "^7.4.1",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
     "node-cron": "^3.0.3",
+    "pdf-parse": "^1.1.4",
     "pg": "^8.13.1",
     "pino": "^9.5.0",
     "pino-http": "^10.3.0",
@@ -47,8 +50,10 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.1.0",
     "@types/node": "^20.17.0",
     "@types/node-cron": "^3.0.11",
+    "@types/pdf-parse": "^1.1.5",
     "@types/pg": "^8.11.10",
     "@types/supertest": "^6.0.2",
     "@types/turndown": "^5.0.6",

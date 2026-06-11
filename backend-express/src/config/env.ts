@@ -24,6 +24,9 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
+  // Optional second model retried once when GEMINI_MODEL fails transiently
+  // (timeout / 503 overload). Deliberately no default: unset means no fallback.
+  GEMINI_FALLBACK_MODEL: z.string().optional(),
   AI_RATE_LIMIT_PER_HOUR: z.coerce.number().int().positive().default(10),
   MAX_PERSONAS: z.coerce.number().int().positive().default(5),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
