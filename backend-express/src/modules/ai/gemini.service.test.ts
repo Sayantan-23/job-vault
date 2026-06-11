@@ -6,6 +6,13 @@ vi.mock('@google/genai', () => ({
   GoogleGenAI: vi.fn(() => ({ models: { generateContent } })),
 }))
 
+// The real logger spins up a pino-pretty transport worker at module load —
+// stub it so the service unit stays hermetic and the fallback warn is assertable.
+const loggerWarn = vi.fn()
+vi.mock('@/shared/logger.js', () => ({
+  logger: { warn: loggerWarn },
+}))
+
 function loadEnv(overrides: Record<string, string> = {}) {
   process.env['DATABASE_URL'] = 'postgres://u:p@localhost:5432/db'
   process.env['CORS_ORIGINS'] = 'http://localhost:8080'
@@ -18,6 +25,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   vi.resetModules()
   delete process.env['GEMINI_API_KEY']
+  delete process.env['GEMINI_FALLBACK_MODEL']
 })
 
 describe('geminiService', () => {
@@ -140,5 +148,88 @@ describe('geminiService', () => {
     )
     const { geminiService } = await import('./gemini.service.js')
     await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'RATE_LIMITED' })
+  })
+
+  describe('fallback model chain', () => {
+    const overloadedError = () =>
+      Object.assign(
+        new Error('{"error":{"code":503,"message":"This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.","status":"UNAVAILABLE"}}'),
+        { name: 'ApiError', status: 503 },
+      )
+    const timeoutError = () =>
+      Object.assign(new TypeError('fetch failed'), {
+        cause: Object.assign(new Error('Headers Timeout Error'), {
+          name: 'HeadersTimeoutError',
+          code: 'UND_ERR_HEADERS_TIMEOUT',
+        }),
+      })
+
+    it('retries once on the fallback model when the primary is overloaded (503)', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k', GEMINI_FALLBACK_MODEL: 'gemini-2.0-flash-lite' })
+      generateContent.mockRejectedValueOnce(overloadedError()).mockResolvedValueOnce({ text: 'ok' })
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).resolves.toBe('ok')
+      expect(generateContent).toHaveBeenCalledTimes(2)
+      expect(generateContent).toHaveBeenNthCalledWith(1, expect.objectContaining({ model: 'gemini-2.0-flash' }))
+      expect(generateContent).toHaveBeenNthCalledWith(2, expect.objectContaining({ model: 'gemini-2.0-flash-lite' }))
+      expect(loggerWarn).toHaveBeenCalledOnce()
+    })
+
+    it('retries once on the fallback model when the primary times out', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k', GEMINI_FALLBACK_MODEL: 'gemini-2.0-flash-lite' })
+      generateContent.mockRejectedValueOnce(timeoutError()).mockResolvedValueOnce({ text: 'ok' })
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).resolves.toBe('ok')
+      expect(generateContent).toHaveBeenCalledTimes(2)
+      expect(generateContent).toHaveBeenNthCalledWith(2, expect.objectContaining({ model: 'gemini-2.0-flash-lite' }))
+    })
+
+    it('does NOT fall back on 429/quota — account-level, the fallback would fail too', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k', GEMINI_FALLBACK_MODEL: 'gemini-2.0-flash-lite' })
+      generateContent.mockRejectedValue(
+        Object.assign(new Error('{"error":{"code":429,"status":"RESOURCE_EXHAUSTED"}}'), { status: 429 }),
+      )
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'RATE_LIMITED' })
+      expect(generateContent).toHaveBeenCalledTimes(1)
+    })
+
+    it('does NOT fall back on generic provider errors', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k', GEMINI_FALLBACK_MODEL: 'gemini-2.0-flash-lite' })
+      generateContent.mockRejectedValue(new Error('socket hang up'))
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'INTERNAL_ERROR' })
+      expect(generateContent).toHaveBeenCalledTimes(1)
+    })
+
+    it('does NOT fall back when GEMINI_FALLBACK_MODEL is unset', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k' })
+      generateContent.mockRejectedValue(overloadedError())
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).rejects.toMatchObject({
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'The AI model is currently overloaded. Please try again in a moment.',
+      })
+      expect(generateContent).toHaveBeenCalledTimes(1)
+    })
+
+    it('does NOT fall back when the fallback model equals the primary', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k', GEMINI_FALLBACK_MODEL: 'gemini-2.0-flash' })
+      generateContent.mockRejectedValue(overloadedError())
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' })
+      expect(generateContent).toHaveBeenCalledTimes(1)
+    })
+
+    it('surfaces the fallback attempt error when both models fail transiently', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k', GEMINI_FALLBACK_MODEL: 'gemini-2.0-flash-lite' })
+      generateContent.mockRejectedValueOnce(overloadedError()).mockRejectedValueOnce(timeoutError())
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateText('p')).rejects.toMatchObject({
+        code: 'SERVICE_UNAVAILABLE',
+        message: 'The AI request timed out. Please try again.',
+      })
+      expect(generateContent).toHaveBeenCalledTimes(2)
+    })
   })
 })
