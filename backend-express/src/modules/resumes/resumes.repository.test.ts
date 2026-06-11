@@ -6,11 +6,13 @@ import { personas } from '@/db/schema/personas.js'
 import { generatedResumes } from '@/db/schema/generated-resumes.js'
 import { resumesRepository } from './resumes.repository.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 const EMAIL = `resumes-repo-${Date.now()}@example.com`
 let userId: string
 let personaId: string
 const C: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
+const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
 
 beforeAll(async () => {
   if (!process.env['DATABASE_URL']) process.env['DATABASE_URL'] = 'postgres://postgres:postgres@localhost:5433/jobvault'
@@ -20,7 +22,7 @@ beforeAll(async () => {
   const userRow = userRows[0]
   if (!userRow) throw new Error('failed to seed user')
   userId = userRow.id
-  const personaRows = await getDb().insert(personas).values({ userId, name: 'Backend', data: C }).returning()
+  const personaRows = await getDb().insert(personas).values({ userId, name: 'Backend', data: P }).returning()
   const personaRow = personaRows[0]
   if (!personaRow) throw new Error('failed to seed persona')
   personaId = personaRow.id

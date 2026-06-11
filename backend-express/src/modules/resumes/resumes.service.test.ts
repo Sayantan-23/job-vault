@@ -15,6 +15,7 @@ import { geminiService } from '@/modules/ai/gemini.service.js'
 import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
 import { resumesService } from './resumes.service.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 const repo = vi.mocked(resumesRepository)
 const personas = vi.mocked(personasRepository)
@@ -22,7 +23,8 @@ const jobs = vi.mocked(jobsRepository)
 const ai = vi.mocked(geminiService)
 const rl = vi.mocked(assertWithinRateLimit)
 const C: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
-const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: C, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
+const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
+const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: P, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
 const resumeRow = { id: 'res1', userId: 'u1', personaId: 'p1', jobId: null, title: 'Backend', instructions: null, content: C, createdAt: new Date(), updatedAt: new Date() }
 
 beforeEach(() => {

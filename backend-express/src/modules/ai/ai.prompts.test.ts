@@ -1,16 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { buildStructurePrompt } from './ai.prompts.js'
-import { buildResumePrompt } from './ai.prompts.js'
-import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import { buildStructurePrompt, buildResumePrompt, buildCoverLetterPrompt } from './ai.prompts.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
-const BG: ResumeContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
+const BG: ProfileContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
 
 describe('buildResumePrompt', () => {
-  it('embeds the background and asks for the ResumeContent JSON', () => {
+  it('embeds the background and asks for the ResumeContent output JSON', () => {
     const p = buildResumePrompt(BG, null)
     expect(p).toContain('"name":"A"')
     expect(p).toMatch(/JSON/i)
     expect(p).toMatch(/double asterisks/i)
+    // output stays the legacy résumé shape (title/date strings), not ProfileContent
+    expect(p).toContain('"title"')
+    expect(p).toContain('"date"')
+  })
+  it('explains the MonthYear background dates', () => {
+    const p = buildResumePrompt(BG, null)
+    expect(p).toContain('{month, year}')
+    expect(p).toContain('Jan 2022 – Present')
   })
   it('includes the job when tailoring, and instructions', () => {
     const p = buildResumePrompt(BG, { title: 'Backend Engineer', company: 'Acme', snapshot: 'Go + k8s' }, 'emphasize leadership')
@@ -25,31 +32,34 @@ describe('buildResumePrompt', () => {
 })
 
 describe('buildStructurePrompt', () => {
-  it('embeds all provided inputs and asks for the ResumeContent JSON shape', () => {
-    const p = buildStructurePrompt({ freeText: 'I led teams', pastedResume: 'RESUME TEXT', fields: { basics: { name: 'Kartick', links: [] } } })
-    expect(p).toContain('RESUME TEXT')
-    expect(p).toContain('I led teams')
-    expect(p).toContain('Kartick')
-    // schema guidance
-    expect(p).toMatch(/basics/)
-    expect(p).toMatch(/experience/)
-    expect(p).toMatch(/double asterisks/i)
+  it('embeds the raw text and asks for the ProfileContent JSON shape', () => {
+    const p = buildStructurePrompt('I led platform teams at Acme')
+    expect(p).toContain('I led platform teams at Acme')
     expect(p).toMatch(/JSON/i)
+    // ProfileContent markers
+    expect(p).toContain('"role"')
+    expect(p).toContain('"startDate"')
+    expect(p).toContain('"month"')
+    expect(p).toContain('"technologies"')
+    expect(p).toContain('"fieldOfStudy"')
+    expect(p).toMatch(/double asterisks/i)
+    expect(p).toMatch(/never invent/i)
   })
-
-  it('omits absent sections gracefully', () => {
-    const p = buildStructurePrompt({ freeText: 'only free text' })
-    expect(p).toContain('only free text')
-    expect(p).not.toContain('PASTED RESUME')
+  it('tells the model to omit ids and use null for unknown dates', () => {
+    const p = buildStructurePrompt('text')
+    expect(p).toMatch(/omit all "id" fields/i)
+    expect(p).toMatch(/null/)
+  })
+  it('does not describe the legacy ResumeContent shape', () => {
+    const p = buildStructurePrompt('text')
+    expect(p).not.toContain('"tagline"')
+    expect(p).not.toContain('"period"')
   })
 })
 
-import { buildCoverLetterPrompt } from './ai.prompts.js'
-
 describe('buildCoverLetterPrompt', () => {
-  const bg: ResumeContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
   it('asks for a Markdown letter tailored to the job, no invention', () => {
-    const p = buildCoverLetterPrompt(bg, { title: 'Backend Engineer', company: 'Acme', snapshot: 'Go' }, 'be concise')
+    const p = buildCoverLetterPrompt(BG, { title: 'Backend Engineer', company: 'Acme', snapshot: 'Go' }, 'be concise')
     expect(p).toMatch(/markdown/i)
     expect(p).toContain('Backend Engineer')
     expect(p).toContain('Acme')
@@ -57,5 +67,10 @@ describe('buildCoverLetterPrompt', () => {
     expect(p).toContain('be concise')
     expect(p).toMatch(/do not invent|truthful/i)
     expect(p).toContain('"name":"A"')
+  })
+  it('explains the MonthYear background dates', () => {
+    const p = buildCoverLetterPrompt(BG, { title: 'T', company: 'C' })
+    expect(p).toContain('{month, year}')
+    expect(p).toContain('Jan 2022 – Present')
   })
 })

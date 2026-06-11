@@ -3,6 +3,7 @@ import request from 'supertest'
 import type { Express } from 'express'
 import type { GeneratedResumeRow } from '@/db/schema/generated-resumes.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
+import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 vi.mock('./resumes.repository.js', () => ({
   resumesRepository: { create: vi.fn(), listForUser: vi.fn(), findById: vi.fn(), update: vi.fn(), remove: vi.fn() },
@@ -20,10 +21,11 @@ const repo = vi.mocked(resumesRepository)
 const personas = vi.mocked(personasRepository)
 const ai = vi.mocked(geminiService)
 const C: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
+const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
 function row(over: Partial<GeneratedResumeRow> = {}): GeneratedResumeRow {
   return { id: 'res1', userId: 'u1', personaId: 'p1', jobId: null, title: 'Backend', instructions: null, content: C, createdAt: new Date(), updatedAt: new Date(), ...over }
 }
-const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: C, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
+const persona = { id: 'p1', userId: 'u1', name: 'Backend', data: P, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
 let app: Express
 let cookie: string
 
