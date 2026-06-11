@@ -64,8 +64,8 @@ describe('personasRepository (real DB)', () => {
     if (!inserted) throw new Error('insert returned no row')
 
     const found = await personasRepository.findById(userId, inserted.id)
-    expect(found).not.toBeNull()
-    const data = found!.data
+    if (!found) throw new Error('persona not found')
+    const data = found.data
     expect(data.experience[0]?.role).toBe('Engineer')
     expect(data.experience[0]?.startDate?.year).toBe(2022)
     expect(data.experience[0]?.current).toBe(true)

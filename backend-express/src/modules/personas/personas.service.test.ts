@@ -84,7 +84,9 @@ describe('personasService.create', () => {
   it('keeps pre-existing ids stable', async () => {
     repo.countForUser.mockResolvedValue(0)
     repo.create.mockResolvedValue(fakePersona())
-    const withId: ProfileContent = { ...DATA, experience: [{ ...DATA.experience[0]!, id: 'exp-1' }] }
+    const first = DATA.experience[0]
+    if (!first) throw new Error('fixture missing experience')
+    const withId: ProfileContent = { ...DATA, experience: [{ ...first, id: 'exp-1' }] }
     await personasService.create('u1', { name: 'Backend', data: withId })
     const data = repo.create.mock.calls[0]?.[0]?.data as ProfileContent
     expect(data.experience[0]?.id).toBe('exp-1')

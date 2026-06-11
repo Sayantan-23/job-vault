@@ -12,12 +12,30 @@ import { authRepository } from '@/modules/auth/auth.repository.js'
 import { profileService } from './profile.service.js'
 import { ProfileContentSchema, type ProfileContent } from '@/shared/profile-content.schema.js'
 import type { UserProfileRow } from '@/db/schema/user-profiles.js'
+import type { UserRow } from '@/db/schema/users.js'
 
 const repo = vi.mocked(profileRepository)
 const auth = vi.mocked(authRepository)
 const CONTENT: ProfileContent = ProfileContentSchema.parse({ basics: { name: 'Ada' }, summary: 'hi' })
 function row(content: ProfileContent): UserProfileRow {
   return { id: 'pr1', userId: 'u1', content, createdAt: new Date(), updatedAt: new Date() }
+}
+
+function userRow(name: string, email: string): UserRow {
+  return {
+    id: 'u1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name,
+    email,
+    passwordHash: null,
+    googleId: null,
+    isEmailVerified: false,
+    masterResumeUrl: null,
+    masterProfileJson: null,
+    preferences: null,
+    refreshTokenHash: null,
+  }
 }
 
 beforeEach(() => vi.clearAllMocks())
@@ -29,7 +47,7 @@ describe('profileService.getForUser', () => {
   })
   it('seeds an empty profile (not persisted) with the registered name/email when none exists', async () => {
     repo.findByUserId.mockResolvedValue(null)
-    auth.findById.mockResolvedValue({ id: 'u1', name: 'Ada Lovelace', email: 'ada@example.com' } as never)
+    auth.findById.mockResolvedValue(userRow('Ada Lovelace', 'ada@example.com'))
     const out = await profileService.getForUser('u1')
     expect(out.basics.name).toBe('Ada Lovelace')
     expect(out.basics.email).toBe('ada@example.com')

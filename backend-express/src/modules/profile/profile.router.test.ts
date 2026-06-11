@@ -12,12 +12,30 @@ vi.mock('@/modules/auth/auth.repository.js', () => ({
 
 import { profileRepository } from './profile.repository.js'
 import { authRepository } from '@/modules/auth/auth.repository.js'
+import type { UserRow } from '@/db/schema/users.js'
 
 const repo = vi.mocked(profileRepository)
 const auth = vi.mocked(authRepository)
 let app: Express
 let cookie: string
 const CONTENT: ProfileContent = ProfileContentSchema.parse({ basics: { name: 'Ada' }, summary: 'hi' })
+
+function userRow(name: string, email: string): UserRow {
+  return {
+    id: 'u1',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name,
+    email,
+    passwordHash: null,
+    googleId: null,
+    isEmailVerified: false,
+    masterResumeUrl: null,
+    masterProfileJson: null,
+    preferences: null,
+    refreshTokenHash: null,
+  }
+}
 
 beforeAll(async () => {
   process.env['NODE_ENV'] = 'test'
@@ -41,7 +59,7 @@ describe('profile routes', () => {
   })
   it('GET seeds an empty profile from the registered name/email when none saved', async () => {
     repo.findByUserId.mockResolvedValue(null)
-    auth.findById.mockResolvedValue({ id: 'u1', name: 'Ada Lovelace', email: 'ada@example.com' } as never)
+    auth.findById.mockResolvedValue(userRow('Ada Lovelace', 'ada@example.com'))
     const res = await request(app).get('/api/profile').set('Cookie', [cookie])
     expect(res.status).toBe(200)
     expect(res.body.data.basics.name).toBe('Ada Lovelace')
