@@ -9,8 +9,11 @@ import { ResumeContentSchema, type ResumeContent } from './resume-content.schema
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
 
 // Split on – / — anywhere, but require surrounding spaces for "-" and "to" so
-// hyphenated words ("Co-op") and month names ("October") never split.
-const RANGE_SEPARATOR = /\s*[–—]\s*|\s+-\s+|\s+to\s+/i
+// hyphenated words ("Co-op") and month names ("October") never split. An
+// unspaced "-" also splits when the preceding character is a digit ("2020-2021",
+// "May 2020-May 2021") — a year/month side always ends in a digit, while
+// hyphenated words ("Co-op", "mid-2020") never have one before the hyphen.
+const RANGE_SEPARATOR = /\s*[–—]\s*|\s+-\s+|\s+to\s+|(?<=\d)\s*-\s*/i
 
 const CURRENT_MARKER = /^(present|current|now|ongoing)$/i
 
@@ -59,10 +62,17 @@ export function parseDateRange(raw: string): {
   return { startDate, endDate: parseMonthYear(right), current: false }
 }
 
-// When a non-empty legacy date string parsed to nothing at all, keep it as a
-// leading bullet so the information is never lost.
+// When ANY non-empty side of a legacy date string failed to parse, keep the
+// original string as a leading bullet so the information is never lost
+// (spec §8: lossless up-conversion) — half-parseable ranges like
+// "Summer 2021 – Present" keep the parsed side AND stash the original.
 function unparseableDate(raw: string, range: ReturnType<typeof parseDateRange>): boolean {
-  return raw.trim() !== '' && range.startDate === null && range.endDate === null && !range.current
+  const parts = raw.trim().split(RANGE_SEPARATOR)
+  const left = (parts[0] ?? '').trim()
+  const right = parts.length > 1 ? (parts[1] ?? '').trim() : ''
+  const leftLost = left !== '' && range.startDate === null
+  const rightLost = right !== '' && !CURRENT_MARKER.test(right) && range.endDate === null
+  return leftLost || rightLost
 }
 
 export function resumeContentToProfileContent(legacy: ResumeContent): ProfileContent {

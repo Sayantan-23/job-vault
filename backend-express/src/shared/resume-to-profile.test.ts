@@ -88,6 +88,42 @@ describe('parseDateRange', () => {
   it('does not split hyphenated words like "Co-op"', () => {
     expect(parseDateRange('Co-op')).toEqual({ startDate: null, endDate: null, current: false })
   })
+
+  it('parses "2020-2021" (unspaced hyphen) as year-only sides', () => {
+    expect(parseDateRange('2020-2021')).toEqual({
+      startDate: { month: null, year: 2020 },
+      endDate: { month: null, year: 2021 },
+      current: false,
+    })
+  })
+
+  it('parses "May 2020-May 2021" (unspaced hyphen) with both sides full', () => {
+    expect(parseDateRange('May 2020-May 2021')).toEqual({
+      startDate: { month: 5, year: 2020 },
+      endDate: { month: 5, year: 2021 },
+      current: false,
+    })
+  })
+
+  it('parses "06/2021-08/2021" (unspaced hyphen) numeric months', () => {
+    expect(parseDateRange('06/2021-08/2021')).toEqual({
+      startDate: { month: 6, year: 2021 },
+      endDate: { month: 8, year: 2021 },
+      current: false,
+    })
+  })
+
+  it('parses "2020-Present" (unspaced hyphen) as current', () => {
+    expect(parseDateRange('2020-Present')).toEqual({
+      startDate: { month: null, year: 2020 },
+      endDate: null,
+      current: true,
+    })
+  })
+
+  it('does not split hyphenated words like "mid-2020" (no digit before the hyphen)', () => {
+    expect(parseDateRange('mid-2020')).toEqual({ startDate: null, endDate: null, current: false })
+  })
 })
 
 const legacyFixture: ResumeContent = {
@@ -240,6 +276,63 @@ describe('resumeContentToProfileContent', () => {
     })
     expect(out.projects[0]?.links).toEqual([])
     expect(out.projects[0]?.description).toBeUndefined()
+  })
+
+  // Half-parseable ranges: keep the side that parsed AND stash the original
+  // string as a leading bullet, so nothing is lost (spec §8).
+  describe('half-parseable date ranges', () => {
+    function convertExperienceDate(date: string) {
+      const out = resumeContentToProfileContent({
+        ...legacyFixture,
+        experience: [{ company: 'X', title: 'SWE', date, bullets: ['kept bullet'] }],
+        education: [],
+      })
+      const entry = out.experience[0]
+      if (!entry) throw new Error('expected one experience entry')
+      return entry
+    }
+
+    it('"Summer 2021 – Present": current is kept AND the Dates bullet is stashed', () => {
+      const e = convertExperienceDate('Summer 2021 – Present')
+      expect(e.startDate).toBeNull()
+      expect(e.endDate).toBeNull()
+      expect(e.current).toBe(true)
+      expect(e.bullets).toEqual(['Dates: Summer 2021 – Present', 'kept bullet'])
+    })
+
+    it('"Summer 2019 – Dec 2019": parsed end is kept AND the Dates bullet is stashed', () => {
+      const e = convertExperienceDate('Summer 2019 – Dec 2019')
+      expect(e.startDate).toBeNull()
+      expect(e.endDate).toEqual({ month: 12, year: 2019 })
+      expect(e.current).toBe(false)
+      expect(e.bullets).toEqual(['Dates: Summer 2019 – Dec 2019', 'kept bullet'])
+    })
+
+    it('"Jan 2020 – Summer 2020": parsed start is kept AND the Dates bullet is stashed', () => {
+      const e = convertExperienceDate('Jan 2020 – Summer 2020')
+      expect(e.startDate).toEqual({ month: 1, year: 2020 })
+      expect(e.endDate).toBeNull()
+      expect(e.current).toBe(false)
+      expect(e.bullets).toEqual(['Dates: Jan 2020 – Summer 2020', 'kept bullet'])
+    })
+
+    it('education "Fall 2018 – 2022": parsed end is kept AND the Dates bullet is stashed', () => {
+      const out = resumeContentToProfileContent({
+        ...legacyFixture,
+        experience: [],
+        education: [{ degree: 'BS', institution: 'MIT', period: 'Fall 2018 – 2022' }],
+      })
+      const ed = out.education[0]
+      expect(ed?.startDate).toBeNull()
+      expect(ed?.endDate).toEqual({ month: null, year: 2022 })
+      expect(ed?.current).toBe(false)
+      expect(ed?.bullets).toEqual(['Dates: Fall 2018 – 2022'])
+    })
+
+    it('fully-parseable ranges still get NO Dates bullet', () => {
+      const e = convertExperienceDate('Jan 2022 – Present')
+      expect(e.bullets).toEqual(['kept bullet'])
+    })
   })
 })
 
