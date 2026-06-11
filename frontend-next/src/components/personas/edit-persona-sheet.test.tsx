@@ -75,6 +75,45 @@ describe('EditPersonaSheet', () => {
     expect(screen.getByText('Senior Engineer @ Stripe')).toBeInTheDocument()
   })
 
+  it('clears a stale save-error banner when a different persona is opened', async () => {
+    api.patch.mockRejectedValue(new Error('Persona limit reached'))
+    // A stable QueryClient across rerenders, mirroring the mounted workspace.
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+    const stableWrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+    const { rerender } = render(
+      <EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={vi.fn()} />,
+      { wrapper: stableWrapper },
+    )
+
+    await userEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/persona limit reached/i)
+
+    // The workspace keeps the sheet mounted; opening another persona re-seeds it.
+    const personaB: Persona = { ...PERSONA, id: 'p2', name: 'Frontend' }
+    rerender(<EditPersonaSheet persona={personaB} profile={PROFILE} open onOpenChange={vi.fn()} />)
+
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+    expect(screen.getByLabelText('Persona name')).toHaveValue('Frontend')
+  })
+
+  it('Escape does not dismiss the sheet once the draft is edited; pristine Escape still closes', async () => {
+    const onOpenChange = vi.fn()
+    render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
+
+    await userEvent.keyboard('{Escape}')
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+    onOpenChange.mockClear()
+
+    await userEvent.type(screen.getByLabelText('Persona name'), ' X')
+    await userEvent.keyboard('{Escape}')
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
   it('blocks save and lists errors when the draft fails validation', async () => {
     const invalid: Persona = { ...PERSONA, data: { ...DATA, basics: { name: '', links: [] } } }
     render(<EditPersonaSheet persona={invalid} profile={PROFILE} open onOpenChange={vi.fn()} />, { wrapper })

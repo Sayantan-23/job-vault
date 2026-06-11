@@ -58,6 +58,14 @@ export function CreatePersonaSheet({ open, onOpenChange, profile, aiEnabled }: P
     if (!next) reset()
   }
 
+  // Past the mode step (or with anything typed/attached) the draft may hold a
+  // rate-limited parse result or tailoring work — block Escape/outside-click
+  // dismissal so only the explicit Cancel/Save buttons discard it.
+  const dirty = step !== 'mode' || name.trim() !== '' || pasted.trim() !== '' || file !== null
+  const guardDismiss = (e: { preventDefault: () => void }) => {
+    if (dirty) e.preventDefault()
+  }
+
   const startBuild = () => {
     setDraft({
       ...emptyProfileContent(),
@@ -94,7 +102,7 @@ export function CreatePersonaSheet({ open, onOpenChange, profile, aiEnabled }: P
 
   return (
     <Sheet open={open} onOpenChange={handleOpenChange}>
-      <SheetContent hideClose>
+      <SheetContent hideClose onEscapeKeyDown={guardDismiss} onPointerDownOutside={guardDismiss}>
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-card px-6 py-4">
           <SheetTitle className="text-lg font-semibold">New persona</SheetTitle>
           <div className="flex items-center gap-2">
@@ -136,7 +144,18 @@ export function CreatePersonaSheet({ open, onOpenChange, profile, aiEnabled }: P
 
         {step === 'import' ? (
           <div className="space-y-6 p-6">
-            <Button type="button" variant="ghost" size="sm" onClick={() => setStep('mode')}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              // reset() detaches an in-flight parse (TanStack v5 drops the
+              // mutate callbacks), so a late result can't hijack the sheet
+              // after the user backs out; it also clears a stale parse error.
+              onClick={() => {
+                parse.reset()
+                setStep('mode')
+              }}
+            >
               <ArrowLeft className="size-4" aria-hidden="true" />
               Back
             </Button>

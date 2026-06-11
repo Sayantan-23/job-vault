@@ -26,13 +26,26 @@ export function EditPersonaSheet({ persona, profile, open, onOpenChange }: Props
   const update = useUpdatePersona(persona?.id ?? '')
 
   // Re-seed the form whenever a different persona is opened for editing.
+  // resetUpdate clears a stale failure banner from a previous persona's
+  // save (the sheet stays mounted across opens); it is referentially stable
+  // in TanStack v5, so listing it as a dep adds no extra effect runs.
+  const { reset: resetUpdate } = update
   useEffect(() => {
     if (persona) {
       setName(persona.name)
       setData(persona.data)
       setErrors([])
+      resetUpdate()
     }
-  }, [persona])
+  }, [persona, resetUpdate])
+
+  // Edits exist only in this sheet's draft state — block Escape/outside-click
+  // dismissal once dirty so only the explicit Cancel/Save buttons discard them.
+  // (setName/setData always produce new values, so inequality is a safe proxy.)
+  const dirty = persona !== null && (name !== persona.name || data !== persona.data)
+  const guardDismiss = (e: { preventDefault: () => void }) => {
+    if (dirty) e.preventDefault()
+  }
 
   const save = () => {
     if (!data || !name.trim()) return
@@ -45,7 +58,7 @@ export function EditPersonaSheet({ persona, profile, open, onOpenChange }: Props
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent hideClose>
+      <SheetContent hideClose onEscapeKeyDown={guardDismiss} onPointerDownOutside={guardDismiss}>
         <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-card px-6 py-4">
           <SheetTitle className="text-lg font-semibold">Edit persona</SheetTitle>
           <div className="flex items-center gap-2">

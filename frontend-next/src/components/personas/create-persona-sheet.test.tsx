@@ -1,6 +1,6 @@
 // frontend-next/src/components/personas/create-persona-sheet.test.tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -149,6 +149,65 @@ describe('CreatePersonaSheet', () => {
     })
     expect(screen.getByRole('button', { name: /import a résumé/i })).toBeDisabled()
     expect(screen.getByRole('button', { name: /build from profile/i })).toBeEnabled()
+  })
+
+  it('Back while a parse is in flight detaches it — a late result cannot hijack a Build draft', async () => {
+    let resolveParse!: (value: { content: ProfileContent; rawText: string }) => void
+    api.postForm.mockReturnValue(new Promise((resolve) => (resolveParse = resolve)))
+    api.post.mockResolvedValue({ id: 'p3' })
+    render(<CreatePersonaSheet open onOpenChange={vi.fn()} profile={buildProfile()} aiEnabled />, {
+      wrapper,
+    })
+
+    await userEvent.type(screen.getByLabelText('Persona name'), 'Built')
+    await userEvent.click(screen.getByRole('button', { name: /import a résumé/i }))
+    await userEvent.type(screen.getByLabelText(/paste your résumé/i), 'RESUME TEXT')
+    await userEvent.click(screen.getByRole('button', { name: /parse with ai/i }))
+
+    // Impatient user backs out of the slow parse and builds from the profile instead.
+    await userEvent.click(screen.getByRole('button', { name: /^back$/i }))
+    await userEvent.click(screen.getByRole('button', { name: /build from profile/i }))
+    expect(screen.getByLabelText('Full name')).toHaveValue('Ada Lovelace')
+
+    // The abandoned parse resolves late — it must not clobber the build draft
+    // nor attach its rawText to the eventually-saved persona.
+    resolveParse({ content: PARSED, rawText: 'STALE RAW' })
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    expect(screen.getByLabelText('Full name')).toHaveValue('Ada Lovelace')
+
+    await userEvent.click(screen.getByRole('button', { name: /^save$/i }))
+    await waitFor(() =>
+      expect(api.post).toHaveBeenCalledWith(
+        '/api/personas',
+        expect.objectContaining({ name: 'Built', rawInput: null }),
+      ),
+    )
+  })
+
+  it('Escape does not dismiss a dirty draft; explicit Cancel still closes', async () => {
+    const onOpenChange = vi.fn()
+    render(<CreatePersonaSheet open onOpenChange={onOpenChange} profile={buildProfile()} aiEnabled />, {
+      wrapper,
+    })
+
+    await userEvent.click(screen.getByRole('button', { name: /build from profile/i }))
+    await userEvent.keyboard('{Escape}')
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('Escape on the pristine mode step still dismisses the sheet', async () => {
+    const onOpenChange = vi.fn()
+    render(<CreatePersonaSheet open onOpenChange={onOpenChange} profile={buildProfile()} aiEnabled />, {
+      wrapper,
+    })
+
+    await userEvent.keyboard('{Escape}')
+    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
   it('validation errors block save', async () => {
