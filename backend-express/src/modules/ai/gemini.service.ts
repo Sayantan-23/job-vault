@@ -8,8 +8,39 @@ let client: GoogleGenAI | null = null
 function getClient(): GoogleGenAI {
   const key = getEnv().GEMINI_API_KEY
   if (!key) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
-  if (!client) client = new GoogleGenAI({ apiKey: key })
+  // Without an explicit timeout a hung provider call rides undici's 5-minute
+  // headers timeout while the proxy/browser has long given up — bound it so
+  // failures surface quickly as our envelope.
+  if (!client) client = new GoogleGenAI({ apiKey: key, httpOptions: { timeout: 60_000 } })
   return client
+}
+
+// Walks the error `cause` chain looking for timeout/abort markers: undici
+// HeadersTimeoutError, fetch AbortError, the SDK's own timeout, and the
+// provider's server-side deadline (the SDK forwards httpOptions.timeout as a
+// server deadline, so a slow generation comes back as HTTP 504 DEADLINE_EXCEEDED).
+function isTimeoutError(err: unknown): boolean {
+  let current: unknown = err
+  for (let depth = 0; current && depth < 5; depth++) {
+    const { name, code, status, message } = current as {
+      name?: string
+      code?: string
+      status?: unknown
+      message?: string
+    }
+    if (
+      name === 'AbortError' ||
+      name === 'HeadersTimeoutError' ||
+      name === 'TimeoutError' ||
+      code === 'UND_ERR_HEADERS_TIMEOUT' ||
+      status === 504 ||
+      /timed?\s?out|timeout|DEADLINE_EXCEEDED|deadline expired/i.test(message ?? '')
+    ) {
+      return true
+    }
+    current = (current as { cause?: unknown }).cause
+  }
+  return false
 }
 
 function isAiEnabled(): boolean {
@@ -40,6 +71,16 @@ async function callModel(
     if (status === 429 || /RESOURCE_EXHAUSTED|quota|rate.?limit/i.test(message)) {
       throw new AppError('RATE_LIMITED', 'The AI service is busy or out of quota. Please try again shortly.', err)
     }
+    // A timed-out/aborted call is transient — tell the user to retry instead of
+    // presenting it as a server fault.
+    if (isTimeoutError(err)) {
+      throw new AppError('SERVICE_UNAVAILABLE', 'The AI request timed out. Please try again.', err)
+    }
+    // Provider-side overload (HTTP 503 UNAVAILABLE, "high demand") is equally
+    // transient — surface it as retryable, not as our fault.
+    if (status === 503 || /\bUNAVAILABLE\b|overloaded|high demand/i.test(message)) {
+      throw new AppError('SERVICE_UNAVAILABLE', 'The AI model is currently overloaded. Please try again in a moment.', err)
+    }
     throw new AppError('INTERNAL_ERROR', 'AI service request failed', err)
   }
 }
@@ -53,17 +94,25 @@ async function generateText(prompt: string): Promise<string> {
 
 // Input param fixed to `unknown` so T binds to the schema's OUTPUT type (with
 // defaults applied), not its input type — callers get a fully-formed value.
+// The model occasionally emits truncated/malformed JSON or misses the schema —
+// one transparent retry absorbs most of those; provider errors (quota, network,
+// timeout) from callModel are NOT retried here (the SDK retries internally).
 async function generateStructured<T>(prompt: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>): Promise<T> {
-  const res = await callModel(prompt, { responseMimeType: 'application/json' })
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(res.text ?? '')
-  } catch {
-    throw new AppError('VALIDATION_ERROR', 'AI returned malformed JSON')
+  let lastError = new AppError('VALIDATION_ERROR', 'AI returned malformed JSON')
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await callModel(prompt, { responseMimeType: 'application/json' })
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(res.text ?? '')
+    } catch {
+      lastError = new AppError('VALIDATION_ERROR', 'AI returned malformed JSON')
+      continue
+    }
+    const result = schema.safeParse(parsed)
+    if (result.success) return result.data
+    lastError = new AppError('VALIDATION_ERROR', 'AI output did not match the expected shape')
   }
-  const result = schema.safeParse(parsed)
-  if (!result.success) throw new AppError('VALIDATION_ERROR', 'AI output did not match the expected shape')
-  return result.data
+  throw lastError
 }
 
 export const geminiService = { isAiEnabled, generateText, generateStructured }
