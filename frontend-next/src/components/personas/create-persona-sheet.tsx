@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { PersonaModeCard } from './persona-mode-card'
 import { PdfFileInput } from './pdf-file-input'
 import { PersonaContentEditor } from './persona-content-editor'
+import { SheetErrorMessage, SheetValidationErrors } from './persona-sheet-alerts'
 import { useCreatePersona, useParseResume } from '@/hooks/use-personas'
 import { emptyProfileContent, validateProfileContent } from '@/lib/profile'
 import type { ProfileContent } from '@/types/profile'
@@ -186,27 +187,6 @@ function PersonaNameField({ value, onChange }: { value: string; onChange: (next:
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-    </div>
-  )
-}
-
-function SheetErrorMessage({ message }: { message: string }) {
-  return (
-    <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-      {message}
-    </p>
-  )
-}
-
-function SheetValidationErrors({ errors }: { errors: string[] }) {
-  return (
-    <div role="alert" className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-      <p className="font-medium">Please fix the following:</p>
-      <ul className="mt-1 list-inside list-disc">
-        {errors.map((e) => (
-          <li key={e}>{e}</li>
-        ))}
-      </ul>
     </div>
   )
 }

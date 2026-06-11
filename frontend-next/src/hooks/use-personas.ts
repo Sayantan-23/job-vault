@@ -51,7 +51,7 @@ export function useDeletePersona() {
 // review. Multipart (FormData) because of the optional PDF upload.
 export function useParseResume() {
   return useMutation({
-    mutationFn: ({ text, file }: { text?: string; file?: File }) => {
+    mutationFn: ({ text, file }: { text?: string | undefined; file?: File | undefined }) => {
       const fd = new FormData()
       if (file) fd.append('file', file)
       if (text) fd.append('text', text)

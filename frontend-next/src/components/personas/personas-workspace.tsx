@@ -3,26 +3,31 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { Persona, AiStatus } from '@/types/persona'
+import type { ProfileContent } from '@/types/profile'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/app/page-header'
 import { usePersonas } from '@/hooks/use-personas'
 import { useAiStatus } from '@/hooks/use-ai-status'
+import { useProfile } from '@/hooks/use-profile'
 import { PersonaList } from './persona-list'
-import { CreatePersonaWizard } from './create-persona-wizard'
+import { CreatePersonaSheet } from './create-persona-sheet'
 import { EditPersonaSheet } from './edit-persona-sheet'
 
 interface Props {
   initialPersonas: Persona[]
   initialStatus: AiStatus
+  initialProfile: ProfileContent
 }
 
-export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
+export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfile }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<Persona | null>(null)
   const { data: personas = initialPersonas } = usePersonas(initialPersonas)
   const { data: status = initialStatus } = useAiStatus(initialStatus)
+  const { data: profile = initialProfile } = useProfile(initialProfile)
   const atCap = personas.length >= status.maxPersonas
-  const canCreate = status.enabled && !atCap
+  // Manual creation never needs AI — only the résumé-import mode does.
+  const canCreate = !atCap
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -44,7 +49,7 @@ export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
         <div className="space-y-4">
           {!status.enabled ? (
             <p role="status" className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-              AI features are not configured. Set <span className="font-mono">GEMINI_API_KEY</span> to create personas.
+              AI features are not configured. Set <span className="font-mono">GEMINI_API_KEY</span> to import résumés.
             </p>
           ) : atCap ? (
             <p role="status" className="text-xs text-muted-foreground">
@@ -55,9 +60,15 @@ export function PersonasWorkspace({ initialPersonas, initialStatus }: Props) {
         </div>
       </div>
 
-      <CreatePersonaWizard open={createOpen} onOpenChange={setCreateOpen} />
+      <CreatePersonaSheet
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        profile={profile}
+        aiEnabled={status.enabled}
+      />
       <EditPersonaSheet
         persona={editing}
+        profile={profile}
         open={editing !== null}
         onOpenChange={(o) => {
           if (!o) setEditing(null)

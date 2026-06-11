@@ -77,7 +77,7 @@ function PersonaItemPickerRow({
   onToggle,
 }: {
   title: string
-  subtitle?: string
+  subtitle?: string | undefined
   checked: boolean
   onToggle: () => void
 }) {
