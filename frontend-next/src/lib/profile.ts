@@ -1,5 +1,6 @@
 // frontend-next/src/lib/profile.ts
 import type {
+  MonthYear,
   ProfileContent,
   ProfileExperience,
   ProfileProject,
@@ -55,6 +56,25 @@ export const newEducation = (): ProfileEducation => ({
   current: false,
   bullets: [],
 })
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+const formatMonthYear = (d: MonthYear | null): string => {
+  if (!d) return ''
+  const month = d.month ? MONTH_LABELS[d.month - 1] : undefined
+  return month ? `${month} ${d.year}` : String(d.year)
+}
+
+// "Jan 2022 – Present", "2019 – 2021", "Mar 2022" (no end), "" (no dates).
+export function formatMonthYearRange(
+  startDate: MonthYear | null,
+  endDate: MonthYear | null,
+  current: boolean,
+): string {
+  const start = formatMonthYear(startDate)
+  const end = current ? 'Present' : formatMonthYear(endDate)
+  return [start, end].filter(Boolean).join(' – ')
+}
 
 // Mirrors the backend's min(1) requirements plus form-level date requiredness
 // (experience: start + end-unless-current; education: start + end-unless-current).
