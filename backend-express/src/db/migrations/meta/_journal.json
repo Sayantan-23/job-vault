@@ -57,6 +57,13 @@
       "when": 1780751473298,
       "tag": "0007_many_the_enforcers",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781159913163,
+      "tag": "0008_salty_vampiro",
+      "breakpoints": true
     }
   ]
 }
