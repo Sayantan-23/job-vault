@@ -17,11 +17,9 @@ import type { ProfileProject } from '@/types/profile'
 interface Props {
   value: ProfileProject[]
   onChange: (next: ProfileProject[]) => void
-  /** Hide the trailing add button when a host (e.g. the persona editor) provides its own. */
-  showAddButton?: boolean
 }
 
-export function ProfileProjectsEditor({ value, onChange, showAddButton = true }: Props) {
+export function ProfileProjectsEditor({ value, onChange }: Props) {
   const setAt = (i: number, partial: Partial<ProfileProject>) =>
     onChange(value.map((p, idx) => (idx === i ? { ...p, ...partial } : p)))
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
@@ -109,12 +107,10 @@ export function ProfileProjectsEditor({ value, onChange, showAddButton = true }:
           </div>
         </div>
       ))}
-      {showAddButton && (
-        <Button type="button" variant="softPrimary" size="sm" onClick={add}>
-          <Plus className="size-4" aria-hidden="true" />
-          Add project
-        </Button>
-      )}
+      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+        <Plus className="size-4" aria-hidden="true" />
+        Add project
+      </Button>
     </div>
   )
 }

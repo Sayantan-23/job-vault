@@ -17,10 +17,11 @@ import { emptyProfileContent, validateProfileContent } from '@/lib/profile'
 import type { ProfileContent } from '@/types/profile'
 
 // Persona creation in two modes, both ending at the same review-and-save
-// editor: "Build from profile" seeds basics + summary from the master profile
-// (sections are then picked/tailored), "Import a résumé" sends pasted text
-// and/or a PDF to the AI parse endpoint and pre-fills the editor from the
-// structured result (the extracted text is kept as rawInput for audit).
+// editor: "Build from profile" seeds basics (carried silently — the editor
+// shows no Basics section) + summary from the master profile (sections are
+// then picked/tailored), "Import a résumé" sends pasted text and/or a PDF to
+// the AI parse endpoint and pre-fills the editor from the structured result
+// (the extracted text is kept as rawInput for audit).
 type Step = 'mode' | 'import' | 'edit'
 
 interface Props {
@@ -90,12 +91,19 @@ export function CreatePersonaSheet({ open, onOpenChange, profile, aiEnabled }: P
 
   const save = () => {
     if (!draft || !name.trim()) return
+    // The editor no longer shows Basics (contact identity lives on the master
+    // profile and is merged at generation time), so a blank parsed name would
+    // fail validation on a field the user cannot see — substitute the
+    // profile's name before validating/posting.
+    const data = draft.basics.name.trim()
+      ? draft
+      : { ...draft, basics: { ...draft.basics, name: profile.basics.name } }
     // Education is pick-only here; imported/legacy entries may legitimately lack dates.
-    const found = validateProfileContent(draft, { requireEducationDates: false })
+    const found = validateProfileContent(data, { requireEducationDates: false })
     setErrors(found)
     if (found.length > 0) return
     create.mutate(
-      { name: name.trim(), data: draft, rawInput: rawText ?? null },
+      { name: name.trim(), data, rawInput: rawText ?? null },
       { onSuccess: () => handleOpenChange(false) },
     )
   }

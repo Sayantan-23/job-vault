@@ -55,13 +55,17 @@ function Harness({ profile, initial }: { profile: ProfileContent; initial?: Prof
 }
 
 describe('PersonaContentEditor', () => {
-  it('renders all six section headings and a picker per pickable section', () => {
+  it('renders the five section headings (no Basics) and a picker per pickable section', () => {
     render(
       <PersonaContentEditor value={emptyProfileContent()} onChange={vi.fn()} profile={buildProfile()} />,
     )
-    for (const h of ['Basics', 'Summary', 'Experience', 'Projects', 'Skills', 'Education']) {
+    for (const h of ['Summary', 'Experience', 'Projects', 'Skills', 'Education']) {
       expect(screen.getByRole('heading', { name: h })).toBeInTheDocument()
     }
+    // Contact identity lives on the master profile and is merged in at
+    // generation time — personas don't expose or edit Basics.
+    expect(screen.queryByRole('heading', { name: 'Basics' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Full name')).not.toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Profile experience picker' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Profile projects picker' })).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Profile skills picker' })).toBeInTheDocument()
@@ -108,44 +112,44 @@ describe('PersonaContentEditor', () => {
     expect((onChange.mock.calls[0]?.[0] as ProfileContent).experience).toEqual([])
   })
 
-  it('Add custom appends an empty entry in experience, projects, and skills', async () => {
+  it('the per-section add buttons append an empty entry in experience, projects, and skills', async () => {
     const onChange = vi.fn()
     render(
       <PersonaContentEditor value={emptyProfileContent()} onChange={onChange} profile={buildProfile()} />,
     )
 
-    await userEvent.click(screen.getByRole('button', { name: /add custom experience/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^add experience$/i }))
     let next = onChange.mock.calls.at(-1)?.[0] as ProfileContent
     expect(next.experience).toHaveLength(1)
     expect(next.experience[0]?.company).toBe('')
     expect(next.experience[0]?.id).toBeTruthy()
 
-    await userEvent.click(screen.getByRole('button', { name: /add custom project/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^add project$/i }))
     next = onChange.mock.calls.at(-1)?.[0] as ProfileContent
     expect(next.projects).toHaveLength(1)
     expect(next.projects[0]?.name).toBe('')
     expect(next.projects[0]?.id).toBeTruthy()
 
-    await userEvent.click(screen.getByRole('button', { name: /add custom skill group/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^add category$/i }))
     next = onChange.mock.calls.at(-1)?.[0] as ProfileContent
     expect(next.skills).toHaveLength(1)
     expect(next.skills[0]?.id).toBeTruthy()
   })
 
-  it("'Add custom' is the single add affordance — the embedded editors' own add buttons are suppressed", () => {
+  it("each section editor's own add button is the single add affordance — 'Add custom' is gone", () => {
     render(
       <PersonaContentEditor value={emptyProfileContent()} onChange={vi.fn()} profile={buildProfile()} />,
     )
-    expect(screen.queryByRole('button', { name: /^add experience$/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^add project$/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^add category$/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^add experience$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^add project$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^add category$/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /add custom/i })).not.toBeInTheDocument()
   })
 
-  it('education is pick-only: no add-custom affordance, with a manage-in-profile link', () => {
+  it('education is pick-only: no add affordance, with a manage-in-profile link', () => {
     render(
       <PersonaContentEditor value={emptyProfileContent()} onChange={vi.fn()} profile={buildProfile()} />,
     )
-    expect(screen.queryByRole('button', { name: /add custom education/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /add education/i })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /manage education in your profile/i })).toHaveAttribute(
       'href',

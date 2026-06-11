@@ -1,17 +1,14 @@
 // frontend-next/src/components/personas/persona-content-editor.tsx
 'use client'
 
-import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ProfileSection } from '@/components/profile/profile-section'
-import { ProfileBasicsEditor } from '@/components/profile/profile-basics-editor'
 import { ProfileExperienceEditor } from '@/components/profile/profile-experience-editor'
 import { ProfileProjectsEditor } from '@/components/profile/profile-projects-editor'
 import { ProfileSkillsEditor } from '@/components/profile/profile-skills-editor'
 import { PersonaItemPicker } from './persona-item-picker'
 import { PersonaEducationSection } from './persona-education-section'
-import { formatMonthYearRange, newExperience, newProject, newSkillGroup } from '@/lib/profile'
+import { formatMonthYearRange } from '@/lib/profile'
 import type {
   ProfileContent,
   ProfileExperience,
@@ -22,7 +19,9 @@ import type {
 // Rich persona editor: the same ProfileSection layout as the master ProfileEditor,
 // with a profile-item picker above each pickable section. Picked items are deep
 // copies (ids kept, so picker checkboxes reflect draft membership) edited with the
-// 7a section editors; education is pick-only (managed on /app/profile).
+// 7a section editors; education is pick-only (managed on /app/profile). There is
+// no Basics section — contact identity lives on the master profile and is merged
+// in at generation time (the draft still carries basics silently).
 interface Props {
   value: ProfileContent
   onChange: (next: ProfileContent) => void
@@ -40,10 +39,6 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
 
   return (
     <div>
-      <ProfileSection layout="stacked" title="Basics" description="Name, contact details, and links for this persona.">
-        <ProfileBasicsEditor value={value.basics} onChange={(basics) => patch({ basics })} />
-      </ProfileSection>
-
       <ProfileSection layout="stacked" title="Summary" description="A short professional pitch shown at the top of a résumé.">
         <Textarea
           aria-label="Professional summary"
@@ -66,14 +61,9 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
             onRemove={(ids) => patch({ experience: removeByIds(value.experience, ids) })}
             emptyHint="No experience in your profile yet — add it on your Profile page."
           />
-          <AddCustomButton
-            section="experience"
-            onClick={() => patch({ experience: [...value.experience, newExperience()] })}
-          />
           <ProfileExperienceEditor
             value={value.experience}
             onChange={(experience) => patch({ experience })}
-            showAddButton={false}
           />
         </div>
       </ProfileSection>
@@ -90,14 +80,9 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
             onRemove={(ids) => patch({ projects: removeByIds(value.projects, ids) })}
             emptyHint="No projects in your profile yet — add them on your Profile page."
           />
-          <AddCustomButton
-            section="project"
-            onClick={() => patch({ projects: [...value.projects, newProject()] })}
-          />
           <ProfileProjectsEditor
             value={value.projects}
             onChange={(projects) => patch({ projects })}
-            showAddButton={false}
           />
         </div>
       </ProfileSection>
@@ -114,14 +99,9 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
             onRemove={(ids) => patch({ skills: removeByIds(value.skills, ids) })}
             emptyHint="No skills in your profile yet — add them on your Profile page."
           />
-          <AddCustomButton
-            section="skill group"
-            onClick={() => patch({ skills: [...value.skills, newSkillGroup()] })}
-          />
           <ProfileSkillsEditor
             value={value.skills}
             onChange={(skills) => patch({ skills })}
-            showAddButton={false}
           />
         </div>
       </ProfileSection>
@@ -134,20 +114,5 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
         />
       </ProfileSection>
     </div>
-  )
-}
-
-function AddCustomButton({ section, onClick }: { section: string; onClick: () => void }) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      aria-label={`Add custom ${section}`}
-      onClick={onClick}
-    >
-      <Plus className="size-4" aria-hidden="true" />
-      Add custom
-    </Button>
   )
 }
