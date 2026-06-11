@@ -84,6 +84,30 @@ describe('personasRepository (real DB)', () => {
     await getDb().delete(personas).where(eq(personas.id, inserted.id))
   })
 
+  it('normalizes the row returned by a name-only update on a legacy ResumeContent row', async () => {
+    const rows = await getDb()
+      .insert(personas)
+      .values({ userId, name: 'Legacy to rename', data: LEGACY as unknown as ProfileContent })
+      .returning()
+    const inserted = rows[0]
+    if (!inserted) throw new Error('insert returned no row')
+
+    const updated = await personasRepository.update(userId, inserted.id, { name: 'Renamed' })
+    if (!updated) throw new Error('update returned no row')
+    expect(updated.name).toBe('Renamed')
+    const data = updated.data
+    expect(data.experience[0]?.role).toBe('Engineer')
+    expect(data.experience[0]?.startDate?.year).toBe(2022)
+    expect(data.experience[0]?.current).toBe(true)
+    expect(data.experience[0]?.id).toBeTruthy()
+    expect(data.experience[0]).not.toHaveProperty('title')
+    expect(data.experience[0]).not.toHaveProperty('date')
+    expect(data.education[0]?.startDate?.year).toBe(2018)
+    expect(data.education[0]).not.toHaveProperty('period')
+
+    await getDb().delete(personas).where(eq(personas.id, inserted.id))
+  })
+
   it('passes a modern ProfileContent row through unchanged (ids preserved)', async () => {
     const modern: ProfileContent = {
       basics: { name: 'Modern', links: [{ id: 'link-1', label: 'Site', url: 'https://m.dev' }] },
