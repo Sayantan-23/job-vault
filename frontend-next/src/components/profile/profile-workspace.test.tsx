@@ -25,10 +25,15 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => vi.clearAllMocks())
 
 describe('ProfileWorkspace', () => {
+  it('renders the SSR-provided profile immediately (no fetch flash)', () => {
+    render(<ProfileWorkspace initialProfile={{ ...EMPTY, basics: { name: 'Grace Hopper', links: [] } }} />, { wrapper })
+    expect((screen.getByLabelText('Full name') as HTMLInputElement).value).toBe('Grace Hopper')
+    expect(api.get).not.toHaveBeenCalled() // seeded from SSR, no client read needed
+  })
+
   it('disables Save until a name is entered, then saves', async () => {
-    api.get.mockResolvedValue(EMPTY)
     api.put.mockImplementation(async (_p, body) => (body as { content: ProfileContent }).content)
-    render(<ProfileWorkspace />, { wrapper })
+    render(<ProfileWorkspace initialProfile={EMPTY} />, { wrapper })
 
     const save = await screen.findByRole('button', { name: /save/i })
     expect(save).toBeDisabled()
@@ -40,8 +45,12 @@ describe('ProfileWorkspace', () => {
   })
 
   it('surfaces validation errors and blocks save', async () => {
-    api.get.mockResolvedValue({ ...EMPTY, basics: { name: 'Ada', links: [] }, experience: [{ company: '', role: '', startDate: null, endDate: null, current: false, bullets: [] }] })
-    render(<ProfileWorkspace />, { wrapper })
+    const invalid: ProfileContent = {
+      ...EMPTY,
+      basics: { name: 'Ada', links: [] },
+      experience: [{ company: '', role: '', startDate: null, endDate: null, current: false, bullets: [] }],
+    }
+    render(<ProfileWorkspace initialProfile={invalid} />, { wrapper })
     await userEvent.click(await screen.findByRole('button', { name: /save/i }))
     expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(api.put).not.toHaveBeenCalled()

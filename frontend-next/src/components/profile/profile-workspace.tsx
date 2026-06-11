@@ -6,13 +6,16 @@ import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/app/page-header'
 import { ProfileEditor } from './profile-editor'
 import { useProfile, useUpdateProfile } from '@/hooks/use-profile'
-import { emptyProfileContent, validateProfileContent } from '@/lib/profile'
+import { validateProfileContent } from '@/lib/profile'
 import type { ProfileContent } from '@/types/profile'
 
-export function ProfileWorkspace() {
-  const { data } = useProfile()
+// `initialProfile` is fetched on the server (page.tsx) and used to hydrate both
+// the query cache and the draft, so the form renders populated on first paint
+// (no client-fetch flash).
+export function ProfileWorkspace({ initialProfile }: { initialProfile: ProfileContent }) {
+  const { data } = useProfile(initialProfile)
   const update = useUpdateProfile()
-  const [draft, setDraft] = useState<ProfileContent>(emptyProfileContent())
+  const [draft, setDraft] = useState<ProfileContent>(initialProfile)
   const [errors, setErrors] = useState<string[]>([])
 
   useEffect(() => {
