@@ -40,11 +40,11 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
 
   return (
     <div>
-      <ProfileSection title="Basics" description="Name, contact details, and links for this persona.">
+      <ProfileSection layout="stacked" title="Basics" description="Name, contact details, and links for this persona.">
         <ProfileBasicsEditor value={value.basics} onChange={(basics) => patch({ basics })} />
       </ProfileSection>
 
-      <ProfileSection title="Summary" description="A short professional pitch shown at the top of a résumé.">
+      <ProfileSection layout="stacked" title="Summary" description="A short professional pitch shown at the top of a résumé.">
         <Textarea
           aria-label="Professional summary"
           placeholder="A short summary of your focus, strengths, and what you're looking for."
@@ -54,7 +54,7 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
         />
       </ProfileSection>
 
-      <ProfileSection title="Experience" description="Pick roles from your profile, or add custom ones.">
+      <ProfileSection layout="stacked" title="Experience" description="Pick roles from your profile, or add custom ones.">
         <div className="space-y-4">
           <PersonaItemPicker<ProfileExperience>
             label="Profile experience picker"
@@ -78,7 +78,7 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
         </div>
       </ProfileSection>
 
-      <ProfileSection title="Projects" description="Pick projects from your profile, or add custom ones.">
+      <ProfileSection layout="stacked" title="Projects" description="Pick projects from your profile, or add custom ones.">
         <div className="space-y-4">
           <PersonaItemPicker<ProfileProject>
             label="Profile projects picker"
@@ -102,7 +102,7 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
         </div>
       </ProfileSection>
 
-      <ProfileSection title="Skills" description="Pick skill groups from your profile, or add custom ones.">
+      <ProfileSection layout="stacked" title="Skills" description="Pick skill groups from your profile, or add custom ones.">
         <div className="space-y-4">
           <PersonaItemPicker<ProfileSkillGroup>
             label="Profile skills picker"
@@ -126,7 +126,7 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
         </div>
       </ProfileSection>
 
-      <ProfileSection title="Education" description="Picked from your profile — manage entries there.">
+      <ProfileSection layout="stacked" title="Education" description="Picked from your profile — manage entries there.">
         <PersonaEducationSection
           value={value.education}
           onChange={(education) => patch({ education })}
