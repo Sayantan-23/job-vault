@@ -60,6 +60,18 @@ describe('PersonasWorkspace', () => {
     expect(screen.getByRole('button', { name: /new persona/i })).toBeEnabled()
   })
 
+  it('shows both the AI-off hint and the at-cap explanation when both apply', () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({ ...PERSONA, id: `p${i}`, name: `P${i}` }))
+    render(
+      <PersonasWorkspace initialPersonas={five} initialStatus={{ enabled: false, maxPersonas: 5 }} initialProfile={PROFILE} />,
+      { wrapper },
+    )
+    const statuses = screen.getAllByRole('status')
+    expect(statuses.some((s) => /import résumés/i.test(s.textContent ?? ''))).toBe(true)
+    expect(statuses.some((s) => /maximum of 5 personas/i.test(s.textContent ?? ''))).toBe(true)
+    expect(screen.getByRole('button', { name: /new persona/i })).toBeDisabled()
+  })
+
   it('opens the create sheet with both modes from New persona', async () => {
     render(
       <PersonasWorkspace initialPersonas={[]} initialStatus={{ enabled: true, maxPersonas: 5 }} initialProfile={PROFILE} />,

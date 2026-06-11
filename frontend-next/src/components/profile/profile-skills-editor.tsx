@@ -11,9 +11,11 @@ import type { ProfileSkillGroup } from '@/types/profile'
 interface Props {
   value: ProfileSkillGroup[]
   onChange: (next: ProfileSkillGroup[]) => void
+  /** Hide the trailing add button when a host (e.g. the persona editor) provides its own. */
+  showAddButton?: boolean
 }
 
-export function ProfileSkillsEditor({ value, onChange }: Props) {
+export function ProfileSkillsEditor({ value, onChange, showAddButton = true }: Props) {
   const setAt = (i: number, partial: Partial<ProfileSkillGroup>) =>
     onChange(value.map((g, idx) => (idx === i ? { ...g, ...partial } : g)))
   const remove = (i: number) => onChange(value.filter((_, idx) => idx !== i))
@@ -54,10 +56,12 @@ export function ProfileSkillsEditor({ value, onChange }: Props) {
           />
         </div>
       ))}
-      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
-        <Plus className="size-4" aria-hidden="true" />
-        Add category
-      </Button>
+      {showAddButton && (
+        <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+          <Plus className="size-4" aria-hidden="true" />
+          Add category
+        </Button>
+      )}
     </div>
   )
 }

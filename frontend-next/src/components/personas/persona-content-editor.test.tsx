@@ -132,6 +132,15 @@ describe('PersonaContentEditor', () => {
     expect(next.skills[0]?.id).toBeTruthy()
   })
 
+  it("'Add custom' is the single add affordance — the embedded editors' own add buttons are suppressed", () => {
+    render(
+      <PersonaContentEditor value={emptyProfileContent()} onChange={vi.fn()} profile={buildProfile()} />,
+    )
+    expect(screen.queryByRole('button', { name: /^add experience$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^add project$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^add category$/i })).not.toBeInTheDocument()
+  })
+
   it('education is pick-only: no add-custom affordance, with a manage-in-profile link', () => {
     render(
       <PersonaContentEditor value={emptyProfileContent()} onChange={vi.fn()} profile={buildProfile()} />,

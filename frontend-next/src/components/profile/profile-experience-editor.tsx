@@ -24,9 +24,11 @@ const EMPLOYMENT_TYPES: { value: EmploymentType; label: string }[] = [
 interface Props {
   value: ProfileExperience[]
   onChange: (next: ProfileExperience[]) => void
+  /** Hide the trailing add button when a host (e.g. the persona editor) provides its own. */
+  showAddButton?: boolean
 }
 
-export function ProfileExperienceEditor({ value, onChange }: Props) {
+export function ProfileExperienceEditor({ value, onChange, showAddButton = true }: Props) {
   const setAt = (i: number, partial: Partial<ProfileExperience>) =>
     onChange(value.map((e, idx) => (idx === i ? { ...e, ...partial } : e)))
   // employmentType is optional; clearing it omits the key (exactOptionalPropertyTypes
@@ -131,10 +133,12 @@ export function ProfileExperienceEditor({ value, onChange }: Props) {
           </div>
         </div>
       ))}
-      <Button type="button" variant="softPrimary" size="sm" onClick={add}>
-        <Plus className="size-4" aria-hidden="true" />
-        Add experience
-      </Button>
+      {showAddButton && (
+        <Button type="button" variant="softPrimary" size="sm" onClick={add}>
+          <Plus className="size-4" aria-hidden="true" />
+          Add experience
+        </Button>
+      )}
     </div>
   )
 }

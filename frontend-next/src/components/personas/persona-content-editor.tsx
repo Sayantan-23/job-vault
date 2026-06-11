@@ -73,6 +73,7 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
           <ProfileExperienceEditor
             value={value.experience}
             onChange={(experience) => patch({ experience })}
+            showAddButton={false}
           />
         </div>
       </ProfileSection>
@@ -93,7 +94,11 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
             section="project"
             onClick={() => patch({ projects: [...value.projects, newProject()] })}
           />
-          <ProfileProjectsEditor value={value.projects} onChange={(projects) => patch({ projects })} />
+          <ProfileProjectsEditor
+            value={value.projects}
+            onChange={(projects) => patch({ projects })}
+            showAddButton={false}
+          />
         </div>
       </ProfileSection>
 
@@ -113,7 +118,11 @@ export function PersonaContentEditor({ value, onChange, profile }: Props) {
             section="skill group"
             onClick={() => patch({ skills: [...value.skills, newSkillGroup()] })}
           />
-          <ProfileSkillsEditor value={value.skills} onChange={(skills) => patch({ skills })} />
+          <ProfileSkillsEditor
+            value={value.skills}
+            onChange={(skills) => patch({ skills })}
+            showAddButton={false}
+          />
         </div>
       </ProfileSection>
 

@@ -47,15 +47,18 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <div className="space-y-4">
-          {!status.enabled ? (
+          {/* Independent conditions: the cap disables the button, AI-off only gates the
+              import mode — both messages must be able to show at once. */}
+          {!status.enabled && (
             <p role="status" className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
               AI features are not configured. Set <span className="font-mono">GEMINI_API_KEY</span> to import résumés.
             </p>
-          ) : atCap ? (
+          )}
+          {atCap && (
             <p role="status" className="text-xs text-muted-foreground">
               You&rsquo;ve reached the maximum of {status.maxPersonas} personas. Delete one to add another.
             </p>
-          ) : null}
+          )}
           <PersonaList personas={personas} onEdit={setEditing} />
         </div>
       </div>
