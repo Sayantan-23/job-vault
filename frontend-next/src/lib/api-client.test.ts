@@ -161,6 +161,51 @@ describe('apiClient', () => {
     expect(page.meta).toEqual({ total: 1, page: 1, limit: 20, totalPages: 1 })
   })
 
+  it('postForm sends the FormData untouched, without a JSON Content-Type header', async () => {
+    const fetchMock = vi.fn(
+      async (_url: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
+        new Response(JSON.stringify({ data: { ok: true } }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    )
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    const fd = new FormData()
+    fd.append('text', 'résumé text')
+    const result = await apiClient.postForm<{ ok: boolean }>('/api/personas/parse-resume', fd)
+    expect(result).toEqual({ ok: true })
+    const init = fetchMock.mock.calls[0]?.[1]
+    if (!init) throw new Error('fetch was called without init')
+    // The browser must set the multipart boundary itself — a manual JSON
+    // Content-Type would corrupt the multipart body.
+    expect((init.headers as Record<string, string>)['Content-Type']).toBeUndefined()
+    expect(init.body).toBe(fd)
+    expect(init.credentials).toBe('include')
+  })
+
+  it('postForm refreshes and retries once on a 401, re-sending the same FormData', async () => {
+    let dataCalls = 0
+    let refreshCalls = 0
+    const bodies: unknown[] = []
+    sequencedFetch((url, init) => {
+      if (url.includes('/api/auth/refresh')) {
+        refreshCalls++
+        return { status: 200, body: { data: { id: 'u1' } } }
+      }
+      dataCalls++
+      bodies.push(init?.body)
+      return dataCalls === 1 ? { status: 401, body: UNAUTH } : { status: 200, body: { data: { ok: true } } }
+    })
+    const fd = new FormData()
+    fd.append('text', 'résumé text')
+    const result = await apiClient.postForm<{ ok: boolean }>('/api/personas/parse-resume', fd)
+    expect(result).toEqual({ ok: true })
+    expect(refreshCalls).toBe(1)
+    expect(dataCalls).toBe(2)
+    expect(bodies[0]).toBe(fd)
+    expect(bodies[1]).toBe(fd)
+  })
+
   it('getPage refreshes and retries once on a 401, still returning the unwrapped {data, meta} envelope', async () => {
     let dataCalls = 0
     let refreshCalls = 0

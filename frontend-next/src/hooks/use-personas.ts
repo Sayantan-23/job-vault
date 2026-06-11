@@ -3,12 +3,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import { PERSONAS_KEY } from '@/lib/query-keys'
-import type { Persona } from '@/types/persona'
-import type { ResumeContent } from '@/types/resume'
+import type { Persona, ParsedResume } from '@/types/persona'
+import type { ProfileContent } from '@/types/profile'
 
 interface CreatePersonaBody {
   name: string
-  inputs: { pastedResume?: string; freeText?: string; fields?: Partial<ResumeContent> }
+  data: ProfileContent
+  rawInput?: string | null
 }
 
 export function usePersonas(initialData?: Persona[]) {
@@ -33,7 +34,7 @@ export function useCreatePersona() {
 export function useUpdatePersona(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (patch: { name?: string; data?: ResumeContent }) => apiClient.patch<Persona>(`/api/personas/${id}`, patch),
+    mutationFn: (patch: { name?: string; data?: ProfileContent }) => apiClient.patch<Persona>(`/api/personas/${id}`, patch),
     onSuccess: () => void qc.invalidateQueries({ queryKey: PERSONAS_KEY }),
   })
 }
@@ -43,5 +44,18 @@ export function useDeletePersona() {
   return useMutation({
     mutationFn: (id: string) => apiClient.delete<void>(`/api/personas/${id}`),
     onSuccess: () => void qc.invalidateQueries({ queryKey: PERSONAS_KEY }),
+  })
+}
+
+// The only AI persona path: text and/or PDF → structured ProfileContent for
+// review. Multipart (FormData) because of the optional PDF upload.
+export function useParseResume() {
+  return useMutation({
+    mutationFn: ({ text, file }: { text?: string; file?: File }) => {
+      const fd = new FormData()
+      if (file) fd.append('file', file)
+      if (text) fd.append('text', text)
+      return apiClient.postForm<ParsedResume>('/api/personas/parse-resume', fd)
+    },
   })
 }

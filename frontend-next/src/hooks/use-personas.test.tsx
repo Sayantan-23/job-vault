@@ -4,13 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
 vi.mock('@/lib/api-client', () => ({
-  apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
+  apiClient: { get: vi.fn(), post: vi.fn(), postForm: vi.fn(), patch: vi.fn(), delete: vi.fn() },
   ApiError: class ApiError extends Error {},
 }))
 
 import { apiClient } from '@/lib/api-client'
-import { usePersonas, useCreatePersona, useUpdatePersona, useDeletePersona } from './use-personas'
+import { usePersonas, useCreatePersona, useUpdatePersona, useDeletePersona, useParseResume } from './use-personas'
 import { PERSONAS_KEY } from '@/lib/query-keys'
+import { emptyProfileContent } from '@/lib/profile'
 
 const api = vi.mocked(apiClient)
 function wrapper({ children }: { children: ReactNode }) {
@@ -36,14 +37,42 @@ describe('usePersonas', () => {
 })
 
 describe('useCreatePersona', () => {
-  it('posts and invalidates the list', async () => {
+  it('posts { name, data, rawInput } and invalidates the list', async () => {
     api.post.mockResolvedValue({ id: 'p1' })
     const { Wrapper, invalidate } = spiedClient()
     const { result } = renderHook(() => useCreatePersona(), { wrapper: Wrapper })
-    result.current.mutate({ name: 'Backend', inputs: { pastedResume: 'R' } })
+    const data = emptyProfileContent()
+    result.current.mutate({ name: 'Backend', data, rawInput: 'pasted résumé' })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(api.post).toHaveBeenCalledWith('/api/personas', { name: 'Backend', inputs: { pastedResume: 'R' } })
+    expect(api.post).toHaveBeenCalledWith('/api/personas', { name: 'Backend', data, rawInput: 'pasted résumé' })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: PERSONAS_KEY })
+  })
+})
+
+describe('useParseResume', () => {
+  it('posts a FormData with the file and text fields', async () => {
+    api.postForm.mockResolvedValue({ content: emptyProfileContent(), rawText: 'extracted' })
+    const { result } = renderHook(() => useParseResume(), { wrapper })
+    const file = new File(['%PDF-1.4'], 'resume.pdf', { type: 'application/pdf' })
+    result.current.mutate({ text: 'pasted text', file })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.postForm).toHaveBeenCalledOnce()
+    const [path, fd] = api.postForm.mock.calls[0] as [string, FormData]
+    expect(path).toBe('/api/personas/parse-resume')
+    expect(fd).toBeInstanceOf(FormData)
+    expect(fd.get('text')).toBe('pasted text')
+    expect(fd.get('file')).toBe(file)
+    expect(result.current.data?.rawText).toBe('extracted')
+  })
+
+  it('omits absent fields from the FormData', async () => {
+    api.postForm.mockResolvedValue({ content: emptyProfileContent(), rawText: 'text only' })
+    const { result } = renderHook(() => useParseResume(), { wrapper })
+    result.current.mutate({ text: 'just pasted text' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    const [, fd] = api.postForm.mock.calls[0] as [string, FormData]
+    expect(fd.get('text')).toBe('just pasted text')
+    expect(fd.has('file')).toBe(false)
   })
 })
 
