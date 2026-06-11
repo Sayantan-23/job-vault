@@ -120,27 +120,81 @@ async function generateText(prompt: string): Promise<string> {
   return text
 }
 
+// Strips the `null`s that smaller models (e.g. the flash-lite fallback) love
+// to emit for fields they have no value for: recursively deletes object
+// properties whose value is null and filters null/undefined entries out of
+// arrays. WHY this is loss-free for our AI schemas: every intentionally-
+// nullable field (MonthYear.month, startDate/endDate) is declared
+// `.nullable().default(null)`, so deleting a null key lets Zod's default
+// restore the exact same null — while `.optional()` fields (phone, tagline,
+// period, grade, employmentType, …) reject an explicit null outright, which
+// is precisely the failure mode this absorbs.
+export function sanitizeModelJson(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.filter((entry) => entry !== null && entry !== undefined).map(sanitizeModelJson)
+  }
+  if (value !== null && typeof value === 'object') {
+    const out: Record<string, unknown> = {}
+    for (const [key, prop] of Object.entries(value)) {
+      if (prop === null) continue
+      out[key] = sanitizeModelJson(prop)
+    }
+    return out
+  }
+  return value
+}
+
+const MAX_FEEDBACK_ISSUES = 10
+
 // Input param fixed to `unknown` so T binds to the schema's OUTPUT type (with
 // defaults applied), not its input type — callers get a fully-formed value.
 // The model occasionally emits truncated/malformed JSON or misses the schema —
-// one transparent retry absorbs most of those; provider errors (quota, network,
-// timeout) from callModel are NOT retried here (the SDK retries internally).
+// the parsed JSON is null-sanitized (see sanitizeModelJson) before validation,
+// and one retry re-prompts WITH the failure fed back (parse error or the Zod
+// issues) so the model can actually correct itself; provider errors (quota,
+// network, timeout) from callModel are NOT retried here (the SDK retries
+// internally).
 async function generateStructured<T>(prompt: string, schema: z.ZodType<T, z.ZodTypeDef, unknown>): Promise<T> {
-  let lastError = new AppError('VALIDATION_ERROR', 'AI returned malformed JSON')
+  let currentPrompt = prompt
+  let failure: { error: AppError; issues: string[]; rawPreview: string } = {
+    error: new AppError('VALIDATION_ERROR', 'AI returned malformed JSON'),
+    issues: [],
+    rawPreview: '',
+  }
   for (let attempt = 0; attempt < 2; attempt++) {
-    const res = await callModel(prompt, { responseMimeType: 'application/json' })
+    const res = await callModel(currentPrompt, { responseMimeType: 'application/json' })
+    const raw = res.text ?? ''
     let parsed: unknown
     try {
-      parsed = JSON.parse(res.text ?? '')
-    } catch {
-      lastError = new AppError('VALIDATION_ERROR', 'AI returned malformed JSON')
+      parsed = JSON.parse(raw)
+    } catch (err) {
+      failure = {
+        error: new AppError('VALIDATION_ERROR', 'AI returned malformed JSON', err),
+        issues: [err instanceof Error ? err.message : 'invalid JSON'],
+        rawPreview: raw.slice(0, 500),
+      }
+      currentPrompt = `${prompt}\n\nYour previous response was not valid JSON. Return ONLY the corrected JSON object, no commentary.`
       continue
     }
-    const result = schema.safeParse(parsed)
+    const result = schema.safeParse(sanitizeModelJson(parsed))
     if (result.success) return result.data
-    lastError = new AppError('VALIDATION_ERROR', 'AI output did not match the expected shape')
+    const issues = result.error.issues
+      .slice(0, MAX_FEEDBACK_ISSUES)
+      .map((issue) => `${issue.path.join('.')}: ${issue.message}`)
+    failure = {
+      error: new AppError('VALIDATION_ERROR', 'AI output did not match the expected shape', result.error),
+      issues,
+      rawPreview: raw.slice(0, 500),
+    }
+    currentPrompt = `${prompt}\n\nYour previous response failed validation with these problems:\n${issues.join('\n')}\nReturn ONLY the corrected JSON object.`
   }
-  throw lastError
+  // Both attempts failed — log the diagnostics (capped issues + a short raw
+  // preview, never the full output) so a misbehaving model is debuggable.
+  logger.warn(
+    { issues: failure.issues, rawPreview: failure.rawPreview },
+    'gemini structured output failed validation after retry',
+  )
+  throw failure.error
 }
 
 export const geminiService = { isAiEnabled, generateText, generateStructured }

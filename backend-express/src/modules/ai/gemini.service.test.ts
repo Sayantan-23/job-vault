@@ -73,6 +73,97 @@ describe('geminiService', () => {
     expect(generateContent).toHaveBeenCalledTimes(2)
   })
 
+  describe('structured output hardening', () => {
+    // One optional field (rejects null) + one nullable-with-default field
+    // (null is its default) — proves sanitizing nulls is loss-free for both.
+    const schema = z.object({
+      name: z.string(),
+      phone: z.string().optional(),
+      startDate: z.number().nullable().default(null),
+    })
+
+    it('sanitizes nulls on optional fields so validation succeeds on the first call', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k' })
+      generateContent.mockResolvedValue({ text: '{"name":"Ada","phone":null,"startDate":null}' })
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateStructured('p', schema)).resolves.toEqual({
+        name: 'Ada',
+        startDate: null,
+      })
+      expect(generateContent).toHaveBeenCalledTimes(1)
+    })
+
+    it('filters null entries out of arrays (including nested objects)', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k' })
+      generateContent.mockResolvedValue({
+        text: '{"items":["a",null,"b"],"entries":[null,{"label":"x","note":null}]}',
+      })
+      const { geminiService } = await import('./gemini.service.js')
+      const arraySchema = z.object({
+        items: z.array(z.string()),
+        entries: z.array(z.object({ label: z.string(), note: z.string().optional() })),
+      })
+      await expect(geminiService.generateStructured('p', arraySchema)).resolves.toEqual({
+        items: ['a', 'b'],
+        entries: [{ label: 'x' }],
+      })
+      expect(generateContent).toHaveBeenCalledTimes(1)
+    })
+
+    it('feeds the validation issues back into the retry prompt, then succeeds', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k' })
+      generateContent
+        .mockResolvedValueOnce({ text: '{"name":"Ada","phone":42}' })
+        .mockResolvedValueOnce({ text: '{"name":"Ada","phone":"42"}' })
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateStructured('the original prompt', schema)).resolves.toEqual({
+        name: 'Ada',
+        phone: '42',
+        startDate: null,
+      })
+      expect(generateContent).toHaveBeenCalledTimes(2)
+      const retryPrompt = (generateContent.mock.calls[1]?.[0] as { contents: string }).contents
+      expect(retryPrompt).toContain('the original prompt')
+      expect(retryPrompt).toContain('failed validation')
+      expect(retryPrompt).toContain('phone')
+    })
+
+    it('tells the model its previous response was not valid JSON on the retry', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k' })
+      generateContent
+        .mockResolvedValueOnce({ text: 'not json at all' })
+        .mockResolvedValueOnce({ text: '{"name":"Ada"}' })
+      const { geminiService } = await import('./gemini.service.js')
+      await expect(geminiService.generateStructured('the original prompt', schema)).resolves.toEqual({
+        name: 'Ada',
+        startDate: null,
+      })
+      const retryPrompt = (generateContent.mock.calls[1]?.[0] as { contents: string }).contents
+      expect(retryPrompt).toContain('the original prompt')
+      expect(retryPrompt).toContain('not valid JSON')
+    })
+
+    it('throws with diagnostics (cause + warn log) when both attempts fail validation', async () => {
+      loadEnv({ GEMINI_API_KEY: 'k' })
+      generateContent.mockResolvedValue({ text: '{"phone":123}' })
+      const { geminiService } = await import('./gemini.service.js')
+      const err = await geminiService.generateStructured('p', schema).catch((e: unknown) => e)
+      expect(err).toMatchObject({
+        code: 'VALIDATION_ERROR',
+        message: 'AI output did not match the expected shape',
+      })
+      expect((err as { cause?: unknown }).cause).toBeInstanceOf(z.ZodError)
+      expect(generateContent).toHaveBeenCalledTimes(2)
+      expect(loggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          issues: expect.arrayContaining([expect.stringContaining('phone')]),
+          rawPreview: '{"phone":123}',
+        }),
+        'gemini structured output failed validation after retry',
+      )
+    })
+  })
+
   it('maps timed-out provider calls (undici headers timeout / abort) to SERVICE_UNAVAILABLE', async () => {
     loadEnv({ GEMINI_API_KEY: 'k' })
     const headersTimeout = Object.assign(new Error('Headers Timeout Error'), {
