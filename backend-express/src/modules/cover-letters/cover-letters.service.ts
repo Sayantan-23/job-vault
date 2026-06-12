@@ -6,16 +6,32 @@ import { personasRepository } from '@/modules/personas/personas.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
 import { profileService } from '@/modules/profile/profile.service.js'
 import { coverLettersRepository } from './cover-letters.repository.js'
-import type { CoverLetterRow } from '@/db/schema/cover-letters.js'
+import type { AdhocJob, CoverLetterRow } from '@/db/schema/cover-letters.js'
 import type { GenerateCoverLetterInput, UpdateCoverLetterInput } from './cover-letters.schema.js'
 
 async function generate(userId: string, input: GenerateCoverLetterInput): Promise<CoverLetterRow> {
   if (!geminiService.isAiEnabled()) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
 
-  const job = await jobsRepository.findById(userId, input.jobId)
-  if (!job) throw new AppError('NOT_FOUND', 'Job not found')
   const persona = await personasRepository.findById(userId, input.personaId)
   if (!persona) throw new AppError('NOT_FOUND', 'Persona not found')
+
+  let jobContext: { title: string; company: string; snapshot: string | null }
+  let jobId: string | null = null
+  let adhocJob: AdhocJob | null = null
+  if (input.jobId) {
+    const job = await jobsRepository.findById(userId, input.jobId)
+    if (!job) throw new AppError('NOT_FOUND', 'Job not found')
+    jobContext = { title: job.title, company: job.company, snapshot: job.snapshotMarkdown }
+    jobId = input.jobId
+  } else {
+    // The schema XOR guarantees `job` is present whenever `jobId` is absent.
+    const j = input.job!
+    // A blank pasted description is normalized away: omitted from the stored
+    // adhocJob and the prompt gets snapshot null (decision 6).
+    const description = j.description?.trim() || undefined
+    adhocJob = { title: j.title, company: j.company, ...(description ? { description } : {}) }
+    jobContext = { title: j.title, company: j.company, snapshot: description ?? null }
+  }
 
   // Spend the shared hourly budget only after ownership is confirmed.
   await assertWithinRateLimit(userId)
@@ -24,17 +40,15 @@ async function generate(userId: string, input: GenerateCoverLetterInput): Promis
   // the persona's own (which remain the fallback when no profile is saved).
   const savedBasics = await profileService.getSavedBasics(userId)
   const bodyMarkdown = await geminiService.generateText(
-    buildCoverLetterPrompt(
-      { ...persona.data, basics: savedBasics ?? persona.data.basics },
-      { title: job.title, company: job.company, snapshot: job.snapshotMarkdown },
-      input.instructions,
-    ),
+    buildCoverLetterPrompt({ ...persona.data, basics: savedBasics ?? persona.data.basics }, jobContext, input.instructions),
   )
   return coverLettersRepository.create({
     userId,
-    jobId: input.jobId,
+    jobId,
+    adhocJob,
     personaId: input.personaId,
-    title: `${job.company} — cover letter`,
+    // cover_letters.title is varchar(200) — clamp so a long company can't overflow it.
+    title: `${jobContext.company} — cover letter`.slice(0, 200),
     instructions: input.instructions ?? null,
     bodyMarkdown,
   })

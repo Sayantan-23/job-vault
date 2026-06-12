@@ -46,6 +46,7 @@ describe('coverLettersService.generate', () => {
     await expect(coverLettersService.generate('u1', { jobId: 'j1', personaId: 'p1' })).rejects.toMatchObject({ code: 'SERVICE_UNAVAILABLE' })
   })
   it('NOT_FOUND when job not owned (and does NOT spend rate limit)', async () => {
+    personas.findById.mockResolvedValue(persona)
     jobs.findById.mockResolvedValue(null)
     await expect(coverLettersService.generate('u1', { jobId: 'jX', personaId: 'p1' })).rejects.toMatchObject({ code: 'NOT_FOUND' })
     expect(rl).not.toHaveBeenCalled()
@@ -84,6 +85,75 @@ describe('coverLettersService.generate', () => {
     repo.create.mockResolvedValue(row)
     await coverLettersService.generate('u1', { jobId: 'j1', personaId: 'p1' })
     expect(prompt).toHaveBeenCalledWith(P, { title: 'SWE', company: 'Acme', snapshot: 'Go' }, undefined)
+  })
+})
+
+describe('coverLettersService.generate — adhoc (pasted JD)', () => {
+  const adhocInput = { personaId: 'p1', job: { title: 'Staff Eng', company: 'Acme', description: 'JD text' } }
+
+  it('persists jobId null + adhocJob without touching jobsRepository; prompt snapshot is the description', async () => {
+    personas.findById.mockResolvedValue(persona)
+    ai.generateText.mockResolvedValue('Dear hiring manager,')
+    repo.create.mockResolvedValue({ ...row, jobId: null, adhocJob: adhocInput.job })
+    const out = await coverLettersService.generate('u1', adhocInput)
+    expect(jobs.findById).not.toHaveBeenCalled()
+    expect(prompt).toHaveBeenCalledWith(P, { title: 'Staff Eng', company: 'Acme', snapshot: 'JD text' }, undefined)
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'u1',
+        jobId: null,
+        adhocJob: { title: 'Staff Eng', company: 'Acme', description: 'JD text' },
+        personaId: 'p1',
+        title: 'Acme — cover letter',
+      }),
+    )
+    expect(out.jobId).toBeNull()
+  })
+
+  it('normalizes a blank description away: no key on the stored adhocJob, prompt snapshot null', async () => {
+    personas.findById.mockResolvedValue(persona)
+    ai.generateText.mockResolvedValue('Dear…')
+    repo.create.mockResolvedValue({ ...row, jobId: null, adhocJob: { title: 'Staff Eng', company: 'Acme' } })
+    await coverLettersService.generate('u1', { personaId: 'p1', job: { title: 'Staff Eng', company: 'Acme', description: '   ' } })
+    expect(prompt).toHaveBeenCalledWith(P, { title: 'Staff Eng', company: 'Acme', snapshot: null }, undefined)
+    const created = repo.create.mock.calls[0]![0]
+    expect(created.adhocJob).toEqual({ title: 'Staff Eng', company: 'Acme' })
+    expect(created.adhocJob).not.toHaveProperty('description')
+  })
+
+  it('NOT_FOUND when persona not owned (and does NOT spend rate limit)', async () => {
+    personas.findById.mockResolvedValue(null)
+    await expect(coverLettersService.generate('u1', adhocInput)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(rl).not.toHaveBeenCalled()
+    expect(ai.generateText).not.toHaveBeenCalled()
+  })
+
+  it('spends the rate limit before Gemini and merges saved master basics over the persona', async () => {
+    const masterBasics: ProfileBasics = { name: 'Master Name', email: 'master@example.com', links: [] }
+    const order: string[] = []
+    personas.findById.mockResolvedValue(persona)
+    profile.getSavedBasics.mockResolvedValue(masterBasics)
+    rl.mockImplementation(async () => {
+      order.push('rate-limit')
+    })
+    ai.generateText.mockImplementation(async () => {
+      order.push('gemini')
+      return 'Dear…'
+    })
+    repo.create.mockResolvedValue({ ...row, jobId: null, adhocJob: adhocInput.job })
+    await coverLettersService.generate('u1', adhocInput)
+    expect(order).toEqual(['rate-limit', 'gemini'])
+    expect(prompt).toHaveBeenCalledWith({ ...P, basics: masterBasics }, { title: 'Staff Eng', company: 'Acme', snapshot: 'JD text' }, undefined)
+  })
+
+  it('clamps the generated title to 200 chars for a very long company', async () => {
+    const longCompany = 'C'.repeat(300)
+    personas.findById.mockResolvedValue(persona)
+    ai.generateText.mockResolvedValue('Dear…')
+    repo.create.mockResolvedValue({ ...row, jobId: null, adhocJob: { title: 'T', company: longCompany } })
+    await coverLettersService.generate('u1', { personaId: 'p1', job: { title: 'T', company: longCompany } })
+    const created = repo.create.mock.calls[0]![0]
+    expect(created.title).toHaveLength(200)
   })
 })
 
