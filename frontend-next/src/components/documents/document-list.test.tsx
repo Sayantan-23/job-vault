@@ -86,6 +86,25 @@ describe('DocumentList', () => {
     expect(screen.getByRole('button', { name: /^Acme — cover letter/ })).not.toHaveAttribute('aria-current')
   })
 
+  it('branches the selected background instead of stacking hover on top of it', () => {
+    renderList({ selectedId: 'd1' })
+    const selected = screen.getByRole('button', { name: /^Acme — cover letter/ })
+    const unselected = screen.getByRole('button', { name: /^General résumé/ })
+    expect(selected.className).toMatch(/(?:^|\s)bg-accent(?:\s|$)/)
+    expect(selected.className).not.toContain('hover:bg-accent/50')
+    expect(unselected.className).toContain('hover:bg-accent/50')
+    expect(unselected.className).not.toMatch(/(?:^|\s)bg-accent(?:\s|$)/)
+  })
+
+  it('gives keyboard-focused rows a visible ring and fixes the date column width', () => {
+    renderList()
+    const row = screen.getByRole('button', { name: /^Acme — cover letter/ })
+    expect(row.className).toContain('focus-visible:ring-2')
+    expect(row.className).toContain('focus-visible:ring-ring')
+    // 4rem date track (not auto) so the text-column boundaries align across rows.
+    expect(row.className).toContain('grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_4rem_auto]')
+  })
+
   it('renders the empty text without any rows when rows is empty', () => {
     renderList({ rows: [] })
     expect(screen.getByText('No documents yet.')).toBeInTheDocument()

@@ -6,17 +6,19 @@ import type { GeneratedResume } from '@/types/resume'
 import { ResumeWorkspace } from './resume-workspace'
 
 interface Props {
-  personas: Persona[]
-  initialResumes: GeneratedResume[]
+  // SSR-fetched; undefined means the server fetch failed and the workspace
+  // hooks should fetch on mount instead (see /app/resumes/page.tsx).
+  initialPersonas?: Persona[] | undefined
+  initialResumes?: GeneratedResume[] | undefined
 }
 
-export function ResumesPageClient({ personas, initialResumes }: Props) {
+export function ResumesPageClient({ initialPersonas, initialResumes }: Props) {
   const sp = useSearchParams()
   const initial = sp.get('persona') ?? ''
   const job = sp.get('job') ?? ''
   return (
     <ResumeWorkspace
-      personas={personas}
+      initialPersonas={initialPersonas}
       initialPersonaId={initial}
       initialResumes={initialResumes}
       {...(job ? { initialJobId: job } : {})}

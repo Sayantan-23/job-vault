@@ -1,13 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import Link from 'next/link'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { CoverLetter } from '@/types/cover-letter'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/app/page-header'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { useJobOptions, type JobOption } from '@/hooks/use-job-options'
+import { usePersonas } from '@/hooks/use-personas'
+import { useRevealBelowLg } from '@/hooks/use-reveal-below-lg'
 import {
   useAllCoverLetters,
   useGenerateCoverLetter,
@@ -17,11 +18,16 @@ import {
 } from '@/hooks/use-cover-letters'
 import { CoverLetterEditor } from '@/components/resume/cover-letter-editor'
 import { DocumentList, type DocumentRow } from '@/components/documents/document-list'
+import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
+import { NoPersonasHint } from '@/components/documents/no-personas-hint'
 import { GenerateCoverLetterBar } from './generate-cover-letter-bar'
 
 interface Props {
-  personas: Persona[]
-  initialLetters: CoverLetter[]
+  // SSR-fetched; undefined means the server fetch failed and the client
+  // hooks should fetch on mount instead (a [] fallback would be installed
+  // as fresh initialData and pin a false-empty state).
+  initialPersonas?: Persona[] | undefined
+  initialLetters?: CoverLetter[] | undefined
   aiStatus: AiStatus | undefined
 }
 
@@ -33,21 +39,10 @@ function AiOffHint() {
   )
 }
 
-function NoPersonasHint() {
+function SelectLetterHint({ generatorEnabled }: { generatorEnabled: boolean }) {
   return (
-    <p role="status" className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-      <Link href="/app/personas" className="underline underline-offset-2 hover:text-foreground">
-        Create a persona
-      </Link>{' '}
-      first, then come back to generate a cover letter.
-    </p>
-  )
-}
-
-function SelectLetterHint() {
-  return (
-    <p className="self-start rounded-lg border border-dashed border-border px-3 py-8 text-center text-sm text-muted-foreground">
-      Select a letter or generate a new one.
+    <p className="rounded-lg border border-dashed border-border px-3 py-8 text-center text-sm text-muted-foreground">
+      {generatorEnabled ? 'Select a letter or generate a new one.' : 'Select a letter to view and edit it.'}
     </p>
   )
 }
@@ -60,17 +55,20 @@ function letterContext(letter: CoverLetter, jobsById: Map<string, JobOption>): s
   return job ? `${job.company} · ${job.title}` : '—'
 }
 
-export function CoverLettersWorkspace({ personas, initialLetters, aiStatus }: Props) {
+export function CoverLettersWorkspace({ initialPersonas, initialLetters, aiStatus }: Props) {
   const [active, setActive] = useState<CoverLetter | null>(null)
   const [body, setBody] = useState('')
   const { data: status } = useAiStatus(aiStatus)
-  const { data: letters = initialLetters } = useAllCoverLetters(initialLetters)
+  const { data: personas = [] } = usePersonas(initialPersonas)
+  const { data: letters = [] } = useAllCoverLetters(initialLetters)
   const { data: jobs = [] } = useJobOptions()
   const generate = useGenerateCoverLetter()
   const save = useUpdateCoverLetter(active?.id ?? '')
   const del = useDeleteCoverLetter()
+  const editorPane = useRevealBelowLg<HTMLDivElement>()
 
   const aiEnabled = status?.enabled ?? false
+  const generatorEnabled = aiEnabled && personas.length > 0
   const jobsById = useMemo(() => new Map(jobs.map((j) => [j.id, j])), [jobs])
   const personaNames = useMemo(() => new Map(personas.map((p) => [p.id, p.name])), [personas])
 
@@ -85,6 +83,7 @@ export function CoverLettersWorkspace({ personas, initialLetters, aiStatus }: Pr
   const open = (letter: CoverLetter) => {
     setActive(letter)
     setBody(letter.bodyMarkdown)
+    editorPane.reveal()
   }
 
   const onGenerate = (generateBody: GenerateBody) => {
@@ -97,11 +96,16 @@ export function CoverLettersWorkspace({ personas, initialLetters, aiStatus }: Pr
   }
 
   const onDelete = (id: string) => {
-    del.mutate(id)
-    if (id === active?.id) {
-      setActive(null)
-      setBody('')
-    }
+    del.mutate(id, {
+      // Only clear the editor once the delete actually lands — a failure
+      // keeps the letter open (and surfaces the alert below the generator).
+      onSuccess: () => {
+        if (id === active?.id) {
+          setActive(null)
+          setBody('')
+        }
+      },
+    })
   }
 
   return (
@@ -113,7 +117,7 @@ export function CoverLettersWorkspace({ personas, initialLetters, aiStatus }: Pr
           {!aiEnabled ? (
             <AiOffHint />
           ) : personas.length === 0 ? (
-            <NoPersonasHint />
+            <NoPersonasHint noun="cover letter" />
           ) : (
             <GenerateCoverLetterBar
               personas={personas}
@@ -122,11 +126,8 @@ export function CoverLettersWorkspace({ personas, initialLetters, aiStatus }: Pr
               onGenerate={onGenerate}
             />
           )}
-          {generate.error ? (
-            <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {generate.error.message}
-            </p>
-          ) : null}
+          <MutationErrorAlert error={generate.error} />
+          <MutationErrorAlert error={del.error} />
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
             <DocumentList
@@ -134,23 +135,30 @@ export function CoverLettersWorkspace({ personas, initialLetters, aiStatus }: Pr
               selectedId={active?.id ?? null}
               onSelect={onSelect}
               onDelete={onDelete}
-              emptyText="No cover letters yet — generate your first one above."
+              emptyText={
+                generatorEnabled ? 'No cover letters yet — generate your first one above.' : 'No cover letters yet.'
+              }
               aria-label="Cover letters"
             />
-            {active ? (
-              <div className="space-y-3 self-start lg:sticky lg:top-0">
-                <CoverLetterEditor
-                  value={body}
-                  onChange={setBody}
-                  fileName={`${(active.title ?? 'cover-letter').replace(/\s+/g, '-')}.pdf`}
-                />
-                <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
-                  {save.isPending ? 'Saving…' : 'Save edits'}
-                </Button>
-              </div>
-            ) : (
-              <SelectLetterHint />
-            )}
+            {/* Always-mounted wrapper so reveal() has a scroll target even
+                before the editor mounts on select/generate. */}
+            <div ref={editorPane.ref} className="space-y-3 self-start lg:sticky lg:top-0">
+              {active ? (
+                <>
+                  <CoverLetterEditor
+                    value={body}
+                    onChange={setBody}
+                    fileName={`${(active.title ?? 'cover-letter').replace(/\s+/g, '-')}.pdf`}
+                  />
+                  <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
+                    {save.isPending ? 'Saving…' : 'Save edits'}
+                  </Button>
+                  <MutationErrorAlert error={save.error} />
+                </>
+              ) : (
+                <SelectLetterHint generatorEnabled={generatorEnabled} />
+              )}
+            </div>
           </div>
         </div>
       </div>

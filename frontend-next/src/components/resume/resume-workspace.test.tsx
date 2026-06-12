@@ -34,10 +34,11 @@ function wrapper({ children }: { children: ReactNode }) {
 }
 
 // useResumes refetches on mount, so the get mock must serve both endpoints.
-function mockGets({ resumes = [] as GeneratedResume[], jobs = [] as typeof JOBS } = {}) {
+function mockGets({ resumes = [] as GeneratedResume[], jobs = [] as typeof JOBS, personas = [] as Persona[] } = {}) {
   api.get.mockImplementation((path: string) => {
     if (path.startsWith('/api/jobs')) return Promise.resolve(jobs)
     if (path.startsWith('/api/resumes')) return Promise.resolve(resumes)
+    if (path.startsWith('/api/personas')) return Promise.resolve(personas)
     return Promise.resolve([])
   })
 }
@@ -45,10 +46,19 @@ function mockGets({ resumes = [] as GeneratedResume[], jobs = [] as typeof JOBS 
 beforeEach(() => vi.clearAllMocks())
 
 describe('ResumeWorkspace', () => {
+  it('is headed Résumés with a static description', () => {
+    mockGets()
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[]} />, { wrapper })
+    expect(screen.getByRole('heading', { name: 'Résumés' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Generate from a persona — optionally tailored to a job — or reopen a past one.'),
+    ).toBeInTheDocument()
+  })
+
   it('generates a résumé for the selected persona and shows the preview', async () => {
     mockGets()
     api.post.mockResolvedValue({ id: 'res1', personaId: 'p1', jobId: null, title: 'Backend', instructions: null, content: C, userId: 'u1', createdAt: '', updatedAt: '' })
-    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialResumes={[]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[]} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: /generate résumé|generate resume/i }))
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/resumes', { personaId: 'p1' }))
     expect(await screen.findByTestId('preview')).toBeInTheDocument()
@@ -57,7 +67,7 @@ describe('ResumeWorkspace', () => {
   it('includes jobId in the generate call when given', async () => {
     mockGets()
     api.post.mockResolvedValue({ id: 'res1', personaId: 'p1', jobId: 'job1', title: 'SWE — Acme', instructions: null, content: C, userId: 'u1', createdAt: '', updatedAt: '' })
-    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialJobId="job1" initialResumes={[]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialJobId="job1" initialResumes={[]} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: /generate résumé|generate resume/i }))
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/resumes', { personaId: 'p1', jobId: 'job1' }))
   })
@@ -65,7 +75,7 @@ describe('ResumeWorkspace', () => {
   it('lets you pick a job to tailor to from the form', async () => {
     mockGets({ jobs: JOBS })
     api.post.mockResolvedValue({ id: 'res1', personaId: 'p1', jobId: 'job1', title: 'SWE — Acme', instructions: null, content: C, userId: 'u1', createdAt: '', updatedAt: '' })
-    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialResumes={[]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[]} />, { wrapper })
     await screen.findByRole('option', { name: /SWE — Acme/i })
     await userEvent.selectOptions(screen.getByLabelText(/tailor to a job/i), 'job1')
     await userEvent.click(screen.getByRole('button', { name: /generate résumé|generate resume/i }))
@@ -74,7 +84,7 @@ describe('ResumeWorkspace', () => {
 
   it('lists past résumés with job context and persona names, none auto-selected', async () => {
     mockGets({ resumes: [GENERAL, TAILORED], jobs: JOBS })
-    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialResumes={[GENERAL, TAILORED]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[GENERAL, TAILORED]} />, { wrapper })
     const list = screen.getByRole('list', { name: 'Résumés' })
     expect(within(list).getByText('SWE — Acme')).toBeInTheDocument()
     expect(within(list).getByText('General draft')).toBeInTheDocument()
@@ -89,7 +99,7 @@ describe('ResumeWorkspace', () => {
 
   it('opens a past résumé in the editor when its row is selected', async () => {
     mockGets({ resumes: [TAILORED], jobs: JOBS })
-    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
     await userEvent.click(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme'))
     expect(screen.getByLabelText('Summary')).toHaveValue('Tailored to Acme')
     expect(screen.getByTestId('preview')).toBeInTheDocument()
@@ -98,19 +108,62 @@ describe('ResumeWorkspace', () => {
   it('clears the editor when the open résumé is deleted', async () => {
     mockGets({ resumes: [TAILORED] })
     api.delete.mockResolvedValue(undefined)
-    render(<ResumeWorkspace personas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
     await userEvent.click(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme'))
     expect(screen.getByTestId('preview')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Delete SWE — Acme' }))
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/resumes/r1'))
-    expect(screen.queryByTestId('preview')).not.toBeInTheDocument()
+    // The clear happens in the mutation's onSuccess, so wait for it to settle.
+    await waitFor(() => expect(screen.queryByTestId('preview')).not.toBeInTheDocument())
+  })
+
+  it('surfaces a delete failure and keeps the résumé open', async () => {
+    mockGets({ resumes: [TAILORED] })
+    api.delete.mockRejectedValue(new Error('Delete failed'))
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
+    await userEvent.click(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme'))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete SWE — Acme' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Delete failed')
+    expect(screen.getByTestId('preview')).toBeInTheDocument()
+  })
+
+  it('surfaces a save failure next to the editor', async () => {
+    mockGets({ resumes: [TAILORED] })
+    api.patch.mockRejectedValue(new Error('Save failed'))
+    render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
+    await userEvent.click(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save edits' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed')
+    expect(screen.getByTestId('preview')).toBeInTheDocument()
   })
 
   it('shows a create-persona hint when there are no personas, keeping the library', () => {
     mockGets({ resumes: [TAILORED] })
-    render(<ResumeWorkspace personas={[]} initialPersonaId="" initialResumes={[TAILORED]} />, { wrapper })
+    render(<ResumeWorkspace initialPersonas={[]} initialPersonaId="" initialResumes={[TAILORED]} />, { wrapper })
     expect(screen.getByRole('link', { name: /create a persona/i })).toHaveAttribute('href', '/app/personas')
     expect(screen.queryByRole('button', { name: /generate résumé|generate resume/i })).not.toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme')).toBeInTheDocument()
+  })
+
+  it('uses generate-first empty copy with personas and neutral copy without', () => {
+    mockGets()
+    const { unmount } = render(
+      <ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[]} />,
+      { wrapper },
+    )
+    expect(screen.getByText('No résumés yet — generate your first one above.')).toBeInTheDocument()
+    unmount()
+    render(<ResumeWorkspace initialPersonas={[]} initialPersonaId="" initialResumes={[]} />, { wrapper })
+    expect(screen.getByText('No résumés yet.')).toBeInTheDocument()
+  })
+
+  it('heals client-side when the SSR fetches failed (undefined initial data)', async () => {
+    mockGets({ resumes: [TAILORED], jobs: JOBS, personas: [PERSONA] })
+    render(<ResumeWorkspace initialPersonaId="" />, { wrapper })
+    // No initialData installed → the hooks fetch on mount and fill in
+    // both the library and the persona-gated generator.
+    expect(await screen.findByRole('list', { name: 'Résumés' })).toBeInTheDocument()
+    expect(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /generate résumé|generate resume/i })).toBeInTheDocument()
   })
 })

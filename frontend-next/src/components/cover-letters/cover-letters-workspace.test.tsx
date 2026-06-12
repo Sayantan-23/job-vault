@@ -18,6 +18,7 @@ const api = vi.mocked(apiClient)
 const PROFILE: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
 const PERSONAS: Persona[] = [{ id: 'p1', createdAt: '', updatedAt: '', userId: 'u1', name: 'Backend', data: PROFILE, rawInput: null }]
 const AI_ON = { enabled: true, maxPersonas: 5 }
+const AI_OFF = { enabled: false, maxPersonas: 5 }
 const TRACKED: CoverLetter = {
   id: 'cl1', createdAt: '2026-06-10T12:00:00.000Z', updatedAt: '', userId: 'u1',
   jobId: 'j1', adhocJob: null, personaId: 'p1', title: 'Acme — cover letter', instructions: null, bodyMarkdown: 'Dear Acme',
@@ -34,10 +35,11 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={c}>{children}</QueryClientProvider>
 }
 
-function mockGets(letters: CoverLetter[]) {
+function mockGets(letters: CoverLetter[], personas: Persona[] = PERSONAS) {
   api.get.mockImplementation((path: string) => {
     if (path.startsWith('/api/jobs')) return Promise.resolve(JOBS)
     if (path.startsWith('/api/cover-letters')) return Promise.resolve(letters)
+    if (path.startsWith('/api/personas')) return Promise.resolve(personas)
     return Promise.resolve([])
   })
 }
@@ -47,7 +49,7 @@ beforeEach(() => vi.clearAllMocks())
 describe('CoverLettersWorkspace', () => {
   it('lists tracked and adhoc letters with job context + persona names, and no auto-selected letter', async () => {
     mockGets(LETTERS)
-    render(<CoverLettersWorkspace personas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     expect(screen.getByText('Initech — cover letter')).toBeInTheDocument()
     expect(screen.getByText('Acme — cover letter')).toBeInTheDocument()
     // Adhoc context comes from the stored adhocJob; tracked is joined via the jobs query.
@@ -63,7 +65,7 @@ describe('CoverLettersWorkspace', () => {
 
   it('opens the editor with the letter body when a row is selected', async () => {
     mockGets(LETTERS)
-    render(<CoverLettersWorkspace personas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     await userEvent.click(screen.getByText('Acme — cover letter'))
     expect(screen.getByLabelText('Cover letter body')).toHaveValue('Dear Acme')
     expect(screen.queryByText('Select a letter or generate a new one.')).not.toBeInTheDocument()
@@ -73,7 +75,7 @@ describe('CoverLettersWorkspace', () => {
     const NEW: CoverLetter = { ...TRACKED, id: 'cl3', bodyMarkdown: 'Fresh draft' }
     mockGets([NEW, ...LETTERS])
     api.post.mockResolvedValue(NEW)
-    render(<CoverLettersWorkspace personas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     await screen.findByRole('option', { name: 'SWE — Acme' })
     await userEvent.selectOptions(screen.getByLabelText('Job'), 'j1')
     await userEvent.click(screen.getByRole('button', { name: 'Generate cover letter' }))
@@ -84,18 +86,39 @@ describe('CoverLettersWorkspace', () => {
   it('clears the editor pane when the active letter is deleted', async () => {
     mockGets(LETTERS)
     api.delete.mockResolvedValue(undefined)
-    render(<CoverLettersWorkspace personas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     await userEvent.click(screen.getByText('Acme — cover letter'))
     expect(screen.getByLabelText('Cover letter body')).toHaveValue('Dear Acme')
     await userEvent.click(screen.getByRole('button', { name: 'Delete Acme — cover letter' }))
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/cover-letters/cl1'))
-    expect(screen.queryByLabelText('Cover letter body')).not.toBeInTheDocument()
+    // The clear happens in the mutation's onSuccess, so wait for it to settle.
+    await waitFor(() => expect(screen.queryByLabelText('Cover letter body')).not.toBeInTheDocument())
     expect(screen.getByText('Select a letter or generate a new one.')).toBeInTheDocument()
+  })
+
+  it('surfaces a delete failure and keeps the active letter open', async () => {
+    mockGets(LETTERS)
+    api.delete.mockRejectedValue(new Error('Delete failed'))
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    await userEvent.click(screen.getByText('Acme — cover letter'))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete Acme — cover letter' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Delete failed')
+    expect(screen.getByLabelText('Cover letter body')).toHaveValue('Dear Acme')
+  })
+
+  it('surfaces a save failure next to the editor', async () => {
+    mockGets(LETTERS)
+    api.patch.mockRejectedValue(new Error('Save failed'))
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    await userEvent.click(screen.getByText('Acme — cover letter'))
+    await userEvent.click(screen.getByRole('button', { name: 'Save edits' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Save failed')
+    expect(screen.getByLabelText('Cover letter body')).toHaveValue('Dear Acme')
   })
 
   it('shows the AI-off hint but still lists the library', () => {
     mockGets(LETTERS)
-    render(<CoverLettersWorkspace personas={PERSONAS} initialLetters={LETTERS} aiStatus={{ enabled: false, maxPersonas: 5 }} />, { wrapper })
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_OFF} />, { wrapper })
     expect(screen.getByText(/not configured/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Generate cover letter' })).not.toBeInTheDocument()
     expect(screen.getByText('Acme — cover letter')).toBeInTheDocument()
@@ -103,10 +126,33 @@ describe('CoverLettersWorkspace', () => {
   })
 
   it('shows a create-persona hint with a link when there are no personas, keeping the library', () => {
-    mockGets(LETTERS)
-    render(<CoverLettersWorkspace personas={[]} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    mockGets(LETTERS, [])
+    render(<CoverLettersWorkspace initialPersonas={[]} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     expect(screen.getByRole('link', { name: /create a persona/i })).toHaveAttribute('href', '/app/personas')
     expect(screen.queryByRole('button', { name: 'Generate cover letter' })).not.toBeInTheDocument()
     expect(screen.getByText('Acme — cover letter')).toBeInTheDocument()
+  })
+
+  it('uses generate-first empty/hint copy when the generator is available', () => {
+    mockGets([])
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={[]} aiStatus={AI_ON} />, { wrapper })
+    expect(screen.getByText('No cover letters yet — generate your first one above.')).toBeInTheDocument()
+    expect(screen.getByText('Select a letter or generate a new one.')).toBeInTheDocument()
+  })
+
+  it('uses neutral empty/hint copy when the generator is gated (AI off)', () => {
+    mockGets([])
+    render(<CoverLettersWorkspace initialPersonas={PERSONAS} initialLetters={[]} aiStatus={AI_OFF} />, { wrapper })
+    expect(screen.getByText('No cover letters yet.')).toBeInTheDocument()
+    expect(screen.getByText('Select a letter to view and edit it.')).toBeInTheDocument()
+  })
+
+  it('heals client-side when the SSR fetches failed (undefined initial data)', async () => {
+    mockGets(LETTERS)
+    render(<CoverLettersWorkspace aiStatus={AI_ON} />, { wrapper })
+    // No initialData installed → the hooks fetch on mount and fill in
+    // both the library and the persona-gated generator.
+    expect(await screen.findByText('Acme — cover letter')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Generate cover letter' })).toBeInTheDocument()
   })
 })

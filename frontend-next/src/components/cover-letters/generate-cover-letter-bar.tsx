@@ -26,6 +26,16 @@ interface Props {
   onGenerate: (body: GenerateBody) => void
 }
 
+// Shown instead of leaving the empty picker a dead end. We deliberately do
+// not auto-switch modes — the jobs load async and the swap would flicker.
+function NoTrackedJobsHint() {
+  return (
+    <p className="text-xs text-muted-foreground">
+      No tracked jobs yet — switch to &quot;Paste a description&quot;.
+    </p>
+  )
+}
+
 function TrackedJobFields({
   jobs,
   jobId,
@@ -46,6 +56,7 @@ function TrackedJobFields({
           </option>
         ))}
       </Select>
+      {jobs.length === 0 ? <NoTrackedJobsHint /> : null}
     </div>
   )
 }
@@ -73,6 +84,7 @@ function PasteJobFields({
           <Input
             id="gcl-title"
             placeholder="e.g. Staff Engineer"
+            maxLength={255}
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
           />
@@ -82,6 +94,7 @@ function PasteJobFields({
           <Input
             id="gcl-company"
             placeholder="e.g. Acme"
+            maxLength={255}
             value={company}
             onChange={(e) => onCompanyChange(e.target.value)}
           />
@@ -93,6 +106,7 @@ function PasteJobFields({
           id="gcl-description"
           rows={5}
           placeholder="Paste the job description (optional, but it makes the letter much better)"
+          maxLength={50_000}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
         />
@@ -166,6 +180,7 @@ export function GenerateCoverLetterBar({ personas, jobs, isPending, onGenerate }
           id="gcl-instructions"
           rows={2}
           placeholder="e.g. mention my open-source work; keep it under a page"
+          maxLength={2000}
           value={instructions}
           onChange={(e) => setInstructions(e.target.value)}
         />

@@ -117,4 +117,26 @@ describe('GenerateCoverLetterBar', () => {
     renderBar({ isPending: true })
     expect(screen.getByRole('button', { name: 'Generating…' })).toBeDisabled()
   })
+
+  it('caps the paste inputs and instructions at the backend Zod limits', async () => {
+    renderBar()
+    expect(screen.getByLabelText(/instructions/i)).toHaveAttribute('maxlength', '2000')
+    await userEvent.click(screen.getByRole('button', { name: /paste a description/i }))
+    expect(screen.getByLabelText('Job title')).toHaveAttribute('maxlength', '255')
+    expect(screen.getByLabelText('Company')).toHaveAttribute('maxlength', '255')
+    expect(screen.getByLabelText('Job description')).toHaveAttribute('maxlength', '50000')
+  })
+
+  it('shows a switch-to-paste hint in tracked mode when there are no tracked jobs', () => {
+    renderBar({ jobs: [] })
+    expect(screen.getByText(/No tracked jobs yet — switch to "Paste a description"\./)).toBeInTheDocument()
+    // The mode does not auto-switch — the picker (with its placeholder) stays.
+    expect(screen.getByLabelText('Job')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /tracked job/i })).toHaveAttribute('aria-pressed', 'true')
+  })
+
+  it('hides the no-jobs hint once tracked jobs exist', () => {
+    renderBar()
+    expect(screen.queryByText(/No tracked jobs yet/)).not.toBeInTheDocument()
+  })
 })

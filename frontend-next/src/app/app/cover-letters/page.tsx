@@ -6,18 +6,22 @@ import type { CoverLetter } from '@/types/cover-letter'
 
 export const metadata: Metadata = { title: 'Cover letters' }
 
+// Failed server fetches fall back to undefined (never []) — the client hooks
+// treat undefined as "no SSR data" and fetch on mount, where the api-client's
+// silent token refresh heals e.g. an expired access cookie. A [] fallback
+// would be installed as fresh initialData and pin a false-empty workspace.
 export default async function CoverLettersPage() {
-  let personas: Persona[] = []
+  let personas: Persona[] | undefined
   try {
     personas = await apiServer.get<Persona[]>('/api/personas')
   } catch {
-    personas = []
+    personas = undefined
   }
-  let letters: CoverLetter[] = []
+  let letters: CoverLetter[] | undefined
   try {
     letters = await apiServer.get<CoverLetter[]>('/api/cover-letters')
   } catch {
-    letters = []
+    letters = undefined
   }
   let aiStatus: AiStatus | undefined
   try {
@@ -26,5 +30,5 @@ export default async function CoverLettersPage() {
     aiStatus = undefined
   }
 
-  return <CoverLettersWorkspace personas={personas} initialLetters={letters} aiStatus={aiStatus} />
+  return <CoverLettersWorkspace initialPersonas={personas} initialLetters={letters} aiStatus={aiStatus} />
 }

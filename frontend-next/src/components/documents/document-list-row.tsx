@@ -15,8 +15,9 @@ export interface DocumentRow {
 }
 
 // Text columns get proportional shrinkable shares (minmax(0,…) so they can
-// truncate); the date + delete columns hug their content.
-const GRID = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_auto_auto] items-center gap-4'
+// truncate); the date column is fixed (4rem) so the text-column boundaries
+// align across rows; the delete column hugs its content.
+const GRID = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_4rem_auto] items-center gap-4'
 
 interface Props {
   row: DocumentRow
@@ -49,8 +50,9 @@ export function DocumentListRow({ row, selected, onSelect, onDelete }: Props) {
       onKeyDown={handleKeyDown}
       className={cn(
         GRID,
-        'cursor-pointer px-3 py-2.5 text-sm transition-colors hover:bg-accent/50',
-        selected && 'bg-accent',
+        'cursor-pointer px-3 py-2.5 text-sm transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+        selected ? 'bg-accent' : 'hover:bg-accent/50',
       )}
     >
       <span className="truncate font-medium">{row.title}</span>
