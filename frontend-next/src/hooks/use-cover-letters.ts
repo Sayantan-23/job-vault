@@ -3,11 +3,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import { COVER_LETTERS_KEY, coverLettersByJobKey } from '@/lib/query-keys'
-import type { CoverLetter } from '@/types/cover-letter'
+import type { CoverLetter, AdhocJob } from '@/types/cover-letter'
 
-interface GenerateBody {
-  jobId: string
+export interface GenerateBody {
   personaId: string
+  jobId?: string
+  job?: AdhocJob
   instructions?: string
 }
 
@@ -17,6 +18,17 @@ export function useCoverLetters(jobId: string) {
     queryFn: () => apiClient.get<CoverLetter[]>(`/api/cover-letters?jobId=${jobId}`),
     enabled: Boolean(jobId),
     refetchOnMount: 'always',
+  })
+}
+
+export function useAllCoverLetters(initialData?: CoverLetter[]) {
+  return useQuery({
+    queryKey: COVER_LETTERS_KEY,
+    queryFn: () => apiClient.get<CoverLetter[]>('/api/cover-letters'),
+    // SSR-hydrated; treat as fresh on mount so we don't clobber it with an
+    // immediate refetch. Mutations (generate/update/delete) still invalidate.
+    staleTime: 30_000,
+    ...(initialData ? { initialData } : {}),
   })
 }
 

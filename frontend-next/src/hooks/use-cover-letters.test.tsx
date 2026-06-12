@@ -5,8 +5,9 @@ import type { ReactNode } from 'react'
 
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() }, ApiError: class extends Error {} }))
 import { apiClient } from '@/lib/api-client'
-import { useCoverLetters, useGenerateCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter } from './use-cover-letters'
+import { useCoverLetters, useAllCoverLetters, useGenerateCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter } from './use-cover-letters'
 import { COVER_LETTERS_KEY } from '@/lib/query-keys'
+import type { CoverLetter } from '@/types/cover-letter'
 
 const api = vi.mocked(apiClient)
 function wrapper({ children }: { children: ReactNode }) {
@@ -27,6 +28,32 @@ describe('use-cover-letters', () => {
     const { result } = renderHook(() => useCoverLetters('j1'), { wrapper })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(api.get).toHaveBeenCalledWith('/api/cover-letters?jobId=j1')
+  })
+  it('lists the full library', async () => {
+    api.get.mockResolvedValue([{ id: 'cl1' }, { id: 'cl2' }])
+    const { result } = renderHook(() => useAllCoverLetters(), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.get).toHaveBeenCalledWith('/api/cover-letters')
+    expect(result.current.data).toHaveLength(2)
+  })
+  it('serves SSR initialData without an immediate refetch', async () => {
+    const letter: CoverLetter = {
+      id: 'cl1', createdAt: '2026-06-12T00:00:00Z', updatedAt: '2026-06-12T00:00:00Z',
+      userId: 'u1', jobId: null, adhocJob: { title: 'Staff Eng', company: 'Acme' },
+      personaId: 'p1', title: 'Acme — cover letter', instructions: null, bodyMarkdown: 'Dear team,',
+    }
+    const { result } = renderHook(() => useAllCoverLetters([letter]), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data).toEqual([letter])
+    expect(api.get).not.toHaveBeenCalled()
+  })
+  it('generate posts an adhoc job body verbatim', async () => {
+    api.post.mockResolvedValue({ id: 'cl2' })
+    const { result } = renderHook(() => useGenerateCoverLetter(), { wrapper })
+    const body = { personaId: 'p1', job: { title: 'Staff Eng', company: 'Acme', description: 'JD text' } }
+    result.current.mutate(body)
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.post).toHaveBeenCalledWith('/api/cover-letters', body)
   })
   it('generate posts and invalidates', async () => {
     api.post.mockResolvedValue({ id: 'cl1' })
