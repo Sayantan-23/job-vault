@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Users, Clock } from 'lucide-react'
+import { LayoutDashboard, Briefcase, Users, FileText, Mail, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Profile + Settings live in the account menu at the bottom of the sidebar.
@@ -10,6 +10,8 @@ const NAV = [
   { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/app/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/app/personas', label: 'Personas', icon: Users },
+  { href: '/app/resumes', label: 'Résumés', icon: FileText },
+  { href: '/app/cover-letters', label: 'Cover letters', icon: Mail },
   { href: '/app/timeline', label: 'Timeline', icon: Clock },
 ] as const
 
