@@ -23,7 +23,7 @@ const jobs = vi.mocked(jobsRepository)
 const ai = vi.mocked(geminiService)
 const UUID = '11111111-1111-1111-1111-111111111111'
 function row(over: Partial<CoverLetterRow> = {}): CoverLetterRow {
-  return { id: 'cl1', userId: 'u1', jobId: 'j1', personaId: 'p1', title: 'Acme', instructions: null, bodyMarkdown: 'Dear…', createdAt: new Date(), updatedAt: new Date(), ...over }
+  return { id: 'cl1', userId: 'u1', jobId: 'j1', adhocJob: null, personaId: 'p1', title: 'Acme', instructions: null, bodyMarkdown: 'Dear…', createdAt: new Date(), updatedAt: new Date(), ...over }
 }
 const persona = { id: 'p1', userId: 'u1', name: 'B', data: { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }, rawInput: null, createdAt: new Date(), updatedAt: new Date() }
 const job = { id: 'j1', userId: 'u1', title: 'SWE', company: 'Acme', location: null, salaryRange: null, sourceUrl: null, snapshotMarkdown: null, status: 'APPLIED' as const, kanbanOrder: 1, lastActivityAt: new Date(), ghostDays: 0, notes: null, createdAt: new Date(), updatedAt: new Date() }

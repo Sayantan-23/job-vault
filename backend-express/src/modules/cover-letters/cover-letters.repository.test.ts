@@ -40,4 +40,30 @@ describe('coverLettersRepository (real DB)', () => {
     expect(u?.bodyMarkdown).toBe('Updated')
     expect(await coverLettersRepository.remove(userId, cl.id)).toBe(true)
   })
+
+  it('stores adhoc letters (jobId null + adhocJob jsonb) and lists them alongside tracked ones', async () => {
+    const tracked = await coverLettersRepository.create({ userId, jobId, personaId: null, title: 'Tracked', instructions: null, bodyMarkdown: 'Tracked body' })
+    const adhoc = await coverLettersRepository.create({
+      userId,
+      jobId: null,
+      adhocJob: { title: 'Staff Eng', company: 'Acme', description: 'JD text' },
+      personaId: null,
+      title: 'Acme — cover letter',
+      instructions: null,
+      bodyMarkdown: 'Adhoc body',
+    })
+    const found = await coverLettersRepository.findById(userId, adhoc.id)
+    expect(found?.jobId).toBeNull()
+    expect(found?.adhocJob).toEqual({ title: 'Staff Eng', company: 'Acme', description: 'JD text' })
+    const all = await coverLettersRepository.listForUser(userId)
+    expect(all.map((l) => l.id).sort()).toEqual([tracked.id, adhoc.id].sort())
+    const trackedOnly = await coverLettersRepository.listForUser(userId, jobId)
+    expect(trackedOnly.map((l) => l.id)).toEqual([tracked.id])
+  })
+
+  it('rejects rows where both job_id and adhoc_job are null (XOR check)', async () => {
+    await expect(
+      getDb().insert(coverLetters).values({ userId, jobId: null, adhocJob: null, personaId: null, title: null, instructions: null, bodyMarkdown: 'x' }),
+    ).rejects.toThrow()
+  })
 })
