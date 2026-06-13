@@ -125,9 +125,9 @@ describe('coverLettersService.generate — adhoc (pasted JD)', () => {
     repo.create.mockResolvedValue({ ...row, jobId: null, adhocJob: { title: 'Staff Eng', company: 'Acme' } })
     await coverLettersService.generate('u1', { personaId: 'p1', job: { title: 'Staff Eng', company: 'Acme', description: '   ' } })
     expect(prompt).toHaveBeenCalledWith(P, { title: 'Staff Eng', company: 'Acme', snapshot: null }, undefined)
-    const created = repo.create.mock.calls[0]![0]
-    expect(created.adhocJob).toEqual({ title: 'Staff Eng', company: 'Acme' })
-    expect(created.adhocJob).not.toHaveProperty('description')
+    const created = repo.create.mock.calls[0]?.[0]
+    expect(created?.adhocJob).toEqual({ title: 'Staff Eng', company: 'Acme' })
+    expect(created?.adhocJob).not.toHaveProperty('description')
   })
 
   it('NOT_FOUND when persona not owned (and does NOT spend rate limit)', async () => {
@@ -161,8 +161,8 @@ describe('coverLettersService.generate — adhoc (pasted JD)', () => {
     ai.generateText.mockResolvedValue('Dear…')
     repo.create.mockResolvedValue({ ...row, jobId: null, adhocJob: { title: 'T', company: longCompany } })
     await coverLettersService.generate('u1', { personaId: 'p1', job: { title: 'T', company: longCompany } })
-    const created = repo.create.mock.calls[0]![0]
-    expect(created.title).toHaveLength(200)
+    const created = repo.create.mock.calls[0]?.[0]
+    expect(created?.title).toHaveLength(200)
   })
 })
 

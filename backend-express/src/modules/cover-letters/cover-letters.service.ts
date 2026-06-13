@@ -25,8 +25,10 @@ async function generate(userId: string, input: GenerateCoverLetterInput): Promis
     jobContext = { title: job.title, company: job.company, snapshot: job.snapshotMarkdown }
     jobId = input.jobId
   } else {
-    // The schema XOR guarantees `job` is present whenever `jobId` is absent.
-    const j = input.job!
+    // The schema XOR guarantees `job` is present whenever `jobId` is absent;
+    // the guard narrows the type without a non-null assertion.
+    const j = input.job
+    if (!j) throw new AppError('VALIDATION_ERROR', 'A job or jobId is required')
     // A blank pasted description is normalized away: omitted from the stored
     // adhocJob and the prompt gets snapshot null (decision 6).
     const description = j.description?.trim() || undefined
