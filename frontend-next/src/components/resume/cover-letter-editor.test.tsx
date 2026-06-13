@@ -9,6 +9,14 @@ vi.mock('./download-cover-letter-pdf-button', () => ({
   DownloadCoverLetterPdfButton: () => null,
 }))
 
+// The refine panel pulls in a react-query hook; stub it so this unit test stays
+// focused on the editor's own wiring (the real component is covered elsewhere).
+vi.mock('./cover-letter-refine', () => ({
+  CoverLetterRefine: (props: { coverLetterId: string }) => (
+    <div data-testid="refine" data-id={props.coverLetterId} />
+  ),
+}))
+
 import { CoverLetterEditor } from './cover-letter-editor'
 
 const writeText = vi.fn()
@@ -55,5 +63,15 @@ describe('CoverLetterEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: /^preview$/i }))
     expect(screen.getByRole('button', { name: /^preview$/i })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: /^edit$/i })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('renders the refine panel only when a coverLetterId is provided', () => {
+    const { rerender } = render(<CoverLetterEditor value="Dear" onChange={vi.fn()} fileName="cl.pdf" />)
+    expect(screen.queryByTestId('refine')).not.toBeInTheDocument()
+
+    rerender(<CoverLetterEditor value="Dear" onChange={vi.fn()} fileName="cl.pdf" coverLetterId="cl_1" />)
+    const refine = screen.getByTestId('refine')
+    expect(refine).toBeInTheDocument()
+    expect(refine).toHaveAttribute('data-id', 'cl_1')
   })
 })

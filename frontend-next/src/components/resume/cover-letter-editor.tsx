@@ -8,17 +8,21 @@ import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { coverLetterToPlainText } from '@/lib/cover-letter-markdown'
 import { CoverLetterPreview } from './cover-letter-preview'
+import { CoverLetterRefine } from './cover-letter-refine'
 import { DownloadCoverLetterPdfButton } from './download-cover-letter-pdf-button'
 
 interface Props {
   value: string
   onChange: (next: string) => void
   fileName: string
+  // When present, AI refine actions are surfaced above the toolbar; omitted
+  // (e.g. before a letter is persisted) the editor renders without them.
+  coverLetterId?: string
 }
 
 type Mode = 'edit' | 'preview'
 
-export function CoverLetterEditor({ value, onChange, fileName }: Props) {
+export function CoverLetterEditor({ value, onChange, fileName, coverLetterId }: Props) {
   const [mode, setMode] = useState<Mode>('edit')
   const [copied, setCopied] = useState(false)
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -34,6 +38,9 @@ export function CoverLetterEditor({ value, onChange, fileName }: Props) {
 
   return (
     <div className="space-y-3">
+      {coverLetterId ? (
+        <CoverLetterRefine coverLetterId={coverLetterId} currentBody={value} onApply={onChange} />
+      ) : null}
       <div className="flex flex-wrap items-center gap-2">
         <SegmentedControl
           value={mode}

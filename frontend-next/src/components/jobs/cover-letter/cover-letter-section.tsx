@@ -69,7 +69,7 @@ export function CoverLetterSection({ jobId }: { jobId: string }) {
 
           {active ? (
             <div className="space-y-2 border-t border-border pt-3">
-              <CoverLetterEditor value={body} onChange={setBody} fileName={`${(active.title ?? 'cover-letter').replace(/\s+/g, '-')}.pdf`} />
+              <CoverLetterEditor value={body} onChange={setBody} coverLetterId={active.id} fileName={`${(active.title ?? 'cover-letter').replace(/\s+/g, '-')}.pdf`} />
               <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
                 {save.isPending ? 'Saving…' : 'Save edits'}
               </Button>
