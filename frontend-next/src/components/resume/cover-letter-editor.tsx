@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
+import { useEffect, useRef, useState } from 'react'
+import { Check, Copy, Pencil, Eye } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { SegmentedControl } from '@/components/ui/segmented-control'
+import { CoverLetterPreview } from './cover-letter-preview'
 import { DownloadCoverLetterPdfButton } from './download-cover-letter-pdf-button'
 
 interface Props {
@@ -13,22 +15,43 @@ interface Props {
   fileName: string
 }
 
+type Mode = 'edit' | 'preview'
+
 export function CoverLetterEditor({ value, onChange, fileName }: Props) {
-  const [showPreview, setShowPreview] = useState(false)
-  const copy = () => void navigator.clipboard.writeText(value)
+  const [mode, setMode] = useState<Mode>('edit')
+  const [copied, setCopied] = useState(false)
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), [])
+
+  const copy = () => {
+    void navigator.clipboard.writeText(value)
+    setCopied(true)
+    clearTimeout(copiedTimer.current)
+    copiedTimer.current = setTimeout(() => setCopied(false), 2000)
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={copy}>Copy text</Button>
-        <DownloadCoverLetterPdfButton body={value} fileName={fileName} />
-        <Button type="button" variant="ghost" size="sm" onClick={() => setShowPreview((v) => !v)}>
-          {showPreview ? 'Edit' : 'Preview'}
+        <SegmentedControl
+          value={mode}
+          onValueChange={setMode}
+          aria-label="Cover letter view mode"
+          options={[
+            { value: 'edit', label: 'Edit', icon: Pencil },
+            { value: 'preview', label: 'Preview', icon: Eye },
+          ]}
+        />
+        <div className="hidden flex-1 sm:block" />
+        <Button type="button" variant="outline" size="sm" onClick={copy} aria-live="polite">
+          {copied ? <Check className="size-3.5" aria-hidden="true" /> : <Copy className="size-3.5" aria-hidden="true" />}
+          {copied ? 'Copied' : 'Copy text'}
         </Button>
+        <DownloadCoverLetterPdfButton body={value} fileName={fileName} />
       </div>
-      {showPreview ? (
-        <div className="prose prose-sm max-w-none rounded-lg border border-border p-3 text-sm">
-          <ReactMarkdown>{value}</ReactMarkdown>
-        </div>
+      {mode === 'preview' ? (
+        <CoverLetterPreview body={value} />
       ) : (
         <div className="space-y-1.5">
           <Label htmlFor="cl-body" className="sr-only">Cover letter body</Label>
