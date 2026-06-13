@@ -1,13 +1,14 @@
 import { AppError } from '@/shared/errors.js'
 import { geminiService } from '@/modules/ai/gemini.service.js'
 import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
-import { buildCoverLetterPrompt } from '@/modules/ai/ai.prompts.js'
+import { buildCoverLetterPrompt, buildRefineCoverLetterPrompt } from '@/modules/ai/ai.prompts.js'
+import { aiUsageRepository } from '@/modules/ai/ai-usage.repository.js'
 import { personasRepository } from '@/modules/personas/personas.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
 import { profileService } from '@/modules/profile/profile.service.js'
 import { coverLettersRepository } from './cover-letters.repository.js'
 import type { AdhocJob, CoverLetterRow } from '@/db/schema/cover-letters.js'
-import type { GenerateCoverLetterInput, UpdateCoverLetterInput } from './cover-letters.schema.js'
+import type { GenerateCoverLetterInput, RefineCoverLetterInput, UpdateCoverLetterInput } from './cover-letters.schema.js'
 
 async function generate(userId: string, input: GenerateCoverLetterInput): Promise<CoverLetterRow> {
   if (!geminiService.isAiEnabled()) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
@@ -79,4 +80,24 @@ async function remove(userId: string, id: string): Promise<{ id: string }> {
   return { id }
 }
 
-export const coverLettersService = { generate, list, get, update, remove }
+// AI-edits an existing cover letter and returns the revised body as a CANDIDATE
+// — it does NOT persist. The frontend stages the result (Replace / Try again /
+// Discard); the existing update() saves it on Replace.
+async function refine(userId: string, id: string, input: RefineCoverLetterInput): Promise<{ bodyMarkdown: string }> {
+  if (!geminiService.isAiEnabled()) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
+
+  const cl = await coverLettersRepository.findById(userId, id)
+  if (!cl) throw new AppError('NOT_FOUND', 'Cover letter not found')
+
+  // Spend the shared hourly budget only after ownership is confirmed.
+  await assertWithinRateLimit(userId)
+
+  const bodyMarkdown = await geminiService.generateText(
+    buildRefineCoverLetterPrompt(cl.bodyMarkdown, input.action, input.instructions),
+  )
+  // Record the usage only after a successful generation.
+  await aiUsageRepository.recordUsageEvent(userId, 'cover_letter_refine')
+  return { bodyMarkdown }
+}
+
+export const coverLettersService = { generate, list, get, update, remove, refine }
