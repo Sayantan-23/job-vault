@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseCoverLetterMarkdown, type Block } from './cover-letter-markdown'
+import { parseCoverLetterMarkdown, coverLetterToPlainText, type Block } from './cover-letter-markdown'
 
 describe('parseCoverLetterMarkdown', () => {
   it('returns no blocks for empty/whitespace input', () => {
@@ -123,5 +123,26 @@ describe('parseCoverLetterMarkdown', () => {
       },
       { lines: [[{ type: 'text', text: 'I am writing to express my strong interest.' }]] },
     ])
+  })
+})
+
+describe('coverLetterToPlainText', () => {
+  it('drops bold markers but keeps the words', () => {
+    expect(coverLetterToPlainText('Dear **Hiring** Team,')).toBe('Dear Hiring Team,')
+  })
+
+  it('expands links to "text (url)" so the URL survives a paste', () => {
+    expect(
+      coverLetterToPlainText('[LinkedIn](https://linkedin.com/in/janedoe) | [GitHub](https://github.com/janedoe)'),
+    ).toBe('LinkedIn (https://linkedin.com/in/janedoe) | GitHub (https://github.com/janedoe)')
+  })
+
+  it('preserves paragraph (blank line) and soft-break structure', () => {
+    const md = 'Jane Doe\nSan Francisco\n\nDear Team,\n\nThanks.'
+    expect(coverLetterToPlainText(md)).toBe('Jane Doe\nSan Francisco\n\nDear Team,\n\nThanks.')
+  })
+
+  it('returns an empty string for empty input', () => {
+    expect(coverLetterToPlainText('')).toBe('')
   })
 })

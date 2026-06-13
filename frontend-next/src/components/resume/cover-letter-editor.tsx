@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
+import { coverLetterToPlainText } from '@/lib/cover-letter-markdown'
 import { CoverLetterPreview } from './cover-letter-preview'
 import { DownloadCoverLetterPdfButton } from './download-cover-letter-pdf-button'
 
@@ -25,7 +26,7 @@ export function CoverLetterEditor({ value, onChange, fileName }: Props) {
   useEffect(() => () => clearTimeout(copiedTimer.current), [])
 
   const copy = () => {
-    void navigator.clipboard.writeText(value)
+    void navigator.clipboard.writeText(coverLetterToPlainText(value))
     setCopied(true)
     clearTimeout(copiedTimer.current)
     copiedTimer.current = setTimeout(() => setCopied(false), 2000)

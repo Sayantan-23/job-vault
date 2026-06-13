@@ -25,8 +25,8 @@ describe('CoverLetterEditor', () => {
     expect(onChange).toHaveBeenCalled()
   })
 
-  it('copies the body text and shows copied feedback', async () => {
-    render(<CoverLetterEditor value="Dear hiring manager" onChange={vi.fn()} fileName="cl.pdf" />)
+  it('copies clean plain text (no markdown syntax) and shows copied feedback', async () => {
+    render(<CoverLetterEditor value="Dear **hiring** manager" onChange={vi.fn()} fileName="cl.pdf" />)
     await userEvent.click(screen.getByRole('button', { name: /copy text/i }))
     await waitFor(() => expect(writeText).toHaveBeenCalledWith('Dear hiring manager'))
     expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument()

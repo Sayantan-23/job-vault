@@ -44,3 +44,19 @@ export function parseCoverLetterMarkdown(markdown: string): Block[] {
     .filter((chunk) => chunk.trim().length > 0)
     .map((chunk) => ({ lines: chunk.split('\n').map(tokenizeLine) }))
 }
+
+function lineToPlainText(line: Line): string {
+  // Bold keeps its words (markers dropped); a link expands to "text (url)" so the
+  // URL survives a paste into an email or application form.
+  return line
+    .map((run) => (run.type === 'link' ? `${run.text} (${run.href})` : run.text))
+    .join('')
+}
+
+// Clean prose for the clipboard: no Markdown syntax, paragraph and soft-break
+// structure preserved. Shares the parser with the preview/PDF so all surfaces match.
+export function coverLetterToPlainText(markdown: string): string {
+  return parseCoverLetterMarkdown(markdown)
+    .map((block) => block.lines.map(lineToPlainText).join('\n'))
+    .join('\n\n')
+}
