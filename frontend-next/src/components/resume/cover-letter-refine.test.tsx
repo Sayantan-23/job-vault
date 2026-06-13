@@ -95,6 +95,34 @@ describe('CoverLetterRefine', () => {
     expect(onApply).not.toHaveBeenCalled()
   })
 
+  it('after Replace, signals the change is staged in the editor but not yet saved', async () => {
+    api.post.mockResolvedValue({ bodyMarkdown: 'Committed rewrite.' })
+    render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
+
+    await userEvent.click(screen.getByRole('button', { name: /shorten/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /^replace$/i }))
+
+    expect(screen.getByText(/save edits to keep it/i)).toBeInTheDocument()
+  })
+
+  it('discards a staged candidate when the target letter changes (prevents cross-letter Replace)', async () => {
+    api.post.mockResolvedValue({ bodyMarkdown: 'Candidate for letter one.' })
+    const onApply = vi.fn()
+    const { rerender } = render(
+      <CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={onApply} />,
+      { wrapper },
+    )
+    await userEvent.click(screen.getByRole('button', { name: /humanize/i }))
+    expect(await screen.findByText('Candidate for letter one.')).toBeInTheDocument()
+
+    // Selecting a different letter must clear the staged rewrite so it can't be
+    // Replaced into the new letter's buffer.
+    rerender(<CoverLetterRefine coverLetterId="cl2" currentBody="A different letter." onApply={onApply} />)
+
+    expect(screen.queryByText('Candidate for letter one.')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^replace$/i })).not.toBeInTheDocument()
+  })
+
   it('renders an alert when the refine mutation fails', async () => {
     api.post.mockRejectedValue(new Error('AI is unavailable'))
     render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })

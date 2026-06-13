@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sparkles, Wand2, Undo2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -77,6 +77,19 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply }: Props
   const [lastInstructions, setLastInstructions] = useState<string | undefined>(undefined)
   const [instructions, setInstructions] = useState('')
   const [undoBody, setUndoBody] = useState<string | null>(null)
+
+  // Switching to a different letter must discard any staged rewrite/undo — else
+  // a candidate generated for letter A could be Replaced into letter B's buffer
+  // and saved onto B. Reset all workflow state (and the mutation) on id change.
+  const { reset } = refine
+  useEffect(() => {
+    setCandidate(null)
+    setUndoBody(null)
+    setLastAction(null)
+    setLastInstructions(undefined)
+    setInstructions('')
+    reset()
+  }, [coverLetterId, reset])
 
   const busy = refine.isPending
   const trimmed = instructions.trim()
@@ -176,7 +189,7 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply }: Props
         </div>
       ) : undoBody !== null ? (
         <div className={cn('flex items-center gap-2 text-sm text-muted-foreground')}>
-          <span>Letter updated · </span>
+          <span>Applied to the editor — Save edits to keep it.</span>
           <Button type="button" variant="link" size="sm" className="h-auto px-0" onClick={undo}>
             <Undo2 className="size-3.5" aria-hidden="true" />
             Undo

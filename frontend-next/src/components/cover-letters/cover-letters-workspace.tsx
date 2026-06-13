@@ -148,7 +148,9 @@ export function CoverLettersWorkspace({ initialPersonas, initialLetters, aiStatu
                   <CoverLetterEditor
                     value={body}
                     onChange={setBody}
-                    coverLetterId={active.id}
+                    // Only surface AI refine when AI is on — else the panel would
+                    // 503 on every click (the JobDrawer gates the same way).
+                    {...(aiEnabled ? { coverLetterId: active.id } : {})}
                     fileName={`${(active.title ?? 'cover-letter').replace(/\s+/g, '-')}.pdf`}
                   />
                   <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
