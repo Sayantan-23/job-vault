@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() }, ApiError: class extends Error {} }))
 import { apiClient } from '@/lib/api-client'
-import { useCoverLetters, useAllCoverLetters, useGenerateCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter } from './use-cover-letters'
+import { useCoverLetters, useAllCoverLetters, useGenerateCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter, useRefineCoverLetter } from './use-cover-letters'
 import { COVER_LETTERS_KEY } from '@/lib/query-keys'
 import type { CoverLetter } from '@/types/cover-letter'
 
@@ -74,5 +74,16 @@ describe('use-cover-letters', () => {
     del.result.current.mutate('cl1')
     await waitFor(() => expect(del.result.current.isSuccess).toBe(true))
     expect(api.delete).toHaveBeenCalledWith('/api/cover-letters/cl1')
+  })
+  it('refine posts the action + instructions and resolves to bodyMarkdown', async () => {
+    api.post.mockResolvedValue({ bodyMarkdown: 'Refined letter.' })
+    const { result } = renderHook(() => useRefineCoverLetter('cl1'), { wrapper })
+    result.current.mutate({ action: 'custom', instructions: 'Make it punchier' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(api.post).toHaveBeenCalledWith('/api/cover-letters/cl1/refine', {
+      action: 'custom',
+      instructions: 'Make it punchier',
+    })
+    expect(result.current.data).toEqual({ bodyMarkdown: 'Refined letter.' })
   })
 })
