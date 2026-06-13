@@ -26,7 +26,19 @@ export const UpdateCoverLetterSchema = z
 
 export const CoverLetterQuerySchema = z.object({ jobId: z.string().uuid().optional() })
 
+export const REFINE_ACTIONS = ['humanize', 'shorten', 'lengthen', 'fix-grammar', 'custom'] as const
+
+export const RefineCoverLetterSchema = z
+  .object({
+    action: z.enum(REFINE_ACTIONS),
+    instructions: z.string().max(2000).optional(),
+  })
+  .refine((v) => v.action !== 'custom' || (!!v.instructions && v.instructions.trim().length > 0), {
+    message: 'Custom refinement requires instructions',
+  })
+
 export type AdhocJobInput = z.infer<typeof AdhocJobInputSchema>
 export type GenerateCoverLetterInput = z.infer<typeof GenerateCoverLetterSchema>
 export type UpdateCoverLetterInput = z.infer<typeof UpdateCoverLetterSchema>
 export type CoverLetterQuery = z.infer<typeof CoverLetterQuerySchema>
+export type RefineCoverLetterInput = z.infer<typeof RefineCoverLetterSchema>

@@ -72,3 +72,28 @@ export function buildCoverLetterPrompt(
   if (instructions) parts.push(`EXTRA INSTRUCTIONS:\n${instructions}`)
   return parts.join('\n\n')
 }
+
+type RefineAction = 'humanize' | 'shorten' | 'lengthen' | 'fix-grammar' | 'custom'
+
+const REFINE_ACTION_GUIDE: Record<RefineAction, string> = {
+  humanize:
+    'Rewrite it to sound natural and human — strip robotic, generic, or clichéd AI phrasing (e.g. "I am writing to express my keen interest"), vary sentence rhythm and length, keep a genuine first-person voice.',
+  shorten:
+    'Make it more concise — cut filler and redundancy, tighten sentences, keep every substantive point. The result should be noticeably shorter.',
+  lengthen:
+    'Expand it with more relevant, specific detail drawn from the existing content — add substance, not padding or repetition. Keep it focused.',
+  'fix-grammar':
+    'Fix grammar, spelling, and punctuation and smooth awkward phrasing. Preserve meaning, length, and voice — change as little as possible beyond corrections.',
+  custom: 'Apply the user instructions below.',
+}
+
+export function buildRefineCoverLetterPrompt(currentBody: string, action: RefineAction, instructions?: string): string {
+  return [
+    "You are editing an existing cover letter. Revise it per the instruction below, preserving its Markdown structure and the candidate's real facts — do not invent employers, titles, dates, or achievements. Output ONLY the revised letter body in Markdown (no preamble, no code fences).",
+    `INSTRUCTION: ${REFINE_ACTION_GUIDE[action]}`,
+    instructions ? `ADDITIONAL INSTRUCTIONS:\n${instructions}` : null,
+    `CURRENT COVER LETTER:\n${currentBody}`,
+  ]
+    .filter((part): part is string => part !== null)
+    .join('\n\n')
+}
