@@ -27,108 +27,74 @@ describe('CoverLetterRefine', () => {
   it('clicking Humanize calls the refine mutation with { action: humanize }', async () => {
     api.post.mockResolvedValue({ bodyMarkdown: 'Hey there, I would love to apply.' })
     render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
-
     await userEvent.click(screen.getByRole('button', { name: /humanize/i }))
-
-    await waitFor(() =>
-      expect(api.post).toHaveBeenCalledWith('/api/cover-letters/cl1/refine', { action: 'humanize' }),
-    )
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/cover-letters/cl1/refine', { action: 'humanize' }))
   })
 
   it('disables the custom submit until text is entered, then sends { action: custom, instructions }', async () => {
     api.post.mockResolvedValue({ bodyMarkdown: 'Rewritten.' })
     render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
-
     const submit = screen.getByRole('button', { name: /^improve$/i })
     expect(submit).toBeDisabled()
-
     await userEvent.type(screen.getByPlaceholderText(/tell the ai what to change/i), 'Make it warmer')
     expect(submit).toBeEnabled()
     await userEvent.click(submit)
-
     await waitFor(() =>
-      expect(api.post).toHaveBeenCalledWith('/api/cover-letters/cl1/refine', {
-        action: 'custom',
-        instructions: 'Make it warmer',
-      }),
+      expect(api.post).toHaveBeenCalledWith('/api/cover-letters/cl1/refine', { action: 'custom', instructions: 'Make it warmer' }),
     )
   })
 
-  it('shows the returned candidate in a preview with Replace / Try again / Discard', async () => {
+  it('shows the returned candidate in a proposal with Keep / Try again / Discard and signals staged', async () => {
     api.post.mockResolvedValue({ bodyMarkdown: 'A warmer, friendlier opener.' })
-    render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
-
+    const onStagedChange = vi.fn()
+    render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} onStagedChange={onStagedChange} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: /shorten/i }))
-
     expect(await screen.findByText('A warmer, friendlier opener.')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^replace$/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /discard/i })).toBeInTheDocument()
+    expect(screen.getByText(/proposed rewrite/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^keep$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^try again$/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^discard$/i })).toBeInTheDocument()
+    await waitFor(() => expect(onStagedChange).toHaveBeenLastCalledWith(true))
   })
 
-  it('Replace calls onApply(candidate) then reveals an Undo control that restores currentBody', async () => {
+  it('Keep applies the candidate, signals un-staged, then offers Undo to restore', async () => {
     api.post.mockResolvedValue({ bodyMarkdown: 'The committed rewrite.' })
     const onApply = vi.fn()
-    render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={onApply} />, { wrapper })
-
+    const onStagedChange = vi.fn()
+    render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={onApply} onStagedChange={onStagedChange} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: /fix grammar/i }))
-    await userEvent.click(await screen.findByRole('button', { name: /^replace$/i }))
-
+    await userEvent.click(await screen.findByRole('button', { name: /^keep$/i }))
     expect(onApply).toHaveBeenCalledWith('The committed rewrite.')
-    // The staged preview is cleared.
-    expect(screen.queryByText('The committed rewrite.')).not.toBeInTheDocument()
-
-    const undo = await screen.findByRole('button', { name: /undo/i })
-    await userEvent.click(undo)
+    await waitFor(() => expect(onStagedChange).toHaveBeenLastCalledWith(false))
+    expect(screen.getByText(/save edits to keep it/i)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /undo/i }))
     expect(onApply).toHaveBeenLastCalledWith(CURRENT)
   })
 
-  it('Discard removes the preview without calling onApply', async () => {
+  it('Discard removes the proposal without applying', async () => {
     api.post.mockResolvedValue({ bodyMarkdown: 'A discarded candidate.' })
     const onApply = vi.fn()
     render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={onApply} />, { wrapper })
-
     await userEvent.click(screen.getByRole('button', { name: /humanize/i }))
-    await userEvent.click(await screen.findByRole('button', { name: /discard/i }))
-
+    await userEvent.click(await screen.findByRole('button', { name: /^discard$/i }))
     expect(screen.queryByText('A discarded candidate.')).not.toBeInTheDocument()
     expect(onApply).not.toHaveBeenCalled()
   })
 
-  it('after Replace, signals the change is staged in the editor but not yet saved', async () => {
-    api.post.mockResolvedValue({ bodyMarkdown: 'Committed rewrite.' })
-    render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
-
-    await userEvent.click(screen.getByRole('button', { name: /shorten/i }))
-    await userEvent.click(await screen.findByRole('button', { name: /^replace$/i }))
-
-    expect(screen.getByText(/save edits to keep it/i)).toBeInTheDocument()
-  })
-
-  it('discards a staged candidate when the target letter changes (prevents cross-letter Replace)', async () => {
+  it('discards a staged candidate when the target letter changes', async () => {
     api.post.mockResolvedValue({ bodyMarkdown: 'Candidate for letter one.' })
-    const onApply = vi.fn()
-    const { rerender } = render(
-      <CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={onApply} />,
-      { wrapper },
-    )
+    const { rerender } = render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: /humanize/i }))
     expect(await screen.findByText('Candidate for letter one.')).toBeInTheDocument()
-
-    // Selecting a different letter must clear the staged rewrite so it can't be
-    // Replaced into the new letter's buffer.
-    rerender(<CoverLetterRefine coverLetterId="cl2" currentBody="A different letter." onApply={onApply} />)
-
+    rerender(<CoverLetterRefine coverLetterId="cl2" currentBody="A different letter." onApply={vi.fn()} />)
     expect(screen.queryByText('Candidate for letter one.')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^replace$/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^keep$/i })).not.toBeInTheDocument()
   })
 
   it('renders an alert when the refine mutation fails', async () => {
     api.post.mockRejectedValue(new Error('AI is unavailable'))
     render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })
-
     await userEvent.click(screen.getByRole('button', { name: /humanize/i }))
-
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('AI is unavailable')
   })

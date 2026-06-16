@@ -1,4 +1,5 @@
 import { Fragment } from 'react'
+import { cn } from '@/lib/utils'
 import { parseCoverLetterMarkdown, type Line } from '@/lib/cover-letter-markdown'
 
 function InlineRuns({ runs }: { runs: Line }) {
@@ -20,10 +21,11 @@ function InlineRuns({ runs }: { runs: Line }) {
 
 // Renders the cover-letter Markdown model as styled prose. Shares its parser with
 // the PDF document so the on-screen preview and the downloaded PDF stay identical.
-export function CoverLetterPreview({ body }: { body: string }) {
+// `bare` drops the card chrome so a caller (the proposal pane) can supply its own.
+export function CoverLetterPreview({ body, bare = false }: { body: string; bare?: boolean }) {
   const blocks = parseCoverLetterMarkdown(body)
   return (
-    <div className="rounded-lg border border-border bg-card p-4 text-sm leading-relaxed text-foreground">
+    <div className={cn('text-sm leading-relaxed text-foreground', !bare && 'rounded-lg border border-border bg-card p-4')}>
       {blocks.map((block, bi) => (
         <p key={bi} className="mb-3 last:mb-0 whitespace-normal">
           {block.lines.map((line, li) => (

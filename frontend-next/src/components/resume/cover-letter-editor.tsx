@@ -24,6 +24,9 @@ type Mode = 'edit' | 'preview'
 
 export function CoverLetterEditor({ value, onChange, fileName, coverLetterId }: Props) {
   const [mode, setMode] = useState<Mode>('edit')
+  // While a refine proposal is staged, the proposal owns the body slot — hide the
+  // editor's own toolbar + body so only one letter is on screen.
+  const [refineStaged, setRefineStaged] = useState(false)
   const [copied, setCopied] = useState(false)
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -39,32 +42,41 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId }: 
   return (
     <div className="space-y-3">
       {coverLetterId ? (
-        <CoverLetterRefine coverLetterId={coverLetterId} currentBody={value} onApply={onChange} />
-      ) : null}
-      <div className="flex flex-wrap items-center gap-2">
-        <SegmentedControl
-          value={mode}
-          onValueChange={setMode}
-          aria-label="Cover letter view mode"
-          options={[
-            { value: 'edit', label: 'Edit', icon: Pencil },
-            { value: 'preview', label: 'Preview', icon: Eye },
-          ]}
+        <CoverLetterRefine
+          coverLetterId={coverLetterId}
+          currentBody={value}
+          onApply={onChange}
+          onStagedChange={setRefineStaged}
         />
-        <div className="hidden flex-1 sm:block" />
-        <Button type="button" variant="outline" size="sm" onClick={copy} aria-live="polite">
-          {copied ? <Check className="size-3.5" aria-hidden="true" /> : <Copy className="size-3.5" aria-hidden="true" />}
-          {copied ? 'Copied' : 'Copy text'}
-        </Button>
-        <DownloadCoverLetterPdfButton body={value} fileName={fileName} />
-      </div>
-      {mode === 'preview' ? (
-        <CoverLetterPreview body={value} />
-      ) : (
-        <div className="space-y-1.5">
-          <Label htmlFor="cl-body" className="sr-only">Cover letter body</Label>
-          <Textarea id="cl-body" rows={14} value={value} onChange={(e) => onChange(e.target.value)} />
-        </div>
+      ) : null}
+      {refineStaged ? null : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <SegmentedControl
+              value={mode}
+              onValueChange={setMode}
+              aria-label="Cover letter view mode"
+              options={[
+                { value: 'edit', label: 'Edit', icon: Pencil },
+                { value: 'preview', label: 'Preview', icon: Eye },
+              ]}
+            />
+            <div className="hidden flex-1 sm:block" />
+            <Button type="button" variant="outline" size="sm" onClick={copy} aria-live="polite">
+              {copied ? <Check className="size-3.5" aria-hidden="true" /> : <Copy className="size-3.5" aria-hidden="true" />}
+              {copied ? 'Copied' : 'Copy text'}
+            </Button>
+            <DownloadCoverLetterPdfButton body={value} fileName={fileName} />
+          </div>
+          {mode === 'preview' ? (
+            <CoverLetterPreview body={value} />
+          ) : (
+            <div className="space-y-1.5">
+              <Label htmlFor="cl-body" className="sr-only">Cover letter body</Label>
+              <Textarea id="cl-body" rows={14} value={value} onChange={(e) => onChange(e.target.value)} />
+            </div>
+          )}
+        </>
       )}
     </div>
   )
