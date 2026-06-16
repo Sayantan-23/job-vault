@@ -1,9 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
 import type { CoverLetter } from '@/types/cover-letter'
 import type { AiStatus } from '@/types/persona'
 import { Button } from '@/components/ui/button'
@@ -34,7 +32,7 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader
         title={letter.title ?? 'Cover letter'}
-        description="Edit, improve with AI, then save"
+        back={{ href: '/app/cover-letters', label: 'Cover letters' }}
         actions={
           <>
             <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
@@ -58,13 +56,6 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
             (the letter itself stays letter-width inside CoverLetterEditor).
             Left-aligned — a centered block floats in whitespace on wide screens. */}
         <div className="max-w-5xl space-y-4">
-          <Link
-            href="/app/cover-letters"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" aria-hidden="true" />
-            Cover letters
-          </Link>
           <CoverLetterEditor
             value={body}
             onChange={setBody}
