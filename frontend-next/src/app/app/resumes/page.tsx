@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { ResumesPageClient } from '@/components/resume/resumes-page-client'
+import { ResumesSkeleton } from '@/components/layout/app/route-skeletons'
 import type { Persona } from '@/types/persona'
 import type { GeneratedResume } from '@/types/resume'
 
@@ -17,8 +18,10 @@ export default async function ResumesPage() {
     apiServer.get<Persona[]>('/api/personas').catch(() => undefined),
     apiServer.get<GeneratedResume[]>('/api/resumes').catch(() => undefined),
   ])
+  // Skeleton (not null) fallback: on client navigation this boundary suspends
+  // while the workspace mounts, so a null fallback flashed the content blank.
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ResumesSkeleton />}>
       <ResumesPageClient initialPersonas={personas} initialResumes={resumes} />
     </Suspense>
   )

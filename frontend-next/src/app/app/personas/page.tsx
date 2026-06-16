@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { PersonasWorkspace } from '@/components/personas/personas-workspace'
+import { PersonasSkeleton } from '@/components/layout/app/route-skeletons'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 
@@ -27,8 +28,10 @@ export default async function PersonasPage() {
     apiServer.get<ProfileContent>('/api/profile').catch(() => EMPTY_PROFILE),
   ])
 
+  // Skeleton (not null) fallback: on client navigation this boundary suspends
+  // while the workspace mounts, so a null fallback flashed the content blank.
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PersonasSkeleton />}>
       <PersonasWorkspace
         initialPersonas={initialPersonas}
         initialStatus={initialStatus}

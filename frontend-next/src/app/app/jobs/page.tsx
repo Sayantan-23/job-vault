@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { JobsWorkspace } from '@/components/jobs/jobs-workspace'
+import { JobsSkeleton } from '@/components/layout/app/route-skeletons'
 import { EMPTY_BOARD, EMPTY_JOBS_PAGE } from '@/lib/dashboard-defaults'
 import { parseFilters, buildListQuery, buildBoardQuery } from '@/lib/filters'
 import type { Job } from '@/types/job'
@@ -41,9 +42,12 @@ export default async function JobsPage({
       : Promise.resolve(EMPTY_BOARD),
   ])
 
-  // useSearchParams() in JobsWorkspace requires a Suspense boundary.
+  // useSearchParams() in JobsWorkspace requires a Suspense boundary. Its fallback
+  // is the page skeleton, not null — on client navigation this boundary (not
+  // loading.tsx) suspends while the workspace mounts, so a null fallback flashed
+  // the whole content area blank.
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<JobsSkeleton />}>
       <JobsWorkspace initialJobs={initialJobs} initialBoard={initialBoard} />
     </Suspense>
   )
