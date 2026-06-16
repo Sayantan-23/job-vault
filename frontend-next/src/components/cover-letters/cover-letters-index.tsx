@@ -57,6 +57,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
   }))
 
   const onDelete = async (id: string) => {
+    if (del.isPending) return // don't start a second delete while one is in flight
     const letter = letters.find((l) => l.id === id)
     if (
       await confirm({

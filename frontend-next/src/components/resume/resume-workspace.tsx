@@ -71,6 +71,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
   }
 
   const onDelete = async (id: string) => {
+    if (del.isPending) return // don't start a second delete while one is in flight
     const target = allResumes.find((r) => r.id === id)
     if (
       !(await confirm({
