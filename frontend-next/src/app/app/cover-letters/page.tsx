@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { apiServer } from '@/lib/api-server'
-import { CoverLettersWorkspace } from '@/components/cover-letters/cover-letters-workspace'
+import { CoverLettersIndex } from '@/components/cover-letters/cover-letters-index'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { CoverLetter } from '@/types/cover-letter'
 
@@ -30,5 +30,5 @@ export default async function CoverLettersPage() {
     aiStatus = undefined
   }
 
-  return <CoverLettersWorkspace initialPersonas={personas} initialLetters={letters} aiStatus={aiStatus} />
+  return <CoverLettersIndex initialPersonas={personas} initialLetters={letters} aiStatus={aiStatus} />
 }

@@ -28,6 +28,7 @@ export const resumeKey = (id: string) => ['resumes', id] as const
 export const resumesByJobKey = (jobId: string) => ['resumes', 'job', jobId] as const
 
 export const COVER_LETTERS_KEY = ['cover-letters'] as const
+export const coverLetterKey = (id: string) => ['cover-letters', id] as const
 export const coverLettersByJobKey = (jobId: string) => ['cover-letters', 'job', jobId] as const
 
 export const PROFILE_KEY = ['profile'] as const

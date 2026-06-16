@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { COVER_LETTERS_KEY, coverLettersByJobKey } from '@/lib/query-keys'
+import { COVER_LETTERS_KEY, coverLetterKey, coverLettersByJobKey } from '@/lib/query-keys'
 import type { CoverLetter, AdhocJob, RefineAction } from '@/types/cover-letter'
 
 export interface GenerateBody {
@@ -28,6 +28,18 @@ export function useAllCoverLetters(initialData?: CoverLetter[]) {
     // SSR-hydrated; treat as fresh on mount so we don't clobber it with an
     // immediate refetch. Mutations (generate/update/delete) still invalidate.
     staleTime: 30_000,
+    ...(initialData ? { initialData } : {}),
+  })
+}
+
+// Single letter for the dedicated editor route. SSR-hydrated via initialData;
+// refetches on mount so an edit made elsewhere shows the latest.
+export function useCoverLetter(id: string, initialData?: CoverLetter) {
+  return useQuery({
+    queryKey: coverLetterKey(id),
+    queryFn: () => apiClient.get<CoverLetter>(`/api/cover-letters/${id}`),
+    enabled: Boolean(id),
+    refetchOnMount: 'always',
     ...(initialData ? { initialData } : {}),
   })
 }
