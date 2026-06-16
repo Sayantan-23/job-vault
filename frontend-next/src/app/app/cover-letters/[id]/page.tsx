@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
 import { apiServer } from '@/lib/api-server'
 import { CoverLetterEditorView } from '@/components/cover-letters/cover-letter-editor-view'
+import { CoverLetterNotFound } from '@/components/cover-letters/cover-letter-not-found'
 import type { CoverLetter } from '@/types/cover-letter'
 import type { AiStatus } from '@/types/persona'
 
@@ -16,7 +16,9 @@ export default async function CoverLetterEditorPage({ params }: { params: Promis
   } catch {
     letter = null
   }
-  if (!letter) notFound()
+  // Rendered inline (not via notFound()) so the missing-letter state keeps the
+  // authenticated app shell + sidebar, which the notFound() boundary drops.
+  if (!letter) return <CoverLetterNotFound />
 
   let aiStatus: AiStatus | undefined
   try {
