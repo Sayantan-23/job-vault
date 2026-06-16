@@ -71,6 +71,22 @@ body {
   --animate-jv-sheet-out: jv-sheet-out 0.22s ease-in both;
   --animate-jv-surface-in: jv-surface-in 0.18s ease-out both;
   --animate-jv-surface-out: jv-surface-out 0.14s ease-in both;
+  /* Skeleton shimmer sweep + the indeterminate route-transition progress bar.
+     The bar "trickles" toward ~92% and holds (forwards); its loading.tsx host
+     unmounts the instant the real page is ready, so it never needs a 100% snap. */
+  --animate-jv-shimmer: jv-shimmer 1.6s ease-in-out infinite;
+  --animate-jv-route-progress: jv-route-progress 2.2s cubic-bezier(0.1, 0.6, 0.2, 1) forwards;
+
+  @keyframes jv-shimmer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+  }
+  @keyframes jv-route-progress {
+    0% { transform: scaleX(0); }
+    40% { transform: scaleX(0.55); }
+    80% { transform: scaleX(0.85); }
+    100% { transform: scaleX(0.92); }
+  }
 
   @keyframes jv-overlay-in {
     from { opacity: 0; }

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { PersonasWorkspace } from '@/components/personas/personas-workspace'
+import { PersonasSkeleton } from '@/components/layout/app/route-skeletons'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 
@@ -16,29 +17,21 @@ const EMPTY_PROFILE: ProfileContent = {
   education: [],
 }
 
-export default async function PersonasPage() {
-  let initialPersonas: Persona[] = []
-  try {
-    initialPersonas = await apiServer.get<Persona[]>('/api/personas')
-  } catch {
-    initialPersonas = []
-  }
-  let initialStatus: AiStatus = { enabled: false, maxPersonas: 5 }
-  try {
-    initialStatus = await apiServer.get<AiStatus>('/api/ai/status')
-  } catch {
-    initialStatus = { enabled: false, maxPersonas: 5 }
-  }
-  // The master profile feeds the persona pickers and the build-from-profile seed.
-  let initialProfile: ProfileContent = EMPTY_PROFILE
-  try {
-    initialProfile = await apiServer.get<ProfileContent>('/api/profile')
-  } catch {
-    initialProfile = EMPTY_PROFILE
-  }
+const EMPTY_STATUS: AiStatus = { enabled: false, maxPersonas: 5 }
 
+export default async function PersonasPage() {
+  // Fetched in parallel — independent reads, so one round-trip instead of three.
+  // The master profile feeds the persona pickers and the build-from-profile seed.
+  const [initialPersonas, initialStatus, initialProfile] = await Promise.all([
+    apiServer.get<Persona[]>('/api/personas').catch((): Persona[] => []),
+    apiServer.get<AiStatus>('/api/ai/status').catch(() => EMPTY_STATUS),
+    apiServer.get<ProfileContent>('/api/profile').catch(() => EMPTY_PROFILE),
+  ])
+
+  // Skeleton (not null) fallback: on client navigation this boundary suspends
+  // while the workspace mounts, so a null fallback flashed the content blank.
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PersonasSkeleton />}>
       <PersonasWorkspace
         initialPersonas={initialPersonas}
         initialStatus={initialStatus}

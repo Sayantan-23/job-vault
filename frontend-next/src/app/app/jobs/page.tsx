@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { JobsWorkspace } from '@/components/jobs/jobs-workspace'
+import { JobsSkeleton } from '@/components/layout/app/route-skeletons'
 import { EMPTY_BOARD, EMPTY_JOBS_PAGE } from '@/lib/dashboard-defaults'
 import { parseFilters, buildListQuery, buildBoardQuery } from '@/lib/filters'
-import type { Paginated } from '@/types/filters'
 import type { Job } from '@/types/job'
 import type { KanbanBoard } from '@/types/dashboard'
 
@@ -29,27 +29,25 @@ export default async function JobsPage({
   const filters = parseFilters(params)
   const view = sp['view']
 
-  let initialJobs: Paginated<Job> = EMPTY_JOBS_PAGE
-  try {
-    initialJobs = await apiServer.getPage<Job>(`/api/jobs${buildListQuery(filters)}`)
-  } catch {
-    initialJobs = EMPTY_JOBS_PAGE
-  }
+  // Fetched in parallel — the list and (when shown) the board are independent
+  // reads, so one round-trip instead of two.
+  const [initialJobs, initialBoard] = await Promise.all([
+    apiServer.getPage<Job>(`/api/jobs${buildListQuery(filters)}`).catch(() => EMPTY_JOBS_PAGE),
+    view === 'board'
+      ? apiServer
+          .get<KanbanBoard>(
+            `/api/dashboard/kanban${buildBoardQuery({ search: filters.search, ghost: filters.ghost })}`,
+          )
+          .catch(() => EMPTY_BOARD)
+      : Promise.resolve(EMPTY_BOARD),
+  ])
 
-  let initialBoard: KanbanBoard = EMPTY_BOARD
-  if (view === 'board') {
-    try {
-      initialBoard = await apiServer.get<KanbanBoard>(
-        `/api/dashboard/kanban${buildBoardQuery({ search: filters.search, ghost: filters.ghost })}`,
-      )
-    } catch {
-      initialBoard = EMPTY_BOARD
-    }
-  }
-
-  // useSearchParams() in JobsWorkspace requires a Suspense boundary.
+  // useSearchParams() in JobsWorkspace requires a Suspense boundary. Its fallback
+  // is the page skeleton, not null — on client navigation this boundary (not
+  // loading.tsx) suspends while the workspace mounts, so a null fallback flashed
+  // the whole content area blank.
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<JobsSkeleton />}>
       <JobsWorkspace initialJobs={initialJobs} initialBoard={initialBoard} />
     </Suspense>
   )
