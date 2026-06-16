@@ -21,13 +21,10 @@ describe('PageHeader', () => {
     expect(screen.queryByText('2 tracked')).not.toBeInTheDocument()
   })
 
-  it('renders a back link (replacing the sub-line) for nested pages', () => {
-    render(
-      <PageHeader title="Acme — cover letter" description="ignored when back is set" back={{ href: '/app/cover-letters', label: 'Cover letters' }} />,
-    )
-    expect(screen.getByRole('link', { name: /cover letters/i })).toHaveAttribute('href', '/app/cover-letters')
+  it('renders a back-arrow icon button before the title for nested pages', () => {
+    render(<PageHeader title="Acme — cover letter" back={{ href: '/app/cover-letters', label: 'Cover letters' }} />)
+    const back = screen.getByRole('link', { name: /back to cover letters/i })
+    expect(back).toHaveAttribute('href', '/app/cover-letters')
     expect(screen.getByRole('heading', { name: 'Acme — cover letter' })).toBeInTheDocument()
-    // The description yields to the back link.
-    expect(screen.queryByText('ignored when back is set')).not.toBeInTheDocument()
   })
 })
