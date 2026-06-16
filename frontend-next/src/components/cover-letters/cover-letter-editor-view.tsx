@@ -54,7 +54,9 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
         }
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="mx-auto max-w-3xl space-y-4">
+        {/* Wider than a single letter column so the AI controls sit in a side rail
+            (the letter itself stays letter-width inside CoverLetterEditor). */}
+        <div className="mx-auto max-w-5xl space-y-4">
           <Link
             href="/app/cover-letters"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -65,6 +67,7 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
           <CoverLetterEditor
             value={body}
             onChange={setBody}
+            layout="split"
             // Only surface AI refine when AI is on — else every click would 503.
             {...(aiEnabled ? { coverLetterId: letter.id } : {})}
             fileName={`${(letter.title ?? 'cover-letter').replace(/\s+/g, '-')}.pdf`}

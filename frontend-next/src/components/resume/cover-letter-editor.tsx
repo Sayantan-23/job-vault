@@ -1,32 +1,37 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Check, Copy, Pencil, Eye } from 'lucide-react'
+import { Check, Copy, Pencil, Eye, Undo2 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
+import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 import { coverLetterToPlainText } from '@/lib/cover-letter-markdown'
+import { useCoverLetterRefine } from '@/hooks/use-cover-letter-refine'
 import { CoverLetterPreview } from './cover-letter-preview'
-import { CoverLetterRefine } from './cover-letter-refine'
+import { CoverLetterProposal } from './cover-letter-proposal'
+import { RefineControls } from './refine-controls'
 import { DownloadCoverLetterPdfButton } from './download-cover-letter-pdf-button'
 
 interface Props {
   value: string
   onChange: (next: string) => void
   fileName: string
-  // When present, AI refine actions are surfaced above the toolbar; omitted
-  // (e.g. before a letter is persisted) the editor renders without them.
+  // When present, AI refine actions are surfaced; omitted, the editor renders
+  // without them.
   coverLetterId?: string
+  // 'split' puts the AI controls in a side rail beside the letter on large
+  // screens (the dedicated editor route); 'stacked' keeps them above the letter
+  // (the narrow JobDrawer). Both stack on small screens.
+  layout?: 'stacked' | 'split'
 }
 
 type Mode = 'edit' | 'preview'
 
-export function CoverLetterEditor({ value, onChange, fileName, coverLetterId }: Props) {
+export function CoverLetterEditor({ value, onChange, fileName, coverLetterId, layout = 'stacked' }: Props) {
   const [mode, setMode] = useState<Mode>('edit')
-  // While a refine proposal is staged, the proposal owns the body slot — hide the
-  // editor's own toolbar + body so only one letter is on screen.
-  const [refineStaged, setRefineStaged] = useState(false)
   const [copied, setCopied] = useState(false)
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -39,18 +44,36 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId }: 
     copiedTimer.current = setTimeout(() => setCopied(false), 2000)
   }
 
-  return (
-    <div className="space-y-3">
-      {coverLetterId ? (
-        <CoverLetterRefine
-          coverLetterId={coverLetterId}
+  // Always called (rules of hooks); inert when there is no letter id.
+  const refine = useCoverLetterRefine(coverLetterId ?? '', value, onChange)
+  const refineOn = Boolean(coverLetterId)
+  const split = refineOn && layout === 'split'
+  const staged = refineOn && refine.staged
+
+  const main = (
+    <div className={cn('min-w-0 space-y-3', split && 'lg:order-1')}>
+      {staged && refine.candidate !== null && refine.lastAction !== null ? (
+        <CoverLetterProposal
+          key={refine.proposalSeq}
+          action={refine.lastAction}
+          candidate={refine.candidate}
           currentBody={value}
-          onApply={onChange}
-          onStagedChange={setRefineStaged}
+          busy={refine.busy}
+          onKeep={refine.keep}
+          onDiscard={refine.discard}
+          onTryAgain={refine.tryAgain}
         />
-      ) : null}
-      {refineStaged ? null : (
+      ) : (
         <>
+          {refineOn && refine.undoBody !== null ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Applied to the editor — Save edits to keep it.</span>
+              <Button type="button" variant="link" size="sm" className="h-auto px-0" onClick={refine.undo}>
+                <Undo2 className="size-3.5" aria-hidden="true" />
+                Undo
+              </Button>
+            </div>
+          ) : null}
           <div className="flex flex-wrap items-center gap-2">
             <SegmentedControl
               value={mode}
@@ -78,6 +101,29 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId }: 
           )}
         </>
       )}
+    </div>
+  )
+
+  if (!refineOn) {
+    return <div className="mx-auto max-w-2xl">{main}</div>
+  }
+
+  const rail = (
+    <div className={cn('space-y-3', split && 'lg:order-2 lg:sticky lg:top-0')}>
+      <RefineControls busy={refine.busy} onRun={refine.run} />
+      <MutationErrorAlert error={refine.error} />
+    </div>
+  )
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-3',
+        split && 'lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-6',
+      )}
+    >
+      {rail}
+      {main}
     </div>
   )
 }

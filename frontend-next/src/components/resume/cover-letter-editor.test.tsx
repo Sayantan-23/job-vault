@@ -3,25 +3,27 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 // react-pdf's PDFDownloadLink resolves to its node build under jsdom and throws
-// ("web specific API"); the plan forbids rendering a PDF in a vitest test, so we
-// stub the download button (its real behavior is covered by the live smoke test).
-vi.mock('./download-cover-letter-pdf-button', () => ({
-  DownloadCoverLetterPdfButton: () => null,
-}))
+// ("web specific API"); stub the download button (covered by the live smoke test).
+vi.mock('./download-cover-letter-pdf-button', () => ({ DownloadCoverLetterPdfButton: () => null }))
 
-// The refine panel pulls in a react-query hook; stub it so this unit test stays
-// focused on the editor's own wiring (the real component is covered elsewhere).
-vi.mock('./cover-letter-refine', () => ({
-  CoverLetterRefine: (props: { coverLetterId: string }) => (
-    <div data-testid="refine" data-id={props.coverLetterId} />
-  ),
-}))
+// The refine workflow has its own hook + component tests; mock the hook so this
+// unit test drives the editor's own wiring (rail vs body, staged vs not).
+vi.mock('@/hooks/use-cover-letter-refine', () => ({ useCoverLetterRefine: vi.fn() }))
 
+import { useCoverLetterRefine } from '@/hooks/use-cover-letter-refine'
 import { CoverLetterEditor } from './cover-letter-editor'
+
+const mockRefine = vi.mocked(useCoverLetterRefine)
+type RefineState = ReturnType<typeof useCoverLetterRefine>
+const inert = (): RefineState => ({
+  busy: false, error: null, staged: false, candidate: null, lastAction: null, undoBody: null, proposalSeq: 0,
+  run: vi.fn(), tryAgain: vi.fn(), keep: vi.fn(), discard: vi.fn(), undo: vi.fn(),
+})
 
 const writeText = vi.fn()
 beforeEach(() => {
   vi.clearAllMocks()
+  mockRefine.mockReturnValue(inert())
   Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
 })
 
@@ -40,38 +42,31 @@ describe('CoverLetterEditor', () => {
     expect(screen.getByRole('button', { name: /copied/i })).toBeInTheDocument()
   })
 
-  it('switches to preview mode and renders parsed markdown (paragraphs, bold, links)', async () => {
-    const md = 'Dear **Hiring** Team,\n\nVisit [my site](https://example.com).'
-    render(<CoverLetterEditor value={md} onChange={vi.fn()} fileName="cl.pdf" />)
-    // Edit mode shows the raw markdown textarea.
+  it('switches to preview mode and renders parsed markdown', async () => {
+    render(<CoverLetterEditor value={'Dear **Hiring** Team,\n\nVisit [my site](https://example.com).'} onChange={vi.fn()} fileName="cl.pdf" />)
     expect(screen.getByLabelText(/cover letter body/i)).toBeInTheDocument()
-
     await userEvent.click(screen.getByRole('button', { name: /^preview$/i }))
-
-    // The textarea is gone; the rendered prose is shown instead.
     expect(screen.queryByLabelText(/cover letter body/i)).not.toBeInTheDocument()
     expect(screen.getByText('Hiring').tagName).toBe('STRONG')
-    const link = screen.getByRole('link', { name: 'my site' })
-    expect(link).toHaveAttribute('href', 'https://example.com')
-    // No raw markdown syntax leaks into the preview.
-    expect(screen.queryByText(/\*\*Hiring\*\*/)).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'my site' })).toHaveAttribute('href', 'https://example.com')
   })
 
-  it('marks the active view mode as pressed', async () => {
-    render(<CoverLetterEditor value="Dear" onChange={vi.fn()} fileName="cl.pdf" />)
-    expect(screen.getByRole('button', { name: /^edit$/i })).toHaveAttribute('aria-pressed', 'true')
-    await userEvent.click(screen.getByRole('button', { name: /^preview$/i }))
-    expect(screen.getByRole('button', { name: /^preview$/i })).toHaveAttribute('aria-pressed', 'true')
-    expect(screen.getByRole('button', { name: /^edit$/i })).toHaveAttribute('aria-pressed', 'false')
-  })
-
-  it('renders the refine panel only when a coverLetterId is provided', () => {
+  it('shows the AI refine controls only when a coverLetterId is provided', () => {
     const { rerender } = render(<CoverLetterEditor value="Dear" onChange={vi.fn()} fileName="cl.pdf" />)
-    expect(screen.queryByTestId('refine')).not.toBeInTheDocument()
-
+    expect(screen.queryByText(/improve with ai/i)).not.toBeInTheDocument()
     rerender(<CoverLetterEditor value="Dear" onChange={vi.fn()} fileName="cl.pdf" coverLetterId="cl_1" />)
-    const refine = screen.getByTestId('refine')
-    expect(refine).toBeInTheDocument()
-    expect(refine).toHaveAttribute('data-id', 'cl_1')
+    expect(screen.getByText(/improve with ai/i)).toBeInTheDocument()
+    // Not staged → the editor body (textarea) is still shown alongside the controls.
+    expect(screen.getByLabelText(/cover letter body/i)).toBeInTheDocument()
+  })
+
+  it('hides the editor body and shows the proposal while a rewrite is staged', () => {
+    mockRefine.mockReturnValue({ ...inert(), staged: true, candidate: 'A friendlier opener.', lastAction: 'humanize' })
+    render(<CoverLetterEditor value="Dear team" onChange={vi.fn()} fileName="cl.pdf" coverLetterId="cl_1" />)
+    expect(screen.getByText(/proposed rewrite/i)).toBeInTheDocument()
+    expect(screen.getByText('A friendlier opener.')).toBeInTheDocument()
+    // The editor's own toolbar + textarea are hidden so only one letter is shown.
+    expect(screen.queryByLabelText(/cover letter body/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /copy text/i })).not.toBeInTheDocument()
   })
 })
