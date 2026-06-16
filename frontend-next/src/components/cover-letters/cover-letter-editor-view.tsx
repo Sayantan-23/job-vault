@@ -55,8 +55,9 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
         {/* Wider than a single letter column so the AI controls sit in a side rail
-            (the letter itself stays letter-width inside CoverLetterEditor). */}
-        <div className="mx-auto max-w-5xl space-y-4">
+            (the letter itself stays letter-width inside CoverLetterEditor).
+            Left-aligned — a centered block floats in whitespace on wide screens. */}
+        <div className="max-w-5xl space-y-4">
           <Link
             href="/app/cover-letters"
             className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

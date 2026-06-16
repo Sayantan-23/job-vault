@@ -51,7 +51,7 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId, la
   const staged = refineOn && refine.staged
 
   const main = (
-    <div className={cn('min-w-0 space-y-3', split && 'lg:order-1')}>
+    <div className={cn('min-w-0 space-y-3', split && 'xl:order-1')}>
       {staged && refine.candidate !== null && refine.lastAction !== null ? (
         <CoverLetterProposal
           key={refine.proposalSeq}
@@ -96,7 +96,15 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId, la
           ) : (
             <div className="space-y-1.5">
               <Label htmlFor="cl-body" className="sr-only">Cover letter body</Label>
-              <Textarea id="cl-body" rows={14} value={value} onChange={(e) => onChange(e.target.value)} />
+              {/* In the split route layout, grow the edit box to fill the viewport
+                  instead of a short fixed box with empty space below it. */}
+              <Textarea
+                id="cl-body"
+                rows={14}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className={cn(split && 'xl:min-h-[calc(100vh-14rem)]')}
+              />
             </div>
           )}
         </>
@@ -105,11 +113,11 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId, la
   )
 
   if (!refineOn) {
-    return <div className="mx-auto max-w-2xl">{main}</div>
+    return <div className="max-w-2xl">{main}</div>
   }
 
   const rail = (
-    <div className={cn('space-y-3', split && 'lg:order-2 lg:sticky lg:top-0')}>
+    <div className={cn('space-y-3', split && 'xl:order-2 xl:sticky xl:top-0')}>
       <RefineControls busy={refine.busy} onRun={refine.run} />
       <MutationErrorAlert error={refine.error} />
     </div>
@@ -119,7 +127,9 @@ export function CoverLetterEditor({ value, onChange, fileName, coverLetterId, la
     <div
       className={cn(
         'flex flex-col gap-3',
-        split && 'lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:items-start lg:gap-6',
+        // Split only at xl: at lg the app sidebar leaves too little width, so the
+        // rail would cramp the letter — stack until there is real room.
+        split && 'xl:grid xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start xl:gap-6',
       )}
     >
       {rail}
