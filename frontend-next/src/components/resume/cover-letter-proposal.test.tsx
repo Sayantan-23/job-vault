@@ -53,19 +53,13 @@ describe('CoverLetterProposal', () => {
     expect(onDiscard).toHaveBeenCalled()
   })
 
-  it('plain Try again re-runs with no new instructions', async () => {
+  it('Try again re-rolls the same action (no second instruction input here)', async () => {
     const { onTryAgain } = setup('humanize')
     await userEvent.click(screen.getByRole('button', { name: /^try again$/i }))
     expect(onTryAgain).toHaveBeenCalledTimes(1)
-    expect(onTryAgain.mock.calls[0]).toEqual([]) // called with no args → parent reuses last instructions
-  })
-
-  it('Try-again dropdown lets you regenerate with tweaked instructions', async () => {
-    const { onTryAgain } = setup('humanize')
-    await userEvent.click(screen.getByRole('button', { name: /try again with new instructions/i }))
-    await userEvent.type(screen.getByLabelText(/new instructions for try again/i), 'more concise')
-    await userEvent.click(screen.getByRole('button', { name: /regenerate/i }))
-    expect(onTryAgain).toHaveBeenCalledWith('more concise')
+    // The proposal has no instruction input — steering lives in the top panel.
+    expect(screen.queryByLabelText(/new instructions/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /regenerate/i })).not.toBeInTheDocument()
   })
 
   it('Fix grammar shows a word-diff by default (removed + added words), toggle to clean', async () => {

@@ -79,16 +79,16 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply, onStage
     )
   }
 
-  function tryAgain(nextInstructions?: string) {
+  // Re-roll the same action with the same instructions. To change instructions,
+  // use the top "Improve with AI" panel (the single instruction input).
+  function tryAgain() {
     if (!lastAction) return
-    const instr = nextInstructions ?? lastInstructions
     refine.mutate(
-      { action: lastAction, ...(instr ? { instructions: instr } : {}) },
+      { action: lastAction, ...(lastInstructions ? { instructions: lastInstructions } : {}) },
       {
         onSuccess: (r) => {
           setCandidate(r.bodyMarkdown)
           setProposalSeq((s) => s + 1)
-          if (nextInstructions !== undefined) setLastInstructions(nextInstructions || undefined)
         },
       },
     )
