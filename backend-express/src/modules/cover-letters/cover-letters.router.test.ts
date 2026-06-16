@@ -9,7 +9,7 @@ vi.mock('./cover-letters.repository.js', () => ({
 vi.mock('@/modules/personas/personas.repository.js', () => ({ personasRepository: { findById: vi.fn() } }))
 vi.mock('@/modules/jobs/jobs.repository.js', () => ({ jobsRepository: { findById: vi.fn() } }))
 vi.mock('@/modules/ai/gemini.service.js', () => ({ geminiService: { isAiEnabled: vi.fn(() => true), generateText: vi.fn() } }))
-vi.mock('@/modules/ai/ai-usage.repository.js', () => ({ aiUsageRepository: { countRecentGenerations: vi.fn().mockResolvedValue(0) } }))
+vi.mock('@/modules/ai/ai-usage.repository.js', () => ({ aiUsageRepository: { countRecentGenerations: vi.fn().mockResolvedValue(0), recordUsageEvent: vi.fn() } }))
 vi.mock('@/modules/profile/profile.repository.js', () => ({ profileRepository: { findByUserId: vi.fn().mockResolvedValue(null), upsert: vi.fn() } }))
 
 import { coverLettersRepository } from './cover-letters.repository.js'
@@ -96,5 +96,30 @@ describe('cover-letters routes', () => {
   it('deletes (204)', async () => {
     repo.remove.mockResolvedValue(true)
     expect((await request(app).delete('/api/cover-letters/cl1').set('Cookie', [cookie])).status).toBe(204)
+  })
+
+  it('401 refining without cookie', async () => {
+    expect((await request(app).post(`/api/cover-letters/${UUID}/refine`).send({ action: 'humanize' })).status).toBe(401)
+  })
+  it('404 refining an unknown id', async () => {
+    repo.findById.mockResolvedValue(null)
+    const res = await request(app).post(`/api/cover-letters/${UUID}/refine`).set('Cookie', [cookie]).send({ action: 'humanize' })
+    expect(res.status).toBe(404)
+  })
+  it('400 on an invalid action', async () => {
+    const res = await request(app).post(`/api/cover-letters/${UUID}/refine`).set('Cookie', [cookie]).send({ action: 'nope' })
+    expect(res.status).toBe(400)
+  })
+  it('400 when action=custom without instructions', async () => {
+    const res = await request(app).post(`/api/cover-letters/${UUID}/refine`).set('Cookie', [cookie]).send({ action: 'custom' })
+    expect(res.status).toBe(400)
+  })
+  it('refines (200) returning the candidate body', async () => {
+    repo.findById.mockResolvedValue(row())
+    ai.generateText.mockResolvedValue('Refined letter body')
+    const res = await request(app).post(`/api/cover-letters/${UUID}/refine`).set('Cookie', [cookie]).send({ action: 'humanize' })
+    expect(res.status).toBe(200)
+    expect(res.body.data).toEqual({ bodyMarkdown: 'Refined letter body' })
+    expect(repo.update).not.toHaveBeenCalled()
   })
 })

@@ -3,7 +3,12 @@ import { asyncHandler } from '@/shared/async-handler.js'
 import { validate } from '@/middleware/validate.middleware.js'
 import { authMiddleware } from '@/middleware/auth.middleware.js'
 import { coverLettersController } from './cover-letters.controller.js'
-import { GenerateCoverLetterSchema, UpdateCoverLetterSchema, CoverLetterQuerySchema } from './cover-letters.schema.js'
+import {
+  GenerateCoverLetterSchema,
+  UpdateCoverLetterSchema,
+  CoverLetterQuerySchema,
+  RefineCoverLetterSchema,
+} from './cover-letters.schema.js'
 
 const router = Router()
 router.use(authMiddleware)
@@ -12,5 +17,6 @@ router.get('/', validate(CoverLetterQuerySchema, 'query'), asyncHandler(coverLet
 router.get('/:id', asyncHandler(coverLettersController.get))
 router.patch('/:id', validate(UpdateCoverLetterSchema), asyncHandler(coverLettersController.update))
 router.delete('/:id', asyncHandler(coverLettersController.remove))
+router.post('/:id/refine', validate(RefineCoverLetterSchema), asyncHandler(coverLettersController.refine))
 
 export { router as coverLettersRouter }

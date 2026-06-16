@@ -20,4 +20,11 @@ describe('PageHeader', () => {
     // No stray paragraph under the title.
     expect(screen.queryByText('2 tracked')).not.toBeInTheDocument()
   })
+
+  it('renders a back-arrow icon button before the title for nested pages', () => {
+    render(<PageHeader title="Acme — cover letter" back={{ href: '/app/cover-letters', label: 'Cover letters' }} />)
+    const back = screen.getByRole('link', { name: /back to cover letters/i })
+    expect(back).toHaveAttribute('href', '/app/cover-letters')
+    expect(screen.getByRole('heading', { name: 'Acme — cover letter' })).toBeInTheDocument()
+  })
 })

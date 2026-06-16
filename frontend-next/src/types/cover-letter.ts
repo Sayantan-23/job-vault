@@ -4,6 +4,8 @@ export interface AdhocJob {
   description?: string
 }
 
+export type RefineAction = 'humanize' | 'shorten' | 'lengthen' | 'fix-grammar' | 'custom'
+
 export interface CoverLetter {
   id: string
   createdAt: string

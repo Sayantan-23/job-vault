@@ -2,8 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { COVER_LETTERS_KEY, coverLettersByJobKey } from '@/lib/query-keys'
-import type { CoverLetter, AdhocJob } from '@/types/cover-letter'
+import { COVER_LETTERS_KEY, coverLetterKey, coverLettersByJobKey } from '@/lib/query-keys'
+import type { CoverLetter, AdhocJob, RefineAction } from '@/types/cover-letter'
 
 export interface GenerateBody {
   personaId: string
@@ -32,6 +32,18 @@ export function useAllCoverLetters(initialData?: CoverLetter[]) {
   })
 }
 
+// Single letter for the dedicated editor route. SSR-hydrated via initialData;
+// refetches on mount so an edit made elsewhere shows the latest.
+export function useCoverLetter(id: string, initialData?: CoverLetter) {
+  return useQuery({
+    queryKey: coverLetterKey(id),
+    queryFn: () => apiClient.get<CoverLetter>(`/api/cover-letters/${id}`),
+    enabled: Boolean(id),
+    refetchOnMount: 'always',
+    ...(initialData ? { initialData } : {}),
+  })
+}
+
 export function useGenerateCoverLetter() {
   const qc = useQueryClient()
   return useMutation({
@@ -46,6 +58,13 @@ export function useUpdateCoverLetter(id: string) {
     mutationFn: (patch: { title?: string; bodyMarkdown?: string }) =>
       apiClient.patch<CoverLetter>(`/api/cover-letters/${id}`, patch),
     onSuccess: () => void qc.invalidateQueries({ queryKey: COVER_LETTERS_KEY }),
+  })
+}
+
+export function useRefineCoverLetter(id: string) {
+  return useMutation({
+    mutationFn: (body: { action: RefineAction; instructions?: string }) =>
+      apiClient.post<{ bodyMarkdown: string }>(`/api/cover-letters/${id}/refine`, body),
   })
 }
 

@@ -14,11 +14,6 @@ export interface DocumentRow {
   createdAt: string // ISO timestamp, rendered via shortDate
 }
 
-// Text columns get proportional shrinkable shares (minmax(0,…) so they can
-// truncate); the date column is fixed (4rem) so the text-column boundaries
-// align across rows; the delete column hugs its content.
-const GRID = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_4rem_auto] items-center gap-4'
-
 interface Props {
   row: DocumentRow
   selected: boolean
@@ -26,6 +21,8 @@ interface Props {
   onDelete: (id: string) => void
 }
 
+// Two-line row (title above, muted metadata below) so the details have room to
+// breathe instead of cramming title/context/persona/date onto one line.
 export function DocumentListRow({ row, selected, onSelect, onDelete }: Props) {
   // The row hosts the delete <button>, so it cannot be a <button> itself
   // (nested buttons are invalid HTML) — it is a div with button semantics.
@@ -41,6 +38,8 @@ export function DocumentListRow({ row, selected, onSelect, onDelete }: Props) {
     onDelete(row.id)
   }
 
+  const hasPersona = Boolean(row.personaName) && row.personaName !== '—'
+
   return (
     <div
       role="button"
@@ -49,25 +48,35 @@ export function DocumentListRow({ row, selected, onSelect, onDelete }: Props) {
       onClick={() => onSelect(row.id)}
       onKeyDown={handleKeyDown}
       className={cn(
-        GRID,
-        'cursor-pointer px-3 py-2.5 text-sm transition-colors',
+        'flex cursor-pointer items-center gap-3 px-3.5 py-3 text-sm transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
         selected ? 'bg-accent' : 'hover:bg-accent/50',
       )}
     >
-      <span className="truncate font-medium">{row.title}</span>
-      <span className="truncate text-muted-foreground">{row.context}</span>
-      <span className="truncate text-muted-foreground">{row.personaName}</span>
-      <span className="font-mono text-xs tabular-nums text-muted-foreground">{shortDate(row.createdAt)}</span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-medium">{row.title}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          <span>{row.context}</span>
+          {hasPersona ? (
+            <>
+              <span aria-hidden="true" className="px-1.5 text-muted-foreground/50">
+                ·
+              </span>
+              <span>{row.personaName}</span>
+            </>
+          ) : null}
+        </p>
+      </div>
+      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">{shortDate(row.createdAt)}</span>
       <Button
         type="button"
         variant="ghost"
         size="iconSm"
         aria-label={`Delete ${row.title}`}
         onClick={handleDelete}
-        className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
       >
-        <Trash2 className="size-3.5" aria-hidden="true" />
+        <Trash2 className="size-4" aria-hidden="true" />
       </Button>
     </div>
   )

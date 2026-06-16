@@ -7,6 +7,7 @@ import { personas } from '@/db/schema/personas.js'
 import { generatedResumes } from '@/db/schema/generated-resumes.js'
 import { coverLetters } from '@/db/schema/cover-letters.js'
 import { resumeParseEvents } from '@/db/schema/resume-parse-events.js'
+import { aiUsageEvents } from '@/db/schema/ai-usage-events.js'
 import { aiUsageRepository } from './ai-usage.repository.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
 import { emptyProfileContent } from '@/shared/profile-content.schema.js'
@@ -33,6 +34,7 @@ beforeAll(async () => {
   personaId = personaRow.id
 })
 afterAll(async () => {
+  await getDb().delete(aiUsageEvents).where(eq(aiUsageEvents.userId, userId))
   await getDb().delete(resumeParseEvents).where(eq(resumeParseEvents.userId, userId))
   await getDb().delete(coverLetters).where(eq(coverLetters.userId, userId))
   await getDb().delete(generatedResumes).where(eq(generatedResumes.userId, userId))
@@ -61,6 +63,19 @@ describe('aiUsageRepository.countRecentGenerations (real DB)', () => {
       .insert(resumeParseEvents)
       .values({ userId, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) })
     expect(await aiUsageRepository.countRecentGenerations(userId, since)).toBe(3)
+    expect(await aiUsageRepository.countRecentGenerations(userId, new Date(Date.now() + 60_000))).toBe(0)
+  })
+
+  it('counts ai usage events within the cutoff and ignores older ones', async () => {
+    const since = new Date(Date.now() - 60 * 60 * 1000)
+    await aiUsageRepository.recordUsageEvent(userId, 'cover-letter-refine')
+    // 1 résumé + 1 cover letter + 1 parse event (previous tests) + 1 usage event
+    expect(await aiUsageRepository.countRecentGenerations(userId, since)).toBe(4)
+    // a usage event before the cutoff is ignored
+    await getDb()
+      .insert(aiUsageEvents)
+      .values({ userId, kind: 'cover-letter-refine', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) })
+    expect(await aiUsageRepository.countRecentGenerations(userId, since)).toBe(4)
     expect(await aiUsageRepository.countRecentGenerations(userId, new Date(Date.now() + 60_000))).toBe(0)
   })
 })

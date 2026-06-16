@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { GenerateCoverLetterSchema, UpdateCoverLetterSchema } from './cover-letters.schema.js'
+import { GenerateCoverLetterSchema, UpdateCoverLetterSchema, RefineCoverLetterSchema } from './cover-letters.schema.js'
 
 const UUID = '11111111-1111-1111-1111-111111111111'
 const ADHOC = { title: 'Staff Engineer', company: 'Acme' }
@@ -57,5 +57,33 @@ describe('UpdateCoverLetterSchema', () => {
   it('accepts a body edit; rejects empty', () => {
     expect(UpdateCoverLetterSchema.safeParse({ bodyMarkdown: 'Dear…' }).success).toBe(true)
     expect(UpdateCoverLetterSchema.safeParse({}).success).toBe(false)
+  })
+})
+
+describe('RefineCoverLetterSchema', () => {
+  it('parses each preset action without instructions', () => {
+    for (const action of ['humanize', 'shorten', 'lengthen', 'fix-grammar'] as const) {
+      expect(RefineCoverLetterSchema.safeParse({ action }).success).toBe(true)
+      expect(RefineCoverLetterSchema.safeParse({ action, instructions: 'be punchy' }).success).toBe(true)
+    }
+  })
+
+  it('requires non-empty instructions for the custom action', () => {
+    expect(RefineCoverLetterSchema.safeParse({ action: 'custom', instructions: 'add a closing line' }).success).toBe(
+      true,
+    )
+    expect(RefineCoverLetterSchema.safeParse({ action: 'custom' }).success).toBe(false)
+    expect(RefineCoverLetterSchema.safeParse({ action: 'custom', instructions: '   ' }).success).toBe(false)
+  })
+
+  it('bounds instructions at 2000 chars', () => {
+    expect(RefineCoverLetterSchema.safeParse({ action: 'humanize', instructions: 'x'.repeat(2000) }).success).toBe(true)
+    expect(RefineCoverLetterSchema.safeParse({ action: 'humanize', instructions: 'x'.repeat(2001) }).success).toBe(
+      false,
+    )
+  })
+
+  it('rejects an unknown action', () => {
+    expect(RefineCoverLetterSchema.safeParse({ action: 'translate' }).success).toBe(false)
   })
 })

@@ -1,7 +1,12 @@
 import type { Request, Response } from 'express'
 import { AppError } from '@/shared/errors.js'
 import { coverLettersService } from './cover-letters.service.js'
-import type { GenerateCoverLetterInput, UpdateCoverLetterInput, CoverLetterQuery } from './cover-letters.schema.js'
+import type {
+  GenerateCoverLetterInput,
+  UpdateCoverLetterInput,
+  CoverLetterQuery,
+  RefineCoverLetterInput,
+} from './cover-letters.schema.js'
 
 function requireUserId(req: Request): string {
   const id = req.user?.id
@@ -32,5 +37,9 @@ async function remove(req: Request, res: Response): Promise<void> {
   await coverLettersService.remove(requireUserId(req), paramValue(req, 'id'))
   res.status(204).end()
 }
+async function refine(req: Request, res: Response): Promise<void> {
+  const out = await coverLettersService.refine(requireUserId(req), paramValue(req, 'id'), req.body as RefineCoverLetterInput)
+  res.status(200).json({ data: out })
+}
 
-export const coverLettersController = { generate, list, get, update, remove }
+export const coverLettersController = { generate, list, get, update, remove, refine }

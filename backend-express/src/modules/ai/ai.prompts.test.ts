@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildStructurePrompt, buildResumePrompt, buildCoverLetterPrompt } from './ai.prompts.js'
+import { buildStructurePrompt, buildResumePrompt, buildCoverLetterPrompt, buildRefineCoverLetterPrompt } from './ai.prompts.js'
 import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 const BG: ProfileContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
@@ -72,5 +72,36 @@ describe('buildCoverLetterPrompt', () => {
     const p = buildCoverLetterPrompt(BG, { title: 'T', company: 'C' })
     expect(p).toContain('{month, year}')
     expect(p).toContain('Jan 2022 – Present')
+  })
+})
+
+describe('buildRefineCoverLetterPrompt', () => {
+  const BODY = 'Dear hiring manager,\n\nI led the platform team at Acme.'
+
+  it('embeds the current letter body and the no-invent / output-only-Markdown guardrails', () => {
+    const p = buildRefineCoverLetterPrompt(BODY, 'humanize')
+    expect(p).toContain(BODY)
+    expect(p).toMatch(/do not invent/i)
+    expect(p).toMatch(/only the revised letter body in Markdown/i)
+    expect(p).toMatch(/no code fences/i)
+  })
+
+  it('includes the per-action guide text for each preset', () => {
+    expect(buildRefineCoverLetterPrompt(BODY, 'humanize')).toMatch(/strip robotic, generic, or clichéd AI phrasing/i)
+    expect(buildRefineCoverLetterPrompt(BODY, 'shorten')).toMatch(/more concise/i)
+    expect(buildRefineCoverLetterPrompt(BODY, 'lengthen')).toMatch(/expand it with more relevant, specific detail/i)
+    expect(buildRefineCoverLetterPrompt(BODY, 'fix-grammar')).toMatch(/fix grammar, spelling, and punctuation/i)
+  })
+
+  it('includes the ADDITIONAL INSTRUCTIONS block for the custom action', () => {
+    const p = buildRefineCoverLetterPrompt(BODY, 'custom', 'mention my open-source work')
+    expect(p).toMatch(/apply the user instructions below/i)
+    expect(p).toContain('ADDITIONAL INSTRUCTIONS:')
+    expect(p).toContain('mention my open-source work')
+  })
+
+  it('omits the ADDITIONAL INSTRUCTIONS block for a preset without instructions', () => {
+    const p = buildRefineCoverLetterPrompt(BODY, 'shorten')
+    expect(p).not.toContain('ADDITIONAL INSTRUCTIONS:')
   })
 })

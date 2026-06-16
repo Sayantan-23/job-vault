@@ -1,5 +1,5 @@
-import Markdown from 'react-markdown'
 import { ExternalLink } from 'lucide-react'
+import { MarkdownProse } from '@/components/ui/markdown-prose'
 
 export function JobSnapshot({ markdown, sourceUrl }: { markdown: string | null; sourceUrl: string | null }) {
   return (
@@ -19,9 +19,7 @@ export function JobSnapshot({ markdown, sourceUrl }: { markdown: string | null; 
         ) : null}
       </div>
       {markdown ? (
-        <div className="prose prose-sm max-w-none text-foreground prose-headings:text-foreground prose-a:text-primary">
-          <Markdown>{markdown}</Markdown>
-        </div>
+        <MarkdownProse>{markdown}</MarkdownProse>
       ) : (
         <p className="text-sm text-muted-foreground">No snapshot was captured for this job.</p>
       )}

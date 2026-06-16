@@ -96,13 +96,18 @@ describe('DocumentList', () => {
     expect(unselected.className).not.toMatch(/(?:^|\s)bg-accent(?:\s|$)/)
   })
 
-  it('gives keyboard-focused rows a visible ring and fixes the date column width', () => {
+  it('gives keyboard-focused rows a visible ring', () => {
     renderList()
     const row = screen.getByRole('button', { name: /^Acme — cover letter/ })
     expect(row.className).toContain('focus-visible:ring-2')
     expect(row.className).toContain('focus-visible:ring-ring')
-    // 4rem date track (not auto) so the text-column boundaries align across rows.
-    expect(row.className).toContain('grid-cols-[minmax(0,2fr)_minmax(0,1.5fr)_minmax(0,1fr)_4rem_auto]')
+  })
+
+  it('omits the persona segment when the row has no persona', () => {
+    renderList()
+    // d2 has personaName '—', so it should not render the dot-separated persona.
+    const row = screen.getByRole('button', { name: /^General résumé/ })
+    expect(row.textContent).not.toContain('—')
   })
 
   it('renders the empty text without any rows when rows is empty', () => {
