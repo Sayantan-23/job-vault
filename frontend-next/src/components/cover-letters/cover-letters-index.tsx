@@ -76,7 +76,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
         }
       />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="mx-auto max-w-3xl space-y-4">
+        <div className="space-y-4">
           <MutationErrorAlert error={del.error} />
           <DocumentList
             rows={rows}
