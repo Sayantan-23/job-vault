@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -91,6 +91,8 @@ describe('PersonasWorkspace', () => {
       { wrapper },
     )
     await userEvent.click(screen.getByRole('button', { name: /delete backend/i }))
+    // A confirmation dialog gates the delete.
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/personas/p1'))
   })
 

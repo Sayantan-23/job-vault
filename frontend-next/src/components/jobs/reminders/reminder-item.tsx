@@ -3,6 +3,7 @@
 import { Check, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { useConfirm } from '@/hooks/use-confirm'
 import type { Reminder } from '@/types/reminder'
 
 export function ReminderItem({
@@ -16,6 +17,13 @@ export function ReminderItem({
 }) {
   const overdue = !reminder.isCompleted && new Date(reminder.remindAt).getTime() < Date.now()
   const due = new Date(reminder.remindAt)
+  const { confirm, confirmDialog } = useConfirm()
+
+  const onDeleteClick = async () => {
+    if (await confirm({ title: 'Delete reminder?', description: reminder.message, confirmLabel: 'Delete', destructive: true })) {
+      onDelete(reminder.id)
+    }
+  }
 
   return (
     <div
@@ -41,16 +49,11 @@ export function ReminderItem({
         >
           <Check className={cn('size-4', reminder.isCompleted && 'text-primary')} aria-hidden="true" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label="Delete reminder"
-          onClick={() => onDelete(reminder.id)}
-        >
+        <Button type="button" variant="ghost" size="icon" aria-label="Delete reminder" onClick={onDeleteClick}>
           <Trash2 className="size-4" aria-hidden="true" />
         </Button>
       </div>
+      {confirmDialog}
     </div>
   )
 }

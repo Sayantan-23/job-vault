@@ -112,6 +112,8 @@ describe('ResumeWorkspace', () => {
     await userEvent.click(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme'))
     expect(screen.getByTestId('preview')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Delete SWE — Acme' }))
+    // A confirmation dialog gates the delete.
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/resumes/r1'))
     // The clear happens in the mutation's onSuccess, so wait for it to settle.
     await waitFor(() => expect(screen.queryByTestId('preview')).not.toBeInTheDocument())
@@ -123,6 +125,7 @@ describe('ResumeWorkspace', () => {
     render(<ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumes={[TAILORED]} />, { wrapper })
     await userEvent.click(within(screen.getByRole('list', { name: 'Résumés' })).getByText('SWE — Acme'))
     await userEvent.click(screen.getByRole('button', { name: 'Delete SWE — Acme' }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Delete failed')
     expect(screen.getByTestId('preview')).toBeInTheDocument()
   })

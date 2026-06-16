@@ -7,6 +7,7 @@ import { useGenerateResume, useUpdateResume, useResumes, useDeleteResume } from 
 import { useJobOptions, type JobOption } from '@/hooks/use-job-options'
 import { usePersonas } from '@/hooks/use-personas'
 import { useRevealBelowLg } from '@/hooks/use-reveal-below-lg'
+import { useConfirm } from '@/hooks/use-confirm'
 import { GenerateResumeBar } from './generate-resume-bar'
 import { ResumePreview } from './resume-preview'
 import { ResumeContentEditor } from './resume-content-editor'
@@ -47,6 +48,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
   const { data: jobs = [] } = useJobOptions()
   const { data: allResumes = [] } = useResumes(undefined, initialResumes)
   const editorPane = useRevealBelowLg<HTMLDivElement>()
+  const { confirm, confirmDialog } = useConfirm()
 
   const jobsById = useMemo(() => new Map(jobs.map((j) => [j.id, j])), [jobs])
   const personaNames = useMemo(() => new Map(personas.map((p) => [p.id, p.name])), [personas])
@@ -68,7 +70,18 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
     }
   }
 
-  const onDelete = (id: string) => {
+  const onDelete = async (id: string) => {
+    const target = allResumes.find((r) => r.id === id)
+    if (
+      !(await confirm({
+        title: 'Delete résumé?',
+        description: target?.title ? `"${target.title}" will be permanently deleted.` : 'This résumé will be permanently deleted.',
+        confirmLabel: 'Delete',
+        destructive: true,
+      }))
+    ) {
+      return
+    }
     del.mutate(id, {
       // Only clear the editor once the delete actually lands — a failure
       // keeps the résumé open (and surfaces the alert below the generator).
@@ -157,6 +170,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
           </div>
         </div>
       </div>
+      {confirmDialog}
     </div>
   )
 }

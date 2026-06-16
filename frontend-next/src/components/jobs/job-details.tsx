@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useConfirm } from '@/hooks/use-confirm'
 import type { Job } from '@/types/job'
 
 // The <select> only renders valid options, but `e.target.value` is a plain
@@ -30,7 +31,20 @@ export function JobDetails({
   const update = useUpdateJob(job.id)
   const remove = useDeleteJob()
   const [notes, setNotes] = useState(job.notes ?? '')
-  const [confirming, setConfirming] = useState(false)
+  const { confirm, confirmDialog } = useConfirm()
+
+  const onDelete = async () => {
+    if (
+      await confirm({
+        title: 'Delete job?',
+        description: `"${job.title}" at ${job.company} will be permanently deleted, along with its timeline, reminders, and any cover letters generated from it.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      })
+    ) {
+      remove.mutate(job.id, { onSuccess: onDeleted })
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -100,28 +114,11 @@ export function JobDetails({
       </div>
 
       <div className="border-t border-border pt-4">
-        {confirming ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Delete this job?</span>
-            <Button
-              type="button"
-              variant="destructive"
-              size="sm"
-              disabled={remove.isPending}
-              onClick={() => remove.mutate(job.id, { onSuccess: onDeleted })}
-            >
-              Confirm delete
-            </Button>
-            <Button type="button" variant="ghost" size="sm" onClick={() => setConfirming(false)}>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button type="button" variant="destructive" size="sm" onClick={() => setConfirming(true)}>
-            Delete
-          </Button>
-        )}
+        <Button type="button" variant="destructive" size="sm" disabled={remove.isPending} onClick={onDelete}>
+          Delete
+        </Button>
       </div>
+      {confirmDialog}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/app/page-header'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { useCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter } from '@/hooks/use-cover-letters'
+import { useConfirm } from '@/hooks/use-confirm'
 import { CoverLetterEditor } from '@/components/resume/cover-letter-editor'
 import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 
@@ -21,11 +22,21 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
   const save = useUpdateCoverLetter(letter.id)
   const del = useDeleteCoverLetter()
   const [body, setBody] = useState(initialLetter.bodyMarkdown)
+  const { confirm, confirmDialog } = useConfirm()
 
   const aiEnabled = status?.enabled ?? false
 
-  const onDelete = () => {
-    del.mutate(letter.id, { onSuccess: () => router.push('/app/cover-letters') })
+  const onDelete = async () => {
+    if (
+      await confirm({
+        title: 'Delete cover letter?',
+        description: letter.title ? `"${letter.title}" will be permanently deleted.` : 'This cover letter will be permanently deleted.',
+        confirmLabel: 'Delete',
+        destructive: true,
+      })
+    ) {
+      del.mutate(letter.id, { onSuccess: () => router.push('/app/cover-letters') })
+    }
   }
 
   return (
@@ -68,6 +79,7 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
           <MutationErrorAlert error={del.error} />
         </div>
       </div>
+      {confirmDialog}
     </div>
   )
 }
