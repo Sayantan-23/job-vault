@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { Persona } from '@/types/persona'
 import { useDeletePersona } from '@/hooks/use-personas'
+import { useConfirm } from '@/hooks/use-confirm'
 
 interface Props {
   persona: Persona
@@ -12,6 +13,20 @@ interface Props {
 
 export function PersonaCard({ persona, onEdit }: Props) {
   const del = useDeletePersona()
+  const { confirm, confirmDialog } = useConfirm()
+
+  const onDelete = async () => {
+    if (
+      await confirm({
+        title: 'Delete persona?',
+        description: `"${persona.name}" will be permanently deleted. Résumés and cover letters already generated from it are not affected.`,
+        confirmLabel: 'Delete',
+        destructive: true,
+      })
+    ) {
+      del.mutate(persona.id)
+    }
+  }
   const roles = persona.data.experience.length
   const skills = persona.data.skills.length
   const summary = persona.data.summary.trim()
@@ -39,13 +54,14 @@ export function PersonaCard({ persona, onEdit }: Props) {
             type="button"
             aria-label={`Delete ${persona.name}`}
             disabled={del.isPending}
-            onClick={() => del.mutate(persona.id)}
+            onClick={onDelete}
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
           >
             <Trash2 className="size-4" aria-hidden="true" />
           </button>
         </div>
       </div>
+      {confirmDialog}
 
       <p className="mt-3 line-clamp-2 min-h-[2.5rem] text-sm text-muted-foreground">
         {summary || 'No summary yet — edit this persona to add one.'}

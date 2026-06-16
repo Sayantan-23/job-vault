@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { Reminder } from '@/types/reminder'
 import { ReminderItem } from './reminder-item'
@@ -33,6 +33,8 @@ describe('ReminderItem', () => {
     await userEvent.click(screen.getByRole('button', { name: /complete/i }))
     expect(onToggleComplete).toHaveBeenCalledWith(reminder)
     await userEvent.click(screen.getByRole('button', { name: /delete reminder/i }))
+    // A confirmation dialog gates the delete.
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
     expect(onDelete).toHaveBeenCalledWith('r1')
   })
 })

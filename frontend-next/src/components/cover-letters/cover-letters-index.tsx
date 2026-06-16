@@ -13,6 +13,7 @@ import { usePersonas } from '@/hooks/use-personas'
 import { useAllCoverLetters, useGenerateCoverLetter, useDeleteCoverLetter, type GenerateBody } from '@/hooks/use-cover-letters'
 import { DocumentList, type DocumentRow } from '@/components/documents/document-list'
 import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
+import { useConfirm } from '@/hooks/use-confirm'
 import { NewCoverLetterSheet } from './new-cover-letter-sheet'
 
 interface Props {
@@ -33,6 +34,7 @@ function letterContext(letter: CoverLetter, jobsById: Map<string, JobOption>): s
 
 export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }: Props) {
   const router = useRouter()
+  const { confirm, confirmDialog } = useConfirm()
   const [sheetOpen, setSheetOpen] = useState(false)
   const { data: status } = useAiStatus(aiStatus)
   const { data: personas = [] } = usePersonas(initialPersonas)
@@ -53,6 +55,21 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
     personaName: (letter.personaId && personaNames.get(letter.personaId)) || '—',
     createdAt: letter.createdAt,
   }))
+
+  const onDelete = async (id: string) => {
+    if (del.isPending) return // don't start a second delete while one is in flight
+    const letter = letters.find((l) => l.id === id)
+    if (
+      await confirm({
+        title: 'Delete cover letter?',
+        description: letter?.title ? `"${letter.title}" will be permanently deleted.` : 'This cover letter will be permanently deleted.',
+        confirmLabel: 'Delete',
+        destructive: true,
+      })
+    ) {
+      del.mutate(id)
+    }
+  }
 
   const onGenerate = (body: GenerateBody) => {
     generate.mutate(body, {
@@ -82,7 +99,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
             rows={rows}
             selectedId={null}
             onSelect={(id) => router.push(`/app/cover-letters/${id}`)}
-            onDelete={(id) => del.mutate(id)}
+            onDelete={onDelete}
             emptyText={
               generatorEnabled
                 ? 'No cover letters yet — create your first one.'
@@ -102,6 +119,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
         error={generate.error}
         onGenerate={onGenerate}
       />
+      {confirmDialog}
     </div>
   )
 }

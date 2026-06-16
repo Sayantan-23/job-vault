@@ -85,6 +85,8 @@ describe('CoverLettersIndex', () => {
     api.delete.mockResolvedValue(undefined)
     render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     await userEvent.click(screen.getByRole('button', { name: 'Delete Acme — cover letter' }))
+    // A confirmation dialog gates the delete.
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/cover-letters/cl1'))
   })
 
