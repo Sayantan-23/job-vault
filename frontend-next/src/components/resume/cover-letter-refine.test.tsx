@@ -91,6 +91,19 @@ describe('CoverLetterRefine', () => {
     expect(screen.queryByRole('button', { name: /^keep$/i })).not.toBeInTheDocument()
   })
 
+  it('resets the proposal view (back to diff) when Try again returns a fresh grammar candidate', async () => {
+    api.post.mockResolvedValue({ bodyMarkdown: 'I have five years of experience.' })
+    render(<CoverLetterRefine coverLetterId="cl1" currentBody="I has five year of experience." onApply={vi.fn()} />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: /fix grammar/i }))
+    // Grammar defaults to the diff → toggle offers "Show clean".
+    expect(await screen.findByRole('button', { name: /show clean/i })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /show clean/i }))
+    expect(screen.getByRole('button', { name: /show diff/i })).toBeInTheDocument()
+    // Try again → fresh candidate remounts the proposal back to the diff view.
+    await userEvent.click(screen.getByRole('button', { name: /^try again$/i }))
+    expect(await screen.findByRole('button', { name: /show clean/i })).toBeInTheDocument()
+  })
+
   it('renders an alert when the refine mutation fails', async () => {
     api.post.mockRejectedValue(new Error('AI is unavailable'))
     render(<CoverLetterRefine coverLetterId="cl1" currentBody={CURRENT} onApply={vi.fn()} />, { wrapper })

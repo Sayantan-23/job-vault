@@ -40,6 +40,9 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply, onStage
   const [lastInstructions, setLastInstructions] = useState<string | undefined>(undefined)
   const [instructions, setInstructions] = useState('')
   const [undoBody, setUndoBody] = useState<string | null>(null)
+  // Bumped on every fresh candidate so the proposal pane remounts with clean view
+  // state (diff/clean toggle, try-again tweak box) instead of carrying it over.
+  const [proposalSeq, setProposalSeq] = useState(0)
 
   // Switching to a different letter must discard any staged rewrite/undo — else
   // a candidate generated for letter A could be kept into letter B's buffer.
@@ -70,6 +73,7 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply, onStage
           setCandidate(r.bodyMarkdown)
           setLastAction(action)
           setLastInstructions(trimmed || undefined)
+          setProposalSeq((s) => s + 1)
         },
       },
     )
@@ -83,6 +87,7 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply, onStage
       {
         onSuccess: (r) => {
           setCandidate(r.bodyMarkdown)
+          setProposalSeq((s) => s + 1)
           if (nextInstructions !== undefined) setLastInstructions(nextInstructions || undefined)
         },
       },
@@ -141,6 +146,7 @@ export function CoverLetterRefine({ coverLetterId, currentBody, onApply, onStage
 
       {staged && candidate !== null && lastAction !== null ? (
         <CoverLetterProposal
+          key={proposalSeq}
           action={lastAction}
           candidate={candidate}
           currentBody={currentBody}
