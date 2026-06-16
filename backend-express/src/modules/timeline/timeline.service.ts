@@ -1,8 +1,8 @@
 import { AppError } from '@/shared/errors.js'
-import { timelineRepository } from './timeline.repository.js'
+import { timelineRepository, type GlobalTimelineEventRow } from './timeline.repository.js'
 import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
 import type { TimelineEventRow, NewTimelineEventRow } from '@/db/schema/timeline.js'
-import type { CreateTimelineEntryInput } from './timeline.schema.js'
+import type { CreateTimelineEntryInput, TimelineQueryInput } from './timeline.schema.js'
 
 export interface AutoEntryInput {
   userId: string
@@ -19,6 +19,15 @@ async function assertJobOwned(userId: string, jobId: string): Promise<void> {
 async function list(userId: string, jobId: string): Promise<TimelineEventRow[]> {
   await assertJobOwned(userId, jobId)
   return timelineRepository.findByJob(jobId)
+}
+
+async function listForUser(
+  userId: string,
+  query: TimelineQueryInput,
+): Promise<{ rows: GlobalTimelineEventRow[]; total: number; page: number; limit: number }> {
+  const { page, limit } = query
+  const { rows, total } = await timelineRepository.findByUser(userId, limit, (page - 1) * limit)
+  return { rows, total, page, limit }
 }
 
 async function addManualEntry(
@@ -49,4 +58,4 @@ async function addAutoEntry(input: AutoEntryInput): Promise<TimelineEventRow> {
   return timelineRepository.create(values)
 }
 
-export const timelineService = { list, addManualEntry, addAutoEntry }
+export const timelineService = { list, listForUser, addManualEntry, addAutoEntry }

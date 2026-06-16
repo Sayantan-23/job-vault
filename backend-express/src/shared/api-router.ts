@@ -3,7 +3,7 @@ import { healthRouter } from '@/modules/health/health.router.js'
 import { authRouter } from '@/modules/auth/auth.router.js'
 import { jobsRouter } from '@/modules/jobs/jobs.router.js'
 import { dashboardRouter } from '@/modules/dashboard/dashboard.router.js'
-import { timelineRouter } from '@/modules/timeline/timeline.router.js'
+import { timelineRouter, timelineGlobalRouter } from '@/modules/timeline/timeline.router.js'
 import { notificationsRouter } from '@/modules/notifications/notifications.router.js'
 import { remindersJobRouter, remindersRouter } from '@/modules/reminders/reminders.router.js'
 import { aiRouter } from '@/modules/ai/ai.router.js'
@@ -24,6 +24,7 @@ router.use('/jobs/:jobId/timeline', timelineRouter)
 // '/jobs/<id>/reminders' falls through to the mount registered here.
 router.use('/jobs/:jobId/reminders', remindersJobRouter)
 router.use('/reminders', remindersRouter)
+router.use('/timeline', timelineGlobalRouter)
 router.use('/dashboard', dashboardRouter)
 router.use('/notifications', notificationsRouter)
 router.use('/ai', aiRouter)

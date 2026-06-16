@@ -7,6 +7,7 @@ import type { JobRow } from '@/db/schema/jobs.js'
 vi.mock('./timeline.repository.js', () => ({
   timelineRepository: {
     findByJob: vi.fn(),
+    findByUser: vi.fn(),
     create: vi.fn(),
   },
 }))
@@ -76,6 +77,40 @@ describe('GET /api/jobs/:jobId/timeline', () => {
     const res = await request(app).get('/api/jobs/missing/timeline').set('Cookie', [cookie])
     expect(res.status).toBe(404)
     expect(res.body.error).toBe('NOT_FOUND')
+  })
+})
+
+describe('GET /api/timeline (global feed)', () => {
+  it('401s without an access token cookie', async () => {
+    const res = await request(app).get('/api/timeline')
+    expect(res.status).toBe(401)
+    expect(timeline.findByUser).not.toHaveBeenCalled()
+  })
+
+  it('200s with the enriched rows and pagination meta', async () => {
+    timeline.findByUser.mockResolvedValue({
+      rows: [{ ...fakeEvent({ title: 'Status changed to Applied' }), jobTitle: 'SWE', jobCompany: 'Acme' }],
+      total: 1,
+    })
+    const res = await request(app).get('/api/timeline').set('Cookie', [cookie])
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveLength(1)
+    expect(res.body.data[0].jobCompany).toBe('Acme')
+    expect(res.body.meta).toMatchObject({ total: 1, page: 1, limit: 50, totalPages: 1 })
+  })
+
+  it('forwards page/limit query params (offset = (page-1)*limit)', async () => {
+    timeline.findByUser.mockResolvedValue({ rows: [], total: 5 })
+    const res = await request(app).get('/api/timeline?page=2&limit=2').set('Cookie', [cookie])
+    expect(res.status).toBe(200)
+    expect(timeline.findByUser).toHaveBeenCalledWith('u1', 2, 2)
+    expect(res.body.meta).toMatchObject({ total: 5, page: 2, limit: 2, totalPages: 3 })
+  })
+
+  it('400s on an invalid page param', async () => {
+    const res = await request(app).get('/api/timeline?page=0').set('Cookie', [cookie])
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('VALIDATION_ERROR')
   })
 })
 
