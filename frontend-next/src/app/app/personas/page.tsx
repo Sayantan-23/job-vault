@@ -16,26 +16,16 @@ const EMPTY_PROFILE: ProfileContent = {
   education: [],
 }
 
+const EMPTY_STATUS: AiStatus = { enabled: false, maxPersonas: 5 }
+
 export default async function PersonasPage() {
-  let initialPersonas: Persona[] = []
-  try {
-    initialPersonas = await apiServer.get<Persona[]>('/api/personas')
-  } catch {
-    initialPersonas = []
-  }
-  let initialStatus: AiStatus = { enabled: false, maxPersonas: 5 }
-  try {
-    initialStatus = await apiServer.get<AiStatus>('/api/ai/status')
-  } catch {
-    initialStatus = { enabled: false, maxPersonas: 5 }
-  }
+  // Fetched in parallel — independent reads, so one round-trip instead of three.
   // The master profile feeds the persona pickers and the build-from-profile seed.
-  let initialProfile: ProfileContent = EMPTY_PROFILE
-  try {
-    initialProfile = await apiServer.get<ProfileContent>('/api/profile')
-  } catch {
-    initialProfile = EMPTY_PROFILE
-  }
+  const [initialPersonas, initialStatus, initialProfile] = await Promise.all([
+    apiServer.get<Persona[]>('/api/personas').catch((): Persona[] => []),
+    apiServer.get<AiStatus>('/api/ai/status').catch(() => EMPTY_STATUS),
+    apiServer.get<ProfileContent>('/api/profile').catch(() => EMPTY_PROFILE),
+  ])
 
   return (
     <Suspense fallback={null}>

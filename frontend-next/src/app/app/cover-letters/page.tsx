@@ -11,24 +11,12 @@ export const metadata: Metadata = { title: 'Cover letters' }
 // silent token refresh heals e.g. an expired access cookie. A [] fallback
 // would be installed as fresh initialData and pin a false-empty workspace.
 export default async function CoverLettersPage() {
-  let personas: Persona[] | undefined
-  try {
-    personas = await apiServer.get<Persona[]>('/api/personas')
-  } catch {
-    personas = undefined
-  }
-  let letters: CoverLetter[] | undefined
-  try {
-    letters = await apiServer.get<CoverLetter[]>('/api/cover-letters')
-  } catch {
-    letters = undefined
-  }
-  let aiStatus: AiStatus | undefined
-  try {
-    aiStatus = await apiServer.get<AiStatus>('/api/ai/status')
-  } catch {
-    aiStatus = undefined
-  }
+  // Fetched in parallel — independent reads, so one round-trip instead of three.
+  const [personas, letters, aiStatus] = await Promise.all([
+    apiServer.get<Persona[]>('/api/personas').catch(() => undefined),
+    apiServer.get<CoverLetter[]>('/api/cover-letters').catch(() => undefined),
+    apiServer.get<AiStatus>('/api/ai/status').catch(() => undefined),
+  ])
 
   return <CoverLettersIndex initialPersonas={personas} initialLetters={letters} aiStatus={aiStatus} />
 }

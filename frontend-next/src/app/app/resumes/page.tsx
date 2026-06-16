@@ -12,18 +12,11 @@ export const metadata: Metadata = { title: 'Résumés' }
 // silent token refresh heals e.g. an expired access cookie. A [] fallback
 // would be installed as fresh initialData and pin a false-empty workspace.
 export default async function ResumesPage() {
-  let personas: Persona[] | undefined
-  try {
-    personas = await apiServer.get<Persona[]>('/api/personas')
-  } catch {
-    personas = undefined
-  }
-  let resumes: GeneratedResume[] | undefined
-  try {
-    resumes = await apiServer.get<GeneratedResume[]>('/api/resumes')
-  } catch {
-    resumes = undefined
-  }
+  // Fetched in parallel — independent reads, so one round-trip instead of two.
+  const [personas, resumes] = await Promise.all([
+    apiServer.get<Persona[]>('/api/personas').catch(() => undefined),
+    apiServer.get<GeneratedResume[]>('/api/resumes').catch(() => undefined),
+  ])
   return (
     <Suspense fallback={null}>
       <ResumesPageClient initialPersonas={personas} initialResumes={resumes} />

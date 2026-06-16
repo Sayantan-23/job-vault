@@ -10,22 +10,15 @@ export const metadata: Metadata = { title: 'Cover letter' }
 export default async function CoverLetterEditorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  let letter: CoverLetter | null = null
-  try {
-    letter = await apiServer.get<CoverLetter>(`/api/cover-letters/${id}`)
-  } catch {
-    letter = null
-  }
+  // Fetched in parallel — independent reads. aiStatus is simply unused if the
+  // letter turns out missing (a rare 404), which beats serializing the two.
+  const [letter, aiStatus] = await Promise.all([
+    apiServer.get<CoverLetter>(`/api/cover-letters/${id}`).catch(() => null),
+    apiServer.get<AiStatus>('/api/ai/status').catch(() => undefined),
+  ])
   // Rendered inline (not via notFound()) so the missing-letter state keeps the
   // authenticated app shell + sidebar, which the notFound() boundary drops.
   if (!letter) return <CoverLetterNotFound />
-
-  let aiStatus: AiStatus | undefined
-  try {
-    aiStatus = await apiServer.get<AiStatus>('/api/ai/status')
-  } catch {
-    aiStatus = undefined
-  }
 
   return <CoverLetterEditorView initialLetter={letter} aiStatus={aiStatus} />
 }
