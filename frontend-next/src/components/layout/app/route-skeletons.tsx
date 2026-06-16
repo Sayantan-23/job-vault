@@ -92,6 +92,34 @@ export function CoverLetterEditorSkeleton() {
   )
 }
 
+export function TimelineSkeleton() {
+  return (
+    <PageSkeleton hasDescription>
+      <div className="mx-auto w-full max-w-2xl space-y-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex gap-3">
+            <Skeleton className="size-7 shrink-0 rounded-full" />
+            <div className="flex-1 space-y-1.5">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-32" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </PageSkeleton>
+  )
+}
+
+export function SettingsSkeleton() {
+  return (
+    <PageSkeleton hasDescription>
+      <div className="w-full max-w-2xl space-y-8">
+        <SkeletonRows count={3} className="h-32" />
+      </div>
+    </PageSkeleton>
+  )
+}
+
 export function ProfileSkeleton() {
   return (
     <PageSkeleton hasActions>
