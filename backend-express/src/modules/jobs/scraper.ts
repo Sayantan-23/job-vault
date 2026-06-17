@@ -1,5 +1,14 @@
 import * as cheerio from 'cheerio'
-import { htmlToMarkdown } from './markdown.js'
+import { htmlToMarkdown, sanitizeSnapshotMarkdown } from './markdown.js'
+
+// How confident we are in the captured result, surfaced to the client so it can
+// degrade gracefully: 'ok' → show the preview, 'partial'/'empty' → route the
+// user to manual entry pre-filled with whatever we got (never lose the job).
+export type ScrapeStatus = 'ok' | 'partial' | 'empty'
+
+// Which tier produced the result (telemetry + lets the client/render chain
+// reason about provenance): the static fetch, a JS render provider, or the AI.
+export type ScrapeSource = 'static' | 'render' | 'ai'
 
 export interface ScrapeResult {
   title: string
@@ -7,15 +16,20 @@ export interface ScrapeResult {
   location?: string
   salaryRange?: string
   snapshotMarkdown: string
+  status: ScrapeStatus
+  source: ScrapeSource
 }
-
-/** Optional second-pass extractor (e.g. an LLM). Wired in by the AI slice. */
-export type ScrapeFallback = (html: string, url: string) => Promise<Partial<ScrapeResult>>
 
 // A partial scrape result whose optional fields may be explicitly `undefined`.
 // `finalize` merges values produced by `?? ` chains (which can be `undefined`),
 // which `exactOptionalPropertyTypes` would otherwise reject for `Partial<…>`.
-type PartialScrape = { [K in keyof ScrapeResult]?: ScrapeResult[K] | undefined }
+export type PartialScrape = { [K in keyof ScrapeResult]?: ScrapeResult[K] | undefined }
+
+// Second-pass extractor invoked only when the static fetch yields a shell (a CSR
+// SPA / bot-protected page). Renders the URL with a JS-capable provider and/or
+// AI-extracts structured fields from the rendered content; see render.ts and the
+// jobs service wiring. Returns `null` when it has nothing to add.
+export type ScrapeFallback = (html: string, url: string) => Promise<PartialScrape | null>
 
 const DEFAULT_TITLE = 'Untitled Position'
 const DEFAULT_COMPANY = 'Unknown Company'
@@ -24,16 +38,19 @@ export async function scrapeUrl(url: string, fallback?: ScrapeFallback): Promise
   const html = await fetchHtml(url)
   const cheerioResult = cheerioExtract(html, url)
 
-  if ((!cheerioResult.title || !cheerioResult.company) && fallback) {
+  if (isShellResult(cheerioResult) && fallback) {
     try {
       const fb = await fallback(html, url)
-      return finalize({
-        title: fb.title ?? cheerioResult.title,
-        company: fb.company ?? cheerioResult.company,
-        location: fb.location ?? cheerioResult.location,
-        salaryRange: fb.salaryRange ?? cheerioResult.salaryRange,
-        snapshotMarkdown: fb.snapshotMarkdown ?? cheerioResult.snapshotMarkdown,
-      })
+      if (fb) {
+        return finalize({
+          title: fb.title ?? cheerioResult.title,
+          company: fb.company ?? cheerioResult.company,
+          location: fb.location ?? cheerioResult.location,
+          salaryRange: fb.salaryRange ?? cheerioResult.salaryRange,
+          snapshotMarkdown: fb.snapshotMarkdown ?? cheerioResult.snapshotMarkdown,
+          source: fb.source ?? 'render',
+        })
+      }
     } catch {
       // Fallback is best-effort; fall through to the Cheerio result.
     }
@@ -42,11 +59,51 @@ export async function scrapeUrl(url: string, fallback?: ScrapeFallback): Promise
   return finalize(cheerioResult)
 }
 
+function isPlaceholderOrEmpty(value: string | undefined, placeholder: string): boolean {
+  const v = value?.trim()
+  return !v || v === placeholder
+}
+
+// A snapshot is "empty" when, after sanitization (which deletes decoy/`data:`
+// images), no actual word characters remain — i.e. the page gave us nothing but
+// chrome and anti-scrape pixels.
+function isSnapshotEmpty(markdown: string | undefined): boolean {
+  if (!markdown) return true
+  return !/[a-z0-9]/i.test(sanitizeSnapshotMarkdown(markdown))
+}
+
+// True when the static fetch failed to capture the essentials — missing/placeholder
+// title or company, or a snapshot that's empty once decoys are stripped. This is
+// the signal to escalate to the render+AI fallback.
+export function isShellResult(p: PartialScrape): boolean {
+  return (
+    isPlaceholderOrEmpty(p.title, DEFAULT_TITLE) ||
+    isPlaceholderOrEmpty(p.company, DEFAULT_COMPANY) ||
+    isSnapshotEmpty(p.snapshotMarkdown)
+  )
+}
+
+function computeStatus(r: { title: string; company: string; snapshotMarkdown: string }): ScrapeStatus {
+  const titleReal = !isPlaceholderOrEmpty(r.title, DEFAULT_TITLE)
+  const companyReal = !isPlaceholderOrEmpty(r.company, DEFAULT_COMPANY)
+  const hasSnapshot = !isSnapshotEmpty(r.snapshotMarkdown)
+  if (!titleReal && !companyReal) return 'empty'
+  if (titleReal && companyReal && hasSnapshot) return 'ok'
+  return 'partial'
+}
+
 function finalize(p: PartialScrape): ScrapeResult {
+  const title = p.title?.trim() || DEFAULT_TITLE
+  const company = p.company?.trim() || DEFAULT_COMPANY
+  // Sanitize unconditionally: the static path already does, but render/AI
+  // markdown arrives here unscrubbed.
+  const snapshotMarkdown = sanitizeSnapshotMarkdown(p.snapshotMarkdown ?? '')
   const result: ScrapeResult = {
-    title: p.title || DEFAULT_TITLE,
-    company: p.company || DEFAULT_COMPANY,
-    snapshotMarkdown: p.snapshotMarkdown ?? '',
+    title,
+    company,
+    snapshotMarkdown,
+    status: computeStatus({ title, company, snapshotMarkdown }),
+    source: p.source ?? 'static',
   }
   if (p.location) result.location = p.location
   if (p.salaryRange) result.salaryRange = p.salaryRange
@@ -106,6 +163,12 @@ function cheerioExtract(html: string, url: string): Partial<ScrapeResult> {
   }
   if (!result.company) {
     const c = $('meta[property="og:site_name"]').attr('content')?.trim()
+    if (c) result.company = c
+  }
+  if (!result.company) {
+    // Many ATS title pages read "Job Application for {title} at {Company}" — pull
+    // the company off the tail of og:title / <title> as a last resort.
+    const c = parseCompanyFromTitle($('meta[property="og:title"]').attr('content') || $('title').text())
     if (c) result.company = c
   }
 
@@ -238,9 +301,14 @@ function extractFromPlatformSelectors($: cheerio.CheerioAPI, url: string): Parti
       $('[data-testid="job-location"]').text() || $('[data-testid="inlineHeader-companyLocation"]').text(),
     )
   } else if (url.includes('greenhouse.io')) {
-    set('title', $('#header .app-title').text())
-    set('company', $('#header .company-name').text())
-    set('location', $('.location').first().text())
+    // Modern Greenhouse boards dropped the legacy `#header .app-title` markup; try
+    // the current selectors first, then fall back to the old ones.
+    set(
+      'title',
+      $('.job__title h1').text() || $('h1.app-title').text() || $('#header .app-title').text(),
+    )
+    set('company', $('.company-name').text() || $('#header .company-name').text())
+    set('location', $('.job__location').first().text() || $('.location').first().text())
   } else if (url.includes('lever.co')) {
     set('title', $('h2.posting-headline').text() || $('.posting-headline h2').text())
     set('company', $('[data-qa="company-name"]').text())
@@ -252,4 +320,14 @@ function extractFromPlatformSelectors($: cheerio.CheerioAPI, url: string): Parti
   }
 
   return result
+}
+
+// Extracts a company name from a "… at {Company}" page title. Bounded to a
+// reasonable length and stops at common separators so noisy titles don't yield
+// junk. Returns undefined when there's no clear "at" tail.
+function parseCompanyFromTitle(title: string | undefined): string | undefined {
+  if (!title) return undefined
+  const match = /\bat\s+([^|–—\-]+?)\s*$/i.exec(title.trim())
+  const company = match?.[1]?.trim()
+  return company && company.length >= 2 && company.length <= 100 ? company : undefined
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { scrapeUrl } from './scraper.js'
+import { scrapeUrl, isShellResult } from './scraper.js'
 
 function mockFetchHtml(html: string, ok = true): void {
   vi.stubGlobal(
@@ -75,6 +75,74 @@ describe('scrapeUrl — fallback seam', () => {
     const fallback = vi.fn()
     await scrapeUrl('https://example.com/ok', fallback)
     expect(fallback).not.toHaveBeenCalled()
+  })
+})
+
+describe('scrapeUrl — status + source', () => {
+  it("marks a fully-extracted result 'ok'/'static'", async () => {
+    const html = `<html><head><meta property="og:site_name" content="Globex"/></head>
+      <body><h1>Platform Engineer</h1><main><p>Own the platform end to end.</p></main></body></html>`
+    mockFetchHtml(html)
+    const r = await scrapeUrl('https://careers.example.org/p')
+    expect(r.status).toBe('ok')
+    expect(r.source).toBe('static')
+  })
+
+  it("marks a nothing-extracted result 'empty'", async () => {
+    mockFetchHtml('<html><body><div>no useful markup at all</div></body></html>')
+    const r = await scrapeUrl('https://example.com/x')
+    expect(r.status).toBe('empty')
+  })
+
+  it('strips decoy images from the snapshot and reports the render source', async () => {
+    // A shell page: no title/company, body is only an anti-scrape decoy image.
+    mockFetchHtml('<html><body><img src="data:image/svg+xml;base64,PD94bWw="/></body></html>')
+    const fallback = vi.fn().mockResolvedValue({
+      title: 'Quality Analyst',
+      company: 'Teleperformance',
+      snapshotMarkdown: '# Quality Analyst\n\nResponsibilities include QA.',
+      source: 'render' as const,
+    })
+    const r = await scrapeUrl('https://www.naukri.com/job-listings-x', fallback)
+    expect(r.title).toBe('Quality Analyst')
+    expect(r.company).toBe('Teleperformance')
+    expect(r.snapshotMarkdown).not.toMatch(/data:|!\[/)
+    expect(r.source).toBe('render')
+    expect(r.status).toBe('ok')
+  })
+})
+
+describe('scrapeUrl — fallback returning null', () => {
+  it('falls through to the (default) static result when the fallback returns null', async () => {
+    mockFetchHtml('<html><body><div>opaque shell</div></body></html>')
+    const fallback = vi.fn().mockResolvedValue(null)
+    const r = await scrapeUrl('https://spa.example.com/job', fallback)
+    expect(fallback).toHaveBeenCalledOnce()
+    expect(r.title).toBe('Untitled Position')
+    expect(r.status).toBe('empty')
+  })
+})
+
+describe('scrapeUrl — company from page title', () => {
+  it('parses "… at {Company}" from <title> when no other company is found', async () => {
+    const html = `<html><head><title>Job Application for Delivery Consultant at Airtable</title></head>
+      <body><h1>Delivery Consultant</h1><main><p>Help customers deliver.</p></main></body></html>`
+    mockFetchHtml(html)
+    const r = await scrapeUrl('https://boards.greenhouse.io/airtable/jobs/123')
+    expect(r.title).toBe('Delivery Consultant')
+    expect(r.company).toBe('Airtable')
+  })
+})
+
+describe('isShellResult', () => {
+  it('is true for missing/placeholder title or company, or an image-only snapshot', () => {
+    expect(isShellResult({})).toBe(true)
+    expect(isShellResult({ title: 'Untitled Position', company: 'Acme', snapshotMarkdown: 'words here' })).toBe(true)
+    expect(isShellResult({ title: 'Engineer', company: 'Unknown Company', snapshotMarkdown: 'words here' })).toBe(true)
+    expect(isShellResult({ title: 'Engineer', company: 'Acme', snapshotMarkdown: '![](data:image/png;base64,AAAA)' })).toBe(true)
+  })
+  it('is false when title, company, and a real snapshot are all present', () => {
+    expect(isShellResult({ title: 'Engineer', company: 'Acme', snapshotMarkdown: 'Build things here.' })).toBe(false)
   })
 })
 
