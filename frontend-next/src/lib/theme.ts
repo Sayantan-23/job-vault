@@ -6,7 +6,6 @@
 export type Theme = 'light' | 'dark' | 'system'
 
 export const THEME_COOKIE = 'theme'
-export const THEMES: readonly Theme[] = ['light', 'dark', 'system'] as const
 
 export function isTheme(value: unknown): value is Theme {
   return value === 'light' || value === 'dark' || value === 'system'

@@ -44,9 +44,14 @@ async function findByUser(
     .limit(limit)
     .offset(offset)
 
+  // Count through the same inner join as the rows query, so `total` can never
+  // exceed the number of rows that are actually returnable (i.e. whose job still
+  // exists). They match in practice today via the jobId cascade-delete, but
+  // keeping the WHERE/JOIN identical makes pagination correct by construction.
   const totalRows = await getDb()
     .select({ value: count() })
     .from(timelineEvents)
+    .innerJoin(jobs, eq(timelineEvents.jobId, jobs.id))
     .where(eq(timelineEvents.userId, userId))
 
   return { rows, total: totalRows[0]?.value ?? 0 }

@@ -11,10 +11,14 @@ export interface ThemeContextValue {
 export const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Server and first client render both start at 'system' to avoid a hydration
-  // mismatch; the actual value is read from the cookie in the effect below. The
-  // inline ThemeScript has already applied the correct class pre-paint, so this
-  // only syncs React state — it never causes a visible flash.
+  // Start at 'system' on both server and client first render so hydration never
+  // mismatches; the real value is read from the cookie in the effect below. The
+  // inline ThemeScript already applied the correct `.dark` class pre-paint, so
+  // there is no color flash. The only residual is cosmetic: on a *hard load* of
+  // a page that displays the selected theme (Settings), the control briefly
+  // highlights 'system' until this effect runs. Eliminating that would require
+  // reading the cookie server-side in the root layout (making it dynamic and
+  // hurting static generation of the marketing pages) — not worth it.
   const [theme, setThemeState] = useState<Theme>('system')
 
   useEffect(() => {

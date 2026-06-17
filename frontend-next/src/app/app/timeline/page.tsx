@@ -19,12 +19,16 @@ export default async function TimelinePage({
 }) {
   const { page: pageParam } = await searchParams
   const page = Math.max(1, Number(pageParam) || 1)
-  const initial = await apiServer
-    .getPage<GlobalTimelineEvent>(`/api/timeline?page=${page}&limit=${TIMELINE_PAGE_SIZE}`)
-    .catch(() => undefined)
 
-  // Only the first page seeds the query cache (the hook keys initialData to page 1).
-  const initialData: Paginated<GlobalTimelineEvent> | undefined = page === 1 ? initial : undefined
+  // Only the first page seeds the query cache (the hook keys initialData to
+  // page 1), so don't waste a server round-trip fetching pages the client
+  // will refetch anyway — page 2+ hydrates from the client hook on mount.
+  const initialData: Paginated<GlobalTimelineEvent> | undefined =
+    page === 1
+      ? await apiServer
+          .getPage<GlobalTimelineEvent>(`/api/timeline?page=1&limit=${TIMELINE_PAGE_SIZE}`)
+          .catch(() => undefined)
+      : undefined
 
   return (
     <Suspense fallback={<TimelineSkeleton />}>
