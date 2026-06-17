@@ -114,7 +114,7 @@ describe('POST /api/jobs', () => {
 
 describe('POST /api/jobs/scrape', () => {
   it('200s and returns a preview ScrapeResult (does not persist)', async () => {
-    scrape.mockResolvedValue({ title: 'Scraped', company: 'Co', snapshotMarkdown: '# md' })
+    scrape.mockResolvedValue({ title: 'Scraped', company: 'Co', snapshotMarkdown: '# md', status: 'ok', source: 'static' })
     const res = await request(app)
       .post('/api/jobs/scrape')
       .set('Cookie', [cookie])

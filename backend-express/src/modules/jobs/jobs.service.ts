@@ -3,6 +3,7 @@ import { logger } from '@/shared/logger.js'
 import { jobsRepository } from './jobs.repository.js'
 import { timelineService } from '@/modules/timeline/timeline.service.js'
 import { scrapeUrl, type ScrapeResult } from './scraper.js'
+import { renderAndExtract } from './scrape-fallback.js'
 import type { JobRow, NewJobRow } from '@/db/schema/jobs.js'
 import type { CreateJobInput, UpdateJobInput, MoveJobInput, JobQueryInput } from './jobs.schema.js'
 
@@ -109,7 +110,9 @@ async function remove(userId: string, id: string): Promise<void> {
 
 async function scrape(url: string): Promise<ScrapeResult> {
   try {
-    return await scrapeUrl(url)
+    // The render+AI fallback fires only when the fast static path returns a shell
+    // (CSR SPA / bot-protected board); see scrape-fallback.ts.
+    return await scrapeUrl(url, renderAndExtract)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to scrape URL'
     throw new AppError('VALIDATION_ERROR', `Scraping failed: ${message}`, err)

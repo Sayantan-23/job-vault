@@ -327,7 +327,7 @@ function extractFromPlatformSelectors($: cheerio.CheerioAPI, url: string): Parti
 // junk. Returns undefined when there's no clear "at" tail.
 function parseCompanyFromTitle(title: string | undefined): string | undefined {
   if (!title) return undefined
-  const match = /\bat\s+([^|–—\-]+?)\s*$/i.exec(title.trim())
+  const match = /\bat\s+([^|–—-]+?)\s*$/i.exec(title.trim())
   const company = match?.[1]?.trim()
   return company && company.length >= 2 && company.length <= 100 ? company : undefined
 }

@@ -150,7 +150,7 @@ describe('jobsService.update / move / remove', () => {
 
 describe('jobsService.scrape', () => {
   it('returns the scrape result on success', async () => {
-    scrape.mockResolvedValue({ title: 'T', company: 'C', snapshotMarkdown: 'md' })
+    scrape.mockResolvedValue({ title: 'T', company: 'C', snapshotMarkdown: 'md', status: 'ok', source: 'static' })
     expect(await jobsService.scrape('https://x.com/j')).toMatchObject({ title: 'T' })
   })
   it('wraps scraper errors as VALIDATION_ERROR', async () => {
