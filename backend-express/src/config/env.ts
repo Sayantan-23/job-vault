@@ -24,6 +24,18 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().optional(),
   GEMINI_API_KEY: z.string().optional(),
   GEMINI_MODEL: z.string().default('gemini-3.5-flash'),
+  // URL-scraper render fallback (for JS-rendered / bot-protected job boards).
+  // Enabled by default; set to 'false'/'0' to disable and stay static-only.
+  SCRAPER_RENDER_ENABLED: z
+    .string()
+    .default('true')
+    .transform((v) => v !== 'false' && v !== '0'),
+  // Jina Reader (r.jina.ai) is the default render provider — works with no key
+  // (free tier); a key raises rate limits. Paid providers below are registered
+  // only when their key is set (interface ready, off until configured).
+  JINA_API_KEY: z.string().optional(),
+  FIRECRAWL_API_KEY: z.string().optional(),
+  SCRAPINGBEE_API_KEY: z.string().optional(),
   // Optional second model retried once when GEMINI_MODEL fails transiently
   // (timeout / 503 overload). Deliberately no default: unset means no fallback.
   GEMINI_FALLBACK_MODEL: z.string().optional(),
