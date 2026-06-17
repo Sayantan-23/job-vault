@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 
 // The real logger reads env + spins up a pino-pretty worker at module load — stub
-// it so the unit stays hermetic (render.ts imports it).
+// it. assertFetchableUrl does real DNS — stub it to a no-op (covered in url-guard.test.ts).
+const { assertFetchableUrl } = vi.hoisted(() => ({ assertFetchableUrl: vi.fn().mockResolvedValue(undefined) }))
 vi.mock('@/shared/logger.js', () => ({ logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() } }))
+vi.mock('./url-guard.js', () => ({ assertFetchableUrl, isPrivateIp: () => false }))
 
 import { parseJinaResponse, createJinaRenderClient, renderUrl, type RenderClient } from './render.js'
 
@@ -22,6 +24,12 @@ describe('parseJinaResponse', () => {
     expect(r?.markdown).toBe('Just some rendered markdown.')
     expect(r?.title).toBeUndefined()
   })
+  it('does not truncate when "Markdown Content:" appears inside the body text', () => {
+    // No header envelope; the phrase appears mid-sentence and must NOT be treated as the marker.
+    const r = parseJinaResponse('# Some job\n\nWe build a Markdown Content: pipeline. Apply now.')
+    expect(r?.markdown).toContain('We build a Markdown Content: pipeline')
+    expect(r?.markdown).toContain('# Some job')
+  })
   it('returns null for empty input', () => {
     expect(parseJinaResponse('')).toBeNull()
     expect(parseJinaResponse('   ')).toBeNull()
@@ -30,11 +38,9 @@ describe('parseJinaResponse', () => {
 
 describe('createJinaRenderClient', () => {
   it('fetches r.jina.ai and returns the parsed result', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: () => Promise.resolve('Title: Role\n\nMarkdown Content:\nDo the thing.'),
-    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response('Title: Role\n\nMarkdown Content:\nDo the thing.', { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     const client = createJinaRenderClient()
     const r = await client.render('https://jobs.example.com/1')
@@ -46,23 +52,27 @@ describe('createJinaRenderClient', () => {
     expect(r?.markdown).toBe('Do the thing.')
   })
   it('sends a bearer token when an API key is configured', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: () => Promise.resolve('Markdown Content:\nContent.'),
-    })
+    const fetchMock = vi.fn().mockResolvedValue(new Response('Markdown Content:\nContent.', { status: 200 }))
     vi.stubGlobal('fetch', fetchMock)
     await createJinaRenderClient('secret-key').render('https://x/1')
     const headers = (fetchMock.mock.calls[0]?.[1] as { headers: Record<string, string> }).headers
     expect(headers['Authorization']).toBe('Bearer secret-key')
   })
   it('returns null on a non-ok response', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429, text: () => Promise.resolve('') }))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 429 })))
     expect(await createJinaRenderClient().render('https://x/1')).toBeNull()
   })
   it('returns null when fetch throws', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
     expect(await createJinaRenderClient().render('https://x/1')).toBeNull()
+  })
+  it('returns null when the SSRF guard rejects the target', async () => {
+    assertFetchableUrl.mockRejectedValueOnce(new Error('private'))
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await createJinaRenderClient().render('https://x/1')).toBeNull()
+    expect(fetchMock).not.toHaveBeenCalled()
+    assertFetchableUrl.mockResolvedValue(undefined)
   })
 })
 

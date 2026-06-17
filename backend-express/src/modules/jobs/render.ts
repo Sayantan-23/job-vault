@@ -1,5 +1,7 @@
 import { getEnv } from '@/config/env.js'
 import { logger } from '@/shared/logger.js'
+import { readTextCapped } from './safe-fetch.js'
+import { assertFetchableUrl } from './url-guard.js'
 
 // A JS-capable render provider: given a URL it returns the page's real content
 // (after the browser-side rendering the static fetch can't do), as Markdown plus
@@ -17,6 +19,7 @@ export interface RenderClient {
 }
 
 const RENDER_TIMEOUT_MS = 45_000
+const MAX_RENDER_BYTES = 5_000_000
 
 // Jina Reader: GET https://r.jina.ai/<target-url> renders the page in a real
 // browser and returns Markdown prefixed with `Title:` / `URL Source:` /
@@ -31,6 +34,14 @@ export function createJinaRenderClient(apiKey?: string): RenderClient {
         'X-Return-Format': 'markdown',
       }
       if (apiKey) headers['Authorization'] = `Bearer ${apiKey}`
+      // Guard the target before handing it to Jina, so we never use the render
+      // provider to launder a request to a private/local address.
+      try {
+        await assertFetchableUrl(url)
+      } catch (err) {
+        logger.warn({ err, url }, 'jina render target failed the SSRF guard')
+        return null
+      }
       let response: Response
       try {
         response = await fetch(`https://r.jina.ai/${url}`, {
@@ -45,7 +56,13 @@ export function createJinaRenderClient(apiKey?: string): RenderClient {
         logger.warn({ status: response.status, url }, 'jina render returned non-ok')
         return null
       }
-      const text = await response.text()
+      let text: string
+      try {
+        text = await readTextCapped(response, MAX_RENDER_BYTES)
+      } catch (err) {
+        logger.warn({ err, url }, 'jina render body exceeded the size cap')
+        return null
+      }
       return parseJinaResponse(text)
     },
   }
@@ -56,13 +73,15 @@ export function createJinaRenderClient(apiKey?: string): RenderClient {
 // body when the headers aren't present.
 export function parseJinaResponse(text: string): RenderResult | null {
   if (!text.trim()) return null
-  const titleMatch = /^Title:\s*(.+)$/m.exec(text)
-  const marker = 'Markdown Content:'
-  const idx = text.indexOf(marker)
-  const markdown = (idx >= 0 ? text.slice(idx + marker.length) : text).trim()
+  // Anchor the body marker to its own line so a stray "Markdown Content:" inside
+  // the page body can't truncate the content. Title is read only from the header
+  // block (before the marker) for the same reason.
+  const markerMatch = /^Markdown Content:[ \t]*$/m.exec(text)
+  const header = markerMatch ? text.slice(0, markerMatch.index) : ''
+  const markdown = (markerMatch ? text.slice(markerMatch.index + markerMatch[0].length) : text).trim()
   if (!markdown) return null
   const result: RenderResult = { markdown }
-  const title = titleMatch?.[1]?.trim()
+  const title = /^Title:\s*(.+)$/m.exec(header)?.[1]?.trim()
   if (title) result.title = title
   return result
 }

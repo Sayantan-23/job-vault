@@ -37,19 +37,28 @@ export function htmlToMarkdown(html: string): string {
 // decoys) and `data:` URIs. Applied to EVERY snapshot we persist, regardless of
 // source (static fetch or a render provider like Jina, whose Markdown is laden
 // with nav logos and image links). Keeps link text, drops the junk. Idempotent.
+// A Markdown URL group `( … )` that tolerates one level of nested parentheses,
+// e.g. `(https://x/Foo_(bar).png)` — a naive `[^)]*` would stop at the first `)`
+// and mangle the surrounding prose.
+const URL_GROUP = String.raw`\((?:[^()]|\([^()]*\))*\)`
+
+const LINKED_IMAGE_RE = new RegExp(String.raw`\[!\[[^\]]*\]${URL_GROUP}\]${URL_GROUP}`, 'g')
+const IMAGE_RE = new RegExp(String.raw`!\[[^\]]*\]${URL_GROUP}`, 'g')
+const DATA_LINK_RE = new RegExp(String.raw`\[([^\]]*)\]\(data:(?:[^()]|\([^()]*\))*\)`, 'gi')
+
 export function sanitizeSnapshotMarkdown(markdown: string): string {
   if (!markdown) return ''
   return (
     markdown
       // Linked images `[![alt](img)](href)` — logos/banners. Drop entirely.
-      .replace(/\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)/g, '')
+      .replace(LINKED_IMAGE_RE, '')
       // Standalone image Markdown `![alt](url)`, incl. `![](<data:…>)` decoys and
-      // transparent pixels (base64 never contains `)`, so the group is safe).
-      .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+      // transparent pixels.
+      .replace(IMAGE_RE, '')
       // Raw <img> HTML that survived into Markdown.
       .replace(/<img\b[^>]*>/gi, '')
       // Links whose href is a `data:` URI — keep the visible text, drop the href.
-      .replace(/\[([^\]]*)\]\(data:[^)]*\)/gi, '$1')
+      .replace(DATA_LINK_RE, '$1')
       // Tidy up the holes left behind.
       .replace(/[ \t]+$/gm, '')
       .replace(/\n{3,}/g, '\n\n')

@@ -34,8 +34,8 @@ describe('renderAndExtract', () => {
     expect(extractJobFromContent).not.toHaveBeenCalled()
   })
 
-  it('prefers AI-extracted fields when AI is enabled', async () => {
-    renderUrl.mockResolvedValue({ title: 'Raw title', markdown: 'noisy rendered page with nav' })
+  it('prefers AI-extracted fields when AI is enabled, feeding it sanitized content', async () => {
+    renderUrl.mockResolvedValue({ title: 'Raw title', markdown: '![](data:image/png;base64,AA)\n\nnoisy page' })
     isAiEnabled.mockReturnValue(true)
     extractJobFromContent.mockResolvedValue({
       title: 'Quality Analyst',
@@ -43,6 +43,8 @@ describe('renderAndExtract', () => {
       snapshotMarkdown: '# Clean description',
     })
     const r = await renderAndExtract('<html/>', 'https://x/1')
+    // The decoy image was stripped before the content reached the AI.
+    expect(extractJobFromContent).toHaveBeenCalledWith('noisy page', 'https://x/1')
     expect(r).toEqual({
       title: 'Quality Analyst',
       company: 'Teleperformance',

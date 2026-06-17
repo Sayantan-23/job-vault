@@ -59,4 +59,19 @@ describe('sanitizeSnapshotMarkdown', () => {
     const once = sanitizeSnapshotMarkdown('![](https://x/a.png)\n\nHello')
     expect(sanitizeSnapshotMarkdown(once)).toBe(once)
   })
+  it('handles image URLs containing parentheses without mangling surrounding prose', () => {
+    const md = sanitizeSnapshotMarkdown('We use ![chart](https://x/Foo_(bar).png) for onboarding.')
+    expect(md).not.toMatch(/!\[|Foo_\(bar\)|\.png/)
+    expect(md).toContain('We use')
+    expect(md).toContain('for onboarding.')
+  })
+  it('removes a linked image whose href has parentheses, keeping later text', () => {
+    const md = sanitizeSnapshotMarkdown('[![Logo](https://x/l.png)](https://acme.example/path_(x)) Apply now.')
+    expect(md).not.toMatch(/!\[|l\.png/)
+    expect(md).toContain('Apply now.')
+  })
+  it('keeps a normal markdown link with a parenthesized URL untouched', () => {
+    const md = sanitizeSnapshotMarkdown('See [the wiki](https://x/Page_(v2)) for details.')
+    expect(md).toBe('See [the wiki](https://x/Page_(v2)) for details.')
+  })
 })

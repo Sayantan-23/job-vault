@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import { htmlToMarkdown, sanitizeSnapshotMarkdown } from './markdown.js'
-import { safeFetch } from './safe-fetch.js'
+import { safeFetch, readTextCapped } from './safe-fetch.js'
 
 // How confident we are in the captured result, surfaced to the client so it can
 // degrade gracefully: 'ok' → show the preview, 'partial'/'empty' → route the
@@ -130,32 +130,6 @@ async function fetchHtml(url: string): Promise<string> {
     throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`)
   }
   return readTextCapped(response, MAX_HTML_BYTES)
-}
-
-// Reads a response body as text, aborting once it exceeds maxBytes.
-async function readTextCapped(response: Response, maxBytes: number): Promise<string> {
-  const lengthHeader = Number(response.headers.get('content-length'))
-  if (Number.isFinite(lengthHeader) && lengthHeader > maxBytes) {
-    throw new Error('Response too large')
-  }
-  const body = response.body
-  if (!body) return ''
-  const reader = body.getReader()
-  const chunks: Uint8Array[] = []
-  let total = 0
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    if (value) {
-      total += value.byteLength
-      if (total > maxBytes) {
-        await reader.cancel()
-        throw new Error('Response too large')
-      }
-      chunks.push(value)
-    }
-  }
-  return Buffer.concat(chunks).toString('utf-8')
 }
 
 function cheerioExtract(html: string, url: string): Partial<ScrapeResult> {
@@ -354,12 +328,19 @@ function extractFromPlatformSelectors($: cheerio.CheerioAPI, url: string): Parti
   return result
 }
 
-// Extracts a company name from a "… at {Company}" page title. Bounded to a
-// reasonable length and stops at common separators so noisy titles don't yield
-// junk. Returns undefined when there's no clear "at" tail.
+// Extracts a company name from a "… at {Company}" page title (the common ATS
+// "Job Application for {role} at {Company}" template). Heuristic guards keep it
+// from capturing generic sentence tails — "operate at scale" → "scale",
+// "at the forefront of innovation" — by requiring a proper-noun shape: starts
+// with a capital/digit, at most a few words. Returns undefined otherwise.
 function parseCompanyFromTitle(title: string | undefined): string | undefined {
   if (!title) return undefined
   const match = /\bat\s+([^|–—-]+?)\s*$/i.exec(title.trim())
   const company = match?.[1]?.trim()
-  return company && company.length >= 2 && company.length <= 100 ? company : undefined
+  if (!company || company.length < 2 || company.length > 100) return undefined
+  // Brand names are proper nouns: capital/number first char, not a lowercase tail.
+  if (!/^[A-Z0-9]/.test(company)) return undefined
+  // A real company name is short; a captured clause is long.
+  if (company.split(/\s+/).length > 6) return undefined
+  return company
 }

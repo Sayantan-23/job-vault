@@ -42,6 +42,33 @@ function validatingLookup(
 
 const safeDispatcher = new Agent({ connect: { lookup: validatingLookup } })
 
+// Reads a response body as text, aborting once it exceeds maxBytes. Guards
+// against a huge or slow-drip page exhausting memory.
+export async function readTextCapped(response: Response, maxBytes: number): Promise<string> {
+  const lengthHeader = Number(response.headers.get('content-length'))
+  if (Number.isFinite(lengthHeader) && lengthHeader > maxBytes) {
+    throw new Error('Response too large')
+  }
+  const body = response.body
+  if (!body) return ''
+  const reader = body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (value) {
+      total += value.byteLength
+      if (total > maxBytes) {
+        await reader.cancel()
+        throw new Error('Response too large')
+      }
+      chunks.push(value)
+    }
+  }
+  return Buffer.concat(chunks).toString('utf-8')
+}
+
 export interface SafeFetchOptions {
   headers?: Record<string, string>
   timeoutMs?: number

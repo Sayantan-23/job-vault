@@ -4,7 +4,11 @@ import { describe, it, expect, vi, afterEach } from 'vitest'
 // serve canned HTML so these unit tests stay hermetic (safe-fetch + url-guard are
 // exercised in their own test files).
 const { safeFetch } = vi.hoisted(() => ({ safeFetch: vi.fn() }))
-vi.mock('./safe-fetch.js', () => ({ safeFetch }))
+vi.mock('./safe-fetch.js', () => ({
+  safeFetch,
+  // The mock serves real Response objects, so the cap-reader is just .text().
+  readTextCapped: (res: Response) => res.text(),
+}))
 
 import { scrapeUrl, isShellResult } from './scraper.js'
 
@@ -134,6 +138,15 @@ describe('scrapeUrl — company from page title', () => {
     const r = await scrapeUrl('https://boards.greenhouse.io/airtable/jobs/123')
     expect(r.title).toBe('Delivery Consultant')
     expect(r.company).toBe('Airtable')
+  })
+
+  it('does NOT treat a generic "… at <lowercase phrase>" tail as a company', async () => {
+    const html = `<html><head><title>Build systems that operate at scale</title></head>
+      <body><h1>Staff Engineer</h1><main><p>Own the platform.</p></main></body></html>`
+    mockFetchHtml(html)
+    const r = await scrapeUrl('https://careers.example.com/role')
+    expect(r.title).toBe('Staff Engineer')
+    expect(r.company).toBe('Unknown Company') // 'scale' rejected by the proper-noun guard
   })
 })
 

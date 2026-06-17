@@ -101,6 +101,28 @@ describe('parseEnv ENABLE_REALTIME', () => {
   })
 })
 
+describe('SCRAPER_RENDER_ENABLED', () => {
+  const base = {
+    CORS_ORIGINS: 'http://localhost:8080',
+    DATABASE_URL: 'postgres://x:x@x:5432/x',
+    JWT_SECRET: 'a'.repeat(32),
+  }
+
+  it('defaults to TRUE when absent (render fallback on by default)', () => {
+    expect(parseEnv(base).SCRAPER_RENDER_ENABLED).toBe(true)
+  })
+  it('parses "false" -> false', () => {
+    expect(parseEnv({ ...base, SCRAPER_RENDER_ENABLED: 'false' }).SCRAPER_RENDER_ENABLED).toBe(false)
+  })
+  it('parses "0" -> false', () => {
+    expect(parseEnv({ ...base, SCRAPER_RENDER_ENABLED: '0' }).SCRAPER_RENDER_ENABLED).toBe(false)
+  })
+  it('parses "true"/"1" -> true', () => {
+    expect(parseEnv({ ...base, SCRAPER_RENDER_ENABLED: 'true' }).SCRAPER_RENDER_ENABLED).toBe(true)
+    expect(parseEnv({ ...base, SCRAPER_RENDER_ENABLED: '1' }).SCRAPER_RENDER_ENABLED).toBe(true)
+  })
+})
+
 const BASE = {
   DATABASE_URL: 'postgres://u:p@localhost:5432/db',
   CORS_ORIGINS: 'http://localhost:8080',

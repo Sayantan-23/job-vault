@@ -25,7 +25,9 @@ export const renderAndExtract: ScrapeFallback = async (_html, url) => {
 
   if (geminiService.isAiEnabled()) {
     try {
-      const ai = await extractJobFromContent(rendered.markdown, url)
+      // Feed the AI the sanitized content (images/decoys stripped) so the token
+      // budget is spent on real text, not markup.
+      const ai = await extractJobFromContent(renderedSnapshot, url)
       if (ai) {
         return {
           title: ai.title ?? base.title,
