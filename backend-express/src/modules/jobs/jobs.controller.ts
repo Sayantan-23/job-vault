@@ -30,7 +30,7 @@ async function create(req: Request, res: Response): Promise<void> {
 
 async function scrape(req: Request, res: Response): Promise<void> {
   const { sourceUrl } = req.body as { sourceUrl: string }
-  const result = await jobsService.scrape(sourceUrl)
+  const result = await jobsService.scrape(requireUserId(req), sourceUrl)
   res.status(200).json({ data: result })
 }
 

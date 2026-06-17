@@ -3,7 +3,7 @@ import { logger } from '@/shared/logger.js'
 import { jobsRepository } from './jobs.repository.js'
 import { timelineService } from '@/modules/timeline/timeline.service.js'
 import { scrapeUrl, type ScrapeResult } from './scraper.js'
-import { renderAndExtract } from './scrape-fallback.js'
+import { createScrapeFallback } from './scrape-fallback.js'
 import type { JobRow, NewJobRow } from '@/db/schema/jobs.js'
 import type { CreateJobInput, UpdateJobInput, MoveJobInput, JobQueryInput } from './jobs.schema.js'
 
@@ -108,11 +108,12 @@ async function remove(userId: string, id: string): Promise<void> {
   if (!ok) throw new AppError('NOT_FOUND', 'Job not found')
 }
 
-async function scrape(url: string): Promise<ScrapeResult> {
+async function scrape(userId: string, url: string): Promise<ScrapeResult> {
   try {
     // The render+AI fallback fires only when the fast static path returns a shell
-    // (CSR SPA / bot-protected board); see scrape-fallback.ts.
-    return await scrapeUrl(url, renderAndExtract)
+    // (CSR SPA / bot-protected board); see scrape-fallback.ts. AI spend is bound
+    // to the user's hourly budget.
+    return await scrapeUrl(url, createScrapeFallback(userId))
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to scrape URL'
     throw new AppError('VALIDATION_ERROR', `Scraping failed: ${message}`, err)
