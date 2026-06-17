@@ -86,14 +86,14 @@ export function UrlPasteForm({
           </Button>
         </div>
         {scrape.isPending ? (
-          <p className="text-xs text-muted-foreground">
+          <p role="status" className="text-xs text-muted-foreground">
             Capturing the posting — this can take a few seconds for some sites.
           </p>
         ) : null}
       </div>
 
       {scrape.isError ? (
-        <div className="space-y-2 rounded-lg bg-destructive/10 px-3 py-2.5">
+        <div role="status" className="space-y-2 rounded-lg bg-destructive/10 px-3 py-2.5">
           <p className="text-sm text-destructive">
             Could not capture this posting. You can enter the details manually instead.
           </p>
@@ -104,7 +104,7 @@ export function UrlPasteForm({
       ) : null}
 
       {captured && preview ? (
-        <div className="space-y-3 rounded-lg border border-border p-4">
+        <div role="status" className="space-y-3 rounded-lg border border-border p-4">
           <div className="space-y-0.5">
             <p className="font-medium">{preview.title}</p>
             <p className="text-sm text-muted-foreground">{preview.company}</p>
@@ -125,7 +125,7 @@ export function UrlPasteForm({
       ) : null}
 
       {incomplete ? (
-        <div className="space-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
+        <div role="status" className="space-y-2 rounded-lg border border-border bg-muted/40 px-3 py-2.5">
           <p className="text-sm font-medium text-foreground">We couldn&apos;t fully capture this posting</p>
           <p className="text-sm text-muted-foreground">
             Some sites block automatic capture. We&apos;ve filled in what we could — review and complete the

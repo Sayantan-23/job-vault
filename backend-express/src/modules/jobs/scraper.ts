@@ -34,6 +34,9 @@ export type ScrapeFallback = (html: string, url: string) => Promise<PartialScrap
 
 const DEFAULT_TITLE = 'Untitled Position'
 const DEFAULT_COMPANY = 'Unknown Company'
+// Bound the persisted/returned snapshot so a huge rendered page can't bloat the
+// response or the DB. Real descriptions are a few KB; this is generous headroom.
+const MAX_SNAPSHOT_CHARS = 100_000
 
 export async function scrapeUrl(url: string, fallback?: ScrapeFallback): Promise<ScrapeResult> {
   const html = await fetchHtml(url)
@@ -96,9 +99,9 @@ function computeStatus(r: { title: string; company: string; snapshotMarkdown: st
 function finalize(p: PartialScrape): ScrapeResult {
   const title = p.title?.trim() || DEFAULT_TITLE
   const company = p.company?.trim() || DEFAULT_COMPANY
-  // Sanitize unconditionally: the static path already does, but render/AI
-  // markdown arrives here unscrubbed.
-  const snapshotMarkdown = sanitizeSnapshotMarkdown(p.snapshotMarkdown ?? '')
+  // Sanitize unconditionally (the static path already does, but render/AI
+  // markdown arrives here unscrubbed) and clamp the length.
+  const snapshotMarkdown = sanitizeSnapshotMarkdown(p.snapshotMarkdown ?? '').slice(0, MAX_SNAPSHOT_CHARS)
   const result: ScrapeResult = {
     title,
     company,
