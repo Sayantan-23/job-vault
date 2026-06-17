@@ -48,4 +48,21 @@ describe('ManualJobForm', () => {
     expect(screen.getByLabelText('Title')).toHaveValue('Pre')
     expect(screen.getByLabelText('Company')).toHaveValue('Filled')
   })
+
+  it('prefills and submits the scraped description (snapshotMarkdown)', async () => {
+    api.post.mockResolvedValue({ id: 'j1' })
+    const onCreated = vi.fn()
+    render(
+      <ManualJobForm
+        onCreated={onCreated}
+        prefill={{ title: 'Pre', company: 'Filled', snapshotMarkdown: '# Captured\n\nBody.' }}
+      />,
+      { wrapper },
+    )
+    expect(screen.getByLabelText('Description')).toHaveValue('# Captured\n\nBody.')
+    await userEvent.click(screen.getByRole('button', { name: /add job/i }))
+    await waitFor(() => expect(onCreated).toHaveBeenCalled())
+    const payload = api.post.mock.calls[0]?.[1] as Record<string, unknown>
+    expect(payload).toMatchObject({ snapshotMarkdown: '# Captured\n\nBody.' })
+  })
 })

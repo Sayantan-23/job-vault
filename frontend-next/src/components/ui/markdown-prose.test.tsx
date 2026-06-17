@@ -19,4 +19,12 @@ describe('MarkdownProse', () => {
     expect(link).toHaveAttribute('target', '_blank')
     expect(link.className).toContain('text-primary')
   })
+
+  it('drops images (decoys, logos, tracking pixels) entirely', () => {
+    const { container } = render(
+      <MarkdownProse>{'![](data:image/svg+xml;base64,AAAA)\n\nReal description text.'}</MarkdownProse>,
+    )
+    expect(container.querySelector('img')).toBeNull()
+    expect(screen.getByText('Real description text.')).toBeInTheDocument()
+  })
 })

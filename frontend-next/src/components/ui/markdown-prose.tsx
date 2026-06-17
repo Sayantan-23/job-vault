@@ -17,6 +17,10 @@ const components: Components = {
       {children}
     </a>
   ),
+  // Images are never meaningful in a scraped job description — they're company
+  // logos, tracking pixels, or anti-scrape decoys (e.g. Naukri's data:-URI
+  // overlay). Drop them so they never render.
+  img: () => null,
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
   em: ({ children }) => <em className="italic">{children}</em>,
   code: ({ children }) => <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">{children}</code>,
