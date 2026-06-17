@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio'
 import { htmlToMarkdown, sanitizeSnapshotMarkdown } from './markdown.js'
+import { assertFetchableUrl } from './url-guard.js'
 
 // How confident we are in the captured result, surfaced to the client so it can
 // degrade gracefully: 'ok' → show the preview, 'partial'/'empty' → route the
@@ -111,6 +112,9 @@ function finalize(p: PartialScrape): ScrapeResult {
 }
 
 async function fetchHtml(url: string): Promise<string> {
+  // SSRF guard: never let a user-supplied URL point the server at a private,
+  // loopback, or metadata address.
+  await assertFetchableUrl(url)
   const response = await fetch(url, {
     headers: {
       'User-Agent':

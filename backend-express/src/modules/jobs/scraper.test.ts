@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+
+// The SSRF guard does a real DNS lookup; stub it to a no-op so these unit tests
+// stay hermetic (it's exercised directly in url-guard.test.ts).
+vi.mock('./url-guard.js', () => ({ assertFetchableUrl: vi.fn().mockResolvedValue(undefined) }))
+
 import { scrapeUrl, isShellResult } from './scraper.js'
 
 function mockFetchHtml(html: string, ok = true): void {
