@@ -53,7 +53,7 @@ describe('createJinaRenderClient', () => {
     })
     vi.stubGlobal('fetch', fetchMock)
     await createJinaRenderClient('secret-key').render('https://x/1')
-    const headers = fetchMock.mock.calls[0][1].headers
+    const headers = (fetchMock.mock.calls[0]?.[1] as { headers: Record<string, string> }).headers
     expect(headers['Authorization']).toBe('Bearer secret-key')
   })
   it('returns null on a non-ok response', async () => {
