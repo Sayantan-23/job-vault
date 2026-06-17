@@ -295,6 +295,18 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 
 ---
 
+## Robust URL Scraping (render fallback + AI normalization) (DONE 2026-06-17)
+
+> Branch `robust-url-scraping`. Plan: `docs/superpowers/plans/2026-06-17-robust-url-scraping.md`. Fixes the long-standing failure where pasting a JS-rendered / bot-protected job URL (Naukri, LinkedIn, Indeed, Workday) returned `Untitled Position` / `Unknown Company` + decoy-image junk. Root cause: those boards are CSR SPAs behind anti-bot — `fetch`+Cheerio only sees an empty shell. This is the **shared** capture mechanism for web **and** the planned mobile app (share-a-URL), so it's built to stand alone (the Chrome extension is web-only).
+- [x] **Tiered pipeline** — static `fetch`+Cheerio/JSON-LD fast-path → on a "shell" result, render via a `RenderClient` (**Jina Reader**, free/keyless default; paid Firecrawl/ScrapingBee slot env-gated) → if Gemini is on, **AI-normalize** the rendered content into `{title, company, location, salary, description}` (the right use of the previously-dead `ScrapeFallback` seam — AI runs over *rendered* content, never the shell) → sanitize + status. `scraper.ts`, `render.ts`, `extract.ts`, `scrape-fallback.ts`, `buildJobExtractionPrompt`.
+- [x] **Graceful degradation** — results carry `status` (`ok`/`partial`/`empty`) + `source` (`static`/`render`/`ai`). Frontend: `ok` → preview; `partial`/`empty` → route to manual entry (placeholders stripped) with a clear note; added the **missing Description (`snapshotMarkdown`) field** to the manual form (was silently dropped); images neutralized in `MarkdownProse` so decoys never render. Markdown sanitizer strips images/`data:` decoys/tracking pixels (paren-safe URLs, reference-style images).
+- [x] **Security (4-lens adversarial review, 19 confirmed findings fixed)** — SSRF hardened: `ipaddr.js` classifier (kills the hex-mapped-IPv6 `::ffff:a9fe:a9fe` bypass), redirect re-validation per hop, **connect-time IP pinning** via an undici dispatcher (closes DNS rebinding), render path guarded too, response body-size cap (5 MB) + snapshot length clamp (100 KB). Scrape AI extraction is **rate-limited + metered** against the hourly AI budget (threaded `userId`); prompt-injection guardrail; 90s overall scrape deadline.
+- [x] **Config** — `docker-compose.yml` now passes `GEMINI_*` + `JINA_API_KEY` + `SCRAPER_RENDER_ENABLED` to the backend container (they were never wired, so AI features couldn't run as deployed). Set `GEMINI_API_KEY` in the root `.env` for the clean AI path; render-only works keyless. **NB: the `GEMINI_MODEL=gemini-3.5-flash` in `backend-express/.env` appears invalid — use e.g. `gemini-2.5-flash-lite`; this affects all AI features, not just scraping.**
+- [x] Gates: backend `typecheck`+`lint`+**549 tests**; frontend `typecheck`+`lint`+**493 tests**+production build. Live-smoked the exact failing Naukri URL → `title: Quality Analyst`, `company: Teleperformance Global Services`, `status: ok`, `source: ai`, clean image-free snapshot.
+- [ ] Manual browser pass (paste a Naukri/LinkedIn URL through the modal) + merge to master — pending user. Deferred lows recorded in `docs/deferred-tasks.md`.
+
+---
+
 ## Dependency Diagram
 
 ```
