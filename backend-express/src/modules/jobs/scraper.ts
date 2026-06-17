@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import { htmlToMarkdown, sanitizeSnapshotMarkdown } from './markdown.js'
-import { assertFetchableUrl } from './url-guard.js'
+import { safeFetch } from './safe-fetch.js'
 
 // How confident we are in the captured result, surfaced to the client so it can
 // degrade gracefully: 'ok' → show the preview, 'partial'/'empty' → route the
@@ -111,23 +111,51 @@ function finalize(p: PartialScrape): ScrapeResult {
   return result
 }
 
+// Cap the buffered body so a huge (or slow-drip) page can't exhaust memory.
+const MAX_HTML_BYTES = 5_000_000
+
 async function fetchHtml(url: string): Promise<string> {
-  // SSRF guard: never let a user-supplied URL point the server at a private,
-  // loopback, or metadata address.
-  await assertFetchableUrl(url)
-  const response = await fetch(url, {
+  // safeFetch applies the SSRF guard (incl. per-redirect-hop + connect-time IP
+  // validation) so a user URL can never reach a private/loopback/metadata target.
+  const response = await safeFetch(url, {
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.5',
     },
-    signal: AbortSignal.timeout(15000),
+    timeoutMs: 15000,
   })
   if (!response.ok) {
     throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`)
   }
-  return response.text()
+  return readTextCapped(response, MAX_HTML_BYTES)
+}
+
+// Reads a response body as text, aborting once it exceeds maxBytes.
+async function readTextCapped(response: Response, maxBytes: number): Promise<string> {
+  const lengthHeader = Number(response.headers.get('content-length'))
+  if (Number.isFinite(lengthHeader) && lengthHeader > maxBytes) {
+    throw new Error('Response too large')
+  }
+  const body = response.body
+  if (!body) return ''
+  const reader = body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (value) {
+      total += value.byteLength
+      if (total > maxBytes) {
+        await reader.cancel()
+        throw new Error('Response too large')
+      }
+      chunks.push(value)
+    }
+  }
+  return Buffer.concat(chunks).toString('utf-8')
 }
 
 function cheerioExtract(html: string, url: string): Partial<ScrapeResult> {

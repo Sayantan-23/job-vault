@@ -1,24 +1,22 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 
-// The SSRF guard does a real DNS lookup; stub it to a no-op so these unit tests
-// stay hermetic (it's exercised directly in url-guard.test.ts).
-vi.mock('./url-guard.js', () => ({ assertFetchableUrl: vi.fn().mockResolvedValue(undefined) }))
+// safeFetch wraps the SSRF guard + redirect handling + streaming read; mock it to
+// serve canned HTML so these unit tests stay hermetic (safe-fetch + url-guard are
+// exercised in their own test files).
+const { safeFetch } = vi.hoisted(() => ({ safeFetch: vi.fn() }))
+vi.mock('./safe-fetch.js', () => ({ safeFetch }))
 
 import { scrapeUrl, isShellResult } from './scraper.js'
 
 function mockFetchHtml(html: string, ok = true): void {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn().mockResolvedValue({
-      ok,
-      status: ok ? 200 : 500,
-      statusText: ok ? 'OK' : 'Server Error',
-      text: () => Promise.resolve(html),
-    }),
-  )
+  // A real Response so scraper's streaming read (response.body.getReader) works.
+  safeFetch.mockResolvedValue(new Response(ok ? html : '', { status: ok ? 200 : 500 }))
 }
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  safeFetch.mockReset()
+})
 
 describe('scrapeUrl — JSON-LD JobPosting', () => {
   it('extracts title, company, location, and a markdown snapshot', async () => {

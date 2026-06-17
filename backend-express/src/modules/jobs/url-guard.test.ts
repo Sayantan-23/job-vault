@@ -16,9 +16,25 @@ describe('isPrivateIp', () => {
   it('allows public IPv4', () => {
     for (const ip of ['8.8.8.8', '1.1.1.1', '34.117.59.81']) expect(isPrivateIp(ip)).toBe(false)
   })
-  it('flags loopback/ULA/link-local and mapped IPv6', () => {
-    for (const ip of ['::1', 'fc00::1', 'fd12::1', 'fe80::1', '::ffff:127.0.0.1']) expect(isPrivateIp(ip)).toBe(true)
+  it('flags loopback/ULA/link-local and mapped IPv6 (dotted AND hex-compressed)', () => {
+    for (const ip of [
+      '::1',
+      '::',
+      'fc00::1',
+      'fd12::1',
+      'fe80::1',
+      '::ffff:127.0.0.1',
+      '::ffff:169.254.169.254', // dotted mapped
+      '::ffff:a9fe:a9fe', // hex-compressed mapped == 169.254.169.254 (the bypass bug)
+      '::ffff:7f00:1', // hex-compressed mapped == 127.0.0.1
+      '64:ff9b::a9fe:a9fe', // NAT64-wrapped metadata
+    ]) {
+      expect(isPrivateIp(ip)).toBe(true)
+    }
     expect(isPrivateIp('2001:4860:4860::8888')).toBe(false)
+  })
+  it('treats an unparseable string as unsafe', () => {
+    expect(isPrivateIp('not-an-ip')).toBe(true)
   })
 })
 

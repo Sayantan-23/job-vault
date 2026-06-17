@@ -1,36 +1,39 @@
 import { promises as dns } from 'node:dns'
 import net from 'node:net'
+import ipaddr from 'ipaddr.js'
 
 // SSRF guard for the scraper's DIRECT fetch path: the server fetches a
 // user-supplied URL, so we must refuse private/loopback/link-local targets that
 // could reach internal services or cloud metadata endpoints. (The render-provider
-// path is safer — Jina fetches the URL, not us.)
+// path also routes through here before handing the URL to Jina.)
+//
+// IP classification uses ipaddr.js rather than hand-rolled regexes — those missed
+// hex-compressed IPv4-mapped IPv6 (e.g. ::ffff:a9fe:a9fe == 169.254.169.254),
+// NAT64, 6to4, and CGNAT. Anything that isn't a public unicast address is blocked.
 
-function isPrivateIpv4(ip: string): boolean {
-  const parts = ip.split('.').map(Number)
-  if (parts.length !== 4 || parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) return false
-  const [a, b] = parts as [number, number, number, number]
-  if (a === 0 || a === 10 || a === 127) return true // "this host", private, loopback
-  if (a === 169 && b === 254) return true // link-local (incl. 169.254.169.254 metadata)
-  if (a === 172 && b >= 16 && b <= 31) return true // private
-  if (a === 192 && b === 168) return true // private
-  if (a === 100 && b >= 64 && b <= 127) return true // CGNAT
-  return false
-}
+// IPv4 ranges (ipaddr.js) that must never be reachable. Public addresses are
+// 'unicast'; everything else is internal/reserved/special.
+const ALLOWED_V4_RANGE = 'unicast'
+// IPv6 ranges that are safe (public). Mapped/translated forms are unwrapped to
+// their embedded IPv4 and checked there instead.
+const ALLOWED_V6_RANGE = 'unicast'
 
 export function isPrivateIp(ip: string): boolean {
-  const version = net.isIP(ip)
-  if (version === 4) return isPrivateIpv4(ip)
-  if (version === 6) {
-    const lower = ip.toLowerCase()
-    if (lower === '::1' || lower === '::') return true // loopback / unspecified
-    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(lower)
-    if (mapped?.[1]) return isPrivateIpv4(mapped[1]) // IPv4-mapped
-    if (/^f[cd]/.test(lower)) return true // unique-local fc00::/7
-    if (/^fe[89ab]/.test(lower)) return true // link-local fe80::/10
-    return false
+  let addr: ipaddr.IPv4 | ipaddr.IPv6
+  try {
+    addr = ipaddr.parse(ip)
+  } catch {
+    return true // unparseable → treat as unsafe
   }
-  return false
+  if (addr.kind() === 'ipv6') {
+    const v6 = addr as ipaddr.IPv6
+    // IPv4-mapped (::ffff:a.b.c.d, in dotted OR hex form) → judge by the v4.
+    if (v6.isIPv4MappedAddress()) return isPrivateIp(v6.toIPv4Address().toString())
+    // 6to4 / Teredo / NAT64 embed a v4 too; rather than unwrap each, block any
+    // non-public-unicast v6 outright.
+    return v6.range() !== ALLOWED_V6_RANGE
+  }
+  return (addr as ipaddr.IPv4).range() !== ALLOWED_V4_RANGE
 }
 
 export function isBlockedHostname(hostname: string): boolean {
@@ -41,7 +44,9 @@ export function isBlockedHostname(hostname: string): boolean {
 }
 
 // Throws when the URL is not safe to fetch server-side. Resolves a non-literal
-// hostname to verify it doesn't point at a private address.
+// hostname to verify it doesn't point at a private address. Note: this is a
+// first-pass check; the actual connection is additionally validated at connect
+// time (see safe-fetch.ts) to close the DNS-rebinding window.
 export async function assertFetchableUrl(rawUrl: string): Promise<void> {
   let url: URL
   try {
