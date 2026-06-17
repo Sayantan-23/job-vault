@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('./timeline.repository.js', () => ({
   timelineRepository: {
     findByJob: vi.fn(),
+    findByUser: vi.fn(),
     create: vi.fn(),
   },
 }))
@@ -52,6 +53,22 @@ describe('timelineService.list', () => {
     const rows = await timelineService.list('u1', 'j1')
     expect(jobs.findById).toHaveBeenCalledWith('u1', 'j1')
     expect(rows).toHaveLength(1)
+  })
+})
+
+describe('timelineService.listForUser', () => {
+  it('translates page/limit into a limit + offset and echoes the pagination back', async () => {
+    timeline.findByUser.mockResolvedValue({ rows: [], total: 42 })
+    const result = await timelineService.listForUser('u1', { page: 3, limit: 10 })
+    // page 3 @ 10/page -> offset 20
+    expect(timeline.findByUser).toHaveBeenCalledWith('u1', 10, 20)
+    expect(result).toEqual({ rows: [], total: 42, page: 3, limit: 10 })
+  })
+
+  it('uses offset 0 for the first page', async () => {
+    timeline.findByUser.mockResolvedValue({ rows: [], total: 0 })
+    await timelineService.listForUser('u1', { page: 1, limit: 50 })
+    expect(timeline.findByUser).toHaveBeenCalledWith('u1', 50, 0)
   })
 })
 

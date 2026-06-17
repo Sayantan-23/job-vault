@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-06-10
+> **Last Updated**: 2026-06-17
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -282,6 +282,16 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] **Micro removals stay instant** (bullets, links, chips, experience/project/skill/education rows, persona pickers) — unchanged.
 - [x] Adversarial review (3 lenses): 1 confirmed minor (list-row delete didn't block a second in-flight mutation — fixed with an `if (del.isPending) return` guard), 5 rejected/refuted (hook lifecycle sound, micro-removals verified untouched). Gates: frontend `typecheck`+`lint`+**472 tests** (new `useConfirm` test; 7 delete tests updated to click through the dialog) + production build.
 - [ ] **Next: Slice 8 — Chrome extension.** Then the backlog: public-pages redesign, Google OAuth, email reminders (`docs/deferred-tasks.md`). Deferred: résumé page still has the old centered/stacked layout (mirror the route-split/side-rail there if wanted); tone/length presets; job-URL scrape into the paste form; side-by-side rewrite compare if the route widens.
+
+## Timeline + Settings pages (DONE 2026-06-17)
+
+> Branch `timeline-settings-pages`. Resolves the two dead sidebar/account-menu links surfaced by the 2026-06-16 remaining-work audit (the global-timeline feed was tracked in `docs/deferred-tasks.md`). Plan: `docs/superpowers/plans/2026-06-16-timeline-settings-pages.md`. Polish/tech-debt backlog from the same audit recorded in `docs/polish-and-tech-debt.md`.
+- [x] **Global timeline feed** — `GET /api/timeline` (userId-scoped, paginated): new `findByUser` (inner-joins `jobs` for `jobTitle`/`jobCompany`) + `listForUser` + a `timelineGlobalRouter` mounted at `/api/timeline`, alongside the untouched per-job `/jobs/:jobId/timeline`. Repo/service/router tests (ordering, pagination, user-scoping, enrichment join).
+- [x] **`/app/timeline` page** — `useGlobalTimeline` hook + `TimelineFeed` (reuses `TimelineEntry` via a new optional `jobLink` prop, and `JobsPagination`); rows link to `/app/jobs?job=<id>` (where the `JobDrawer` mounts). SSR-seeded first page + `TimelineSkeleton`. Hook + feed tests.
+- [x] **Theme system** (frontend-only, no `next-themes`) — unlocks the previously-unreachable dark mode (the `.dark` wiring was stubbed since Slice 0/1). Cookie-backed (`theme=light|dark|system`), no-FOUC inline `ThemeScript` (first child of `<body>`; `<html suppressHydrationWarning>`), `ThemeProvider` + `useTheme` toggling `.dark` on `<html>` with OS-follow in `system`. Theme tests (class + cookie + system change).
+- [x] **`/app/settings` page** — Appearance (Light/Dark/System `SegmentedControl`), Account (read-only name/email + "Edit profile →" + Sign out), Notifications (in-app on; email noted as upcoming). `SettingsSection` wrapper; workspace test.
+- [x] Gates: backend `typecheck`+`lint`+**492 tests**; frontend `typecheck`+`lint`+**490 tests**+production build (via `docker build --target production`, host `.next` is root-owned).
+- [ ] Manual browser pass (dark-mode flip across app, timeline paging + row→drawer, settings) + merge to master — pending user.
 
 ---
 

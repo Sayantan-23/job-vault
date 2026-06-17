@@ -7,8 +7,27 @@ import { timelineEvents } from '@/db/schema/timeline.js'
 import { timelineRepository } from './timeline.repository.js'
 
 const EMAIL = `timeline-repo-${Date.now()}@example.com`
+const OTHER_EMAIL = `timeline-repo-other-${Date.now()}@example.com`
 let userId: string
 let jobId: string
+let otherUserId: string
+
+async function seedUser(email: string): Promise<string> {
+  const rows = await getDb().insert(users).values({ name: 'Repo', email, passwordHash: 'h' }).returning()
+  const user = rows[0]
+  if (!user) throw new Error('failed to seed user')
+  return user.id
+}
+
+async function seedJob(ownerId: string, title: string, company: string): Promise<string> {
+  const rows = await getDb()
+    .insert(jobs)
+    .values({ userId: ownerId, title, company, status: 'WISHLIST', kanbanOrder: 1, lastActivityAt: new Date() })
+    .returning()
+  const job = rows[0]
+  if (!job) throw new Error('failed to seed job')
+  return job.id
+}
 
 beforeAll(async () => {
   if (!process.env['DATABASE_URL']) {
@@ -16,26 +35,18 @@ beforeAll(async () => {
   }
   process.env['CORS_ORIGINS'] = 'http://localhost:8080'
   process.env['JWT_SECRET'] = 'a'.repeat(32)
-  const userRows = await getDb()
-    .insert(users)
-    .values({ name: 'Repo', email: EMAIL, passwordHash: 'h' })
-    .returning()
-  const user = userRows[0]
-  if (!user) throw new Error('failed to seed user')
-  userId = user.id
-  const jobRows = await getDb()
-    .insert(jobs)
-    .values({ userId, title: 'SWE', company: 'Acme', status: 'WISHLIST', kanbanOrder: 1, lastActivityAt: new Date() })
-    .returning()
-  const job = jobRows[0]
-  if (!job) throw new Error('failed to seed job')
-  jobId = job.id
+  userId = await seedUser(EMAIL)
+  jobId = await seedJob(userId, 'SWE', 'Acme')
+  // A second user whose events must never leak into the first user's global feed.
+  otherUserId = await seedUser(OTHER_EMAIL)
 })
 
 afterAll(async () => {
-  await getDb().delete(timelineEvents).where(eq(timelineEvents.userId, userId))
-  await getDb().delete(jobs).where(eq(jobs.userId, userId))
-  await getDb().delete(users).where(eq(users.id, userId))
+  for (const id of [userId, otherUserId]) {
+    await getDb().delete(timelineEvents).where(eq(timelineEvents.userId, id))
+    await getDb().delete(jobs).where(eq(jobs.userId, id))
+    await getDb().delete(users).where(eq(users.id, id))
+  }
   await closeDb()
 })
 
@@ -62,5 +73,48 @@ describe('timelineRepository (real DB)', () => {
     const secondIdx = rows.findIndex((r) => r.id === second.id)
     expect(secondIdx).toBeLessThan(firstIdx)
     expect(rows.every((r) => r.jobId === jobId)).toBe(true)
+  })
+})
+
+describe('timelineRepository.findByUser (real DB)', () => {
+  it('returns the user’s events enriched with job title + company, newest-first', async () => {
+    const second = await seedJob(userId, 'PM', 'Globex')
+    const a = await timelineRepository.create({ userId, jobId, type: 'AUTO', title: 'older' })
+    const b = await timelineRepository.create({ userId, jobId: second, type: 'MANUAL', title: 'newer' })
+
+    const { rows, total } = await timelineRepository.findByUser(userId, 100, 0)
+
+    expect(total).toBe(rows.length)
+    expect(rows.every((r) => r.userId === userId)).toBe(true)
+    // Every row carries its job's title + company (the join populated them).
+    expect(rows.every((r) => typeof r.jobTitle === 'string' && typeof r.jobCompany === 'string')).toBe(true)
+    const newerIdx = rows.findIndex((r) => r.id === b.id)
+    const olderIdx = rows.findIndex((r) => r.id === a.id)
+    expect(newerIdx).toBeGreaterThanOrEqual(0)
+    expect(rows[newerIdx]?.jobTitle).toBe('PM')
+    expect(rows[newerIdx]?.jobCompany).toBe('Globex')
+    // Newest-first: the later-created event sorts ahead of the earlier one.
+    expect(newerIdx).toBeLessThan(olderIdx)
+  })
+
+  it('excludes other users’ events', async () => {
+    const otherJob = await seedJob(otherUserId, 'Designer', 'Initech')
+    const leaked = await timelineRepository.create({ userId: otherUserId, jobId: otherJob, type: 'AUTO', title: 'not yours' })
+
+    const { rows } = await timelineRepository.findByUser(userId, 100, 0)
+    expect(rows.some((r) => r.id === leaked.id)).toBe(false)
+  })
+
+  it('paginates via limit + offset', async () => {
+    const { rows: all } = await timelineRepository.findByUser(userId, 100, 0)
+    expect(all.length).toBeGreaterThanOrEqual(2)
+
+    const { rows: firstPage } = await timelineRepository.findByUser(userId, 1, 0)
+    const { rows: secondPage } = await timelineRepository.findByUser(userId, 1, 1)
+    expect(firstPage).toHaveLength(1)
+    expect(secondPage).toHaveLength(1)
+    expect(firstPage[0]?.id).toBe(all[0]?.id)
+    expect(secondPage[0]?.id).toBe(all[1]?.id)
+    expect(firstPage[0]?.id).not.toBe(secondPage[0]?.id)
   })
 })

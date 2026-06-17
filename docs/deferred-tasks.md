@@ -57,11 +57,8 @@ Work intentionally scoped **out** of the migration slices (almost all from **Sli
 
 ## Timeline
 
-### Global cross-job activity feed (`/app/timeline` page)
-**What:** A user-scoped activity feed across **all** the user's jobs — a `GET /api/timeline` endpoint + an `/app/timeline` page (reusing the existing `TimelineEntry` component, each row linking to its job via `?job=`). Today the timeline is **per-job**, shown in the JobDrawer.
-**Why:** A single "what happened lately across my whole pipeline" view.
-**Note:** this is the feature behind the **`Timeline` sidebar link that currently 404s** (the link is a placeholder, like `Settings`). The `timeline_events.userId` column was added in Slice 4 specifically so this feed is cheap to build.
-**Trigger:** when the global feed (and/or making the sidebar link real) is wanted — pair it with removing/▶ wiring the `Settings` placeholder too.
+### ✅ Global cross-job activity feed (`/app/timeline` page) — DONE 2026-06-17
+**Shipped** (branch `timeline-settings-pages`): a user-scoped activity feed across **all** the user's jobs — `GET /api/timeline` (paginated, `findByUser` inner-joins `jobs` for title/company) + an `/app/timeline` page reusing `TimelineEntry` (via a new optional `jobLink` prop), each row linking to `/app/jobs?job=<id>` to open the JobDrawer. Resolved the 404'ing `Timeline` sidebar link; the `Settings` placeholder was wired up in the same change (`/app/settings` + a cookie-based theme system). See `docs/superpowers/plans/2026-06-16-timeline-settings-pages.md`.
 
 ---
 

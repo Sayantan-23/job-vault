@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { AppError } from '@/shared/errors.js'
 import { timelineService } from './timeline.service.js'
-import type { CreateTimelineEntryInput } from './timeline.schema.js'
+import type { CreateTimelineEntryInput, TimelineQueryInput } from './timeline.schema.js'
 
 function requireUserId(req: Request): string {
   const id = req.user?.id
@@ -21,6 +21,14 @@ async function list(req: Request, res: Response): Promise<void> {
   res.status(200).json({ data: rows })
 }
 
+// GET /api/timeline — the user-scoped global feed (paginated, all jobs).
+async function listGlobal(req: Request, res: Response): Promise<void> {
+  const query = req.query as unknown as TimelineQueryInput
+  const { rows, total, page, limit } = await timelineService.listForUser(requireUserId(req), query)
+  const totalPages = limit > 0 ? Math.ceil(total / limit) : 0
+  res.status(200).json({ data: rows, meta: { total, page, limit, totalPages } })
+}
+
 async function create(req: Request, res: Response): Promise<void> {
   const event = await timelineService.addManualEntry(
     requireUserId(req),
@@ -30,4 +38,4 @@ async function create(req: Request, res: Response): Promise<void> {
   res.status(201).json({ data: event })
 }
 
-export const timelineController = { list, create }
+export const timelineController = { list, listGlobal, create }

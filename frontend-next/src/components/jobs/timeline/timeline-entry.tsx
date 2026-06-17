@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Bot, PencilLine } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { relativeTime } from '@/lib/relative-time'
@@ -13,7 +14,15 @@ const TYPE_ICON_STYLES = {
   MANUAL: 'text-primary',
 } as const
 
-export function TimelineEntry({ event }: { event: TimelineEvent }) {
+// In the per-job timeline (the JobDrawer) the job is implicit, so `jobLink` is
+// omitted. The global feed passes it to label + link each row to its job.
+export function TimelineEntry({
+  event,
+  jobLink,
+}: {
+  event: TimelineEvent
+  jobLink?: { href: string; label: string }
+}) {
   const Icon = TYPE_ICON[event.type]
   return (
     <li data-testid="timeline-entry" data-type={event.type} className="flex gap-3">
@@ -33,6 +42,14 @@ export function TimelineEntry({ event }: { event: TimelineEvent }) {
           </time>
         </div>
         {event.description ? <p className="text-sm text-muted-foreground">{event.description}</p> : null}
+        {jobLink ? (
+          <Link
+            href={jobLink.href}
+            className="inline-block truncate text-xs text-muted-foreground underline-offset-2 transition-colors hover:text-primary hover:underline"
+          >
+            {jobLink.label}
+          </Link>
+        ) : null}
       </div>
     </li>
   )
