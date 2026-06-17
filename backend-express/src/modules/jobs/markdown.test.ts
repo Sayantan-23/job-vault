@@ -74,4 +74,9 @@ describe('sanitizeSnapshotMarkdown', () => {
     const md = sanitizeSnapshotMarkdown('See [the wiki](https://x/Page_(v2)) for details.')
     expect(md).toBe('See [the wiki](https://x/Page_(v2)) for details.')
   })
+  it('strips reference-style image usages', () => {
+    const md = sanitizeSnapshotMarkdown('![logo][1] Welcome aboard.\n\n[1]: https://x/logo.png')
+    expect(md).not.toMatch(/!\[logo\]\[1\]/)
+    expect(md).toContain('Welcome aboard.')
+  })
 })

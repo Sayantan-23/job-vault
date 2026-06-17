@@ -57,6 +57,9 @@ export function sanitizeSnapshotMarkdown(markdown: string): string {
       .replace(IMAGE_RE, '')
       // Raw <img> HTML that survived into Markdown.
       .replace(/<img\b[^>]*>/gi, '')
+      // Reference-style image usages `![alt][id]` (an orphaned `[id]: url`
+      // definition left behind renders as nothing, so it's harmless).
+      .replace(/!\[[^\]]*\]\[[^\]]*\]/g, '')
       // Links whose href is a `data:` URI — keep the visible text, drop the href.
       .replace(DATA_LINK_RE, '$1')
       // Tidy up the holes left behind.
