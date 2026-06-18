@@ -18,10 +18,17 @@ export interface Job {
   notes: string | null
 }
 
+export type ScrapeStatus = 'ok' | 'partial' | 'empty'
+
 export interface ScrapeResult {
   title: string
   company: string
   location?: string
   salaryRange?: string
   snapshotMarkdown: string
+  // How confident the backend is in the capture: 'ok' → show the preview,
+  // 'partial'/'empty' → route the user to manual entry pre-filled. Older API
+  // responses may omit it (treated as 'ok').
+  status?: ScrapeStatus
+  source?: 'static' | 'render' | 'ai'
 }

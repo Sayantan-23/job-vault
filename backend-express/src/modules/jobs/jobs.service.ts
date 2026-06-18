@@ -3,6 +3,7 @@ import { logger } from '@/shared/logger.js'
 import { jobsRepository } from './jobs.repository.js'
 import { timelineService } from '@/modules/timeline/timeline.service.js'
 import { scrapeUrl, type ScrapeResult } from './scraper.js'
+import { createScrapeFallback } from './scrape-fallback.js'
 import type { JobRow, NewJobRow } from '@/db/schema/jobs.js'
 import type { CreateJobInput, UpdateJobInput, MoveJobInput, JobQueryInput } from './jobs.schema.js'
 
@@ -107,13 +108,41 @@ async function remove(userId: string, id: string): Promise<void> {
   if (!ok) throw new AppError('NOT_FOUND', 'Job not found')
 }
 
-async function scrape(url: string): Promise<ScrapeResult> {
+// Overall ceiling on a single scrape so a slow static+render+AI chain can't tie
+// up the request near the Next proxy's timeout. Comfortably above the normal
+// path (~static 15s + render ~16s + AI ~10s) but well under the proxy budget.
+const SCRAPE_DEADLINE_MS = 90_000
+
+async function scrape(userId: string, url: string): Promise<ScrapeResult> {
   try {
-    return await scrapeUrl(url)
+    // The render+AI fallback fires only when the fast static path returns a shell
+    // (CSR SPA / bot-protected board); see scrape-fallback.ts. AI spend is bound
+    // to the user's hourly budget.
+    return await withDeadline(scrapeUrl(url, createScrapeFallback(userId)), SCRAPE_DEADLINE_MS)
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to scrape URL'
     throw new AppError('VALIDATION_ERROR', `Scraping failed: ${message}`, err)
   }
+}
+
+// Races a promise against a deadline. The underlying work may keep running after
+// a timeout (its own per-step timeouts bound it), so swallow its late rejection
+// to avoid an unhandled-rejection warning.
+function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T> {
+  promise.catch(() => undefined)
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('Scrape timed out')), ms)
+    promise.then(
+      (value) => {
+        clearTimeout(timer)
+        resolve(value)
+      },
+      (err: unknown) => {
+        clearTimeout(timer)
+        reject(err instanceof Error ? err : new Error(String(err)))
+      },
+    )
+  })
 }
 
 export const jobsService = { create, list, get, update, move, remove, scrape }

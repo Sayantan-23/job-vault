@@ -9,7 +9,7 @@ export const CreateJobSchema = z.object({
   location: z.string().max(255).optional(),
   salaryRange: z.string().max(255).optional(),
   sourceUrl: z.string().url().max(2000).optional(),
-  snapshotMarkdown: z.string().optional(),
+  snapshotMarkdown: z.string().max(200_000).optional(),
   status: z.enum(JOB_STATUSES).optional(),
   notes: z.string().optional(),
 })

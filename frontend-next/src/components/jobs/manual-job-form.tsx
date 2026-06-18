@@ -31,6 +31,7 @@ export function ManualJobForm({
       location: prefill?.location ?? '',
       salaryRange: prefill?.salaryRange ?? '',
       sourceUrl: prefill?.sourceUrl ?? '',
+      snapshotMarkdown: prefill?.snapshotMarkdown ?? '',
       status: prefill?.status ?? 'WISHLIST',
       notes: prefill?.notes ?? '',
     },
@@ -42,6 +43,7 @@ export function ManualJobForm({
     if (values.location) payload.location = values.location
     if (values.salaryRange) payload.salaryRange = values.salaryRange
     if (values.sourceUrl) payload.sourceUrl = values.sourceUrl
+    if (values.snapshotMarkdown) payload.snapshotMarkdown = values.snapshotMarkdown
     if (values.status) payload.status = values.status
     if (values.notes) payload.notes = values.notes
     create.mutate(payload, { onSuccess: onCreated })
@@ -83,6 +85,16 @@ export function ManualJobForm({
         <Label htmlFor="sourceUrl">Source URL</Label>
         <Input id="sourceUrl" type="url" placeholder="https://…" {...register('sourceUrl')} />
         {errors.sourceUrl ? <p className="text-xs text-destructive">{errors.sourceUrl.message}</p> : null}
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="snapshotMarkdown">Description</Label>
+        <Textarea
+          id="snapshotMarkdown"
+          placeholder="Paste or write the job description (Markdown supported)…"
+          className="min-h-32"
+          {...register('snapshotMarkdown')}
+        />
       </div>
 
       <div className="space-y-1.5">

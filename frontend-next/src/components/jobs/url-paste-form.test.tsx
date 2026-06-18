@@ -48,6 +48,27 @@ describe('UrlPasteForm', () => {
     )
   })
 
+  it('routes to manual entry (dropping placeholders) when capture is incomplete', async () => {
+    api.post.mockResolvedValue({
+      title: 'Untitled Position',
+      company: 'Unknown Company',
+      snapshotMarkdown: 'Some captured body text.',
+      status: 'empty',
+    })
+    const onScraped = vi.fn()
+    render(<UrlPasteForm onScraped={onScraped} onCreated={vi.fn()} />, { wrapper })
+    await userEvent.type(screen.getByLabelText(/job posting url/i), 'https://x.com/job')
+    await userEvent.click(screen.getByRole('button', { name: /fetch/i }))
+    expect(await screen.findByText(/couldn.t fully capture/i)).toBeInTheDocument()
+    // No "Save job" on an incomplete capture — only a review path.
+    expect(screen.queryByRole('button', { name: /save job/i })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /review & complete/i }))
+    const prefill = onScraped.mock.calls[0]?.[0] as Record<string, unknown>
+    expect(prefill).toMatchObject({ sourceUrl: 'https://x.com/job', snapshotMarkdown: 'Some captured body text.' })
+    expect(prefill).not.toHaveProperty('title') // placeholder dropped
+    expect(prefill).not.toHaveProperty('company')
+  })
+
   it('offers manual entry when the scrape fails', async () => {
     api.post.mockRejectedValue(new Error('Scraping failed'))
     const onScraped = vi.fn()

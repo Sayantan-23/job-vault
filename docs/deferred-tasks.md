@@ -83,3 +83,19 @@ The Redis adapter turns each emit into a Redis pub/sub message all instances sub
 **What:** Browser Web Push and/or mobile push as additional delivery channels.
 **Why:** Reaches the user when neither the app tab nor email is the right channel.
 **Trigger:** after email; lower priority than email for this product.
+
+## URL scraping (robust-url-scraping branch, 2026-06-17)
+
+> The robust tiered pipeline (static → render → AI-normalize) shipped on `robust-url-scraping`. These are the LOW-severity items from the adversarial review that were consciously deferred, plus the async follow-up the mobile app will want.
+
+### Async scrape + push (mobile share flow)
+**What:** A `POST /api/jobs/scrape-async` that enqueues the scrape and notifies on completion (via the existing notification system) instead of holding the HTTP request for the render+AI chain.
+**Why:** Mobile "share a URL → scrape" tolerates (even prefers) a background job + push. The pipeline is already a pure, req/res-free service (`scrapeUrl`/`createScrapeFallback`), so a worker can call it unchanged — this is a clean drop-in, not a refactor. Today's synchronous endpoint stays for web; a 90s overall deadline bounds it.
+**Trigger:** when the mobile app lands (or web UX wants non-blocking capture).
+
+### Scrape quality / robustness nice-to-haves (low)
+- **Anti-bot interstitial heuristic:** a Cloudflare/cookie-wall page that yields a non-placeholder title+company+body is reported `status:'ok'` and not escalated to render. Add a phrase/length heuristic ("enable cookies", "just a moment", "verify you are human") to demote to `partial` / trigger render.
+- **`source` provenance precision:** `renderAndExtract` labels the result `source:'ai'` whenever the AI produced *anything* (even just the description), while title/company may be from the raw render. `source` is telemetry-only (not read by the UI), so cosmetic.
+- **Render tier without AI can't supply company:** with Gemini off, the render tier only yields title + snapshot (no company), so a JS-rendered page stays `partial` unless AI is on. A structured render provider (Firecrawl extract) or a light cheerio pass over rendered HTML would close this.
+- **Shared placeholder constants:** `Untitled Position` / `Unknown Company` are duplicated in `scraper.ts` (DEFAULT_*) and `url-paste-form.tsx` (PLACEHOLDER_*). Functionally correct today; future drift risk. Either share via the API contract (trust `status`) or add a linking test.
+- **`getRenderClients()` gating test:** the `SCRAPER_RENDER_ENABLED` env parse is tested; the `getRenderClients() === []` when disabled branch and the render-timeout abort path are not.
