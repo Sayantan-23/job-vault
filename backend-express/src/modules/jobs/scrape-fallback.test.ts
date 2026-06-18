@@ -56,6 +56,14 @@ describe('createScrapeFallback', () => {
     expect(r).toMatchObject({ title: 'Quality Analyst', company: 'Teleperformance', source: 'ai' })
   })
 
+  it('returns null without an AI call when the render hits a bot interstitial', async () => {
+    renderUrl.mockResolvedValue({ title: 'Just a moment...', markdown: '# Just a moment...\n\nChecking your browser.' })
+    isAiEnabled.mockReturnValue(true)
+    const r = await run('<html/>', 'https://www.indeed.com/viewjob?jk=x')
+    expect(r).toBeNull()
+    expect(extractJobFromContent).not.toHaveBeenCalled()
+  })
+
   it('skips AI (no model call, no metering) when the hourly budget is exhausted', async () => {
     renderUrl.mockResolvedValue({ title: 'Raw title', markdown: 'rendered body text' })
     isAiEnabled.mockReturnValue(true)

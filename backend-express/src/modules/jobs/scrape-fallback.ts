@@ -5,7 +5,7 @@ import { logger } from '@/shared/logger.js'
 import { renderUrl } from './render.js'
 import { extractJobFromContent } from './extract.js'
 import { sanitizeSnapshotMarkdown } from './markdown.js'
-import type { PartialScrape, ScrapeFallback } from './scraper.js'
+import { looksLikeInterstitial, type PartialScrape, type ScrapeFallback } from './scraper.js'
 
 const AI_USAGE_KIND = 'job-scrape-extract'
 
@@ -24,6 +24,11 @@ export function createScrapeFallback(userId: string): ScrapeFallback {
   return async (_html, url) => {
     const rendered = await renderUrl(url)
     if (!rendered) return null
+
+    // The render provider may itself hit a bot wall (e.g. Indeed's Cloudflare
+    // "Just a moment…"). That's a dead end, not content — bail so we don't waste
+    // an AI call or persist the challenge page; the caller reports 'empty'.
+    if (looksLikeInterstitial(rendered.title, rendered.markdown)) return null
 
     // The raw render is the baseline snapshot (noisy — includes page chrome).
     const renderedSnapshot = sanitizeSnapshotMarkdown(rendered.markdown)

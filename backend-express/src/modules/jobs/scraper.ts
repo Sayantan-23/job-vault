@@ -39,12 +39,22 @@ const DEFAULT_COMPANY = 'Unknown Company'
 const MAX_SNAPSHOT_CHARS = 100_000
 
 export async function scrapeUrl(url: string, fallback?: ScrapeFallback): Promise<ScrapeResult> {
-  const html = await fetchHtml(url)
-  const cheerioResult = cheerioExtract(html, url)
+  // The static fetch can outright fail on bot-protected boards (Indeed/LinkedIn
+  // return 403/429). Don't hard-fail when we have a render fallback to try — only
+  // re-throw when there's nothing else to fall back to (preserves the plain
+  // fetch-failure contract for callers that pass no fallback).
+  let html: string | null = null
+  try {
+    html = await fetchHtml(url)
+  } catch (err) {
+    if (!fallback) throw err
+  }
+
+  const cheerioResult = html ? cheerioExtract(html, url) : {}
 
   if (isShellResult(cheerioResult) && fallback) {
     try {
-      const fb = await fallback(html, url)
+      const fb = await fallback(html ?? '', url)
       if (fb) {
         return finalize({
           title: fb.title ?? cheerioResult.title,
@@ -56,7 +66,8 @@ export async function scrapeUrl(url: string, fallback?: ScrapeFallback): Promise
         })
       }
     } catch {
-      // Fallback is best-effort; fall through to the Cheerio result.
+      // Fallback is best-effort; fall through to a finalized (likely empty) result
+      // so the client can route the user to manual entry.
     }
   }
 
@@ -76,14 +87,26 @@ function isSnapshotEmpty(markdown: string | undefined): boolean {
   return !/[a-z0-9]/i.test(sanitizeSnapshotMarkdown(markdown))
 }
 
+// Bot-challenge / anti-bot interstitials (Cloudflare "Just a moment…", captcha
+// walls, "verify you are human") look like real pages but carry no job content.
+// We must never persist them as the job, and they should route the user to manual
+// entry. Matched against the title and the snapshot text.
+const INTERSTITIAL_RE =
+  /just a moment|verify you are human|attention required|checking your browser|enable javascript and cookies|please enable cookies|access denied|unusual traffic|are you a robot|cf-browser-verification|needs to review the security/i
+
+export function looksLikeInterstitial(...parts: (string | undefined)[]): boolean {
+  return parts.some((p) => !!p && INTERSTITIAL_RE.test(p))
+}
+
 // True when the static fetch failed to capture the essentials — missing/placeholder
-// title or company, or a snapshot that's empty once decoys are stripped. This is
-// the signal to escalate to the render+AI fallback.
+// title or company, a snapshot that's empty once decoys are stripped, or a bot
+// interstitial. This is the signal to escalate to the render+AI fallback.
 export function isShellResult(p: PartialScrape): boolean {
   return (
     isPlaceholderOrEmpty(p.title, DEFAULT_TITLE) ||
     isPlaceholderOrEmpty(p.company, DEFAULT_COMPANY) ||
-    isSnapshotEmpty(p.snapshotMarkdown)
+    isSnapshotEmpty(p.snapshotMarkdown) ||
+    looksLikeInterstitial(p.title, p.snapshotMarkdown)
   )
 }
 
@@ -97,11 +120,18 @@ function computeStatus(r: { title: string; company: string; snapshotMarkdown: st
 }
 
 function finalize(p: PartialScrape): ScrapeResult {
-  const title = p.title?.trim() || DEFAULT_TITLE
-  const company = p.company?.trim() || DEFAULT_COMPANY
+  let title = p.title?.trim() || DEFAULT_TITLE
+  let company = p.company?.trim() || DEFAULT_COMPANY
   // Sanitize unconditionally (the static path already does, but render/AI
   // markdown arrives here unscrubbed) and clamp the length.
-  const snapshotMarkdown = sanitizeSnapshotMarkdown(p.snapshotMarkdown ?? '').slice(0, MAX_SNAPSHOT_CHARS)
+  let snapshotMarkdown = sanitizeSnapshotMarkdown(p.snapshotMarkdown ?? '').slice(0, MAX_SNAPSHOT_CHARS)
+  // A bot interstitial isn't real content — never persist "Just a moment…" as the
+  // job. Blank it so the result reports 'empty' and the client routes to manual.
+  if (looksLikeInterstitial(title, snapshotMarkdown)) {
+    title = DEFAULT_TITLE
+    company = DEFAULT_COMPANY
+    snapshotMarkdown = ''
+  }
   const result: ScrapeResult = {
     title,
     company,

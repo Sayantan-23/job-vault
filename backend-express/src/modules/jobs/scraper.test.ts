@@ -10,7 +10,7 @@ vi.mock('./safe-fetch.js', () => ({
   readTextCapped: (res: Response) => res.text(),
 }))
 
-import { scrapeUrl, isShellResult } from './scraper.js'
+import { scrapeUrl, isShellResult, looksLikeInterstitial } from './scraper.js'
 
 function mockFetchHtml(html: string, ok = true): void {
   // A real Response so scraper's streaming read (response.body.getReader) works.
@@ -162,8 +162,47 @@ describe('isShellResult', () => {
   })
 })
 
-describe('scrapeUrl — fetch failure', () => {
-  it('throws when the response is not ok', async () => {
+describe('scrapeUrl — bot-protected static fetch (403)', () => {
+  it('falls through to the render fallback when the static fetch throws', async () => {
+    safeFetch.mockRejectedValue(new Error('Failed to fetch URL: 403 Forbidden'))
+    const fallback = vi
+      .fn()
+      .mockResolvedValue({ title: 'Recovered', company: 'Acme', snapshotMarkdown: 'Real JD here.', source: 'render' })
+    const r = await scrapeUrl('https://www.indeed.com/viewjob?jk=x', fallback)
+    expect(fallback).toHaveBeenCalledOnce()
+    expect(r.title).toBe('Recovered')
+    expect(r.source).toBe('render')
+  })
+
+  it('returns an empty result (not an error) when the static fetch fails and the fallback recovers nothing', async () => {
+    safeFetch.mockRejectedValue(new Error('Failed to fetch URL: 403 Forbidden'))
+    const r = await scrapeUrl('https://www.indeed.com/viewjob?jk=x', vi.fn().mockResolvedValue(null))
+    expect(r.status).toBe('empty')
+  })
+})
+
+describe('scrapeUrl — bot interstitials', () => {
+  it('treats a Cloudflare "Just a moment…" page as empty and never persists it', async () => {
+    mockFetchHtml(
+      '<html><head><title>Just a moment...</title></head><body><h1>Just a moment...</h1><p>Checking your browser before accessing the site.</p></body></html>',
+    )
+    const r = await scrapeUrl('https://www.indeed.com/viewjob?jk=x')
+    expect(r.status).toBe('empty')
+    expect(r.title).toBe('Untitled Position')
+    expect(r.snapshotMarkdown).toBe('')
+  })
+})
+
+describe('looksLikeInterstitial', () => {
+  it('matches known bot-wall phrases and ignores real content', () => {
+    expect(looksLikeInterstitial('Just a moment...', undefined)).toBe(true)
+    expect(looksLikeInterstitial(undefined, 'Please verify you are human to continue')).toBe(true)
+    expect(looksLikeInterstitial('Senior Engineer', 'Own the platform end to end.')).toBe(false)
+  })
+})
+
+describe('scrapeUrl — fetch failure (no fallback)', () => {
+  it('throws when the response is not ok and there is no fallback', async () => {
     mockFetchHtml('', false)
     await expect(scrapeUrl('https://example.com/down')).rejects.toThrow(/Failed to fetch/)
   })
