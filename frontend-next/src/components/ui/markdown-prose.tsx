@@ -30,10 +30,21 @@ const components: Components = {
   hr: () => <hr className="my-4 border-border" />,
 }
 
+// Repairs a bold marker that got split across a blank line, e.g.
+// `**Responsibilities\n\n**` (from source HTML like
+// `<strong>Heading<br><br></strong>` → Turndown). CommonMark only treats `**…**`
+// as bold within a single block, so the split renders as literal asterisks — we
+// pull the orphaned closing `**` back onto the text line. Conservative: only
+// matches a single line of non-asterisk text followed by blank line(s) then `**`,
+// so well-formed inline bold is never touched.
+export function repairSplitBold(markdown: string): string {
+  return markdown.replace(/\*\*([^\n*]+?)[ \t]*(?:\n[ \t]*)+\*\*/g, '**$1**')
+}
+
 export function MarkdownProse({ children }: { children: string }) {
   return (
     <div className="text-sm text-foreground">
-      <Markdown components={components}>{children}</Markdown>
+      <Markdown components={components}>{repairSplitBold(children)}</Markdown>
     </div>
   )
 }
