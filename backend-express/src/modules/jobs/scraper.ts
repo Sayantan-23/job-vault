@@ -38,7 +38,34 @@ const DEFAULT_COMPANY = 'Unknown Company'
 // response or the DB. Real descriptions are a few KB; this is generous headroom.
 const MAX_SNAPSHOT_CHARS = 100_000
 
-export async function scrapeUrl(url: string, fallback?: ScrapeFallback): Promise<ScrapeResult> {
+// Rewrites known multi-job / app-shell URLs to the canonical single-job page so
+// we scrape one posting, not the whole search UI. The biggest win is LinkedIn:
+// the desktop address bar shows `/jobs/search?currentJobId=<id>` (the full search
+// page — no JobPosting JSON-LD, just chrome + other jobs), whereas
+// `/jobs/view/<id>` is a clean server-rendered single-job page WITH JSON-LD.
+export function normalizeJobUrl(rawUrl: string): string {
+  let url: URL
+  try {
+    url = new URL(rawUrl)
+  } catch {
+    return rawUrl
+  }
+  const host = url.hostname.toLowerCase()
+  if (host === 'linkedin.com' || host.endsWith('.linkedin.com')) {
+    // Any LinkedIn page (search, collections, feed) carrying a selected job id.
+    const currentJobId = url.searchParams.get('currentJobId')
+    if (currentJobId && /^\d+$/.test(currentJobId)) {
+      return `https://www.linkedin.com/jobs/view/${currentJobId}`
+    }
+    // /jobs/view/<slug>-<id> or /jobs/view/<id> → drop the slug + tracking params.
+    const viewMatch = /\/jobs\/view\/(?:[^/?#]*-)?(\d+)/.exec(url.pathname)
+    if (viewMatch) return `https://www.linkedin.com/jobs/view/${viewMatch[1]}`
+  }
+  return rawUrl
+}
+
+export async function scrapeUrl(rawUrl: string, fallback?: ScrapeFallback): Promise<ScrapeResult> {
+  const url = normalizeJobUrl(rawUrl)
   // The static fetch can outright fail on bot-protected boards (Indeed/LinkedIn
   // return 403/429). Don't hard-fail when we have a render fallback to try — only
   // re-throw when there's nothing else to fall back to (preserves the plain
@@ -211,14 +238,21 @@ function cheerioExtract(html: string, url: string): Partial<ScrapeResult> {
     if (c) result.company = c
   }
 
-  // 4. main-content → markdown if we still have no snapshot
+  // 4. main-content → markdown if we still have no snapshot. Try known
+  // job-description containers first (LinkedIn's JSON-LD often omits the
+  // description, and dumping <body> drags in nav / "sign in" / other-jobs chrome)
+  // before falling back to the page's main region and finally the whole body.
   if (!result.snapshotMarkdown) {
     const main =
+      $('.show-more-less-html__markup').html() || // LinkedIn public JD body
+      $('.description__text').html() || // LinkedIn JD wrapper
+      $('.jobs-description__content').html() || // LinkedIn (authed) JD
+      $('.job-description').html() ||
+      $('#job-description').html() ||
+      $('[data-testid="jobsearch-JobComponent-description"]').html() || // Indeed JD
       $('main').html() ||
       $('[role="main"]').html() ||
       $('article').html() ||
-      $('.job-description').html() ||
-      $('#job-description').html() ||
       $('body').html()
     if (main) result.snapshotMarkdown = htmlToMarkdown(main)
   }

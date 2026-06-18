@@ -10,7 +10,7 @@ vi.mock('./safe-fetch.js', () => ({
   readTextCapped: (res: Response) => res.text(),
 }))
 
-import { scrapeUrl, isShellResult, looksLikeInterstitial } from './scraper.js'
+import { scrapeUrl, isShellResult, looksLikeInterstitial, normalizeJobUrl } from './scraper.js'
 
 function mockFetchHtml(html: string, ok = true): void {
   // A real Response so scraper's streaming read (response.body.getReader) works.
@@ -190,6 +190,47 @@ describe('scrapeUrl — bot interstitials', () => {
     expect(r.status).toBe('empty')
     expect(r.title).toBe('Untitled Position')
     expect(r.snapshotMarkdown).toBe('')
+  })
+})
+
+describe('scrapeUrl — job-description container extraction', () => {
+  it('uses the LinkedIn JD container for the snapshot, not the whole page chrome', async () => {
+    const html = `<html><body>
+      <nav>Sign in · Join now · Jobs</nav>
+      <h1>Software Engineer</h1>
+      <meta property="og:site_name" content="LinkedIn"/>
+      <section class="description__text"><div class="show-more-less-html__markup"><p>Build distributed systems. Own the platform.</p></div></section>
+      <aside>People also viewed · More jobs · Sign in to see</aside>
+      </body></html>`
+    mockFetchHtml(html)
+    const r = await scrapeUrl('https://www.linkedin.com/jobs/view/123')
+    expect(r.snapshotMarkdown).toContain('Build distributed systems')
+    expect(r.snapshotMarkdown).not.toMatch(/Sign in|People also viewed|More jobs/)
+  })
+})
+
+describe('normalizeJobUrl', () => {
+  it('rewrites a LinkedIn desktop search URL (currentJobId) to the canonical job-view page', () => {
+    expect(normalizeJobUrl('https://www.linkedin.com/jobs/search?currentJobId=4406118990&keywords=engineer')).toBe(
+      'https://www.linkedin.com/jobs/view/4406118990',
+    )
+    expect(normalizeJobUrl('https://www.linkedin.com/jobs/collections/recommended/?currentJobId=123456')).toBe(
+      'https://www.linkedin.com/jobs/view/123456',
+    )
+  })
+  it('strips the slug + tracking params from a /jobs/view/<slug>-<id> URL', () => {
+    expect(
+      normalizeJobUrl('https://www.linkedin.com/jobs/view/software-engineer-at-notion-4406118990?refId=abc&trackingId=x'),
+    ).toBe('https://www.linkedin.com/jobs/view/4406118990')
+  })
+  it('leaves non-LinkedIn and already-canonical URLs unchanged', () => {
+    expect(normalizeJobUrl('https://www.naukri.com/job-listings-x-160925503010')).toBe(
+      'https://www.naukri.com/job-listings-x-160925503010',
+    )
+    expect(normalizeJobUrl('https://www.linkedin.com/jobs/view/4406118990')).toBe(
+      'https://www.linkedin.com/jobs/view/4406118990',
+    )
+    expect(normalizeJobUrl('not a url')).toBe('not a url')
   })
 })
 
