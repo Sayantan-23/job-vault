@@ -152,45 +152,45 @@ extension/
 Backend: `npm run typecheck && lint && test` (vitest + real Postgres for repos). Frontend: `typecheck && lint && test && build`. Extension: `typecheck && lint && test` (vitest + jsdom). Don't run two `next build`/`vitest` in the same dir concurrently.
 
 ### Phase A — Backend: `api_keys` table + `api-keys` module
-- [ ] **A1.** Add `src/db/schema/api-keys.ts` + barrel export in `index.ts`. Run `db:generate` → migration `0011_*.sql`; `db:migrate`. *(verify table/indexes created)*
-- [ ] **A2.** `api-keys.schema.ts` (`CreateApiKeySchema { name }`) + schema test.
-- [ ] **A3.** `api-keys.repository.ts` (`create`, `listActiveForUser`, `findActiveByPrefix`, `revoke`, `touchLastUsed`) + repository test (real PG): hash stored, prefix indexed, revoke soft-deletes, expired/revoked excluded.
-- [ ] **A4.** `api-keys.service.ts` (`createKey` → generate `jv_`+hex, bcrypt-hash, return raw once; `list`; `revoke`) + service test.
-- [ ] **A5.** `src/middleware/api-key.middleware.ts` + extend `src/types/express.d.ts` with `apiKey?: { id, userId }`. Verifies `X-API-Key` by prefix→`compareSecret`, sets `req.apiKey`, best-effort `touchLastUsed`. Unit test: valid/invalid/revoked/expired/missing.
-- [ ] **A6.** `api-keys.controller.ts` + `api-keys.router.ts` (authMiddleware, rate-limited create); mount `/api-keys` in `shared/api-router.ts`. Integration test: create→list→revoke→list-empty; raw key only on create.
+- [x] **A1.** Add `src/db/schema/api-keys.ts` + barrel export in `index.ts`. Run `db:generate` → migration `0011_*.sql`; `db:migrate`. *(verify table/indexes created)*
+- [x] **A2.** `api-keys.schema.ts` (`CreateApiKeySchema { name }`) + schema test.
+- [x] **A3.** `api-keys.repository.ts` (`create`, `listActiveForUser`, `findActiveByPrefix`, `revoke`, `touchLastUsed`) + repository test (real PG): hash stored, prefix indexed, revoke soft-deletes, expired/revoked excluded.
+- [x] **A4.** `api-keys.service.ts` (`createKey` → generate `jv_`+hex, bcrypt-hash, return raw once; `list`; `revoke`) + service test.
+- [x] **A5.** `src/middleware/api-key.middleware.ts` + extend `src/types/express.d.ts` with `apiKey?: { id, userId }`. Verifies `X-API-Key` by prefix→`compareSecret`, sets `req.apiKey`, best-effort `touchLastUsed`. Unit test: valid/invalid/revoked/expired/missing.
+- [x] **A6.** `api-keys.controller.ts` + `api-keys.router.ts` (authMiddleware, rate-limited create); mount `/api-keys` in `shared/api-router.ts`. Integration test: create→list→revoke→list-empty; raw key only on create.
 
 ### Phase B — Backend: `extension` module + dedup + timeline option
-- [ ] **B1.** Add `findByNormalizedSourceUrl(userId, normalizedUrl)` to `jobs.repository.ts` + test.
-- [ ] **B2.** Extend `jobsService.create` signature with optional `options?: { autoEntryTitle?; autoEntryDescription? }`; default unchanged. Update/extend jobs.service test for the override.
-- [ ] **B3.** `extension.schema.ts` (`QuickCreateJobSchema`, `CheckUrlSchema { url }`) + test.
-- [ ] **B4.** `extension.service.ts`: `verifyKey` (returns user email), `checkUrl` (normalize + dedup lookup), `quickCreateJob` (normalize → dedup → existing-or-create with `'Added via Chrome Extension'` auto-entry). Service test (dedup hit/miss, timeline title, WISHLIST default).
-- [ ] **B5.** `extension.controller.ts` + `extension.router.ts` (apiKeyMiddleware + `extensionLimiter`); mount `/extension`. Integration test: header-auth on all routes (401 without key), verify/check-url/quick-create, dedup returns existing.
-- [ ] **B6.** *(fallback, may defer within slice)* `POST /api/extension/scrape` reusing `scrapeUrl` under apiKeyMiddleware + per-user budget; integration test.
-- [ ] **B7.** Add the extension origin to `CORS_ORIGINS` handling (env + `.env.example` doc); confirm preflight for `chrome-extension://` origin is allowed. *(manual curl/preflight check)*
+- [x] **B1.** Add `findByNormalizedSourceUrl(userId, normalizedUrl)` to `jobs.repository.ts` + test.
+- [x] **B2.** Extend `jobsService.create` signature with optional `options?: { autoEntryTitle?; autoEntryDescription? }`; default unchanged. Update/extend jobs.service test for the override.
+- [x] **B3.** `extension.schema.ts` (`QuickCreateJobSchema`, `CheckUrlSchema { url }`) + test.
+- [x] **B4.** `extension.service.ts`: `verifyKey` (returns user email), `checkUrl` (normalize + dedup lookup), `quickCreateJob` (normalize → dedup → existing-or-create with `'Added via Chrome Extension'` auto-entry). Service test (dedup hit/miss, timeline title, WISHLIST default).
+- [x] **B5.** `extension.controller.ts` + `extension.router.ts` (apiKeyMiddleware + `extensionLimiter`); mount `/extension`. Integration test: header-auth on all routes (401 without key), verify/check-url/quick-create, dedup returns existing.
+- [x] **B6.** *(fallback, may defer within slice)* `POST /api/extension/scrape` reusing `scrapeUrl` under apiKeyMiddleware + per-user budget; integration test.
+- [x] **B7.** Add the extension origin to `CORS_ORIGINS` handling (env + `.env.example` doc); confirm preflight for `chrome-extension://` origin is allowed. *(manual curl/preflight check)*
 
 ### Phase C — Frontend: Connected Apps in Settings
-- [ ] **C1.** `src/types/extension.ts` (`ConnectedApp`, `CreatedApiKey`) + `use-api-keys.ts` hooks (`useApiKeys`, `useCreateApiKey`, `useRevokeApiKey`) + query-keys entry. Hook test (msw or mocked apiClient).
-- [ ] **C2.** `ConnectedAppsSection` (component) wired into `SettingsWorkspace`: list, last-used, **Revoke** via `useConfirm`/`ConfirmDialog`, "Generate key manually" → one-time reveal with copy. Component test (list renders, revoke confirm, reveal-once). Reuse Button/Input/Label/SettingsSection.
+- [x] **C1.** `src/types/extension.ts` (`ConnectedApp`, `CreatedApiKey`) + `use-api-keys.ts` hooks (`useApiKeys`, `useCreateApiKey`, `useRevokeApiKey`) + query-keys entry. Hook test (msw or mocked apiClient).
+- [x] **C2.** `ConnectedAppsSection` (component) wired into `SettingsWorkspace`: list, last-used, **Revoke** via `useConfirm`/`ConfirmDialog`, "Generate key manually" → one-time reveal with copy. Component test (list renders, revoke confirm, reveal-once). Reuse Button/Input/Label/SettingsSection.
 
 ### Phase D — Frontend: `/extension/authorize` public page
-- [ ] **D1.** `useOptionalCurrentUser()` hook (no redirect on 401) + test.
-- [ ] **D2.** Add optional `onSuccess`/`redirectTo` to `useLogin`/`useRegister` (default behavior unchanged) + `InlineAuthForm` (compact login/register toggle reusing existing schemas) + test.
-- [ ] **D3.** `src/app/(auth)/extension/authorize/page.tsx` + `AuthorizeFlow` client component: parse + **validate `redirect_uri`** against allowlist (configurable extension id), `state` passthrough; logged-out → `InlineAuthForm`; logged-in → "Connect to {email}" → `POST /api/api-keys` → `window.location.assign(redirect_uri#token&state)`. Component test: invalid redirect rejected, logged-out shows form, logged-in shows connect, connect redirects with token+state.
+- [x] **D1.** `useOptionalCurrentUser()` hook (no redirect on 401) + test.
+- [x] **D2.** Add optional `onSuccess`/`redirectTo` to `useLogin`/`useRegister` (default behavior unchanged) + `InlineAuthForm` (compact login/register toggle reusing existing schemas) + test.
+- [x] **D3.** `src/app/(auth)/extension/authorize/page.tsx` + `AuthorizeFlow` client component: parse + **validate `redirect_uri`** against allowlist (configurable extension id), `state` passthrough; logged-out → `InlineAuthForm`; logged-in → "Connect to {email}" → `POST /api/api-keys` → `window.location.assign(redirect_uri#token&state)`. Component test: invalid redirect rejected, logged-out shows form, logged-in shows connect, connect redirects with token+state.
 
 ### Phase E — Extension scaffold
 - [ ] **E1.** `extension/` project: `package.json`, `vite.config.ts` (@crxjs), `tsconfig`, Tailwind v4 + copied tokens, lint config matching repo. `manifest.config.ts` with pinned `key`, permissions, host_permissions, action popup, background, content_scripts (linkedin/indeed/generic match patterns). `npm run build` produces a loadable `dist/`. Placeholder popup renders. *(load-unpacked smoke)*
-- [ ] **E2.** `lib/storage.ts` (typed `chrome.storage.local` wrapper: token, serverUrl, settings) + `lib/types.ts` (`ExtractedJobData`, `Confidence`, `ExtensionSettings`) + tests (mock `chrome.storage`).
-- [ ] **E3.** `lib/api.ts` — `X-API-Key` fetch against configurable `serverUrl`, `{data}`/error envelope unwrap; `verifyKey`, `checkUrl`, `quickCreate`, `scrape` + tests.
+- [x] **E2.** `lib/storage.ts` (typed `chrome.storage.local` wrapper: token, serverUrl, settings) + `lib/types.ts` (`ExtractedJobData`, `Confidence`, `ExtensionSettings`) + tests (mock `chrome.storage`).
+- [x] **E3.** `lib/api.ts` — `X-API-Key` fetch against configurable `serverUrl`, `{data}`/error envelope unwrap; `verifyKey`, `checkUrl`, `quickCreate`, `scrape` + tests.
 
 ### Phase F — Extension auth (connect)
 - [ ] **F1.** `lib/auth.ts` + `background/service-worker.ts`: generate `state`, `launchWebAuthFlow`, parse `#token&state`, verify `state`, store token, `verifyKey`. Test the URL-parse/`state`-verify logic (pure functions); mock `chrome.identity`.
 
 ### Phase G — Extension extractors (client-first)
-- [ ] **G1.** `content/detector.ts` (URL → platform) + test.
-- [ ] **G2.** `content/extractors/linkedin.ts` — **scope to the focused detail-pane container** + read `currentJobId` from URL; handle split-pane (`/jobs/search?currentJobId=`) and standalone (`/jobs/view/<id>`); canonical `sourceUrl`. Test with saved DOM fixtures (jsdom) incl. the split-pane layout.
-- [ ] **G3.** `content/extractors/indeed.ts` — `data-testid` selectors + `all_frames` consideration for the JD iframe. Test with fixtures.
-- [ ] **G4.** `content/extractors/generic.ts` — schema.org `JobPosting` JSON-LD → OpenGraph → `<h1>`/`<title>` fallback. Test with fixtures (incl. a Greenhouse/Lever-style JSON-LD page).
-- [ ] **G5.** `content/extract.ts` orchestrator + `lib/confidence.ts` (`ok|partial|empty`); `content/index.ts` responds to popup/background messages. Test the orchestrator + confidence scoring.
+- [x] **G1.** `content/detector.ts` (URL → platform) + test.
+- [x] **G2.** `content/extractors/linkedin.ts` — **scope to the focused detail-pane container** + read `currentJobId` from URL; handle split-pane (`/jobs/search?currentJobId=`) and standalone (`/jobs/view/<id>`); canonical `sourceUrl`. Test with saved DOM fixtures (jsdom) incl. the split-pane layout.
+- [x] **G3.** `content/extractors/indeed.ts` — `data-testid` selectors + `all_frames` consideration for the JD iframe. Test with fixtures.
+- [x] **G4.** `content/extractors/generic.ts` — schema.org `JobPosting` JSON-LD → OpenGraph → `<h1>`/`<title>` fallback. Test with fixtures (incl. a Greenhouse/Lever-style JSON-LD page).
+- [x] **G5.** `content/extract.ts` orchestrator + `lib/confidence.ts` (`ok|partial|empty`); `content/index.ts` responds to popup/background messages. Test the orchestrator + confidence scoring.
 
 ### Phase H — Extension popup UI (minimalist-ui skill)
 - [ ] **H1.** Port `ui/` primitives (Button, Input, Label, Spinner, EmptyState) + base styles/tokens.
