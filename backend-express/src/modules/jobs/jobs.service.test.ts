@@ -82,6 +82,18 @@ describe('jobsService.create', () => {
       description: 'Added to WISHLIST column',
     })
   })
+
+  it('lets a caller override the auto-event title (extension attribution)', async () => {
+    repo.nextKanbanOrder.mockResolvedValue(1)
+    repo.create.mockResolvedValue(fakeJob({ status: 'WISHLIST' }))
+    await jobsService.create('u1', { title: 'SWE', company: 'Acme' }, { autoEntryTitle: 'Added via Chrome Extension' })
+    expect(timeline.addAutoEntry).toHaveBeenCalledWith({
+      userId: 'u1',
+      jobId: 'j1',
+      title: 'Added via Chrome Extension',
+      description: 'Added to WISHLIST column',
+    })
+  })
 })
 
 describe('jobsService.get', () => {
