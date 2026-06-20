@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/app/page-header'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl, type SegmentedOption } from '@/components/ui/segmented-control'
 import { SettingsSection } from './settings-section'
+import { ConnectedAppsSection } from './connected-apps-section'
 import { useTheme } from '@/hooks/use-theme'
 import { useCurrentUser, useLogout } from '@/hooks/use-auth'
 import type { Theme } from '@/lib/theme'
@@ -73,6 +74,8 @@ export function SettingsWorkspace() {
               </Button>
             </div>
           </SettingsSection>
+
+          <ConnectedAppsSection />
 
           <SettingsSection
             title="Notifications"

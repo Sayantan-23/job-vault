@@ -40,6 +40,26 @@ export function useRegister() {
   })
 }
 
+// Like useCurrentUser, but safe for PUBLIC pages (e.g. /extension/authorize):
+// a raw fetch that resolves to null when logged out, instead of letting
+// api-client force a redirect to /login on an unrecoverable 401. Its own query
+// key keeps it isolated from the app-shell's current-user cache.
+export function useOptionalCurrentUser() {
+  return useQuery({
+    queryKey: ['optionalCurrentUser'],
+    queryFn: async (): Promise<AuthUser | null> => {
+      const res = await fetch('/api/auth/me', {
+        credentials: 'include',
+        headers: { accept: 'application/json' },
+      })
+      if (!res.ok) return null
+      const payload = (await res.json()) as { data: AuthUser }
+      return payload.data
+    },
+    retry: false,
+  })
+}
+
 export function useLogout() {
   const qc = useQueryClient()
   const router = useRouter()

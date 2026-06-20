@@ -35,3 +35,6 @@ export const coverLetterKey = (id: string) => ['cover-letters', id] as const
 export const coverLettersByJobKey = (jobId: string) => ['cover-letters', 'job', jobId] as const
 
 export const PROFILE_KEY = ['profile'] as const
+
+// Extension API keys ("Connected apps"). Managed first-party in Settings.
+export const API_KEYS_KEY = ['api-keys'] as const
