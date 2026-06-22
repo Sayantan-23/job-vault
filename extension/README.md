@@ -44,6 +44,7 @@ this extension — add a `key` to `manifest.config.ts` and put the resulting id 
 `frontend-next/src/lib/extension-authorize.ts` (`PINNED_EXTENSION_IDS`). Until then
 the web app accepts any `*.chromiumapp.org` https redirect (dev-only).
 
-The extension talks to the backend directly (default `http://localhost:3100`,
-configurable in the popup's Settings). Release/packaging (Web Store) is deferred —
-see `docs/deferred-tasks.md`.
+The extension points at the JobVault **web app** (default `http://localhost:8080`,
+configurable in the popup's Settings) — it serves the `/extension/authorize` page
+and proxies `/api/*` to the backend, so one origin covers everything. Release/
+packaging (Web Store) is deferred — see `docs/deferred-tasks.md`.

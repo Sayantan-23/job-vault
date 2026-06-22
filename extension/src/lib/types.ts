@@ -20,4 +20,7 @@ export interface ExtensionSettings {
   serverUrl: string
 }
 
-export const DEFAULT_SERVER_URL = 'http://localhost:3100'
+// The JobVault WEB APP origin (not the backend). It serves /extension/authorize
+// and proxies /api/* to the backend, so a single base covers the connect page,
+// the X-API-Key calls, and the "open in app" links.
+export const DEFAULT_SERVER_URL = 'http://localhost:8080'

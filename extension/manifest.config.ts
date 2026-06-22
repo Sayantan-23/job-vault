@@ -11,7 +11,9 @@ export default defineManifest({
   action: { default_popup: 'src/popup/index.html', default_title: 'Save to JobVault' },
   background: { service_worker: 'src/background/service-worker.ts', type: 'module' },
   permissions: ['storage', 'activeTab', 'identity'],
-  host_permissions: ['http://localhost:3100/*', 'http://127.0.0.1:3100/*'],
+  // The web-app origin (it proxies /api/* to the backend). Add the prod origin
+  // here when deploying.
+  host_permissions: ['http://localhost:8080/*', 'http://127.0.0.1:8080/*'],
   content_scripts: [
     {
       matches: ['https://www.linkedin.com/*', 'https://*.indeed.com/*'],

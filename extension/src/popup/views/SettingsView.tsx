@@ -38,7 +38,7 @@ export function SettingsView({ email, onBack, onDisconnected }: Props) {
           <p className="text-sm text-foreground">{email ?? '—'}</p>
         </Field>
         <Field label="Server URL">
-          <Input value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://localhost:3100" />
+          <Input value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://localhost:8080" />
         </Field>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={saveUrl}>
