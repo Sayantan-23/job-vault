@@ -202,7 +202,7 @@ Backend: `npm run typecheck && lint && test` (vitest + real Postgres for repos).
 
 ### Phase I — Wiring, smoke, docs
 - [ ] **I1.** End-to-end **manual smoke** on the Docker stack: connect (logged-in AND brand-new-user inline signup), capture on LinkedIn split-pane + standalone, Indeed, one generic board; dedup; Connected Apps revoke kills the extension. Record a GIF.
-- [ ] **I2.** `extension/README.md` (load-unpacked, dev backend URL, pinning the id). Note Web-Store packaging doc as **deferred** in `docs/deferred-tasks.md`.
+- [x] **I2.** `extension/README.md` (load-unpacked, dev backend URL, pinning the id). Note Web-Store packaging doc as **deferred** in `docs/deferred-tasks.md`.
 - [ ] **I3.** Update `progress.md` + `CLAUDE.md` current-state line. Adversarial review pass (4-lens) per slice convention; fix findings.
 
 ---

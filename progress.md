@@ -1,12 +1,24 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-06-17
+> **Last Updated**: 2026-06-22
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
 > **Design Style**: Glassmorphism (frosted glass light + matching dark theme) · Subtle animations · Nuxt UI v4
 
 ---
+
+## Migration Slice 8 — Chrome Extension (IMPLEMENTED, pending live smoke — 2026-06-22)
+
+> Branch `slice-8-chrome-extension`. Plan: `docs/superpowers/plans/2026-06-20-slice-8-chrome-extension.md`. One-click "Save to JobVault" from LinkedIn/Indeed/most boards, with a smooth `launchWebAuthFlow` connect (no key copy-paste) and client-first extraction (the extension reads the live, logged-in DOM, sidestepping the bot-walls that force the server's render+AI fallback).
+
+- [x] **Backend — `api-keys` module** (migration `0011`): `api_keys` table (bcrypt `keyHash`, indexed `keyPrefix`, soft-revoke), cookie-authed mint (raw `jv_` key shown once) / list / revoke, + `apiKeyMiddleware` verifying the `X-API-Key` header (prefix-narrow → bcrypt compare → `req.apiKey`). 21 tests.
+- [x] **Backend — `extension` module** (`X-API-Key`): `verify-key`, `check-url` (dedup probe), `quick-create` (normalize URL via `normalizeJobUrl` → dedup via new `jobsRepository.findBySourceUrl` → WISHLIST job + "Added via Chrome Extension" auto-timeline; `jobsService.create` gained an optional `autoEntryTitle`), `scrape` fallback. 24 tests.
+- [x] **Web — Settings → Connected apps**: list/revoke (via `useConfirm`) + manual-key backstop with one-time reveal (`use-api-keys`).
+- [x] **Web — public `/extension/authorize`**: validates the `chromiumapp.org` redirect, mints a key, hands the token back in the URL **fragment**; logged-out users get inline sign-in/sign-up (`InlineAuthForm`) in the same window; `useOptionalCurrentUser` checks the session without forcing a `/login` redirect. 25 web tests.
+- [x] **Extension project** (`extension/`, React 19 + Vite + Tailwind v4 + crxjs MV3): content-script extractors (LinkedIn split-pane-scoped, Indeed `data-testid`, generic schema.org/OG) + detector + canonical-URL + confidence; `chrome.storage` / `X-API-Key` API / `launchWebAuthFlow` libs; popup (Connect / Capture / Success / Settings) + background connect driver. typecheck + 22 vitest tests + `vite build` → loadable `dist/` all green.
+- [x] **Decisions:** no cookie weakening (runtime uses `X-API-Key`, only same-origin mint uses the cookie); security via `state` nonce + redirect allowlist + fragment-only token + interactive consent; popup-only; LinkedIn/Indeed client + generic→backend-scrape.
+- [ ] **Next:** load unpacked in Chrome → smoke connect (incl. brand-new-user inline signup), capture on real LinkedIn split-pane + standalone / Indeed / a generic board, dedup, and revoke. Then pin the extension id (`manifest.config.ts` `key` → `PINNED_EXTENSION_IDS`), update `CLAUDE.md`, and **merge to master**. Live smoke needs a real browser.
 
 ## Migration Phase 0a — Backend Express Scaffolding (NEW)
 
