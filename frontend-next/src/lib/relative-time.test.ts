@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { relativeTime, shortDate } from './relative-time'
+import { relativeTime, shortDate, dayKey, dayGroupLabel } from './relative-time'
 
 describe('relativeTime', () => {
   const now = new Date('2026-06-03T12:00:00.000Z')
@@ -28,5 +28,39 @@ describe('shortDate', () => {
   it('returns an em dash for empty/invalid input', () => {
     expect(shortDate('')).toBe('—')
     expect(shortDate('not-a-date')).toBe('—')
+  })
+})
+
+// Day bucketing is intentionally local-time (it groups what the user sees), so
+// build fixtures from local Date components rather than UTC `Z` strings to keep
+// these assertions independent of the test runner's timezone.
+const localIso = (y: number, m: number, d: number, h = 12) => new Date(y, m - 1, d, h).toISOString()
+
+describe('dayKey', () => {
+  it('buckets two timestamps on the same calendar day together', () => {
+    expect(dayKey(localIso(2026, 6, 3, 1))).toBe(dayKey(localIso(2026, 6, 3, 23)))
+  })
+  it('separates different calendar days', () => {
+    expect(dayKey(localIso(2026, 6, 3))).not.toBe(dayKey(localIso(2026, 6, 4)))
+  })
+  it('returns an empty string for invalid input', () => {
+    expect(dayKey('nope')).toBe('')
+  })
+})
+
+describe('dayGroupLabel', () => {
+  const now = new Date(2026, 5, 18, 12) // Thu, Jun 18 2026 (local)
+
+  it('labels the current day "Today"', () => {
+    expect(dayGroupLabel(localIso(2026, 6, 18, 3), now)).toBe('Today')
+  })
+  it('labels the prior day "Yesterday"', () => {
+    expect(dayGroupLabel(localIso(2026, 6, 17, 20), now)).toBe('Yesterday')
+  })
+  it('labels a day within the past week by weekday', () => {
+    expect(dayGroupLabel(localIso(2026, 6, 15), now)).toBe('Monday')
+  })
+  it('labels older days with a full date', () => {
+    expect(dayGroupLabel(localIso(2026, 5, 28), now)).toMatch(/May\s+28,\s+2026/)
   })
 })

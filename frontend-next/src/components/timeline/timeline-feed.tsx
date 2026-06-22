@@ -3,13 +3,33 @@
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PageHeader } from '@/components/layout/app/page-header'
-import { TimelineEntry } from '@/components/jobs/timeline/timeline-entry'
+import { TimelineRow } from '@/components/timeline/timeline-row'
 import { JobsPagination } from '@/components/jobs/jobs-pagination'
 import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
-import { Skeleton } from '@/components/ui/skeleton'
+import { TimelineSkeletonBody } from '@/components/layout/app/route-skeletons'
 import { useGlobalTimeline } from '@/hooks/use-global-timeline'
+import { dayGroupLabel, dayKey } from '@/lib/relative-time'
 import type { GlobalTimelineEvent } from '@/types/timeline'
 import type { Paginated } from '@/types/filters'
+
+interface DayGroup {
+  key: string
+  label: string
+  events: GlobalTimelineEvent[]
+}
+
+// Bucket the (already newest-first) feed into consecutive same-day runs so each
+// gets a date heading. The feed is pre-sorted, so a single linear pass suffices.
+function groupByDay(events: GlobalTimelineEvent[]): DayGroup[] {
+  const groups: DayGroup[] = []
+  for (const event of events) {
+    const key = dayKey(event.createdAt)
+    const last = groups[groups.length - 1]
+    if (last && last.key === key) last.events.push(event)
+    else groups.push({ key, label: dayGroupLabel(event.createdAt), events: [event] })
+  }
+  return groups
+}
 
 function EmptyState() {
   return (
@@ -24,22 +44,6 @@ function EmptyState() {
       >
         Go to Jobs →
       </Link>
-    </div>
-  )
-}
-
-function LoadingRows() {
-  return (
-    <div className="space-y-4" aria-hidden="true">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="flex gap-3">
-          <Skeleton className="size-7 shrink-0 rounded-full" />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-4 w-48" />
-            <Skeleton className="h-3 w-32" />
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
@@ -59,31 +63,35 @@ export function TimelineFeed({ initialData }: { initialData?: Paginated<GlobalTi
   }
 
   const events = data?.data ?? []
+  const groups = groupByDay(events)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title="Timeline" description="Everything that’s happened across your job pipeline." />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="mx-auto w-full max-w-2xl space-y-4">
+        <div className="space-y-10">
           {isError ? <MutationErrorAlert error={error} /> : null}
           {isLoading && events.length === 0 ? (
-            <LoadingRows />
+            <TimelineSkeletonBody />
           ) : events.length === 0 ? (
             <EmptyState />
           ) : (
             <>
-              <ol className="space-y-4">
-                {events.map((event) => (
-                  <TimelineEntry
-                    key={event.id}
-                    event={event}
-                    jobLink={{
-                      href: `/app/jobs?job=${event.jobId}`,
-                      label: `${event.jobCompany} — ${event.jobTitle}`,
-                    }}
-                  />
-                ))}
-              </ol>
+              {groups.map((group) => (
+                <section key={group.key} className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <h2 className="shrink-0 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                      {group.label}
+                    </h2>
+                    <span aria-hidden="true" className="h-px flex-1 bg-border" />
+                  </div>
+                  <ol>
+                    {group.events.map((event, i) => (
+                      <TimelineRow key={event.id} event={event} isLast={i === group.events.length - 1} />
+                    ))}
+                  </ol>
+                </section>
+              ))}
               {data ? <JobsPagination meta={data.meta} onPage={setPage} /> : null}
             </>
           )}

@@ -95,18 +95,42 @@ export function CoverLetterEditorSkeleton() {
 export function TimelineSkeleton() {
   return (
     <PageSkeleton hasDescription>
-      <div className="mx-auto w-full max-w-2xl space-y-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="flex gap-3">
-            <Skeleton className="size-7 shrink-0 rounded-full" />
-            <div className="flex-1 space-y-1.5">
-              <Skeleton className="h-4 w-48" />
-              <Skeleton className="h-3 w-32" />
-            </div>
-          </div>
-        ))}
-      </div>
+      <TimelineSkeletonBody />
     </PageSkeleton>
+  )
+}
+
+// Mirrors the global timeline's grouped, full-width rail layout: a day-group
+// heading (label + hairline rule) over rows of [rail node · title/description ·
+// job · time]. Shared by the route skeleton and the feed's in-place loading
+// state so both match the real UI.
+export function TimelineSkeletonBody() {
+  return (
+    <div className="space-y-10" aria-hidden="true">
+      {Array.from({ length: 2 }).map((_, g) => (
+        <div key={g} className="space-y-4">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-3 w-20" />
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <div className="space-y-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex gap-4">
+                <Skeleton className="size-7 shrink-0 rounded-full" />
+                <div className="grid flex-1 grid-cols-1 gap-x-8 gap-y-1.5 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_max-content] sm:items-baseline">
+                  <div className="space-y-1.5">
+                    <Skeleton className="h-4 w-44" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                  <Skeleton className="h-3 w-40" />
+                  <Skeleton className="h-3 w-16 sm:justify-self-end" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 
