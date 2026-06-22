@@ -23,7 +23,14 @@ async function emitAutoEntry(entry: {
   }
 }
 
-async function create(userId: string, input: CreateJobInput): Promise<JobRow> {
+// Lets a caller (e.g. the extension's quick-create) attribute the source of a
+// new job in its auto-timeline entry. Omitted → the default "added to vault" text.
+interface CreateJobOptions {
+  autoEntryTitle?: string
+  autoEntryDescription?: string
+}
+
+async function create(userId: string, input: CreateJobInput, options?: CreateJobOptions): Promise<JobRow> {
   const status = input.status ?? 'WISHLIST'
   const kanbanOrder = await jobsRepository.nextKanbanOrder(userId, status)
 
@@ -45,8 +52,8 @@ async function create(userId: string, input: CreateJobInput): Promise<JobRow> {
   await emitAutoEntry({
     userId,
     jobId: job.id,
-    title: 'Job added to vault',
-    description: `Added to ${job.status} column`,
+    title: options?.autoEntryTitle ?? 'Job added to vault',
+    description: options?.autoEntryDescription ?? `Added to ${job.status} column`,
   })
   return job
 }

@@ -56,6 +56,19 @@ async function findById(userId: string, id: string): Promise<JobRow | null> {
   return rows[0] ?? null
 }
 
+// Exact-match lookup used for extension dedup. The caller normalizes the URL
+// (scraper.normalizeJobUrl) before passing it, so two captures of the same
+// posting collapse to one row. Newest-first in the rare event of historical dups.
+async function findBySourceUrl(userId: string, sourceUrl: string): Promise<JobRow | null> {
+  const rows = await getDb()
+    .select()
+    .from(jobs)
+    .where(and(eq(jobs.userId, userId), eq(jobs.sourceUrl, sourceUrl)))
+    .orderBy(desc(jobs.createdAt))
+    .limit(1)
+  return rows[0] ?? null
+}
+
 async function findAll(userId: string, query: JobQueryInput): Promise<{ rows: JobRow[]; total: number }> {
   const where = and(
     eq(jobs.userId, userId),
@@ -125,6 +138,7 @@ export const jobsRepository = {
   nextKanbanOrder,
   create,
   findById,
+  findBySourceUrl,
   findAll,
   update,
   move,

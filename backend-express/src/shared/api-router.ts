@@ -11,6 +11,8 @@ import { personasRouter } from '@/modules/personas/personas.router.js'
 import { profileRouter } from '@/modules/profile/profile.router.js'
 import { resumesRouter } from '@/modules/resumes/resumes.router.js'
 import { coverLettersRouter } from '@/modules/cover-letters/cover-letters.router.js'
+import { apiKeysRouter } from '@/modules/api-keys/api-keys.router.js'
+import { extensionRouter } from '@/modules/extension/extension.router.js'
 
 const router = Router()
 
@@ -32,5 +34,7 @@ router.use('/personas', personasRouter)
 router.use('/profile', profileRouter)
 router.use('/resumes', resumesRouter)
 router.use('/cover-letters', coverLettersRouter)
+router.use('/api-keys', apiKeysRouter)
+router.use('/extension', extensionRouter)
 
 export { router as apiRouter }

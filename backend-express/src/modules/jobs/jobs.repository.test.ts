@@ -60,6 +60,22 @@ describe('jobsRepository (real DB)', () => {
     expect(await jobsRepository.findById('00000000-0000-0000-0000-000000000000', created.id)).toBeNull()
   })
 
+  it('finds by exact sourceUrl scoped to the owner (extension dedup)', async () => {
+    const url = `https://www.linkedin.com/jobs/view/${Date.now()}`
+    const created = await jobsRepository.create({
+      userId,
+      title: 'Dedup Me',
+      company: 'Acme',
+      status: 'WISHLIST',
+      kanbanOrder: 1,
+      lastActivityAt: new Date(),
+      sourceUrl: url,
+    })
+    expect((await jobsRepository.findBySourceUrl(userId, url))?.id).toBe(created.id)
+    expect(await jobsRepository.findBySourceUrl(userId, `${url}-other`)).toBeNull()
+    expect(await jobsRepository.findBySourceUrl('00000000-0000-0000-0000-000000000000', url)).toBeNull()
+  })
+
   it('filters by search (ILIKE title/company) and status, and paginates', async () => {
     await jobsRepository.create({
       userId,

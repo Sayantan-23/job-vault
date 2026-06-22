@@ -99,3 +99,19 @@ The Redis adapter turns each emit into a Redis pub/sub message all instances sub
 - **Render tier without AI can't supply company:** with Gemini off, the render tier only yields title + snapshot (no company), so a JS-rendered page stays `partial` unless AI is on. A structured render provider (Firecrawl extract) or a light cheerio pass over rendered HTML would close this.
 - **Shared placeholder constants:** `Untitled Position` / `Unknown Company` are duplicated in `scraper.ts` (DEFAULT_*) and `url-paste-form.tsx` (PLACEHOLDER_*). Functionally correct today; future drift risk. Either share via the API contract (trust `status`) or add a linking test.
 - **`getRenderClients()` gating test:** the `SCRAPER_RENDER_ENABLED` env parse is tested; the `getRenderClients() === []` when disabled branch and the render-timeout abort path are not.
+
+## Chrome extension (Slice 8, 2026-06-22)
+
+> Built and unit-tested on `slice-8-chrome-extension` (load-unpacked for dev). Consciously-deferred follow-ups.
+
+### Release / packaging doc + Chrome Web Store
+**What:** A documented release process — pin the extension `key`, version bump, `npm run build`, zip `dist/`, plus a Web Store listing (icons, screenshots, privacy policy, host-permission justification).
+**Why:** Dev uses load-unpacked; real distribution needs store review + a stable id. Out of scope while mid-migration / personal use.
+**Trigger:** when sharing the extension beyond the developer's own browser.
+
+### Extension nice-to-haves (low)
+- **On-page overlay save button** (injected "Save to JobVault" on job pages) — popup-only for now; an overlay is more intrusive and DOM-fragile.
+- **Per-site extractors for more boards** — live-DOM extraction now runs on *every* site (on-demand `chrome.scripting.executeScript` injection via `activeTab`), but only LinkedIn/Indeed have tuned selectors; everything else uses the generic schema.org/OG extractor. Naukri/Glassdoor/Wellfound/Workday would benefit from dedicated extractors (esp. for company, which OG `site_name` gets wrong).
+- **Real logo icons** — `icons/*.png` are solid-indigo placeholders from `scripts/make-icons.mjs`.
+
+> ~~Generic client-side extraction~~ and ~~the stale-tab caveat~~ are **done** (2026-06-22): capture injects the content script on demand into the active tab on every popup open, so it works on any site with no pre-declared match and no reload-after-install.
