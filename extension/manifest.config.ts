@@ -10,7 +10,7 @@ export default defineManifest({
   // PINNED_EXTENSION_IDS allowlist. See README.
   action: { default_popup: 'src/popup/index.html', default_title: 'Save to JobVault' },
   background: { service_worker: 'src/background/service-worker.ts', type: 'module' },
-  permissions: ['storage', 'activeTab', 'scripting', 'identity'],
+  permissions: ['storage', 'activeTab', 'identity'],
   host_permissions: ['http://localhost:3100/*', 'http://127.0.0.1:3100/*'],
   content_scripts: [
     {

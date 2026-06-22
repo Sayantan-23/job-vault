@@ -24,7 +24,15 @@ async function connect(): Promise<ConnectResponse> {
   const state = randomState()
   const authUrl = buildAuthorizeUrl(serverUrl, redirectUri, state)
 
-  const callbackUrl = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true })
+  // Chrome rejects launchWebAuthFlow when the user closes/cancels the auth
+  // window — treat that (and a falsy result) as a clean cancellation rather than
+  // surfacing a raw Chrome error string.
+  let callbackUrl: string | undefined
+  try {
+    callbackUrl = await chrome.identity.launchWebAuthFlow({ url: authUrl, interactive: true })
+  } catch {
+    return { ok: false, error: 'Connection cancelled' }
+  }
   if (!callbackUrl) return { ok: false, error: 'Connection cancelled' }
 
   const { token, state: returnedState } = parseAuthRedirect(callbackUrl)

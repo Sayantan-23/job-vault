@@ -68,6 +68,20 @@ describe('extractFromDocument', () => {
     })
   })
 
+  it('reads location from an array jobLocation and a string hiringOrganization', () => {
+    const ld = {
+      '@context': 'https://schema.org',
+      '@type': 'JobPosting',
+      title: 'Engineer',
+      hiringOrganization: 'Acme',
+      jobLocation: [{ '@type': 'Place', address: { addressLocality: 'Berlin' } }],
+      description: 'd',
+    }
+    const html = `<script type="application/ld+json">${JSON.stringify(ld)}</script>`
+    const out = extractFromDocument(docFrom(html), 'https://boards.greenhouse.io/x/jobs/1')
+    expect(out).toMatchObject({ title: 'Engineer', company: 'Acme', location: 'Berlin' })
+  })
+
   it('falls back to the generic extractor when a known site yields nothing', () => {
     const html = `<meta property="og:title" content="Fallback Role"><meta property="og:site_name" content="SomeCo">`
     const out = extractFromDocument(docFrom(html), 'https://www.linkedin.com/jobs/view/999')

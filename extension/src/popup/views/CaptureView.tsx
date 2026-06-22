@@ -68,6 +68,7 @@ export function CaptureView({ onSaved, onSettings }: Props) {
         title: title.trim(),
         company: company.trim(),
         location: location.trim() || undefined,
+        salaryRange: data?.salaryRange,
         sourceUrl: data?.sourceUrl || undefined,
         description: data?.description,
       })

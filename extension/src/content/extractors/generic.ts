@@ -17,8 +17,10 @@ function orgName(value: unknown): string | undefined {
 }
 
 function place(value: unknown): string | undefined {
-  if (value && typeof value === 'object') {
-    const addr = (value as { address?: unknown }).address
+  // jobLocation may be a single Place or an array of them (multi-office postings).
+  const first = Array.isArray(value) ? value[0] : value
+  if (first && typeof first === 'object') {
+    const addr = (first as { address?: unknown }).address
     if (addr && typeof addr === 'object') {
       const a = addr as Record<string, unknown>
       return jsonLdString(a['addressLocality']) ?? jsonLdString(a['addressRegion'])

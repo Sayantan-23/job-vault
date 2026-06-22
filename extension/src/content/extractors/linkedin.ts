@@ -23,7 +23,9 @@ const COMPANY = [
   '.job-details-jobs-unified-top-card__company-name',
   '.jobs-unified-top-card__company-name',
   '.topcard__org-name-link',
-  'a[data-test-app-aware-link]',
+  // NB: deliberately no unanchored `a[data-test-app-aware-link]` fallback — it
+  // matches nav/job-card links, so if the container scoping ever fails it would
+  // yield a confidently-wrong company AND suppress the generic fallback.
 ]
 const LOCATION = [
   '.job-details-jobs-unified-top-card__primary-description-container',

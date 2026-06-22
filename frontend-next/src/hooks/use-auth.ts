@@ -48,10 +48,20 @@ export function useOptionalCurrentUser() {
   return useQuery({
     queryKey: ['optionalCurrentUser'],
     queryFn: async (): Promise<AuthUser | null> => {
-      const res = await fetch('/api/auth/me', {
-        credentials: 'include',
-        headers: { accept: 'application/json' },
-      })
+      const fetchMe = () =>
+        fetch('/api/auth/me', { credentials: 'include', headers: { accept: 'application/json' } })
+      let res = await fetchMe()
+      // This page is public, so neither the rotation middleware nor api-client's
+      // silent refresh runs here. Recover an idle-but-valid session (expired
+      // access cookie, live refresh cookie) once before falling back to the form.
+      if (res.status === 401) {
+        const refreshed = await fetch('/api/auth/refresh', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { accept: 'application/json' },
+        })
+        if (refreshed.ok) res = await fetchMe()
+      }
       if (!res.ok) return null
       const payload = (await res.json()) as { data: AuthUser }
       return payload.data
