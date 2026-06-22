@@ -1,7 +1,8 @@
 import type { ExtractedJobData } from '@/lib/types'
 import { scoreConfidence } from '@/lib/confidence'
 import { canonicalUrl } from '../detector'
-import { firstText, firstContainer } from './dom'
+import { firstText, firstContainer, firstElement } from './dom'
+import { descriptionToMarkdown } from './markdown'
 
 // Scope to the focused detail pane so the split-pane search layout
 // (…/jobs/search?currentJobId=…) extracts the SELECTED job, not a list card or
@@ -42,7 +43,7 @@ export function extractLinkedIn(doc: Document, pageUrl: string): ExtractedJobDat
     title: title ?? '',
     company: company ?? '',
     location: firstText(root, LOCATION),
-    description: firstText(root, DESCRIPTION),
+    description: descriptionToMarkdown(firstElement(root, DESCRIPTION)?.innerHTML),
     sourceUrl: canonicalUrl(pageUrl),
     platform: 'linkedin',
     confidence: scoreConfidence({ title, company }),

@@ -68,6 +68,23 @@ describe('extractFromDocument', () => {
     })
   })
 
+  it('converts an HTML job description to Markdown (Naukri-style JSON-LD)', () => {
+    const ld = {
+      '@context': 'https://schema.org',
+      '@type': 'JobPosting',
+      title: 'QA Engineer',
+      hiringOrganization: 'Acme',
+      description: '<p><strong>Role</strong></p><ul><li>Test things</li><li>Write cases</li></ul>',
+    }
+    const html = `<script type="application/ld+json">${JSON.stringify(ld)}</script>`
+    const out = extractFromDocument(docFrom(html), 'https://www.naukri.com/job-listings-qa-engineer')
+    expect(out.platform).toBe('generic')
+    expect(out.description).toContain('**Role**')
+    expect(out.description).toContain('- Test things')
+    expect(out.description).not.toContain('<li>')
+    expect(out.description).not.toContain('<p>')
+  })
+
   it('reads location from an array jobLocation and a string hiringOrganization', () => {
     const ld = {
       '@context': 'https://schema.org',

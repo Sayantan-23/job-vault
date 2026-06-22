@@ -1,6 +1,7 @@
 import type { ExtractedJobData } from '@/lib/types'
 import { scoreConfidence } from '@/lib/confidence'
 import { firstText, firstAttr, jobPostingJsonLd } from './dom'
+import { descriptionToMarkdown } from './markdown'
 
 function jsonLdString(value: unknown): string | undefined {
   if (typeof value === 'string') return value.trim() || undefined
@@ -48,9 +49,12 @@ export function extractGeneric(doc: Document, pageUrl: string): ExtractedJobData
     ])
 
   const location = ld ? place(ld['jobLocation']) : undefined
-  const description =
-    (ld && jsonLdString(ld['description'])) ??
-    firstAttr(doc, [['meta[name="description"]', 'content']])
+  // schema.org JobPosting.description is typically HTML → convert to Markdown;
+  // otherwise fall back to the plain-text meta description.
+  const ldDescription = ld ? jsonLdString(ld['description']) : undefined
+  const description = ldDescription
+    ? descriptionToMarkdown(ldDescription)
+    : firstAttr(doc, [['meta[name="description"]', 'content']])
 
   return {
     title: title ?? '',

@@ -1,6 +1,7 @@
 import type { ExtractedJobData } from '@/lib/types'
 import { scoreConfidence } from '@/lib/confidence'
-import { firstText } from './dom'
+import { firstText, firstElement } from './dom'
+import { descriptionToMarkdown } from './markdown'
 
 // Indeed renders the focused job in a right-hand pane keyed by data-testid. We
 // query the document (the pane is the only job-detail region present).
@@ -27,7 +28,7 @@ export function extractIndeed(doc: Document, pageUrl: string): ExtractedJobData 
     company: company ?? '',
     location: firstText(doc, LOCATION),
     salaryRange: firstText(doc, SALARY),
-    description: firstText(doc, DESCRIPTION),
+    description: descriptionToMarkdown(firstElement(doc, DESCRIPTION)?.innerHTML),
     sourceUrl: pageUrl,
     platform: 'indeed',
     confidence: scoreConfidence({ title, company }),

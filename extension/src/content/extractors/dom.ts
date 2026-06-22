@@ -10,6 +10,15 @@ export function firstText(root: ParentNode, selectors: string[]): string | undef
   return undefined
 }
 
+/** First element matching any selector, scoped to root (for innerHTML → Markdown). */
+export function firstElement(root: ParentNode, selectors: string[]): Element | null {
+  for (const selector of selectors) {
+    const el = root.querySelector(selector)
+    if (el) return el
+  }
+  return null
+}
+
 /** First element matching any selector, else the document itself. */
 export function firstContainer(doc: Document, selectors: string[]): ParentNode {
   for (const selector of selectors) {
