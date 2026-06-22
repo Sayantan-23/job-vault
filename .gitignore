@@ -8,3 +8,6 @@ frontend/nul
 .env
 .env.*
 !.env.example
+
+# Claude Code transient runtime lock (per-process; not source)
+.claude/scheduled_tasks.lock
