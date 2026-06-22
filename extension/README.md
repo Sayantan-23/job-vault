@@ -32,9 +32,10 @@ npm run build     # vite build → dist/ (load unpacked) — pending the UI/mani
 2. `npm install && npm run build`
 3. Chrome → `chrome://extensions` → enable Developer mode → **Load unpacked** → `dist/`.
 4. Click the toolbar icon → **Connect with JobVault** (creates an account inline if needed).
-5. On a LinkedIn/Indeed job page, open the popup and **Save to JobVault**. If a job
-   tab was open *before* you installed the extension, reload it once so the content
-   script is present.
+5. On any job page (LinkedIn, Indeed, Naukri, Greenhouse, …), open the popup and
+   **Save to JobVault**. Extraction reads the live page DOM (injected on demand via
+   `activeTab`), so it's instant and works on any site; the backend scrape is only
+   a fallback when the page yields nothing.
 
 ### Pinning the extension id (recommended)
 

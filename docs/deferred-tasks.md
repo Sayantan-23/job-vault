@@ -111,7 +111,7 @@ The Redis adapter turns each emit into a Redis pub/sub message all instances sub
 
 ### Extension nice-to-haves (low)
 - **On-page overlay save button** (injected "Save to JobVault" on job pages) — popup-only for now; an overlay is more intrusive and DOM-fragile.
-- **Generic client-side extraction** — generic sites currently route to the backend `/api/extension/scrape`; on-demand `chrome.scripting.executeScript` injection would let the content-script extractors run on any site (avoiding the bot-wall for non-LinkedIn/Indeed boards).
+- **Per-site extractors for more boards** — live-DOM extraction now runs on *every* site (on-demand `chrome.scripting.executeScript` injection via `activeTab`), but only LinkedIn/Indeed have tuned selectors; everything else uses the generic schema.org/OG extractor. Naukri/Glassdoor/Wellfound/Workday would benefit from dedicated extractors (esp. for company, which OG `site_name` gets wrong).
 - **Real logo icons** — `icons/*.png` are solid-indigo placeholders from `scripts/make-icons.mjs`.
-- **More job boards** (Glassdoor, Wellfound, Workday) via new extractors; the generic schema.org path already covers many ATS boards.
-- **Stale-tab caveat** — if a LinkedIn/Indeed tab was open *before* install, its content script is absent, so capture falls back to the (bot-walled) backend scrape until the tab is reloaded; programmatic injection would remove the caveat.
+
+> ~~Generic client-side extraction~~ and ~~the stale-tab caveat~~ are **done** (2026-06-22): capture injects the content script on demand into the active tab on every popup open, so it works on any site with no pre-declared match and no reload-after-install.

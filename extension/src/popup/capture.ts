@@ -1,23 +1,29 @@
-import { detectPlatform } from '@/content/detector'
+import contentScriptUrl from '@/content/index?iife'
 import { scrape, type ScrapeResult } from '@/lib/api'
 import { EXTRACT } from '@/lib/messages'
 import type { ExtractedJobData } from '@/lib/types'
 
-// Reads the active tab. For LinkedIn/Indeed, asks the content script to extract
-// from the live DOM (the bot-wall-proof path). Otherwise — or if the content
-// script isn't present / came back empty — falls back to the backend scrape.
+// Reads the job straight from the active tab's LIVE, already-rendered DOM — the
+// whole point of the extension (instant, and it sidesteps the bot-walls that make
+// server-side scraping of LinkedIn/Indeed/Naukri slow). The content script is
+// injected on demand via activeTab+scripting when the user opens the popup, so it
+// works on ANY job site without a broad host permission or a pre-declared match.
+// Only when the live read comes back empty (or injection is impossible, e.g. a
+// chrome:// page) do we fall back to the slower backend scrape.
 export async function capturePage(serverUrl: string, token: string): Promise<ExtractedJobData> {
   const tabs = await chrome.tabs.query({ active: true, currentWindow: true })
   const tab = tabs[0]
   const url = tab?.url ?? ''
-  const platform = detectPlatform(url)
+  const tabId = tab?.id
 
-  if ((platform === 'linkedin' || platform === 'indeed') && tab?.id != null) {
+  if (tabId != null && /^https?:/i.test(url)) {
     try {
-      const data = (await chrome.tabs.sendMessage(tab.id, { type: EXTRACT })) as ExtractedJobData | undefined
+      // Idempotent: the content script guards against re-registering its listener.
+      await chrome.scripting.executeScript({ target: { tabId }, files: [contentScriptUrl] })
+      const data = (await chrome.tabs.sendMessage(tabId, { type: EXTRACT })) as ExtractedJobData | undefined
       if (data && data.confidence !== 'empty') return data
     } catch {
-      // Content script not injected (e.g. the tab predates the install) — fall through.
+      // Restricted page (chrome://, the Web Store, a PDF, etc.) — fall through.
     }
   }
 

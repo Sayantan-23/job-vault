@@ -10,17 +10,11 @@ export default defineManifest({
   // PINNED_EXTENSION_IDS allowlist. See README.
   action: { default_popup: 'src/popup/index.html', default_title: 'Save to JobVault' },
   background: { service_worker: 'src/background/service-worker.ts', type: 'module' },
-  permissions: ['storage', 'activeTab', 'identity'],
-  // The web-app origin (it proxies /api/* to the backend). Add the prod origin
-  // here when deploying.
+  permissions: ['storage', 'activeTab', 'scripting', 'identity'],
+  // Only the web-app origin (it serves /extension/authorize and proxies /api/* to
+  // the backend). Live-DOM extraction needs NO host_permission for job sites — it
+  // injects on demand into the active tab via activeTab+scripting on popup open.
   host_permissions: ['http://localhost:8080/*', 'http://127.0.0.1:8080/*'],
-  content_scripts: [
-    {
-      matches: ['https://www.linkedin.com/*', 'https://*.indeed.com/*'],
-      js: ['src/content/index.ts'],
-      run_at: 'document_idle',
-    },
-  ],
   icons: {
     '16': 'icons/icon-16.png',
     '32': 'icons/icon-32.png',
