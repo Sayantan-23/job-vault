@@ -8,9 +8,9 @@
 
 ---
 
-## Migration Slice 8 — Chrome Extension (IMPLEMENTED, pending live smoke — 2026-06-22)
+## Migration Slice 8 — Chrome Extension (DONE — merged to master 2026-06-22, merge `2fae798`)
 
-> Branch `slice-8-chrome-extension`. Plan: `docs/superpowers/plans/2026-06-20-slice-8-chrome-extension.md`. One-click "Save to JobVault" from LinkedIn/Indeed/most boards, with a smooth `launchWebAuthFlow` connect (no key copy-paste) and client-first extraction (the extension reads the live, logged-in DOM, sidestepping the bot-walls that force the server's render+AI fallback).
+> Branch `slice-8-chrome-extension` (merged `--no-ff`). Plan: `docs/superpowers/plans/2026-06-20-slice-8-chrome-extension.md`. One-click "Save to JobVault" from LinkedIn/Indeed/most boards, with a smooth `launchWebAuthFlow` connect (no key copy-paste) and client-first extraction (the extension reads the live, logged-in DOM, sidestepping the bot-walls that force the server's render+AI fallback).
 
 - [x] **Backend — `api-keys` module** (migration `0011`): `api_keys` table (bcrypt `keyHash`, indexed `keyPrefix`, soft-revoke), cookie-authed mint (raw `jv_` key shown once) / list / revoke, + `apiKeyMiddleware` verifying the `X-API-Key` header (prefix-narrow → bcrypt compare → `req.apiKey`). 21 tests.
 - [x] **Backend — `extension` module** (`X-API-Key`): `verify-key`, `check-url` (dedup probe), `quick-create` (normalize URL via `normalizeJobUrl` → dedup via new `jobsRepository.findBySourceUrl` → WISHLIST job + "Added via Chrome Extension" auto-timeline; `jobsService.create` gained an optional `autoEntryTitle`), `scrape` fallback. 24 tests.
@@ -19,7 +19,8 @@
 - [x] **Extension project** (`extension/`, React 19 + Vite + Tailwind v4 + crxjs MV3): content-script extractors (LinkedIn split-pane-scoped, Indeed `data-testid`, generic schema.org/OG) + detector + canonical-URL + confidence; `chrome.storage` / `X-API-Key` API / `launchWebAuthFlow` libs; popup (Connect / Capture / Success / Settings) + background connect driver. typecheck + 22 vitest tests + `vite build` → loadable `dist/` all green.
 - [x] **Adversarially reviewed** (4-lens + verification): 6 fixes applied — authorize-page silent refresh, dropped `salaryRange`, over-broad LinkedIn company selector, connect-cancel UX, array `jobLocation`, removed unused `scripting` permission.
 - [x] **Decisions:** no cookie weakening (runtime uses `X-API-Key`, only same-origin mint uses the cookie); security via `state` nonce + redirect allowlist + fragment-only token + interactive consent; popup-only; LinkedIn/Indeed client + generic→backend-scrape.
-- [ ] **Next:** load unpacked in Chrome → smoke connect (incl. brand-new-user inline signup), capture on real LinkedIn split-pane + standalone / Indeed / a generic board, dedup, and revoke. Then pin the extension id (`manifest.config.ts` `key` → `PINNED_EXTENSION_IDS`), update `CLAUDE.md`, and **merge to master**. Live smoke needs a real browser.
+- [x] **Live-smoked + merged.** Post-implementation fixes during the user's browser pass: connect URL → web-app origin `:8080` (was wrongly the backend); **on-demand live-DOM extraction on _any_ site** (Naukri/Greenhouse/… via `chrome.scripting` + `activeTab`, dropping the declared content_scripts and the reload-after-install caveat); descriptions converted to clean **Markdown** (ported the backend's Turndown + sanitizer) with **decorative-bold stripping** for Naukri's over-`<strong>`'d markup. Final gates: 600 backend + 522 web + 29 extension tests. Now 600/522/29 (1151) green.
+- [ ] **Deferred follow-ups** (`docs/deferred-tasks.md`): pin the extension `key` → `PINNED_EXTENSION_IDS`, real logo icons, per-site extractors (Naukri/Glassdoor company), Web Store packaging. **Next migration backlog:** public-pages redesign, Google OAuth, email reminders.
 
 ## Migration Phase 0a — Backend Express Scaffolding (NEW)
 
