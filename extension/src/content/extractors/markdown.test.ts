@@ -17,6 +17,20 @@ describe('htmlToMarkdown', () => {
     expect(sanitizeSnapshotMarkdown('![](data:image/png;base64,AAA)')).toBe('')
   })
 
+  it('strips decorative bold when most of the description is bold (Naukri)', () => {
+    const html =
+      '<p><strong>Position: Engineer</strong></p><p><strong>Location: Pune</strong></p><p><strong>Experience: 3 years</strong></p>'
+    const md = htmlToMarkdown(html)
+    expect(md).not.toContain('**')
+    expect(md).toContain('Position: Engineer')
+  })
+
+  it('keeps sparse, meaningful bold (e.g. a single heading)', () => {
+    const html =
+      '<p><strong>Responsibilities:</strong></p><p>Build and test a large amount of software across many teams and projects over a long time.</p>'
+    expect(htmlToMarkdown(html)).toContain('**Responsibilities:**')
+  })
+
   it('returns empty/undefined for empty input', () => {
     expect(htmlToMarkdown('')).toBe('')
     expect(descriptionToMarkdown(undefined)).toBeUndefined()
