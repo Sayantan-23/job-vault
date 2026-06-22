@@ -178,12 +178,12 @@ Backend: `npm run typecheck && lint && test` (vitest + real Postgres for repos).
 - [x] **D3.** `src/app/(auth)/extension/authorize/page.tsx` + `AuthorizeFlow` client component: parse + **validate `redirect_uri`** against allowlist (configurable extension id), `state` passthrough; logged-out → `InlineAuthForm`; logged-in → "Connect to {email}" → `POST /api/api-keys` → `window.location.assign(redirect_uri#token&state)`. Component test: invalid redirect rejected, logged-out shows form, logged-in shows connect, connect redirects with token+state.
 
 ### Phase E — Extension scaffold
-- [ ] **E1.** `extension/` project: `package.json`, `vite.config.ts` (@crxjs), `tsconfig`, Tailwind v4 + copied tokens, lint config matching repo. `manifest.config.ts` with pinned `key`, permissions, host_permissions, action popup, background, content_scripts (linkedin/indeed/generic match patterns). `npm run build` produces a loadable `dist/`. Placeholder popup renders. *(load-unpacked smoke)*
+- [x] **E1.** `extension/` project: `package.json`, `vite.config.ts` (@crxjs), `tsconfig`, Tailwind v4 + copied tokens, lint config matching repo. `manifest.config.ts` with pinned `key`, permissions, host_permissions, action popup, background, content_scripts (linkedin/indeed/generic match patterns). `npm run build` produces a loadable `dist/`. Placeholder popup renders. *(load-unpacked smoke)*
 - [x] **E2.** `lib/storage.ts` (typed `chrome.storage.local` wrapper: token, serverUrl, settings) + `lib/types.ts` (`ExtractedJobData`, `Confidence`, `ExtensionSettings`) + tests (mock `chrome.storage`).
 - [x] **E3.** `lib/api.ts` — `X-API-Key` fetch against configurable `serverUrl`, `{data}`/error envelope unwrap; `verifyKey`, `checkUrl`, `quickCreate`, `scrape` + tests.
 
 ### Phase F — Extension auth (connect)
-- [ ] **F1.** `lib/auth.ts` + `background/service-worker.ts`: generate `state`, `launchWebAuthFlow`, parse `#token&state`, verify `state`, store token, `verifyKey`. Test the URL-parse/`state`-verify logic (pure functions); mock `chrome.identity`.
+- [x] **F1.** `lib/auth.ts` + `background/service-worker.ts`: generate `state`, `launchWebAuthFlow`, parse `#token&state`, verify `state`, store token, `verifyKey`. Test the URL-parse/`state`-verify logic (pure functions); mock `chrome.identity`.
 
 ### Phase G — Extension extractors (client-first)
 - [x] **G1.** `content/detector.ts` (URL → platform) + test.
@@ -193,12 +193,12 @@ Backend: `npm run typecheck && lint && test` (vitest + real Postgres for repos).
 - [x] **G5.** `content/extract.ts` orchestrator + `lib/confidence.ts` (`ok|partial|empty`); `content/index.ts` responds to popup/background messages. Test the orchestrator + confidence scoring.
 
 ### Phase H — Extension popup UI (minimalist-ui skill)
-- [ ] **H1.** Port `ui/` primitives (Button, Input, Label, Spinner, EmptyState) + base styles/tokens.
-- [ ] **H2.** `ConnectView` — disconnected empty state ("Connect JobVault to start saving jobs" + one button; "New here? You'll create your account in the next step"); triggers connect; handles user closing the window mid-flow (stays disconnected, no error).
-- [ ] **H3.** `CaptureView` — on open: run extractor, pre-fill form, call `check-url` → show "Already saved ↗" if dup; **Save** → `quick-create`; `partial/empty` → editable manual fill (+ optional "Try smart capture" calling `/extension/scrape`).
-- [ ] **H4.** `SuccessView` — confirmation + "Open in JobVault ↗".
-- [ ] **H5.** `SettingsView` — connected account, server URL, **Disconnect** (revoke locally + optionally call DELETE), about.
-- [ ] **H6.** `App.tsx` view router by auth + capture state.
+- [x] **H1.** Port `ui/` primitives (Button, Input, Label, Spinner, EmptyState) + base styles/tokens.
+- [x] **H2.** `ConnectView` — disconnected empty state ("Connect JobVault to start saving jobs" + one button; "New here? You'll create your account in the next step"); triggers connect; handles user closing the window mid-flow (stays disconnected, no error).
+- [x] **H3.** `CaptureView` — on open: run extractor, pre-fill form, call `check-url` → show "Already saved ↗" if dup; **Save** → `quick-create`; `partial/empty` → editable manual fill (+ optional "Try smart capture" calling `/extension/scrape`).
+- [x] **H4.** `SuccessView` — confirmation + "Open in JobVault ↗".
+- [x] **H5.** `SettingsView` — connected account, server URL, **Disconnect** (revoke locally + optionally call DELETE), about.
+- [x] **H6.** `App.tsx` view router by auth + capture state.
 
 ### Phase I — Wiring, smoke, docs
 - [ ] **I1.** End-to-end **manual smoke** on the Docker stack: connect (logged-in AND brand-new-user inline signup), capture on LinkedIn split-pane + standalone, Indeed, one generic board; dedup; Connected Apps revoke kills the extension. Record a GIF.

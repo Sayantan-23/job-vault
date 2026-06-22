@@ -1,5 +1,3 @@
-import type { ExtractedJobData } from './types'
-
 export interface JobSummary {
   id: string
   title: string
@@ -12,6 +10,15 @@ export interface QuickCreateResult extends JobSummary {
 export interface VerifyResult {
   ok: true
   user: { email: string }
+}
+export interface ScrapeResult {
+  title: string
+  company: string
+  location?: string
+  salaryRange?: string
+  snapshotMarkdown: string
+  status: 'ok' | 'partial' | 'empty'
+  source: string
 }
 
 export class ApiError extends Error {
@@ -57,11 +64,24 @@ export function checkUrl(
   return call(serverUrl, token, `/api/extension/check-url?url=${encodeURIComponent(url)}`)
 }
 
-export function quickCreate(
-  serverUrl: string,
-  token: string,
-  job: Pick<ExtractedJobData, 'title' | 'company' | 'location' | 'salaryRange' | 'description' | 'sourceUrl'>,
-): Promise<QuickCreateResult> {
+// Backend scrape fallback for pages the content script can't parse (generic sites).
+export function scrape(serverUrl: string, token: string, sourceUrl: string): Promise<ScrapeResult> {
+  return call<ScrapeResult>(serverUrl, token, '/api/extension/scrape', {
+    method: 'POST',
+    body: JSON.stringify({ sourceUrl }),
+  })
+}
+
+export interface QuickCreateInput {
+  title: string
+  company: string
+  location?: string
+  salaryRange?: string
+  description?: string
+  sourceUrl?: string
+}
+
+export function quickCreate(serverUrl: string, token: string, job: QuickCreateInput): Promise<QuickCreateResult> {
   return call<QuickCreateResult>(serverUrl, token, '/api/extension/jobs', {
     method: 'POST',
     body: JSON.stringify({
