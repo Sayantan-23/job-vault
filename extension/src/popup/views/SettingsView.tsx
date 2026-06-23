@@ -33,18 +33,26 @@ export function SettingsView({ email, onBack, onDisconnected }: Props) {
   return (
     <div>
       <TopBar onBack={onBack} />
-      <div className="space-y-4 p-4">
+      <div className="space-y-5 p-5">
         <Field label="Connected account">
-          <p className="text-sm text-foreground">{email ?? '—'}</p>
+          <p className="truncate text-sm font-medium text-foreground">{email ?? '—'}</p>
         </Field>
         <Field label="Server URL">
-          <Input value={serverUrl} onChange={(e) => setServerUrl(e.target.value)} placeholder="http://localhost:8080" />
+          <Input
+            value={serverUrl}
+            onChange={(e) => setServerUrl(e.target.value)}
+            placeholder="http://localhost:8080"
+          />
         </Field>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 border-t border-border pt-4">
           <Button variant="outline" onClick={saveUrl}>
             {saved ? 'Saved' : 'Save'}
           </Button>
-          <Button variant="ghost" onClick={disconnect} className="text-destructive hover:text-destructive">
+          <Button
+            variant="ghost"
+            onClick={disconnect}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+          >
             Disconnect
           </Button>
         </div>

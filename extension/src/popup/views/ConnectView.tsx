@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../ui/Button'
+import { Badge } from '../ui/Badge'
 import { Spinner } from '../ui/Spinner'
 import { TopBar } from '../ui/TopBar'
 import { CONNECT, type ConnectResponse } from '@/lib/messages'
@@ -28,28 +29,39 @@ export function ConnectView({ onConnected }: { onConnected: () => void }) {
   return (
     <div>
       <TopBar />
-      <div className="space-y-4 p-5">
-        <div className="space-y-1">
-          <h1 className="text-base font-semibold">Save jobs in one click</h1>
-          <p className="text-sm text-muted-foreground">
-            Connect JobVault to save postings from LinkedIn, Indeed and more. New here? You’ll create your
-            account in the next step.
+      <div className="space-y-5 p-5">
+        <div className="space-y-1.5">
+          <h1 className="font-serif text-2xl leading-tight">Save jobs in one click</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Connect JobVault to save postings straight from the page you’re on — title, company and the full
+            description, deduplicated into your board.
           </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <Badge>LinkedIn</Badge>
+          <Badge>Indeed</Badge>
+          <Badge>Naukri</Badge>
+          <Badge>and more</Badge>
         </div>
         {error ? (
           <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {error}
           </p>
         ) : null}
-        <Button onClick={connect} disabled={busy} className="w-full">
-          {busy ? (
-            <>
-              <Spinner /> Connecting…
-            </>
-          ) : (
-            'Connect with JobVault'
-          )}
-        </Button>
+        <div className="space-y-2">
+          <Button onClick={connect} disabled={busy} className="w-full">
+            {busy ? (
+              <>
+                <Spinner /> Connecting…
+              </>
+            ) : (
+              'Connect with JobVault'
+            )}
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            New here? You’ll create your account in the next step.
+          </p>
+        </div>
       </div>
     </div>
   )

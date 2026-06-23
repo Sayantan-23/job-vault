@@ -7,6 +7,7 @@ import { CaptureView } from './views/CaptureView'
 import { SuccessView } from './views/SuccessView'
 import { SettingsView } from './views/SettingsView'
 import { Spinner } from './ui/Spinner'
+import { TopBar } from './ui/TopBar'
 
 type Screen =
   | { name: 'loading' }
@@ -44,9 +45,12 @@ export default function App() {
   switch (screen.name) {
     case 'loading':
       return (
-        <Centered>
-          <Spinner />
-        </Centered>
+        <div>
+          <TopBar />
+          <Centered>
+            <Spinner className="text-primary" />
+          </Centered>
+        </div>
       )
     case 'connect':
       return <ConnectView onConnected={() => void refresh()} />
