@@ -55,6 +55,11 @@ body {
 
 body {
   width: 360px;
+  /* Round the popup and clip content to the rounded shape — modern Chrome
+     renders the popup window to the body's shape, softening the corners and
+     trimming the light window frame. */
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 /* Instrument Serif only ships a 400; nudge optical sizing for the wordmark. */
