@@ -48,11 +48,7 @@ export function SettingsView({ email, onBack, onDisconnected }: Props) {
           <Button variant="outline" onClick={saveUrl}>
             {saved ? 'Saved' : 'Save'}
           </Button>
-          <Button
-            variant="ghost"
-            onClick={disconnect}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
+          <Button variant="danger" onClick={disconnect}>
             Disconnect
           </Button>
         </div>

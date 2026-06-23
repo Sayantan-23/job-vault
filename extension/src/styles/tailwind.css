@@ -46,6 +46,9 @@ body {
   margin: 0;
   background: var(--color-background);
   color: var(--color-foreground);
+  /* Make the browser paint the popup's own canvas/chrome to match the theme —
+     removes the light frame around the popup in dark mode. */
+  color-scheme: light dark;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
