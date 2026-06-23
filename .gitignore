@@ -11,3 +11,5 @@ frontend/nul
 
 # Claude Code transient runtime lock (per-process; not source)
 .claude/scheduled_tasks.lock
+# Local artifact (résumé .tex export test)
+/example_resume.tex
