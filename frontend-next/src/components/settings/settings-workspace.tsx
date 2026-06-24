@@ -5,7 +5,7 @@ import { Sun, Moon, Monitor } from 'lucide-react'
 import { PageHeader } from '@/components/layout/app/page-header'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl, type SegmentedOption } from '@/components/ui/segmented-control'
-import { SettingsSection } from './settings-section'
+import { SettingsCard } from './settings-card'
 import { ConnectedAppsSection } from './connected-apps-section'
 import { useTheme } from '@/hooks/use-theme'
 import { useCurrentUser, useLogout } from '@/hooks/use-auth'
@@ -19,7 +19,7 @@ const THEME_OPTIONS: ReadonlyArray<SegmentedOption<Theme>> = [
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border py-2.5 last:border-0">
+    <div className="flex items-center justify-between gap-4 py-2.5 first:pt-0 last:pb-0">
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="min-w-0 truncate text-sm text-foreground">{value}</span>
     </div>
@@ -35,8 +35,11 @@ export function SettingsWorkspace() {
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title="Settings" description="Manage how JobVault looks and your account." />
       <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="w-full max-w-2xl space-y-10">
-          <SettingsSection
+        {/* A single, readable column of section cards with even spacing between
+            them. (Sections have very uneven heights, so a multi-column grid left
+            awkward gaps — a single column keeps the rhythm clean.) */}
+        <div className="w-full max-w-3xl space-y-4">
+          <SettingsCard
             title="Appearance"
             description="Choose your theme. System follows your device’s light/dark setting."
           >
@@ -46,17 +49,17 @@ export function SettingsWorkspace() {
               options={THEME_OPTIONS}
               aria-label="Theme"
             />
-          </SettingsSection>
+          </SettingsCard>
 
-          <SettingsSection
+          <SettingsCard
             title="Account"
             description="Your sign-in details. Edit your full profile to change them."
           >
-            <div className="rounded-xl border border-border px-4">
+            <div className="divide-y divide-border">
               <Field label="Name" value={user?.name?.trim() || '—'} />
               <Field label="Email" value={user?.email || '—'} />
             </div>
-            <div className="flex flex-wrap items-center gap-4">
+            <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border pt-4">
               <Link
                 href="/app/profile"
                 className="text-sm font-medium text-primary underline-offset-2 hover:underline"
@@ -73,22 +76,20 @@ export function SettingsWorkspace() {
                 {logout.isPending ? 'Signing out…' : 'Sign out'}
               </Button>
             </div>
-          </SettingsSection>
+          </SettingsCard>
 
           <ConnectedAppsSection />
 
-          <SettingsSection
+          <SettingsCard
             title="Notifications"
             description="How JobVault reaches you about reminders and ghosted applications."
           >
-            <div className="rounded-xl border border-border px-4 py-3 text-sm">
-              <p className="text-foreground">
-                In-app notifications are <span className="font-medium">on</span> — reminders and ghost
-                alerts appear in the bell and update in real time.
-              </p>
-              <p className="mt-1 text-muted-foreground">Email notifications are coming soon.</p>
-            </div>
-          </SettingsSection>
+            <p className="text-sm text-foreground">
+              In-app notifications are <span className="font-medium">on</span> — reminders and ghost
+              alerts appear in the bell and update in real time.
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Email notifications are coming soon.</p>
+          </SettingsCard>
         </div>
       </div>
     </div>
