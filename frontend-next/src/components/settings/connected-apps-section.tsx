@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Check, Copy, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { SettingsSection } from './settings-section'
+import { SettingsCard } from './settings-card'
 import { useConfirm } from '@/hooks/use-confirm'
 import { useApiKeys, useCreateApiKey, useRevokeApiKey } from '@/hooks/use-api-keys'
 import type { ConnectedApp, CreatedApiKey } from '@/types/extension'
@@ -25,7 +25,7 @@ function RevealedKey({ created, onDone }: { created: CreatedApiKey; onDone: () =
     }
   }
   return (
-    <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/[0.04] p-4">
+    <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/[0.06] p-3">
       <p className="text-sm font-medium text-foreground">Copy your key now — you won’t see it again.</p>
       <div className="flex items-center gap-2">
         <code className="min-w-0 flex-1 truncate rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-foreground">
@@ -64,19 +64,19 @@ export function ConnectedAppsSection() {
   }
 
   return (
-    <SettingsSection
+    <SettingsCard
       title="Connected apps"
       description="Connect the JobVault Chrome extension to save jobs from LinkedIn, Indeed and more in one click."
     >
-      <div className="rounded-xl border border-border">
+      <div className="space-y-4">
         {isLoading ? (
-          <p className="px-4 py-3 text-sm text-muted-foreground">Loading…</p>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         ) : apps && apps.length > 0 ? (
-          <ul>
+          <ul className="divide-y divide-border">
             {apps.map((app) => (
               <li
                 key={app.id}
-                className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-0"
+                className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <KeyRound className="size-4 shrink-0 text-muted-foreground" />
@@ -101,24 +101,24 @@ export function ConnectedAppsSection() {
             ))}
           </ul>
         ) : (
-          <p className="px-4 py-3 text-sm text-muted-foreground">No extensions connected yet.</p>
+          <p className="text-sm text-muted-foreground">No extensions connected yet.</p>
+        )}
+
+        {revealed ? (
+          <RevealedKey created={revealed} onDone={() => setRevealed(null)} />
+        ) : (
+          <div className="space-y-1.5 border-t border-border pt-4">
+            <Button type="button" variant="outline" size="sm" onClick={onGenerate} disabled={createKey.isPending}>
+              {createKey.isPending ? 'Generating…' : 'Generate a key manually'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Most people connect with the extension’s one-click button. Use this only to paste a key by hand.
+            </p>
+          </div>
         )}
       </div>
 
-      {revealed ? (
-        <RevealedKey created={revealed} onDone={() => setRevealed(null)} />
-      ) : (
-        <div className="space-y-1.5">
-          <Button type="button" variant="outline" size="sm" onClick={onGenerate} disabled={createKey.isPending}>
-            {createKey.isPending ? 'Generating…' : 'Generate a key manually'}
-          </Button>
-          <p className="text-xs text-muted-foreground">
-            Most people connect with the extension’s one-click button. Use this only to paste a key by hand.
-          </p>
-        </div>
-      )}
-
       {confirmDialog}
-    </SettingsSection>
+    </SettingsCard>
   )
 }
