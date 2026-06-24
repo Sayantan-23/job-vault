@@ -38,7 +38,7 @@ export function SettingsWorkspace() {
         {/* A single, readable column of section cards with even spacing between
             them. (Sections have very uneven heights, so a multi-column grid left
             awkward gaps — a single column keeps the rhythm clean.) */}
-        <div className="w-full max-w-2xl space-y-8">
+        <div className="w-full max-w-3xl space-y-6">
           <SettingsCard
             title="Appearance"
             description="Choose your theme. System follows your device’s light/dark setting."
