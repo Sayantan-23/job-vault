@@ -137,7 +137,7 @@ export function TimelineSkeletonBody() {
 export function SettingsSkeleton() {
   return (
     <PageSkeleton hasDescription>
-      <div className="w-full max-w-3xl space-y-6">
+      <div className="w-full max-w-3xl space-y-4">
         <SkeletonRows count={4} className="h-36 rounded-xl" />
       </div>
     </PageSkeleton>
