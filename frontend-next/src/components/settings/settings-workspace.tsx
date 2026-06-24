@@ -34,13 +34,17 @@ export function SettingsWorkspace() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <PageHeader title="Settings" description="Manage how JobVault looks and your account." />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        {/* A two-column grid lays the sections out in parallel on large screens
-            (deterministic row-major pairing — Appearance|Account, then Connected
-            apps|Notifications) and collapses to a single column below `lg`.
-            `items-start` keeps each card its natural height instead of stretching
-            a short card to its neighbour's height. */}
-        <div className="grid w-full max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2 lg:items-start">
+      {/* `@container` makes the grid below switch on the *content pane* width
+          rather than the full viewport — the app sidebar offsets the viewport by
+          240px, so a viewport breakpoint (`lg:`) would only pair the columns on
+          very wide windows. The container query pairs them as soon as the pane
+          itself has room. */}
+      <div className="min-h-0 flex-1 overflow-y-auto p-6 @container">
+        {/* Two-column grid on a wide-enough pane (deterministic row-major
+            pairing — Appearance|Account, then Connected apps|Notifications),
+            collapsing to a single column when narrow. `items-start` keeps each
+            card its natural height instead of stretching to its neighbour's. */}
+        <div className="grid w-full max-w-6xl grid-cols-1 gap-6 @2xl:grid-cols-2 @2xl:items-start">
           <SettingsCard
             title="Appearance"
             description="Choose your theme. System follows your device’s light/dark setting."

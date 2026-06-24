@@ -137,8 +137,11 @@ export function TimelineSkeletonBody() {
 export function SettingsSkeleton() {
   return (
     <PageSkeleton hasDescription>
-      <div className="grid w-full max-w-5xl grid-cols-1 gap-5 lg:grid-cols-2">
-        <SkeletonRows count={4} className="h-36 rounded-xl" />
+      {/* Mirror the real settings layout: container-query 2-up on a wide pane. */}
+      <div className="@container">
+        <div className="grid w-full max-w-6xl grid-cols-1 gap-6 @2xl:grid-cols-2">
+          <SkeletonRows count={4} className="h-36 rounded-xl" />
+        </div>
       </div>
     </PageSkeleton>
   )
