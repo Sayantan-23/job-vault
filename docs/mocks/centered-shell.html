@@ -44,14 +44,14 @@ a{color:inherit;text-decoration:none}
 .viewport{height:100vh;display:flex;overflow:hidden}
 .frame{width:100%;display:flex;min-width:0}      /* full width; the sidebar carries the left gutter, main runs to the window edge */
 
-.sidebar{width:var(--sb-w);flex-shrink:0;margin-left:max(0px,calc((100% - 1240px)/2));padding:22px 14px;display:flex;flex-direction:column;gap:3px;transition:width .22s ease;overflow:hidden}
+.sidebar{width:var(--sb-w);flex-shrink:0;margin-left:max(0px,calc((100% - 1240px)/2));padding:22px 14px;display:flex;flex-direction:column;gap:3px;transition:width .22s ease;position:relative}
 .brand{padding:6px 12px 18px;font-weight:600;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
-.brandmark{position:relative;display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:10px;background:var(--primary);color:var(--primary-foreground)}
+.brandmark{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:10px;background:var(--primary);color:var(--primary-foreground)}
 .brandmark i{font-size:18px}
-.brandmark .markglyph,.brandmark .toggleglyph{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .15s}
-.brandmark .toggleglyph{opacity:0}
-.sidebar:hover .brandmark .toggleglyph,body[data-showtoggle] .brandmark .toggleglyph{opacity:1}
-.sidebar:hover .brandmark .markglyph,body[data-showtoggle] .brandmark .markglyph{opacity:0}
+/* collapse handle on the rail's right edge (appears on hover) */
+.railtoggle{position:absolute;right:0;top:50%;transform:translate(50%,-50%);z-index:20;display:grid;place-items:center;width:28px;height:28px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--muted-foreground);opacity:0;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:opacity .15s;cursor:pointer}
+.railtoggle i{font-size:15px}
+.sidebar:hover .railtoggle,body[data-showtoggle] .railtoggle{opacity:1}
 .nav a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px;transition:.12s}
 .nav a i{font-size:17px;opacity:.9}
 .nav a:hover{color:var(--foreground);background:color-mix(in oklab,var(--foreground) 4%,transparent)}
@@ -134,7 +134,7 @@ a{color:inherit;text-decoration:none}
 <div class="viewport">
   <div class="frame">
     <aside class="sidebar">
-      <div class="brand"><span class="brandmark"><i class="ph-bold ph-vault markglyph"></i><i class="ph-bold ph-sidebar-simple toggleglyph"></i></span> JobVault</div>
+      <div class="brand"><span class="brandmark"><i class="ph-bold ph-vault"></i></span> JobVault</div>
       <nav class="nav">
         <a class="active"><i class="ph ph-briefcase"></i> Jobs</a>
         <a><i class="ph ph-user-circle"></i> Personas</a>
@@ -144,6 +144,7 @@ a{color:inherit;text-decoration:none}
         <a><i class="ph ph-bell"></i> Notifications <span class="dot"></span></a>
       </nav>
       <div class="foot"><a><span class="avatar">SR</span> Sayantan</a></div>
+      <button class="railtoggle"><i class="ph-bold ph-sidebar-simple"></i></button>
     </aside>
 
     <div class="main">
