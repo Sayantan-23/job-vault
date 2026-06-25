@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Bell } from 'lucide-react'
 import { Popover, PopoverTrigger } from '@/components/ui/popover'
 import {
@@ -21,8 +21,6 @@ import { cn } from '@/lib/utils'
  */
 export function SidebarNotifications() {
   const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
   const { data: notifications = [] } = useNotifications()
   const markRead = useMarkNotificationRead()
   const markAllRead = useMarkAllNotificationsRead()
@@ -33,10 +31,10 @@ export function SidebarNotifications() {
   function handleSelect(notification: Notification) {
     if (!notification.isRead) markRead.mutate(notification.id)
     setOpen(false)
+    // Notifications are job-scoped; open the related job's drawer on the Jobs page
+    // (the rail is global, so the current pathname may have no drawer of its own).
     if (notification.relatedJobId) {
-      const params = new URLSearchParams(searchParams)
-      params.set('job', notification.relatedJobId)
-      router.push(`${pathname}?${params.toString()}`)
+      router.push(`/app/jobs?job=${notification.relatedJobId}`)
     }
   }
 
