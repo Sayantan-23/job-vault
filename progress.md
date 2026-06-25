@@ -8,7 +8,7 @@
 
 ---
 
-## App Redesign — Editorial Workspace Shell (DONE on branch `app-editorial-shell-redesign` 2026-06-25 — **awaiting review/merge**)
+## App Redesign — Editorial Workspace Shell (DONE — **merged to master 2026-06-25**, merge `0adb715`, `--no-ff`)
 
 > Re-points the authenticated `/app` surface from a "dashboard" to a calm editorial workspace while keeping the minimalist-ui system intact (the dashboard feel came from framing/chrome, not the palette/type). Plan: `docs/superpowers/plans/2026-06-25-app-editorial-shell-redesign.md`. Approved mock: `docs/mocks/redesign-shell.html` (Before/After + Light/Dark). Frontend-only — no backend/API/DB change. Built + verified with workflows (build fan-out → 4-lens adversarial review → fix fan-out). 9 commits `afda7f8..154e216`.
 
@@ -16,7 +16,9 @@
 - [x] **9b Shell de-chrome** — sidebar **dissolved** into the canvas (no panel fill/border/dividers/logo cell); the global bordered **top utility bar removed** (all 7 content pages migrated to `PageHeading` inside `AppPage`); **Dashboard KPI page deleted** → `/app/jobs` is home (`/app/dashboard` redirects, login lands on Jobs); **Notifications moved into the rail** (unread dot, routes to `/app/jobs?job=`).
 - [x] **9c Jobs editorial home** — dense uppercase table → grouped **borderless `JobList`** ("Needs your attention" [gated to APPLIED/INTERVIEWING, server-sort-truthful, `<h2>` group labels] / "In progress"); inline `PageHeading` + `InlineStats` + relocated sort/status/date into a slim `JobsListControls` row; **board kept but quieted** (hairline columns, plain-case labels, de-emphasised counts); `PageHeader` + `JobsTable` deleted.
 - [x] **9d De-box + polish** — settings/persona cards and the résumé/cover-letter `DocumentList` → hairlines (no boxes); **editorial serif empty states** (Jobs/Timeline/Personas); dead `NotificationBell` + `DashboardSkeleton` removed; route loading skeletons reworked to the borderless `AppPage` shape (no more top-bar flash).
-- [x] **Gates green:** typecheck + lint + **514 tests** + **production build** (`docker build --target production`). Adversarial review surfaced 8 fixes (all applied); the prod build caught a layout `useSearchParams` Suspense break (fixed). **Not merged** — local master is ahead of origin; merge on the user's say-so.
+- [x] **Gates green:** typecheck + lint + **513 tests** + **production build** (`docker build --target production`). Adversarial review surfaced 8 fixes (all applied); the prod build caught a layout `useSearchParams` Suspense break (fixed).
+- [x] **Post-plan follow-ups** (same branch): single **centered 1240px app frame** (one content width, centered; sidebar in-frame) replacing the inconsistent per-page widths; **window-edge scrollbar** (`main` runs to the viewport edge, the sidebar carries the left gutter; thin on-theme `.app-scroll`); **collapsible icon rail** (240↔56px, content widens 1000↔1184, frame total constant; cookie-persisted + pre-paint, hover-revealed right-edge handle). Mock: `docs/mocks/centered-shell.html`.
+- [x] **Merged to master** 2026-06-25 (merge `0adb715`, `--no-ff`; 15 commits `afda7f8..b94f49e`). Local master ahead of `origin/master` (user pushes).
 
 ## Migration Slice 8 — Chrome Extension (DONE — merged to master 2026-06-22, merge `2fae798`)
 
