@@ -9,6 +9,6 @@ import { cn } from '@/lib/utils'
  */
 export function AppPage({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('w-full max-w-[1000px] px-6 py-10 sm:px-8 lg:px-10', className)}>{children}</div>
+    <div className={cn('jv-content-col w-full px-6 py-10 sm:px-8 lg:px-10', className)}>{children}</div>
   )
 }

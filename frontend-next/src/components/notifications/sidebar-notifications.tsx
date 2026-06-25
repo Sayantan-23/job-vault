@@ -15,9 +15,9 @@ import { cn } from '@/lib/utils'
 
 /**
  * Notifications as a quiet rail entry (replaces the old header bell). Styled to
- * match the nav links, with a small unread dot instead of a badge. Opening it
- * reuses the existing top-right NotificationPopover panel and its mark-read /
- * jump-to-job behavior — no new route.
+ * match the nav links, with a small unread dot on the bell so it survives the
+ * collapsed (icon-only) rail. Opening it reuses the existing top-right
+ * NotificationPopover panel and its mark-read / jump-to-job behavior.
  */
 export function SidebarNotifications() {
   const router = useRouter()
@@ -43,23 +43,26 @@ export function SidebarNotifications() {
       <PopoverTrigger asChild>
         <button
           type="button"
+          title="Notifications"
           aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
           className={cn(
-            'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+            'jv-rail-item flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
             open
               ? 'bg-accent font-medium text-foreground'
               : 'text-muted-foreground hover:bg-accent hover:text-foreground',
           )}
         >
-          <Bell className="size-4" aria-hidden="true" />
-          Notifications
-          {unread > 0 ? (
-            <span
-              data-testid="sidebar-unread-dot"
-              className="ml-auto size-2 shrink-0 rounded-full bg-ghost-ghosted"
-              aria-hidden="true"
-            />
-          ) : null}
+          <span className="relative shrink-0">
+            <Bell className="size-4" aria-hidden="true" />
+            {unread > 0 ? (
+              <span
+                data-testid="sidebar-unread-dot"
+                className="absolute -right-1 -top-1 size-2 rounded-full bg-ghost-ghosted"
+                aria-hidden="true"
+              />
+            ) : null}
+          </span>
+          <span className="jv-rail-label">Notifications</span>
         </button>
       </PopoverTrigger>
       <NotificationPopover

@@ -36,11 +36,13 @@ export function AccountMenu() {
         <button
           type="button"
           aria-label="Open account menu"
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-accent"
+          className="jv-rail-item flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-accent"
         >
           <MonogramAvatar name={name} />
-          <span className="min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground">{name}</span>
-          <ChevronsUpDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span className="jv-rail-label min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground">
+            {name}
+          </span>
+          <ChevronsUpDown className="jv-rail-label size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
         </button>
       </AnchoredPopoverTrigger>
 

@@ -90,7 +90,7 @@ export function JobsWorkspace({
     <>
       {view === 'board' ? (
         <div className="flex min-h-0 flex-1 flex-col">
-          <div className="w-full max-w-[1000px] shrink-0 px-6 pt-10 sm:px-8 lg:px-10">
+          <div className="jv-content-col w-full shrink-0 px-6 pt-10 sm:px-8 lg:px-10">
             <PageHeading
               title="Jobs"
               description={
@@ -106,12 +106,12 @@ export function JobsWorkspace({
               actions={actions}
             />
           </div>
-          <div className="min-h-0 w-full max-w-[1000px] flex-1 px-6 pb-6 sm:px-8 lg:px-10">
+          <div className="min-h-0 jv-content-col w-full flex-1 px-6 pb-6 sm:px-8 lg:px-10">
             <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
           </div>
         </div>
       ) : (
-        <div className="w-full max-w-[1000px] px-6 py-10 sm:px-8 lg:px-10">
+        <div className="jv-content-col w-full px-6 py-10 sm:px-8 lg:px-10">
           <PageHeading
             title="Jobs"
             description={

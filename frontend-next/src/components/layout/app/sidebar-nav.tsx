@@ -27,16 +27,17 @@ export function SidebarNav() {
           <Link
             key={href}
             href={href}
+            title={label}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+              'jv-rail-item flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
               active
                 ? 'bg-accent font-medium text-foreground'
                 : 'text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
           >
-            <Icon className="size-4" aria-hidden="true" />
-            {label}
+            <Icon className="size-4 shrink-0" aria-hidden="true" />
+            <span className="jv-rail-label">{label}</span>
           </Link>
         )
       })}

@@ -82,6 +82,43 @@ body {
   background-color: var(--muted-foreground);
 }
 
+/* Collapsible sidebar — the centered frame stays 1240px; only the rail/content
+   split flips (rail 240<->56, content 1000<->1184), driven by `data-sidebar`
+   on <html> (set pre-paint from the `sidebar` cookie). */
+:root {
+  --jv-sidebar-w: 240px;
+  --jv-content-max: 1000px;
+}
+html[data-sidebar='collapsed'] {
+  --jv-sidebar-w: 56px;
+  --jv-content-max: 1184px;
+}
+.jv-rail {
+  width: var(--jv-sidebar-w);
+}
+.jv-content-col {
+  max-width: var(--jv-content-max);
+}
+.jv-rail,
+.jv-content-col {
+  transition: width 0.22s ease, max-width 0.22s ease;
+}
+html[data-sidebar='collapsed'] .jv-rail-label {
+  display: none;
+}
+html[data-sidebar='collapsed'] .jv-rail-item,
+html[data-sidebar='collapsed'] .jv-rail-brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .jv-rail,
+  .jv-content-col {
+    transition: none;
+  }
+}
+
 /*
  * Overlay/surface motion for Radix-Dialog-based primitives (Sheet drawer, Dialog
  * modal, Popover dropdown). Driven by Radix's [data-state=open|closed]; Radix keeps

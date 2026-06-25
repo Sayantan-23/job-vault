@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono, Newsreader } from 'next/font/google'
 import { Providers } from '@/components/shared/providers'
 import { ThemeScript } from '@/components/theme/theme-script'
+import { SidebarScript } from '@/components/layout/app/sidebar-script'
 import '@/styles/globals.css'
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         {/* Must run before paint, ahead of the React tree, to avoid a theme flash. */}
         <ThemeScript />
+        <SidebarScript />
         <Providers>{children}</Providers>
       </body>
     </html>
