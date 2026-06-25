@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JobVault — heading font comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Spectral:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+[data-theme-scope='app']{
+  --background: oklch(0.992 0.004 75); --foreground: oklch(0.21 0.01 60);
+  --muted-foreground: oklch(0.53 0.01 60); --primary: oklch(0.55 0.12 270);
+  --border: oklch(0.93 0.003 75); --ghost-ghosted: oklch(0.63 0.2 20);
+}
+html.dark [data-theme-scope='app']{
+  --background: oklch(0.18 0.004 75); --foreground: oklch(0.95 0.005 75);
+  --muted-foreground: oklch(0.66 0.01 75); --primary: oklch(0.65 0.13 270);
+  --border: oklch(0.27 0.006 75); --ghost-ghosted: oklch(0.66 0.2 20);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--background);color:var(--foreground);font-family:'Geist',sans-serif;-webkit-font-smoothing:antialiased;padding:56px 64px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;max-width:1180px}
+.cell{background:var(--background);padding:34px 38px 40px}
+.tag{font-family:'Geist Mono','Geist',monospace;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted-foreground)}
+.tag .rec{color:var(--primary)}
+.h1{font-size:46px;line-height:1;letter-spacing:-.01em;margin-top:18px}
+.h2{font-size:34px;line-height:1.05;letter-spacing:-.01em;margin-top:10px}
+.stat{margin-top:16px;color:var(--muted-foreground);font-size:13.5px}
+.stat b{font-family:'Geist Mono',monospace;color:var(--foreground);margin-right:5px}
+.stat .q{color:var(--ghost-ghosted)}
+.fInstrument{font-family:'Instrument Serif',serif;font-weight:400}
+.fFraunces{font-family:'Fraunces',serif;font-weight:400}
+.fNewsreader{font-family:'Newsreader',serif;font-weight:400}
+.fSpectral{font-family:'Spectral',serif;font-weight:500}
+.fGeist{font-family:'Geist',sans-serif;font-weight:600;letter-spacing:-.025em}
+.title-row{font-family:'Geist',sans-serif;font-weight:600;font-size:18px;margin-bottom:30px;letter-spacing:-.01em}
+.title-row span{color:var(--muted-foreground);font-weight:400;font-size:13px;margin-left:10px}
+</style>
+</head>
+<body data-theme-scope="app">
+  <div class="title-row">Heading font comparison <span>“Jobs” at 46px · “Cover letters” at 34px · same stat line under each</span></div>
+  <div class="grid">
+    <div class="cell">
+      <div class="tag">Instrument Serif <span class="rec">· current</span></div>
+      <div class="h1 fInstrument">Jobs</div>
+      <div class="h2 fInstrument">Cover letters</div>
+      <div class="stat"><b>24</b>tracked &nbsp;&nbsp; <span class="q"><b>5</b>going quiet</span></div>
+    </div>
+    <div class="cell">
+      <div class="tag">Fraunces</div>
+      <div class="h1 fFraunces">Jobs</div>
+      <div class="h2 fFraunces">Cover letters</div>
+      <div class="stat"><b>24</b>tracked &nbsp;&nbsp; <span class="q"><b>5</b>going quiet</span></div>
+    </div>
+    <div class="cell">
+      <div class="tag">Newsreader</div>
+      <div class="h1 fNewsreader">Jobs</div>
+      <div class="h2 fNewsreader">Cover letters</div>
+      <div class="stat"><b>24</b>tracked &nbsp;&nbsp; <span class="q"><b>5</b>going quiet</span></div>
+    </div>
+    <div class="cell">
+      <div class="tag">Geist — large tight sans (Linear-style)</div>
+      <div class="h1 fGeist">Jobs</div>
+      <div class="h2 fGeist">Cover letters</div>
+      <div class="stat"><b>24</b>tracked &nbsp;&nbsp; <span class="q"><b>5</b>going quiet</span></div>
+    </div>
+  </div>
+  <script>
+    if (new URLSearchParams(location.search).get('theme') === 'dark') document.documentElement.classList.add('dark');
+  </script>
+</body>
+</html>

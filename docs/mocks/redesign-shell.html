@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JobVault — shell redesign mock</title>
+
+<!-- Real JobVault type system: Geist + Geist Mono + Instrument Serif -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+
+<!-- Phosphor icons (taste-skill preferred; thicker, technical) -->
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+
+<style>
+/* ───────────────────────── Tokens (lifted verbatim from frontend-next/src/styles/app/theme.css) */
+[data-theme-scope='app'] {
+  --background: oklch(0.992 0.004 75);
+  --foreground: oklch(0.21 0.01 60);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.01 60);
+  --primary: oklch(0.55 0.12 270);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.005 75);
+  --secondary-foreground: oklch(0.27 0.01 60);
+  --muted: oklch(0.96 0.005 75);
+  --muted-foreground: oklch(0.53 0.01 60);
+  --accent: oklch(0.96 0.005 75);
+  --accent-foreground: oklch(0.27 0.01 60);
+  --destructive: oklch(0.6 0.22 25);
+  --border: oklch(0.93 0.003 75);
+  --input: oklch(0.89 0.004 75);
+  --ring: oklch(0.55 0.12 270);
+  --radius: 0.5rem;
+  --ghost-active: oklch(0.7 0.15 155);
+  --ghost-stale: oklch(0.78 0.15 75);
+  --ghost-ghosted: oklch(0.63 0.2 20);
+}
+html.dark [data-theme-scope='app'] {
+  --background: oklch(0.18 0.004 75);
+  --foreground: oklch(0.95 0.005 75);
+  --card: oklch(0.21 0.005 75);
+  --card-foreground: oklch(0.95 0.005 75);
+  --primary: oklch(0.65 0.13 270);
+  --primary-foreground: oklch(0.15 0.01 270);
+  --secondary: oklch(0.27 0.005 75);
+  --secondary-foreground: oklch(0.95 0.005 75);
+  --muted: oklch(0.27 0.005 75);
+  --muted-foreground: oklch(0.66 0.01 75);
+  --accent: oklch(0.27 0.005 75);
+  --accent-foreground: oklch(0.95 0.005 75);
+  --destructive: oklch(0.5 0.2 25);
+  --border: oklch(0.27 0.006 75);
+  --input: oklch(0.27 0.006 75);
+  --ring: oklch(0.65 0.13 270);
+  --ghost-active: oklch(0.72 0.15 155);
+  --ghost-stale: oklch(0.8 0.15 75);
+  --ghost-ghosted: oklch(0.66 0.2 20);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Geist', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: 'Geist Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.serif { font-family: 'Instrument Serif', 'Newsreader', serif; font-weight: 400; }
+i.ph, i.ph-bold { font-style: normal; line-height: 1; display: inline-flex; }
+a { color: inherit; text-decoration: none; }
+
+/* ───────────────────────── Mock controls (obviously NOT part of the design) */
+.mockbar {
+  position: fixed; z-index: 100; bottom: 18px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 14px;
+  padding: 8px 10px 8px 14px; border-radius: 999px;
+  background: #18181b; color: #e4e4e7; border: 1px solid #2a2a30;
+  box-shadow: 0 8px 30px rgba(0,0,0,.28); font-size: 12px;
+}
+.mockbar .tag { font-family: 'Geist Mono', monospace; letter-spacing: .14em; font-size: 10px; color: #7c7c86; }
+.mockbar .seg { display: inline-flex; background: #0e0e11; border: 1px solid #2a2a30; border-radius: 999px; padding: 2px; }
+.mockbar .seg button {
+  appearance: none; border: 0; background: transparent; color: #a1a1aa; cursor: pointer;
+  font: inherit; font-size: 12px; padding: 4px 12px; border-radius: 999px; transition: .15s;
+}
+.mockbar .seg button[data-on='true'] { background: #2e2e35; color: #fff; }
+
+/* ───────────────────────── Shared shell scaffolding */
+.app { min-height: 100vh; display: flex; }
+.app[hidden] { display: none; }
+.content { flex: 1; min-width: 0; overflow: hidden; }
+
+/* status chips (mirror STATUS_META) */
+.chip {
+  display: inline-flex; align-items: center; border-radius: 4px; padding: 2px 8px;
+  font-family: 'Geist Mono', monospace; font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+}
+.chip--wishlist { background: var(--muted); color: var(--muted-foreground); }
+.chip--applied { background: var(--secondary); color: var(--secondary-foreground); }
+.chip--interviewing { background: color-mix(in oklab, var(--primary) 12%, transparent); color: var(--primary); }
+.chip--offer { background: var(--primary); color: var(--primary-foreground); }
+.chip--rejected { background: color-mix(in oklab, var(--destructive) 12%, transparent); color: var(--destructive); }
+
+/* ghost meter (mirror GhostMeter) */
+.ghost { display: inline-flex; align-items: center; gap: 4px; font-family: 'Geist Mono', monospace; font-size: 12px; font-weight: 500; }
+.ghost i { font-size: 14px; }
+.ghost--active { color: var(--ghost-active); }
+.ghost--stale { color: var(--ghost-stale); }
+.ghost--ghosted { color: var(--ghost-ghosted); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   BEFORE  —  the current "dashboard" shell
+   ═══════════════════════════════════════════════════════════════════ */
+.b-sidebar {
+  width: 240px; flex-shrink: 0; background: var(--card);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+}
+.b-logo { height: 64px; display: flex; align-items: center; gap: 8px; padding: 0 20px; border-bottom: 1px solid var(--border); font-weight: 600; }
+.b-logo i { color: var(--primary); }
+.b-nav { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.b-nav a { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; color: var(--muted-foreground); font-size: 14px; }
+.b-nav a i { font-size: 16px; }
+.b-nav a.active { background: color-mix(in oklab, var(--primary) 10%, transparent); color: var(--primary); font-weight: 500; }
+.b-account { border-top: 1px solid var(--border); padding: 12px; display: flex; align-items: center; gap: 10px; }
+.b-avatar { width: 30px; height: 30px; border-radius: 6px; background: var(--secondary); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+
+.b-topbar {
+  height: 64px; border-bottom: 1px solid var(--border); display: flex; align-items: center;
+  gap: 12px; padding: 0 24px; background: var(--card);
+}
+.b-topbar .title { font-size: 18px; font-weight: 600; }
+.b-topbar .count { color: var(--muted-foreground); font-family: 'Geist Mono', monospace; font-size: 12px; }
+.b-spacer { flex: 1; }
+.b-search { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 1px solid var(--input); border-radius: 8px; color: var(--muted-foreground); width: 200px; }
+.b-search input { border: 0; background: transparent; color: inherit; font: inherit; width: 100%; outline: none; }
+.b-select { height: 40px; border: 1px solid var(--input); border-radius: 8px; padding: 0 12px; display: flex; align-items: center; gap: 8px; color: var(--muted-foreground); }
+.b-seg { display: inline-flex; height: 40px; border: 1px solid var(--input); border-radius: 8px; overflow: hidden; }
+.b-seg button { appearance: none; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.b-seg button.on { background: var(--secondary); color: var(--foreground); }
+.btn-primary { height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-weight: 500; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; }
+.b-bell { width: 40px; height: 40px; border: 1px solid var(--input); border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted-foreground); position: relative; }
+.b-bell::after { content: '3'; position: absolute; top: -6px; right: -6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 999px; background: var(--destructive); color: #fff; font-size: 10px; font-family: 'Geist Mono', monospace; display: flex; align-items: center; justify-content: center; }
+
+.b-body { padding: 24px; overflow-y: auto; }
+.b-kpis { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 24px; }
+.b-kpi { border: 1px solid var(--border); border-radius: 12px; background: var(--card); padding: 16px; }
+.b-kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted-foreground); font-weight: 500; }
+.b-kpi .val { margin-top: 6px; font-family: 'Geist Mono', monospace; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.b-kpi.alert .val { color: var(--ghost-ghosted); }
+
+.b-table { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--card); }
+.b-thead, .b-row { display: grid; grid-template-columns: 2.4fr 1.4fr 1.2fr 1fr 0.8fr 0.8fr; align-items: center; gap: 12px; padding: 10px 16px; }
+.b-thead { border-bottom: 1px solid var(--border); }
+.b-thead span { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted-foreground); font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+.b-row { border-top: 1px solid var(--border); font-size: 13px; }
+.b-row:first-of-type { border-top: 0; }
+.b-row .ttl { font-weight: 500; }
+.b-row .sub { color: var(--muted-foreground); }
+.b-row .dt { color: var(--muted-foreground); font-family: 'Geist Mono', monospace; font-size: 12px; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   AFTER  —  the quiet workspace
+   ═══════════════════════════════════════════════════════════════════ */
+.a-sidebar {
+  width: 232px; flex-shrink: 0; background: transparent;            /* no panel fill */
+  padding: 22px 14px; display: flex; flex-direction: column; gap: 4px;  /* no right border */
+}
+.a-brand { padding: 6px 12px 18px; font-weight: 600; font-size: 15px; letter-spacing: -.01em; display: flex; align-items: center; gap: 8px; }
+.a-brand i { color: var(--primary); font-size: 17px; }
+.a-nav { display: flex; flex-direction: column; gap: 1px; }
+.a-nav a { display: flex; align-items: center; gap: 11px; padding: 7px 12px; border-radius: 7px; color: var(--muted-foreground); font-size: 13.5px; transition: .12s; }
+.a-nav a i { font-size: 17px; opacity: .9; }
+.a-nav a:hover { color: var(--foreground); background: color-mix(in oklab, var(--foreground) 4%, transparent); }
+.a-nav a.active { color: var(--foreground); font-weight: 500; background: color-mix(in oklab, var(--foreground) 6%, transparent); }
+.a-nav .dot { margin-left: auto; width: 6px; height: 6px; border-radius: 999px; background: var(--ghost-ghosted); }
+.a-foot { margin-top: auto; padding-top: 14px; }
+.a-foot a { display: flex; align-items: center; gap: 11px; padding: 7px 12px; border-radius: 7px; color: var(--muted-foreground); font-size: 13.5px; }
+.a-foot a:hover { color: var(--foreground); }
+.a-avatar { width: 26px; height: 26px; border-radius: 999px; background: color-mix(in oklab, var(--primary) 18%, var(--background)); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+
+.a-main { flex: 1; min-width: 0; overflow-y: auto; }
+.a-col { max-width: 880px; padding: 56px 56px 80px; }
+
+.a-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.a-title { font-family: 'Newsreader', serif; font-weight: 400; font-size: 44px; line-height: 1; letter-spacing: -.01em; }
+.a-actions { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; }
+.a-kbd { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 11px; border-radius: 8px; color: var(--muted-foreground); border: 1px solid var(--border); font-size: 13px; }
+.a-kbd kbd { font-family: 'Geist Mono', monospace; font-size: 11px; background: color-mix(in oklab, var(--foreground) 6%, transparent); padding: 1px 5px; border-radius: 4px; }
+.a-toggle { display: inline-flex; gap: 2px; padding: 3px; border-radius: 8px; background: color-mix(in oklab, var(--foreground) 5%, transparent); }
+.a-toggle button { appearance: none; border: 0; background: transparent; color: var(--muted-foreground); font: inherit; height: 28px; width: 30px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.a-toggle button i { font-size: 16px; }
+.a-toggle button.on { background: var(--card); color: var(--foreground); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.a-add { height: 34px; padding: 0 13px; border: 0; border-radius: 8px; background: var(--primary); color: var(--primary-foreground); font: inherit; font-weight: 500; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+
+.a-stats { margin-top: 18px; display: flex; align-items: center; gap: 28px; color: var(--muted-foreground); font-size: 14px; }
+.a-stats b { font-family: 'Geist Mono', monospace; font-weight: 500; color: var(--foreground); font-variant-numeric: tabular-nums; margin-right: 5px; }
+.a-stats .quiet b, .a-stats .quiet { color: var(--ghost-ghosted); }
+
+/* grouped, borderless, Linear-style list */
+.a-group { margin-top: 40px; }
+.a-grouplbl { font-size: 12.5px; color: var(--muted-foreground); font-weight: 500; margin-bottom: 2px; padding: 0 4px; display: flex; align-items: center; gap: 8px; }
+.a-grouplbl .n { font-family: 'Geist Mono', monospace; font-size: 11px; opacity: .8; }
+.a-list { display: flex; flex-direction: column; }
+.a-item {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 20px;
+  padding: 13px 4px; border-bottom: 1px solid color-mix(in oklab, var(--border) 75%, transparent);
+  border-radius: 6px; cursor: pointer; transition: background .12s;
+}
+.a-item:hover { background: color-mix(in oklab, var(--foreground) 3.5%, transparent); }
+.a-left .ttl { font-size: 14.5px; font-weight: 500; letter-spacing: -.005em; }
+.a-left .sub { color: var(--muted-foreground); font-size: 13px; margin-top: 2px; }
+.a-right { display: flex; align-items: center; gap: 18px; justify-content: flex-end; }
+.a-right .dt { color: var(--muted-foreground); font-family: 'Geist Mono', monospace; font-size: 12px; min-width: 46px; text-align: right; }
+.a-empty { color: var(--muted-foreground); font-size: 13px; }
+
+@media (max-width: 720px) {
+  .b-kpis { grid-template-columns: repeat(2, 1fr); }
+  .a-col { padding: 36px 24px 64px; }
+}
+</style>
+</head>
+
+<body data-theme-scope="app">
+
+<!-- ════════════════ BEFORE ════════════════ -->
+<div class="app" id="view-before" hidden>
+  <aside class="b-sidebar">
+    <div class="b-logo"><i class="ph-bold ph-vault"></i> JobVault</div>
+    <nav class="b-nav">
+      <a class="active"><i class="ph ph-squares-four"></i> Dashboard</a>
+      <a><i class="ph ph-briefcase"></i> Jobs</a>
+      <a><i class="ph ph-users"></i> Personas</a>
+      <a><i class="ph ph-file-text"></i> Résumés</a>
+      <a><i class="ph ph-envelope-simple"></i> Cover letters</a>
+      <a><i class="ph ph-clock"></i> Timeline</a>
+    </nav>
+    <div class="b-account">
+      <div class="b-avatar">SR</div>
+      <div style="line-height:1.2"><div style="font-weight:500;font-size:13px">Sayantan R.</div><div style="color:var(--muted-foreground);font-size:11px">admin@weloin.com</div></div>
+    </div>
+  </aside>
+
+  <div class="content">
+    <div class="b-topbar">
+      <span class="title">Jobs</span>
+      <span class="count">42 tracked</span>
+      <span class="b-spacer"></span>
+      <span class="b-search"><i class="ph ph-magnifying-glass"></i><input placeholder="Search jobs" /></span>
+      <span class="b-select"><i class="ph ph-funnel"></i> Ghost activity</span>
+      <span class="b-seg"><button class="on"><i class="ph ph-kanban"></i> Board</button><button><i class="ph ph-list"></i> List</button></span>
+      <button class="btn-primary"><i class="ph ph-plus"></i> Add Job</button>
+      <span class="b-bell"><i class="ph ph-bell"></i></span>
+    </div>
+
+    <div class="b-body">
+      <div class="b-kpis">
+        <div class="b-kpi"><div class="lbl">Total Jobs</div><div class="val">24</div></div>
+        <div class="b-kpi"><div class="lbl">Applied</div><div class="val">18</div></div>
+        <div class="b-kpi"><div class="lbl">Interviewing</div><div class="val">6</div></div>
+        <div class="b-kpi"><div class="lbl">Offers</div><div class="val">2</div></div>
+        <div class="b-kpi alert"><div class="lbl">Ghost alerts</div><div class="val">5</div></div>
+      </div>
+
+      <div class="b-table">
+        <div class="b-thead">
+          <span>Title</span><span>Company</span><span>Location</span><span>Status</span><span>Ghost</span><span>Added <i class="ph ph-arrow-down"></i></span>
+        </div>
+        <div class="b-row"><span class="ttl">UI Engineer</span><span class="sub">Figma</span><span class="sub">New York</span><span><span class="chip chip--interviewing">Interviewing</span></span><span><span class="ghost ghost--active"><i class="ph ph-clock"></i>1d</span></span><span class="dt">Jun 24</span></div>
+        <div class="b-row"><span class="ttl">Software Engineer</span><span class="sub">Ramp</span><span class="sub">New York</span><span><span class="chip chip--offer">Offer</span></span><span><span class="ghost ghost--active"><i class="ph ph-clock"></i>2d</span></span><span class="dt">Jun 23</span></div>
+        <div class="b-row"><span class="ttl">Senior Frontend Engineer</span><span class="sub">Linear</span><span class="sub">Remote</span><span><span class="chip chip--interviewing">Interviewing</span></span><span><span class="ghost ghost--active"><i class="ph ph-clock"></i>3d</span></span><span class="dt">Jun 22</span></div>
+        <div class="b-row"><span class="ttl">Product Engineer</span><span class="sub">Vercel</span><span class="sub">Remote</span><span><span class="chip chip--applied">Applied</span></span><span><span class="ghost ghost--stale"><i class="ph ph-timer"></i>9d</span></span><span class="dt">Jun 16</span></div>
+        <div class="b-row"><span class="ttl">Frontend Engineer</span><span class="sub">Stripe</span><span class="sub">San Francisco</span><span><span class="chip chip--applied">Applied</span></span><span><span class="ghost ghost--ghosted"><i class="ph ph-ghost"></i>16d</span></span><span class="dt">Jun 9</span></div>
+        <div class="b-row"><span class="ttl">Full-Stack Engineer</span><span class="sub">Supabase</span><span class="sub">Remote</span><span><span class="chip chip--applied">Applied</span></span><span><span class="ghost ghost--ghosted"><i class="ph ph-ghost"></i>21d</span></span><span class="dt">Jun 4</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ AFTER ════════════════ -->
+<div class="app" id="view-after">
+  <aside class="a-sidebar">
+    <div class="a-brand"><i class="ph-bold ph-vault"></i> JobVault</div>
+    <nav class="a-nav">
+      <a class="active"><i class="ph ph-briefcase"></i> Jobs</a>
+      <a><i class="ph ph-user-circle"></i> Personas</a>
+      <a><i class="ph ph-file-text"></i> Résumés</a>
+      <a><i class="ph ph-envelope-simple"></i> Cover letters</a>
+      <a><i class="ph ph-clock-countdown"></i> Timeline</a>
+      <a><i class="ph ph-bell"></i> Notifications <span class="dot"></span></a>
+    </nav>
+    <div class="a-foot">
+      <a><span class="a-avatar">SR</span> Sayantan</a>
+    </div>
+  </aside>
+
+  <div class="a-main">
+    <div class="a-col">
+      <div class="a-head">
+        <h1 class="a-title">Jobs</h1>
+        <div class="a-actions">
+          <span class="a-kbd"><i class="ph ph-magnifying-glass"></i> Search <kbd>⌘K</kbd></span>
+          <span class="a-toggle"><button class="on" title="List"><i class="ph ph-list"></i></button><button title="Board"><i class="ph ph-kanban"></i></button></span>
+          <button class="a-add"><i class="ph ph-plus"></i> Add job</button>
+        </div>
+      </div>
+
+      <div class="a-stats">
+        <span><b>24</b>tracked</span>
+        <span><b>6</b>interviewing</span>
+        <span class="quiet"><b>5</b>going quiet</span>
+      </div>
+
+      <div class="a-group">
+        <div class="a-grouplbl">Needs your attention <span class="n">3</span></div>
+        <div class="a-list">
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">Full-Stack Engineer</div><div class="sub">Supabase &nbsp;·&nbsp; Remote</div></div>
+            <div class="a-right"><span class="chip chip--applied">Applied</span><span class="ghost ghost--ghosted"><i class="ph ph-ghost"></i>21d</span><span class="dt">Jun 4</span></div>
+          </div>
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">Frontend Engineer</div><div class="sub">Stripe &nbsp;·&nbsp; San Francisco</div></div>
+            <div class="a-right"><span class="chip chip--applied">Applied</span><span class="ghost ghost--ghosted"><i class="ph ph-ghost"></i>16d</span><span class="dt">Jun 9</span></div>
+          </div>
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">Product Engineer</div><div class="sub">Vercel &nbsp;·&nbsp; Remote</div></div>
+            <div class="a-right"><span class="chip chip--applied">Applied</span><span class="ghost ghost--stale"><i class="ph ph-timer"></i>9d</span><span class="dt">Jun 16</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="a-group">
+        <div class="a-grouplbl">In progress <span class="n">4</span></div>
+        <div class="a-list">
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">UI Engineer</div><div class="sub">Figma &nbsp;·&nbsp; New York</div></div>
+            <div class="a-right"><span class="chip chip--interviewing">Interviewing</span><span class="ghost ghost--active"><i class="ph ph-clock"></i>1d</span><span class="dt">Jun 24</span></div>
+          </div>
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">Software Engineer</div><div class="sub">Ramp &nbsp;·&nbsp; New York</div></div>
+            <div class="a-right"><span class="chip chip--offer">Offer</span><span class="ghost ghost--active"><i class="ph ph-clock"></i>2d</span><span class="dt">Jun 23</span></div>
+          </div>
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">Senior Frontend Engineer</div><div class="sub">Linear &nbsp;·&nbsp; Remote</div></div>
+            <div class="a-right"><span class="chip chip--interviewing">Interviewing</span><span class="ghost ghost--active"><i class="ph ph-clock"></i>3d</span><span class="dt">Jun 22</span></div>
+          </div>
+          <div class="a-item">
+            <div class="a-left"><div class="ttl">Design Engineer</div><div class="sub">Raycast &nbsp;·&nbsp; Remote</div></div>
+            <div class="a-right"><span class="chip chip--wishlist">Wishlist</span><span class="a-empty">—</span><span class="dt">Jun 20</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ Mock controls ════════════════ -->
+<div class="mockbar">
+  <span class="tag">MOCK</span>
+  <div class="seg" id="seg-variant">
+    <button data-variant="before">Before</button>
+    <button data-variant="after" data-on="true">After</button>
+  </div>
+  <div class="seg" id="seg-theme">
+    <button data-theme="light" data-on="true">Light</button>
+    <button data-theme="dark">Dark</button>
+  </div>
+</div>
+
+<script>
+  const before = document.getElementById('view-before');
+  const after = document.getElementById('view-after');
+  document.querySelectorAll('#seg-variant button').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.variant;
+    document.querySelectorAll('#seg-variant button').forEach(x => x.dataset.on = String(x === b));
+    before.hidden = v !== 'before';
+    after.hidden = v !== 'after';
+  }));
+  document.querySelectorAll('#seg-theme button').forEach(b => b.addEventListener('click', () => {
+    document.querySelectorAll('#seg-theme button').forEach(x => x.dataset.on = String(x === b));
+    document.documentElement.classList.toggle('dark', b.dataset.theme === 'dark');
+  }));
+
+  // Allow ?v=before|after&theme=light|dark to set the initial state (used for headless capture).
+  (function initFromQuery() {
+    const p = new URLSearchParams(location.search);
+    const v = p.get('v'), t = p.get('theme');
+    if (v === 'before' || v === 'after') document.querySelector('#seg-variant button[data-variant="' + v + '"]').click();
+    if (t === 'dark' || t === 'light') document.querySelector('#seg-theme button[data-theme="' + t + '"]').click();
+  })();
+</script>
+</body>
+</html>
