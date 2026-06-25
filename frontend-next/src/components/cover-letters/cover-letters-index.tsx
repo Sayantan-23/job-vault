@@ -6,7 +6,8 @@ import { Plus } from 'lucide-react'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { CoverLetter } from '@/types/cover-letter'
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/layout/app/page-header'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { AppPage } from '@/components/layout/app/app-page'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { useJobOptions, type JobOption } from '@/hooks/use-job-options'
 import { usePersonas } from '@/hooks/use-personas'
@@ -81,18 +82,18 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader
-        title="Cover letters"
-        description="For tracked jobs or pasted descriptions"
-        actions={
-          <Button type="button" size="sm" onClick={() => setSheetOpen(true)}>
-            <Plus className="size-4" aria-hidden="true" />
-            New cover letter
-          </Button>
-        }
-      />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+    <>
+      <AppPage width="wide">
+        <PageHeading
+          title="Cover letters"
+          description="For tracked jobs or pasted descriptions"
+          actions={
+            <Button type="button" size="sm" onClick={() => setSheetOpen(true)}>
+              <Plus className="size-4" aria-hidden="true" />
+              New cover letter
+            </Button>
+          }
+        />
         <div className="space-y-4">
           <MutationErrorAlert error={del.error} />
           <DocumentList
@@ -108,7 +109,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
             aria-label="Cover letters"
           />
         </div>
-      </div>
+      </AppPage>
       <NewCoverLetterSheet
         open={sheetOpen}
         onOpenChange={setSheetOpen}
@@ -120,6 +121,6 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
         onGenerate={onGenerate}
       />
       {confirmDialog}
-    </div>
+    </>
   )
 }

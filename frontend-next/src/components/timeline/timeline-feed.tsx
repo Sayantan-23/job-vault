@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PageHeader } from '@/components/layout/app/page-header'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { AppPage } from '@/components/layout/app/app-page'
 import { TimelineRow } from '@/components/timeline/timeline-row'
 import { JobsPagination } from '@/components/jobs/jobs-pagination'
 import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
@@ -66,37 +67,35 @@ export function TimelineFeed({ initialData }: { initialData?: Paginated<GlobalTi
   const groups = groupByDay(events)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader title="Timeline" description="Everything that’s happened across your job pipeline." />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="space-y-10">
-          {isError ? <MutationErrorAlert error={error} /> : null}
-          {isLoading && events.length === 0 ? (
-            <TimelineSkeletonBody />
-          ) : events.length === 0 ? (
-            <EmptyState />
-          ) : (
-            <>
-              {groups.map((group) => (
-                <section key={group.key} className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <h2 className="shrink-0 font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                      {group.label}
-                    </h2>
-                    <span aria-hidden="true" className="h-px flex-1 bg-border" />
-                  </div>
-                  <ol>
-                    {group.events.map((event, i) => (
-                      <TimelineRow key={event.id} event={event} isLast={i === group.events.length - 1} />
-                    ))}
-                  </ol>
-                </section>
-              ))}
-              {data ? <JobsPagination meta={data.meta} onPage={setPage} /> : null}
-            </>
-          )}
-        </div>
+    <AppPage width="wide">
+      <PageHeading title="Timeline" description="Everything that’s happened across your job pipeline." />
+      <div className="space-y-10">
+        {isError ? <MutationErrorAlert error={error} /> : null}
+        {isLoading && events.length === 0 ? (
+          <TimelineSkeletonBody />
+        ) : events.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            {groups.map((group) => (
+              <section key={group.key} className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <h2 className="shrink-0 font-mono text-xs uppercase tracking-wider text-muted-foreground">
+                    {group.label}
+                  </h2>
+                  <span aria-hidden="true" className="h-px flex-1 bg-border" />
+                </div>
+                <ol>
+                  {group.events.map((event, i) => (
+                    <TimelineRow key={event.id} event={event} isLast={i === group.events.length - 1} />
+                  ))}
+                </ol>
+              </section>
+            ))}
+            {data ? <JobsPagination meta={data.meta} onPage={setPage} /> : null}
+          </>
+        )}
       </div>
-    </div>
+    </AppPage>
   )
 }

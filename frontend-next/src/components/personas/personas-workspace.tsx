@@ -5,7 +5,8 @@ import { Plus } from 'lucide-react'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/layout/app/page-header'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { AppPage } from '@/components/layout/app/app-page'
 import { usePersonas } from '@/hooks/use-personas'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { useProfile } from '@/hooks/use-profile'
@@ -30,22 +31,22 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
   const canCreate = !atCap
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader
-        title="Personas"
-        description={
-          <>
-            <span className="font-mono tabular-nums">{`${personas.length} / ${status.maxPersonas}`}</span> role-focused backgrounds
-          </>
-        }
-        actions={
-          <Button type="button" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
-            <Plus className="size-4" aria-hidden="true" />
-            New persona
-          </Button>
-        }
-      />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+    <>
+      <AppPage width="wide">
+        <PageHeading
+          title="Personas"
+          description={
+            <>
+              <span className="font-mono tabular-nums">{`${personas.length} / ${status.maxPersonas}`}</span> role-focused backgrounds
+            </>
+          }
+          actions={
+            <Button type="button" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
+              <Plus className="size-4" aria-hidden="true" />
+              New persona
+            </Button>
+          }
+        />
         <div className="space-y-4">
           {/* Independent conditions: the cap disables the button, AI-off only gates the
               import mode — both messages must be able to show at once. */}
@@ -61,7 +62,7 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
           )}
           <PersonaList personas={personas} onEdit={setEditing} />
         </div>
-      </div>
+      </AppPage>
 
       <CreatePersonaSheet
         open={createOpen}
@@ -77,6 +78,6 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
           if (!o) setEditing(null)
         }}
       />
-    </div>
+    </>
   )
 }
