@@ -59,6 +59,29 @@ body {
   font-feature-settings: 'rlig' 1, 'calt' 1;
 }
 
+/* Thin, on-theme scrollbar for the app content scroll (`main`), which runs to the
+   window's right edge so the bar sits where it normally does. */
+.app-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.app-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.app-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.app-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  background-clip: content-box;
+  border: 4px solid transparent;
+  border-radius: 999px;
+}
+.app-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+}
+
 /*
  * Overlay/surface motion for Radix-Dialog-based primitives (Sheet drawer, Dialog
  * modal, Popover dropdown). Driven by Radix's [data-state=open|closed]; Radix keeps

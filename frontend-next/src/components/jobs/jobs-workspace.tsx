@@ -88,65 +88,63 @@ export function JobsWorkspace({
 
   return (
     <>
-      <div className="flex min-h-0 flex-1 flex-col">
-        {view === 'board' ? (
-          <>
-            <div className="shrink-0 px-6 pt-10 sm:px-8 lg:px-10">
-              <PageHeading
-                title="Jobs"
-                description={
-                  <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
-                    <InlineStats stats={stats} />
-                    {isBoardFiltered ? (
-                      <span className="text-sm text-muted-foreground">
-                        <span className="font-mono tabular-nums">{board.stats.totalJobs}</span> matching
-                      </span>
-                    ) : null}
-                  </div>
-                }
-                actions={actions}
-              />
-            </div>
-            <div className="min-h-0 flex-1 px-6 pb-6 sm:px-8 lg:px-10">
-              <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
-            </div>
-          </>
-        ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-10 sm:px-8 lg:px-10">
+      {view === 'board' ? (
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="w-full max-w-[1000px] shrink-0 px-6 pt-10 sm:px-8 lg:px-10">
             <PageHeading
               title="Jobs"
               description={
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
                   <InlineStats stats={stats} />
-                  {isListFiltered ? (
+                  {isBoardFiltered ? (
                     <span className="text-sm text-muted-foreground">
-                      <span className="font-mono tabular-nums">{page.meta.total}</span> matching
+                      <span className="font-mono tabular-nums">{board.stats.totalJobs}</span> matching
                     </span>
                   ) : null}
                 </div>
               }
               actions={actions}
             />
-            <JobsListControls
-              sortBy={filters.sortBy}
-              sortOrder={filters.sortOrder}
-              onSort={cycleSort}
-              status={filters.status}
-              onStatus={setStatus}
-              createdFrom={filters.createdFrom}
-              createdTo={filters.createdTo}
-              onDateRange={setDateRange}
-            />
-            <JobList
-              jobs={page.data}
-              loading={listQuery.isLoading}
-              isFiltered={isListFiltered}
-              onReset={resetAll}
-            />
-            <JobsPagination meta={page.meta} onPage={setPage} />
           </div>
-        )}
-      </div>
+          <div className="min-h-0 w-full max-w-[1000px] flex-1 px-6 pb-6 sm:px-8 lg:px-10">
+            <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
+          </div>
+        </div>
+      ) : (
+        <div className="w-full max-w-[1000px] px-6 py-10 sm:px-8 lg:px-10">
+          <PageHeading
+            title="Jobs"
+            description={
+              <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
+                <InlineStats stats={stats} />
+                {isListFiltered ? (
+                  <span className="text-sm text-muted-foreground">
+                    <span className="font-mono tabular-nums">{page.meta.total}</span> matching
+                  </span>
+                ) : null}
+              </div>
+            }
+            actions={actions}
+          />
+          <JobsListControls
+            sortBy={filters.sortBy}
+            sortOrder={filters.sortOrder}
+            onSort={cycleSort}
+            status={filters.status}
+            onStatus={setStatus}
+            createdFrom={filters.createdFrom}
+            createdTo={filters.createdTo}
+            onDateRange={setDateRange}
+          />
+          <JobList
+            jobs={page.data}
+            loading={listQuery.isLoading}
+            isFiltered={isListFiltered}
+            onReset={resetAll}
+          />
+          <JobsPagination meta={page.meta} onPage={setPage} />
+        </div>
+      )}
 
       <AddJobModal open={addOpen} onOpenChange={setAddOpen} />
       <JobDrawer jobId={jobId} />

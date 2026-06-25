@@ -35,10 +35,10 @@ i.ph,i.ph-bold{font-style:normal;line-height:1;display:inline-flex}
 a{color:inherit;text-decoration:none}
 
 /* ── The centered app frame: sidebar + content are ONE centered composition ── */
-.viewport{height:100vh;display:flex;justify-content:center;overflow:hidden}
-.frame{width:100%;max-width:1240px;display:flex;min-width:0}      /* mx-auto via justify-center; balanced gutters either side */
+.viewport{height:100vh;display:flex;overflow:hidden}
+.frame{width:100%;display:flex;min-width:0}      /* full width; the sidebar carries the left gutter, main runs to the window edge */
 
-.sidebar{width:220px;flex-shrink:0;padding:22px 14px;display:flex;flex-direction:column;gap:3px}
+.sidebar{width:220px;flex-shrink:0;margin-left:max(0px,calc((100% - 1240px)/2));padding:22px 14px;display:flex;flex-direction:column;gap:3px}
 .brand{padding:6px 12px 18px;font-weight:600;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
 .brand i{color:var(--primary);font-size:17px}
 .nav a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px;transition:.12s}
@@ -50,8 +50,11 @@ a{color:inherit;text-decoration:none}
 .foot a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px}
 .avatar{width:26px;height:26px;border-radius:999px;background:color-mix(in oklab,var(--primary) 18%,var(--background));color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
 
-.main{flex:1;min-width:0;display:flex;flex-direction:column}
-.content{flex:1;min-width:0;overflow-y:auto;padding:48px 40px 64px}        /* one consistent content area for ALL pages */
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto}    /* main scrolls at the WINDOW edge */
+.main::-webkit-scrollbar{width:12px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background-color:var(--border);background-clip:content-box;border:4px solid transparent;border-radius:999px}
+.content{width:100%;max-width:1020px;padding:48px 40px 64px}        /* capped + left-aligned inside main */
 .view{display:none}
 .view.on{display:block}
 
@@ -152,7 +155,12 @@ a{color:inherit;text-decoration:none}
           <div class="grouplbl">In progress <span class="n">4</span></div>
           <div><div class="item"><div><div class="ttl">UI Engineer</div><div class="sub">Figma · New York</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>1d</span><span class="dt">Jun 24</span></div></div>
           <div class="item"><div><div class="ttl">Software Engineer</div><div class="sub">Ramp · New York</div></div><div class="right"><span class="chip off">Offer</span><span class="ghost ga"><i class="ph ph-clock"></i>2d</span><span class="dt">Jun 23</span></div></div>
-          <div class="item"><div><div class="ttl">Senior Frontend Engineer</div><div class="sub">Linear · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>3d</span><span class="dt">Jun 22</span></div></div></div>
+          <div class="item"><div><div class="ttl">Senior Frontend Engineer</div><div class="sub">Linear · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>3d</span><span class="dt">Jun 22</span></div></div>
+          <div class="item"><div><div class="ttl">Platform Engineer</div><div class="sub">Render · Remote</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost ga"><i class="ph ph-clock"></i>4d</span><span class="dt">Jun 21</span></div></div>
+          <div class="item"><div><div class="ttl">Backend Engineer</div><div class="sub">Fly.io · Remote</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost ga"><i class="ph ph-clock"></i>5d</span><span class="dt">Jun 20</span></div></div>
+          <div class="item"><div><div class="ttl">Infrastructure Engineer</div><div class="sub">Neon · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>6d</span><span class="dt">Jun 19</span></div></div>
+          <div class="item"><div><div class="ttl">Frontend Engineer</div><div class="sub">Resend · New York</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost ga"><i class="ph ph-clock"></i>6d</span><span class="dt">Jun 18</span></div></div>
+          <div class="item"><div><div class="ttl">Product Designer</div><div class="sub">Linear · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>7d</span><span class="dt">Jun 17</span></div></div></div>
         </section>
 
         <!-- JOBS — BOARD (same content width; columns scroll horizontally within it) -->
