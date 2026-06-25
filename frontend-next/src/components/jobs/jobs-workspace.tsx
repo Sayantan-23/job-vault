@@ -4,21 +4,22 @@ import { useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, Plus } from 'lucide-react'
 import { useJobs } from '@/hooks/use-jobs'
-import { useKanban } from '@/hooks/use-dashboard'
+import { useKanban, useStats } from '@/hooks/use-dashboard'
 import { useJobFilters } from '@/hooks/use-job-filters'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { KanbanBoard } from '@/components/kanban/kanban-board'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { InlineStats } from '@/components/dashboard/inline-stats'
 import { JobsToolbar } from './jobs-toolbar'
-import { JobsTable } from './jobs-table'
+import { JobsListControls } from './jobs-list-controls'
+import { JobList } from './job-list'
 import { JobsPagination } from './jobs-pagination'
 import { AddJobModal } from './add-job-modal'
 import { JobDrawer } from './job-drawer'
-import { PageHeader } from '@/components/layout/app/page-header'
-import { NotificationBell } from '@/components/notifications/notification-bell'
 import type { Paginated } from '@/types/filters'
 import type { Job } from '@/types/job'
-import type { KanbanBoard as Board } from '@/types/dashboard'
+import type { KanbanBoard as Board, DashboardStats } from '@/types/dashboard'
 
 type View = 'board' | 'list'
 
@@ -34,9 +35,11 @@ function isView(value: string | null): value is View {
 export function JobsWorkspace({
   initialJobs,
   initialBoard,
+  initialStats,
 }: {
   initialJobs: Paginated<Job>
   initialBoard: Board
+  initialStats: DashboardStats
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -54,6 +57,7 @@ export function JobsWorkspace({
   const page = listQuery.data ?? initialJobs
   const boardQuery = useKanban(boardFilters, initialBoard, view === 'board')
   const board = boardQuery.data ?? initialBoard
+  const { data: stats = initialStats } = useStats(initialStats)
 
   const [addOpen, setAddOpen] = useState(false)
 
@@ -65,8 +69,6 @@ export function JobsWorkspace({
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
-  const count = view === 'board' ? board.stats.totalJobs : page.meta.total
-  const filtered = view === 'board' ? isBoardFiltered : isListFiltered
   const showReset = isListFiltered || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || filters.page > 1
 
   const actions = (
@@ -80,7 +82,6 @@ export function JobsWorkspace({
           <Plus className="size-4" aria-hidden="true" />
           Add job
         </Button>
-        <NotificationBell />
       </div>
     </>
   )
@@ -88,36 +89,37 @@ export function JobsWorkspace({
   return (
     <>
       <div className="flex min-h-0 flex-1 flex-col">
-        <PageHeader
-          title="Jobs"
-          description={
-            <>
-              <span className="font-mono tabular-nums">{count}</span> {filtered ? 'matching' : 'tracked'}
-            </>
-          }
-          actions={actions}
-        />
         {view === 'board' ? (
-          <div className="min-h-0 flex-1 p-6">
-            <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
-          </div>
+          <>
+            <div className="shrink-0 px-6 pt-10 sm:px-8 lg:px-12">
+              <PageHeading title="Jobs" description={<InlineStats stats={stats} />} actions={actions} />
+            </div>
+            <div className="min-h-0 flex-1 px-6 pb-6 sm:px-8 lg:px-12">
+              <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
+            </div>
+          </>
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto p-6">
-            <JobsTable
-              jobs={page.data}
-              sortBy={filters.sortBy}
-              sortOrder={filters.sortOrder}
-              onSort={cycleSort}
-              loading={listQuery.isLoading}
-              isFiltered={isListFiltered}
-              onReset={resetAll}
-              status={filters.status}
-              onStatus={setStatus}
-              createdFrom={filters.createdFrom}
-              createdTo={filters.createdTo}
-              onDateRange={setDateRange}
-            />
-            <JobsPagination meta={page.meta} onPage={setPage} />
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-4xl px-6 py-10 sm:px-8 lg:px-12">
+              <PageHeading title="Jobs" description={<InlineStats stats={stats} />} actions={actions} />
+              <JobsListControls
+                sortBy={filters.sortBy}
+                sortOrder={filters.sortOrder}
+                onSort={cycleSort}
+                status={filters.status}
+                onStatus={setStatus}
+                createdFrom={filters.createdFrom}
+                createdTo={filters.createdTo}
+                onDateRange={setDateRange}
+              />
+              <JobList
+                jobs={page.data}
+                loading={listQuery.isLoading}
+                isFiltered={isListFiltered}
+                onReset={resetAll}
+              />
+              <JobsPagination meta={page.meta} onPage={setPage} />
+            </div>
           </div>
         )}
       </div>

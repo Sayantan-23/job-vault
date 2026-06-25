@@ -43,7 +43,7 @@ export function KanbanCard({ card }: { card: Card }) {
       {...attributes}
       {...listeners}
       className={cn(
-        'w-full cursor-grab touch-none rounded-lg border border-border bg-card p-3 text-left transition-colors',
+        'w-full cursor-grab touch-none rounded-lg border border-hairline bg-card p-3 text-left transition-colors',
         'hover:border-ring/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         isDragging && 'opacity-50',
       )}

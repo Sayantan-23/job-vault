@@ -20,7 +20,7 @@ export function KanbanColumn({ column }: { column: Column }) {
       <div
         ref={setNodeRef}
         className={cn(
-          'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-muted/30 p-2 transition-colors',
+          'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl border border-hairline bg-foreground/[0.02] p-2 transition-colors',
           isOver && 'border-ring/50 bg-accent/40',
         )}
       >
