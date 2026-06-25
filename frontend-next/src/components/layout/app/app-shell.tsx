@@ -13,37 +13,36 @@ export function AppShell({ children }: { children: ReactNode }) {
           the gutter. */}
       <aside
         style={{ marginLeft: 'max(0px, calc((100% - 1240px) / 2))' }}
-        className="jv-rail flex shrink-0 flex-col"
+        className="group jv-rail flex shrink-0 flex-col"
       >
         <div className="jv-rail-brand flex items-center gap-2.5 px-5 pb-2 pt-5">
-          <span
-            aria-hidden="true"
-            className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-primary text-primary-foreground"
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
+          {/* The logo square morphs into the collapse toggle on rail hover. */}
+          <span className="relative grid size-8 shrink-0 place-items-center rounded-[10px] bg-primary text-primary-foreground">
+            <span
+              aria-hidden="true"
+              className="grid place-items-center transition-opacity duration-150 group-hover:opacity-0"
             >
-              <circle cx="12" cy="12" r="7.5" />
-              <path d="M12 12V5.5" />
-              <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
-            </svg>
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
+                <circle cx="12" cy="12" r="7.5" />
+                <path d="M12 12V5.5" />
+                <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+            <SidebarToggle />
           </span>
           <span className="jv-rail-label text-[15px] font-semibold tracking-tight">JobVault</span>
         </div>
         <SidebarNav />
-        <div className="mt-auto">
-          <div className="px-3 pb-1">
-            <SidebarToggle />
-          </div>
-          <div className="p-3 pt-1">
-            <AccountMenu />
-          </div>
+        <div className="mt-auto p-3">
+          <AccountMenu />
         </div>
       </aside>
       {/* Each page supplies its own in-content editorial header (PageHeading).

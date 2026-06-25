@@ -45,8 +45,13 @@ a{color:inherit;text-decoration:none}
 .frame{width:100%;display:flex;min-width:0}      /* full width; the sidebar carries the left gutter, main runs to the window edge */
 
 .sidebar{width:var(--sb-w);flex-shrink:0;margin-left:max(0px,calc((100% - 1240px)/2));padding:22px 14px;display:flex;flex-direction:column;gap:3px;transition:width .22s ease;overflow:hidden}
-.brand{padding:6px 12px 18px;font-weight:600;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
-.brand i{color:var(--primary);font-size:17px}
+.brand{padding:6px 12px 18px;font-weight:600;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.brandmark{position:relative;display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:10px;background:var(--primary);color:var(--primary-foreground)}
+.brandmark i{font-size:18px}
+.brandmark .markglyph,.brandmark .toggleglyph{position:absolute;inset:0;display:grid;place-items:center;transition:opacity .15s}
+.brandmark .toggleglyph{opacity:0}
+.sidebar:hover .brandmark .toggleglyph,body[data-showtoggle] .brandmark .toggleglyph{opacity:1}
+.sidebar:hover .brandmark .markglyph,body[data-showtoggle] .brandmark .markglyph{opacity:0}
 .nav a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px;transition:.12s}
 .nav a i{font-size:17px;opacity:.9}
 .nav a:hover{color:var(--foreground);background:color-mix(in oklab,var(--foreground) 4%,transparent)}
@@ -129,7 +134,7 @@ a{color:inherit;text-decoration:none}
 <div class="viewport">
   <div class="frame">
     <aside class="sidebar">
-      <div class="brand"><i class="ph-bold ph-vault"></i> JobVault</div>
+      <div class="brand"><span class="brandmark"><i class="ph-bold ph-vault markglyph"></i><i class="ph-bold ph-sidebar-simple toggleglyph"></i></span> JobVault</div>
       <nav class="nav">
         <a class="active"><i class="ph ph-briefcase"></i> Jobs</a>
         <a><i class="ph ph-user-circle"></i> Personas</a>
@@ -228,7 +233,8 @@ a{color:inherit;text-decoration:none}
   ;(function(){const p=new URLSearchParams(location.search);const v=p.get('view'),t=p.get('theme');
     if(views[v])document.querySelector(`#seg-view button[data-view="${v}"]`).click();
     if(t==='dark'||t==='light')document.querySelector(`#seg-theme button[data-theme="${t}"]`).click();
-    if(p.get('collapsed')==='1')document.body.setAttribute('data-collapsed','1');})()
+    if(p.get('collapsed')==='1')document.body.setAttribute('data-collapsed','1');
+    if(p.get('showtoggle')==='1')document.body.setAttribute('data-showtoggle','1');})()
 </script>
 </body>
 </html>
