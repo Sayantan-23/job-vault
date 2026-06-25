@@ -14,7 +14,8 @@ import { ResumeContentEditor } from './resume-content-editor'
 import { ResumeOutputBar } from './resume-output-bar'
 import { DownloadPdfButton } from './download-pdf-button'
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/layout/app/page-header'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { AppPage } from '@/components/layout/app/app-page'
 import { DocumentList, type DocumentRow } from '@/components/documents/document-list'
 import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 import { NoPersonasHint } from '@/components/documents/no-personas-hint'
@@ -113,12 +114,12 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader
-        title="Résumés"
-        description="Generate from a persona — optionally tailored to a job — or reopen a past one."
-      />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+    <>
+      <AppPage>
+        <PageHeading
+          title="Résumés"
+          description="Generate from a persona — optionally tailored to a job — or reopen a past one."
+        />
         <div className="space-y-6">
           {/* Only the generator gates on personas — the library below always renders. */}
           {personas.length === 0 ? (
@@ -170,8 +171,8 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
             ) : null}
           </div>
         </div>
-      </div>
+      </AppPage>
       {confirmDialog}
-    </div>
+    </>
   )
 }

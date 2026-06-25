@@ -24,18 +24,18 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => vi.clearAllMocks())
 
 describe('useLogin', () => {
-  it('logs in, primes the current-user cache, and routes to the dashboard', async () => {
+  it('logs in, primes the current-user cache, and routes to the jobs workspace', async () => {
     api.post.mockResolvedValue({ id: 'u1', email: 'a@b.c', name: 'Ada' })
     const { result } = renderHook(() => useLogin(), { wrapper })
     result.current.mutate({ email: 'a@b.c', password: 'longenough' })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(api.post).toHaveBeenCalledWith('/api/auth/login', { email: 'a@b.c', password: 'longenough' })
-    expect(push).toHaveBeenCalledWith('/app/dashboard')
+    expect(push).toHaveBeenCalledWith('/app/jobs')
   })
 })
 
 describe('useRegister', () => {
-  it('registers, primes the current-user cache, and routes to the dashboard', async () => {
+  it('registers, primes the current-user cache, and routes to the jobs workspace', async () => {
     api.post.mockResolvedValue({ id: 'u1', email: 'a@b.co', name: 'Ada' })
     const { result } = renderHook(() => useRegister(), { wrapper })
     result.current.mutate({ name: 'Ada', email: 'a@b.co', password: 'longenough' })
@@ -45,7 +45,7 @@ describe('useRegister', () => {
       email: 'a@b.co',
       password: 'longenough',
     })
-    expect(push).toHaveBeenCalledWith('/app/dashboard')
+    expect(push).toHaveBeenCalledWith('/app/jobs')
   })
 })
 

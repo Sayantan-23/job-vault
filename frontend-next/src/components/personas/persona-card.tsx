@@ -32,7 +32,7 @@ export function PersonaCard({ persona, onEdit }: Props) {
   const summary = persona.data.summary.trim()
 
   return (
-    <div className="flex flex-col rounded-lg border border-border bg-card p-4 transition-colors hover:border-foreground/20">
+    <div className="flex flex-col rounded-lg border border-hairline p-4 transition-colors hover:border-border hover:bg-accent/40">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="truncate font-medium">{persona.name}</p>

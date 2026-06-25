@@ -1,0 +1,76 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Bell } from 'lucide-react'
+import { Popover, PopoverTrigger } from '@/components/ui/popover'
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+} from '@/hooks/use-notifications'
+import { NotificationPopover } from './notification-popover'
+import type { Notification } from '@/types/notification'
+import { cn } from '@/lib/utils'
+
+/**
+ * Notifications as a quiet rail entry (replaces the old header bell). Styled to
+ * match the nav links, with a small unread dot on the bell so it survives the
+ * collapsed (icon-only) rail. Opening it reuses the existing top-right
+ * NotificationPopover panel and its mark-read / jump-to-job behavior.
+ */
+export function SidebarNotifications() {
+  const router = useRouter()
+  const { data: notifications = [] } = useNotifications()
+  const markRead = useMarkNotificationRead()
+  const markAllRead = useMarkAllNotificationsRead()
+  const [open, setOpen] = useState(false)
+
+  const unread = notifications.filter((n) => !n.isRead).length
+
+  function handleSelect(notification: Notification) {
+    if (!notification.isRead) markRead.mutate(notification.id)
+    setOpen(false)
+    // Notifications are job-scoped; open the related job's drawer on the Jobs page
+    // (the rail is global, so the current pathname may have no drawer of its own).
+    if (notification.relatedJobId) {
+      router.push(`/app/jobs?job=${notification.relatedJobId}`)
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          title="Notifications"
+          aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+          className={cn(
+            'jv-rail-item flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+            open
+              ? 'bg-accent font-medium text-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+          )}
+        >
+          <span className="relative shrink-0">
+            <Bell className="size-4" aria-hidden="true" />
+            {unread > 0 ? (
+              <span
+                data-testid="sidebar-unread-dot"
+                className="absolute -right-1 -top-1 size-2 rounded-full bg-ghost-ghosted"
+                aria-hidden="true"
+              />
+            ) : null}
+          </span>
+          <span className="jv-rail-label">Notifications</span>
+        </button>
+      </PopoverTrigger>
+      <NotificationPopover
+        notifications={notifications}
+        hasUnread={unread > 0}
+        onSelect={handleSelect}
+        onMarkAllRead={() => markAllRead.mutate()}
+      />
+    </Popover>
+  )
+}

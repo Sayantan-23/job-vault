@@ -2,7 +2,8 @@
 
 import Link from 'next/link'
 import { Sun, Moon, Monitor } from 'lucide-react'
-import { PageHeader } from '@/components/layout/app/page-header'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { AppPage } from '@/components/layout/app/app-page'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl, type SegmentedOption } from '@/components/ui/segmented-control'
 import { SettingsCard } from './settings-card'
@@ -32,13 +33,12 @@ export function SettingsWorkspace() {
   const logout = useLogout()
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader title="Settings" description="Manage how JobVault looks and your account." />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        {/* A single, readable column of section cards with even spacing between
-            them. (Sections have very uneven heights, so a multi-column grid left
-            awkward gaps — a single column keeps the rhythm clean.) */}
-        <div className="w-full max-w-3xl space-y-4">
+    <AppPage>
+      <PageHeading title="Settings" description="Manage how JobVault looks and your account." />
+      {/* A single, readable column of section cards with even spacing between
+          them. (Sections have very uneven heights, so a multi-column grid left
+          awkward gaps — a single column keeps the rhythm clean.) */}
+      <div className="space-y-4">
           <SettingsCard
             title="Appearance"
             description="Choose your theme. System follows your device’s light/dark setting."
@@ -90,8 +90,7 @@ export function SettingsWorkspace() {
             </p>
             <p className="mt-1 text-sm text-muted-foreground">Email notifications are coming soon.</p>
           </SettingsCard>
-        </div>
       </div>
-    </div>
+    </AppPage>
   )
 }

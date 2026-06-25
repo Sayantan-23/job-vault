@@ -25,6 +25,7 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-hairline: var(--hairline);
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-ghost-active: var(--ghost-active);
@@ -32,7 +33,7 @@
   --color-ghost-ghosted: var(--ghost-ghosted);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: var(--font-instrument-serif);
+  --font-serif: var(--font-newsreader);
   --radius-md: var(--radius);
 }
 
@@ -56,6 +57,66 @@ body {
   color: var(--color-foreground);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: 'rlig' 1, 'calt' 1;
+}
+
+/* Thin, on-theme scrollbar for the app content scroll (`main`), which runs to the
+   window's right edge so the bar sits where it normally does. */
+.app-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.app-scroll::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.app-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.app-scroll::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  background-clip: content-box;
+  border: 4px solid transparent;
+  border-radius: 999px;
+}
+.app-scroll:hover::-webkit-scrollbar-thumb {
+  background-color: var(--muted-foreground);
+}
+
+/* Collapsible sidebar — the centered frame stays 1240px; only the rail/content
+   split flips (rail 240<->56, content 1000<->1184), driven by `data-sidebar`
+   on <html> (set pre-paint from the `sidebar` cookie). */
+:root {
+  --jv-sidebar-w: 240px;
+  --jv-content-max: 1000px;
+}
+html[data-sidebar='collapsed'] {
+  --jv-sidebar-w: 56px;
+  --jv-content-max: 1184px;
+}
+.jv-rail {
+  width: var(--jv-sidebar-w);
+}
+.jv-content-col {
+  max-width: var(--jv-content-max);
+}
+.jv-rail,
+.jv-content-col {
+  transition: width 0.22s ease, max-width 0.22s ease;
+}
+html[data-sidebar='collapsed'] .jv-rail-label {
+  display: none;
+}
+html[data-sidebar='collapsed'] .jv-rail-item,
+html[data-sidebar='collapsed'] .jv-rail-brand {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .jv-rail,
+  .jv-content-col {
+    transition: none;
+  }
 }
 
 /*

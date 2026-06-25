@@ -11,9 +11,9 @@ interface Props {
 export function PersonaList({ personas, onEdit }: Props) {
   if (personas.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center">
-        <p className="text-sm font-medium">No personas yet</p>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+      <div className="py-16 text-center">
+        <p className="font-serif text-xl">No personas yet</p>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
           Create a persona to start generating tailored résumés and cover letters.
         </p>
       </div>

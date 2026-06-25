@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Briefcase, Users, FileText, Mail, Clock } from 'lucide-react'
+import { Briefcase, Users, FileText, Mail, Clock } from 'lucide-react'
+import { SidebarNotifications } from '@/components/notifications/sidebar-notifications'
 import { cn } from '@/lib/utils'
 
-// Profile + Settings live in the account menu at the bottom of the sidebar.
+// Dashboard is gone (the jobs workspace is the home now). Profile + Settings live
+// in the account menu at the bottom of the rail.
 const NAV = [
-  { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/app/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/app/personas', label: 'Personas', icon: Users },
   { href: '/app/resumes', label: 'Résumés', icon: FileText },
@@ -26,19 +27,21 @@ export function SidebarNav() {
           <Link
             key={href}
             href={href}
+            title={label}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
+              'jv-rail-item flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors',
               active
-                ? 'bg-primary/10 font-medium text-primary'
-                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                ? 'bg-accent font-medium text-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-foreground',
             )}
           >
-            <Icon className="size-4" aria-hidden="true" />
-            {label}
+            <Icon className="size-4 shrink-0" aria-hidden="true" />
+            <span className="jv-rail-label">{label}</span>
           </Link>
         )
       })}
+      <SidebarNotifications />
     </nav>
   )
 }

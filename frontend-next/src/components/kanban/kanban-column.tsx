@@ -14,13 +14,13 @@ export function KanbanColumn({ column }: { column: Column }) {
   return (
     <div className="flex h-full w-72 shrink-0 flex-col">
       <div className="mb-2 flex items-center justify-between px-1">
-        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{meta.label}</h2>
+        <h2 className="text-sm font-medium text-muted-foreground">{meta.label}</h2>
         <span className="font-mono text-xs tabular-nums text-muted-foreground">{column.jobs.length}</span>
       </div>
       <div
         ref={setNodeRef}
         className={cn(
-          'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl border border-border bg-muted/30 p-2 transition-colors',
+          'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-xl border border-hairline bg-foreground/[0.02] p-2 transition-colors',
           isOver && 'border-ring/50 bg-accent/40',
         )}
       >

@@ -8,6 +8,16 @@
 
 ---
 
+## App Redesign — Editorial Workspace Shell (DONE on branch `app-editorial-shell-redesign` 2026-06-25 — **awaiting review/merge**)
+
+> Re-points the authenticated `/app` surface from a "dashboard" to a calm editorial workspace while keeping the minimalist-ui system intact (the dashboard feel came from framing/chrome, not the palette/type). Plan: `docs/superpowers/plans/2026-06-25-app-editorial-shell-redesign.md`. Approved mock: `docs/mocks/redesign-shell.html` (Before/After + Light/Dark). Frontend-only — no backend/API/DB change. Built + verified with workflows (build fan-out → 4-lens adversarial review → fix fan-out). 9 commits `afda7f8..154e216`.
+
+- [x] **9a Foundations** — editorial serif swapped Instrument Serif → **Newsreader** (`--font-serif`); new `--hairline` divider token; new primitives `PageHeading` (in-content editorial header), `InlineStats` (quiet stat line), `AppPage` (centered editorial column).
+- [x] **9b Shell de-chrome** — sidebar **dissolved** into the canvas (no panel fill/border/dividers/logo cell); the global bordered **top utility bar removed** (all 7 content pages migrated to `PageHeading` inside `AppPage`); **Dashboard KPI page deleted** → `/app/jobs` is home (`/app/dashboard` redirects, login lands on Jobs); **Notifications moved into the rail** (unread dot, routes to `/app/jobs?job=`).
+- [x] **9c Jobs editorial home** — dense uppercase table → grouped **borderless `JobList`** ("Needs your attention" [gated to APPLIED/INTERVIEWING, server-sort-truthful, `<h2>` group labels] / "In progress"); inline `PageHeading` + `InlineStats` + relocated sort/status/date into a slim `JobsListControls` row; **board kept but quieted** (hairline columns, plain-case labels, de-emphasised counts); `PageHeader` + `JobsTable` deleted.
+- [x] **9d De-box + polish** — settings/persona cards and the résumé/cover-letter `DocumentList` → hairlines (no boxes); **editorial serif empty states** (Jobs/Timeline/Personas); dead `NotificationBell` + `DashboardSkeleton` removed; route loading skeletons reworked to the borderless `AppPage` shape (no more top-bar flash).
+- [x] **Gates green:** typecheck + lint + **514 tests** + **production build** (`docker build --target production`). Adversarial review surfaced 8 fixes (all applied); the prod build caught a layout `useSearchParams` Suspense break (fixed). **Not merged** — local master is ahead of origin; merge on the user's say-so.
+
 ## Migration Slice 8 — Chrome Extension (DONE — merged to master 2026-06-22, merge `2fae798`)
 
 > Branch `slice-8-chrome-extension` (merged `--no-ff`). Plan: `docs/superpowers/plans/2026-06-20-slice-8-chrome-extension.md`. One-click "Save to JobVault" from LinkedIn/Indeed/most boards, with a smooth `launchWebAuthFlow` connect (no key copy-paste) and client-first extraction (the extension reads the live, logged-in DOM, sidestepping the bot-walls that force the server's render+AI fallback).

@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JobVault — centered shell mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css" />
+<style>
+[data-theme-scope='app']{
+  --background: oklch(0.992 0.004 75); --foreground: oklch(0.21 0.01 60); --card: oklch(1 0 0);
+  --primary: oklch(0.55 0.12 270); --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.005 75); --secondary-foreground: oklch(0.27 0.01 60);
+  --muted: oklch(0.96 0.005 75); --muted-foreground: oklch(0.53 0.01 60); --accent: oklch(0.96 0.005 75);
+  --destructive: oklch(0.6 0.22 25); --border: oklch(0.93 0.003 75); --hairline: oklch(0.95 0.003 75);
+  --ghost-active: oklch(0.7 0.15 155); --ghost-stale: oklch(0.78 0.15 75); --ghost-ghosted: oklch(0.63 0.2 20);
+}
+html.dark [data-theme-scope='app']{
+  --background: oklch(0.18 0.004 75); --foreground: oklch(0.95 0.005 75); --card: oklch(0.21 0.005 75);
+  --primary: oklch(0.65 0.13 270); --primary-foreground: oklch(0.15 0.01 270);
+  --secondary: oklch(0.27 0.005 75); --secondary-foreground: oklch(0.95 0.005 75);
+  --muted: oklch(0.27 0.005 75); --muted-foreground: oklch(0.66 0.01 75); --accent: oklch(0.27 0.005 75);
+  --destructive: oklch(0.5 0.2 25); --border: oklch(0.27 0.006 75); --hairline: oklch(0.3 0.006 75);
+  --ghost-active: oklch(0.72 0.15 155); --ghost-stale: oklch(0.8 0.15 75); --ghost-ghosted: oklch(0.66 0.2 20);
+}
+/* Collapsible rail: total frame stays 1240; only the rail/content split flips. */
+[data-theme-scope='app']{--sb-w:240px;--content-max:1000px}
+body[data-collapsed='1']{--sb-w:56px;--content-max:1184px}
+body[data-collapsed='1'] .nav a,body[data-collapsed='1'] .brand,body[data-collapsed='1'] .foot a{font-size:0;justify-content:center;padding-left:0;padding-right:0;gap:0}
+body[data-collapsed='1'] .nav a i,body[data-collapsed='1'] .brand i{font-size:17px}
+body[data-collapsed='1'] .nav .dot{display:none}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--background);color:var(--foreground);font-family:'Geist',system-ui,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+.mono{font-family:'Geist Mono',monospace;font-variant-numeric:tabular-nums}
+.serif{font-family:'Newsreader',serif;font-weight:400}
+i.ph,i.ph-bold{font-style:normal;line-height:1;display:inline-flex}
+a{color:inherit;text-decoration:none}
+
+/* ── The centered app frame: sidebar + content are ONE centered composition ── */
+.viewport{height:100vh;display:flex;overflow:hidden}
+.frame{width:100%;display:flex;min-width:0}      /* full width; the sidebar carries the left gutter, main runs to the window edge */
+
+.sidebar{width:var(--sb-w);flex-shrink:0;margin-left:max(0px,calc((100% - 1240px)/2));padding:22px 14px;display:flex;flex-direction:column;gap:3px;transition:width .22s ease;position:relative}
+.brand{padding:6px 12px 18px;font-weight:600;font-size:15px;letter-spacing:-.01em;display:flex;align-items:center;gap:10px}
+.brandmark{display:grid;place-items:center;width:32px;height:32px;flex-shrink:0;border-radius:10px;background:var(--primary);color:var(--primary-foreground)}
+.brandmark i{font-size:18px}
+/* collapse handle on the rail's right edge (appears on hover) */
+.railtoggle{position:absolute;right:0;top:50%;transform:translate(50%,-50%);z-index:20;display:grid;place-items:center;width:28px;height:28px;border-radius:999px;border:1px solid var(--border);background:var(--card);color:var(--muted-foreground);opacity:0;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:opacity .15s;cursor:pointer}
+.railtoggle i{font-size:15px}
+.sidebar:hover .railtoggle,body[data-showtoggle] .railtoggle{opacity:1}
+.nav a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px;transition:.12s}
+.nav a i{font-size:17px;opacity:.9}
+.nav a:hover{color:var(--foreground);background:color-mix(in oklab,var(--foreground) 4%,transparent)}
+.nav a.active{color:var(--foreground);font-weight:500;background:color-mix(in oklab,var(--foreground) 6%,transparent)}
+.nav .dot{margin-left:auto;width:6px;height:6px;border-radius:999px;background:var(--ghost-ghosted)}
+.foot{margin-top:auto;padding-top:14px}
+.foot a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px}
+.avatar{width:26px;height:26px;border-radius:999px;background:color-mix(in oklab,var(--primary) 18%,var(--background));color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto}    /* main scrolls at the WINDOW edge */
+.main::-webkit-scrollbar{width:12px}
+.main::-webkit-scrollbar-track{background:transparent}
+.main::-webkit-scrollbar-thumb{background-color:var(--border);background-clip:content-box;border:4px solid transparent;border-radius:999px}
+.content{width:100%;max-width:var(--content-max);padding:48px 40px 64px;transition:max-width .22s ease}        /* capped + left-aligned inside main */
+.view{display:none}
+.view.on{display:block}
+
+/* heading */
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:28px}
+.title{font-family:'Newsreader',serif;font-size:42px;line-height:1.05;letter-spacing:-.01em}
+.actions{display:flex;align-items:center;gap:8px;padding-bottom:4px}
+.kbd{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 11px;border-radius:8px;color:var(--muted-foreground);border:1px solid var(--hairline);font-size:13px}
+.kbd kbd{font-family:'Geist Mono',monospace;font-size:11px;background:color-mix(in oklab,var(--foreground) 6%,transparent);padding:1px 5px;border-radius:4px}
+.toggle{display:inline-flex;gap:2px;padding:3px;border-radius:8px;background:color-mix(in oklab,var(--foreground) 5%,transparent)}
+.toggle button{appearance:none;border:0;background:transparent;color:var(--muted-foreground);font:inherit;height:28px;width:30px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.toggle button i{font-size:16px}
+.toggle button.on{background:var(--card);color:var(--foreground);box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.add{height:34px;padding:0 13px;border:0;border-radius:8px;background:var(--primary);color:var(--primary-foreground);font:inherit;font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.stats{margin-top:-14px;margin-bottom:6px;display:flex;align-items:center;gap:26px;color:var(--muted-foreground);font-size:14px}
+.stats b{font-family:'Geist Mono',monospace;font-weight:500;color:var(--foreground);margin-right:5px}
+.stats .q,.stats .q b{color:var(--ghost-ghosted)}
+
+/* list */
+.grouplbl{font-size:12.5px;color:var(--muted-foreground);font-weight:500;margin:26px 0 2px;display:flex;align-items:center;gap:8px}
+.grouplbl .n{font-family:'Geist Mono',monospace;font-size:11px;opacity:.8}
+.item{display:grid;grid-template-columns:1fr auto;align-items:center;gap:20px;padding:13px 4px;border-bottom:1px solid var(--hairline)}
+.item .ttl{font-size:14.5px;font-weight:500}
+.item .sub{color:var(--muted-foreground);font-size:13px;margin-top:2px}
+.right{display:flex;align-items:center;gap:18px;justify-content:flex-end}
+.dt{color:var(--muted-foreground);font-family:'Geist Mono',monospace;font-size:12px;min-width:46px;text-align:right}
+.chip{display:inline-flex;align-items:center;border-radius:4px;padding:2px 8px;font-family:'Geist Mono',monospace;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.chip.int{background:color-mix(in oklab,var(--primary) 12%,transparent);color:var(--primary)}
+.chip.app{background:var(--secondary);color:var(--secondary-foreground)}
+.chip.off{background:var(--primary);color:var(--primary-foreground)}
+.ghost{display:inline-flex;align-items:center;gap:4px;font-family:'Geist Mono',monospace;font-size:12px;font-weight:500}
+.ghost i{font-size:14px}
+.ga{color:var(--ghost-active)} .gs{color:var(--ghost-stale)} .gg{color:var(--ghost-ghosted)}
+
+/* board — lives in the SAME content width and scrolls horizontally (no width jump vs list) */
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+.col{width:248px;flex-shrink:0;border-radius:12px;background:color-mix(in oklab,var(--foreground) 2.5%,transparent);padding:8px}
+.colhead{display:flex;align-items:center;justify-content:space-between;padding:6px 8px 10px;font-size:13px;font-weight:500;color:var(--muted-foreground)}
+.colhead .n{font-family:'Geist Mono',monospace;font-size:11px;opacity:.8}
+.bcard{background:var(--card);border:1px solid var(--hairline);border-radius:8px;padding:10px 11px;margin-bottom:8px}
+.bcard .t{font-size:13px;font-weight:500}
+.bcard .c{font-size:12px;color:var(--muted-foreground);margin-top:2px}
+.bcard .m{display:flex;align-items:center;gap:10px;margin-top:8px}
+
+/* settings — same width, section cards as hairline-divided blocks */
+.scard{border-bottom:1px solid var(--hairline);padding:22px 0}
+.scard:first-of-type{padding-top:4px}
+.scard h3{font-size:14px;font-weight:600}
+.scard p{font-size:13px;color:var(--muted-foreground);margin-top:3px;margin-bottom:14px}
+.seg{display:inline-flex;border:1px solid var(--hairline);border-radius:8px;overflow:hidden}
+.seg span{padding:7px 14px;font-size:13px;color:var(--muted-foreground)}
+.seg span.on{background:var(--secondary);color:var(--foreground)}
+.field{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--hairline);font-size:13px}
+.field:last-child{border-bottom:0}
+.field .k{color:var(--muted-foreground)}
+
+/* mock controls */
+.mockbar{position:fixed;z-index:100;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:8px 10px 8px 14px;border-radius:999px;background:#18181b;color:#e4e4e7;border:1px solid #2a2a30;box-shadow:0 8px 30px rgba(0,0,0,.28);font-size:12px}
+.mockbar .tag{font-family:'Geist Mono',monospace;letter-spacing:.14em;font-size:10px;color:#7c7c86}
+.mockbar .seg2{display:inline-flex;background:#0e0e11;border:1px solid #2a2a30;border-radius:999px;padding:2px}
+.mockbar .seg2 button{appearance:none;border:0;background:transparent;color:#a1a1aa;cursor:pointer;font:inherit;font-size:12px;padding:4px 12px;border-radius:999px}
+.mockbar .seg2 button[data-on='true']{background:#2e2e35;color:#fff}
+</style>
+</head>
+<body data-theme-scope="app">
+<div class="viewport">
+  <div class="frame">
+    <aside class="sidebar">
+      <div class="brand"><span class="brandmark"><i class="ph-bold ph-vault"></i></span> JobVault</div>
+      <nav class="nav">
+        <a class="active"><i class="ph ph-briefcase"></i> Jobs</a>
+        <a><i class="ph ph-user-circle"></i> Personas</a>
+        <a><i class="ph ph-file-text"></i> Résumés</a>
+        <a><i class="ph ph-envelope-simple"></i> Cover letters</a>
+        <a><i class="ph ph-clock-countdown"></i> Timeline</a>
+        <a><i class="ph ph-bell"></i> Notifications <span class="dot"></span></a>
+      </nav>
+      <div class="foot"><a><span class="avatar">SR</span> Sayantan</a></div>
+      <button class="railtoggle"><i class="ph-bold ph-sidebar-simple"></i></button>
+    </aside>
+
+    <div class="main">
+      <div class="content">
+        <!-- JOBS — LIST -->
+        <section class="view on" id="v-list">
+          <div class="head">
+            <h1 class="title">Jobs</h1>
+            <div class="actions">
+              <span class="kbd"><i class="ph ph-magnifying-glass"></i> Search <kbd>⌘K</kbd></span>
+              <span class="toggle"><button class="on"><i class="ph ph-list"></i></button><button><i class="ph ph-kanban"></i></button></span>
+              <button class="add"><i class="ph ph-plus"></i> Add job</button>
+            </div>
+          </div>
+          <div class="stats"><span><b>24</b>tracked</span><span><b>6</b>interviewing</span><span class="q"><b>5</b>going quiet</span></div>
+          <div class="grouplbl">Needs your attention <span class="n">3</span></div>
+          <div><div class="item"><div><div class="ttl">Full-Stack Engineer</div><div class="sub">Supabase · Remote</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost gg"><i class="ph ph-ghost"></i>21d</span><span class="dt">Jun 4</span></div></div>
+          <div class="item"><div><div class="ttl">Frontend Engineer</div><div class="sub">Stripe · San Francisco</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost gg"><i class="ph ph-ghost"></i>16d</span><span class="dt">Jun 9</span></div></div>
+          <div class="item"><div><div class="ttl">Product Engineer</div><div class="sub">Vercel · Remote</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost gs"><i class="ph ph-timer"></i>9d</span><span class="dt">Jun 16</span></div></div></div>
+          <div class="grouplbl">In progress <span class="n">4</span></div>
+          <div><div class="item"><div><div class="ttl">UI Engineer</div><div class="sub">Figma · New York</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>1d</span><span class="dt">Jun 24</span></div></div>
+          <div class="item"><div><div class="ttl">Software Engineer</div><div class="sub">Ramp · New York</div></div><div class="right"><span class="chip off">Offer</span><span class="ghost ga"><i class="ph ph-clock"></i>2d</span><span class="dt">Jun 23</span></div></div>
+          <div class="item"><div><div class="ttl">Senior Frontend Engineer</div><div class="sub">Linear · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>3d</span><span class="dt">Jun 22</span></div></div>
+          <div class="item"><div><div class="ttl">Platform Engineer</div><div class="sub">Render · Remote</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost ga"><i class="ph ph-clock"></i>4d</span><span class="dt">Jun 21</span></div></div>
+          <div class="item"><div><div class="ttl">Backend Engineer</div><div class="sub">Fly.io · Remote</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost ga"><i class="ph ph-clock"></i>5d</span><span class="dt">Jun 20</span></div></div>
+          <div class="item"><div><div class="ttl">Infrastructure Engineer</div><div class="sub">Neon · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>6d</span><span class="dt">Jun 19</span></div></div>
+          <div class="item"><div><div class="ttl">Frontend Engineer</div><div class="sub">Resend · New York</div></div><div class="right"><span class="chip app">Applied</span><span class="ghost ga"><i class="ph ph-clock"></i>6d</span><span class="dt">Jun 18</span></div></div>
+          <div class="item"><div><div class="ttl">Product Designer</div><div class="sub">Linear · Remote</div></div><div class="right"><span class="chip int">Interviewing</span><span class="ghost ga"><i class="ph ph-clock"></i>7d</span><span class="dt">Jun 17</span></div></div></div>
+        </section>
+
+        <!-- JOBS — BOARD (same content width; columns scroll horizontally within it) -->
+        <section class="view" id="v-board">
+          <div class="head">
+            <h1 class="title">Jobs</h1>
+            <div class="actions">
+              <span class="kbd"><i class="ph ph-magnifying-glass"></i> Search <kbd>⌘K</kbd></span>
+              <span class="toggle"><button><i class="ph ph-list"></i></button><button class="on"><i class="ph ph-kanban"></i></button></span>
+              <button class="add"><i class="ph ph-plus"></i> Add job</button>
+            </div>
+          </div>
+          <div class="stats"><span><b>24</b>tracked</span><span><b>6</b>interviewing</span><span class="q"><b>5</b>going quiet</span></div>
+          <div class="board" style="margin-top:18px">
+            <div class="col"><div class="colhead">Wishlist <span class="n">2</span></div><div class="bcard"><div class="t">Design Engineer</div><div class="c">Raycast</div></div></div>
+            <div class="col"><div class="colhead">Applied <span class="n">9</span></div><div class="bcard"><div class="t">Full-Stack Engineer</div><div class="c">Supabase</div><div class="m"><span class="chip app">Applied</span><span class="ghost gg"><i class="ph ph-ghost"></i>21d</span></div></div><div class="bcard"><div class="t">Product Engineer</div><div class="c">Vercel</div><div class="m"><span class="ghost gs"><i class="ph ph-timer"></i>9d</span></div></div></div>
+            <div class="col"><div class="colhead">Interviewing <span class="n">6</span></div><div class="bcard"><div class="t">UI Engineer</div><div class="c">Figma</div><div class="m"><span class="ghost ga"><i class="ph ph-clock"></i>1d</span></div></div><div class="bcard"><div class="t">Senior Frontend Engineer</div><div class="c">Linear</div></div></div>
+            <div class="col"><div class="colhead">Offer <span class="n">2</span></div><div class="bcard"><div class="t">Software Engineer</div><div class="c">Ramp</div></div></div>
+            <div class="col"><div class="colhead">Rejected <span class="n">3</span></div><div class="bcard"><div class="t">Web Engineer</div><div class="c">Retool</div></div></div>
+            <div class="col"><div class="colhead">Archived <span class="n">2</span></div></div>
+          </div>
+        </section>
+
+        <!-- SETTINGS — same content width as Jobs -->
+        <section class="view" id="v-settings">
+          <div class="head"><h1 class="title">Settings</h1></div>
+          <div class="scard"><h3>Appearance</h3><p>Choose your theme. System follows your device’s setting.</p><span class="seg"><span class="on">Light</span><span>Dark</span><span>System</span></span></div>
+          <div class="scard"><h3>Account</h3><p>Your sign-in details.</p><div class="field"><span class="k">Name</span><span>Sayantan R.</span></div><div class="field"><span class="k">Email</span><span>admin@weloin.com</span></div></div>
+          <div class="scard"><h3>Connected apps</h3><p>Manage the Chrome extension and API keys.</p><div class="field"><span class="k">Chrome Extension</span><span class="mono" style="color:var(--muted-foreground)">jv_1a2b3c4d</span></div></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockbar">
+  <span class="tag">MOCK · centered frame</span>
+  <div class="seg2" id="seg-view">
+    <button data-view="list" data-on="true">Jobs · list</button>
+    <button data-view="board">Jobs · board</button>
+    <button data-view="settings">Settings</button>
+  </div>
+  <div class="seg2" id="seg-theme">
+    <button data-theme="light" data-on="true">Light</button>
+    <button data-theme="dark">Dark</button>
+  </div>
+</div>
+<script>
+  const views={list:'v-list',board:'v-board',settings:'v-settings'}
+  document.querySelectorAll('#seg-view button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#seg-view button').forEach(x=>x.dataset.on=String(x===b))
+    Object.values(views).forEach(id=>document.getElementById(id).classList.remove('on'))
+    document.getElementById(views[b.dataset.view]).classList.add('on')
+  }))
+  document.querySelectorAll('#seg-theme button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('#seg-theme button').forEach(x=>x.dataset.on=String(x===b))
+    document.documentElement.classList.toggle('dark',b.dataset.theme==='dark')
+  }))
+  ;(function(){const p=new URLSearchParams(location.search);const v=p.get('view'),t=p.get('theme');
+    if(views[v])document.querySelector(`#seg-view button[data-view="${v}"]`).click();
+    if(t==='dark'||t==='light')document.querySelector(`#seg-theme button[data-theme="${t}"]`).click();
+    if(p.get('collapsed')==='1')document.body.setAttribute('data-collapsed','1');
+    if(p.get('showtoggle')==='1')document.body.setAttribute('data-showtoggle','1');})()
+</script>
+</body>
+</html>

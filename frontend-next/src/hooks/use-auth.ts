@@ -23,7 +23,7 @@ export function useLogin() {
     mutationFn: (values: LoginValues) => apiClient.post<AuthUser>('/api/auth/login', values),
     onSuccess: (user) => {
       qc.setQueryData(CURRENT_USER_KEY, user)
-      router.push('/app/dashboard')
+      router.push('/app/jobs')
     },
   })
 }
@@ -35,7 +35,7 @@ export function useRegister() {
     mutationFn: (values: RegisterValues) => apiClient.post<AuthUser>('/api/auth/register', values),
     onSuccess: (user) => {
       qc.setQueryData(CURRENT_USER_KEY, user)
-      router.push('/app/dashboard')
+      router.push('/app/jobs')
     },
   })
 }

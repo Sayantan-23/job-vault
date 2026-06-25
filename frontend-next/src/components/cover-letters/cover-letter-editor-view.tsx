@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import type { CoverLetter } from '@/types/cover-letter'
 import type { AiStatus } from '@/types/persona'
 import { Button } from '@/components/ui/button'
-import { PageHeader } from '@/components/layout/app/page-header'
+import { PageHeading } from '@/components/layout/app/page-heading'
+import { AppPage } from '@/components/layout/app/app-page'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { useCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter } from '@/hooks/use-cover-letters'
 import { useConfirm } from '@/hooks/use-confirm'
@@ -40,33 +41,33 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
-      <PageHeader
-        title={letter.title ?? 'Cover letter'}
-        back={{ href: '/app/cover-letters', label: 'Cover letters' }}
-        actions={
-          <>
-            <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
-              {save.isPending ? 'Saving…' : 'Save edits'}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={del.isPending}
-              onClick={onDelete}
-              className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-            >
-              Delete
-            </Button>
-          </>
-        }
-      />
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
+    <>
+      <AppPage>
+        <PageHeading
+          title={letter.title ?? 'Cover letter'}
+          back={{ href: '/app/cover-letters', label: 'Cover letters' }}
+          actions={
+            <>
+              <Button type="button" size="sm" disabled={save.isPending} onClick={() => save.mutate({ bodyMarkdown: body })}>
+                {save.isPending ? 'Saving…' : 'Save edits'}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={del.isPending}
+                onClick={onDelete}
+                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+              >
+                Delete
+              </Button>
+            </>
+          }
+        />
         {/* Wider than a single letter column so the AI controls sit in a side rail
             (the letter itself stays letter-width inside CoverLetterEditor).
             Left-aligned — a centered block floats in whitespace on wide screens. */}
-        <div className="max-w-5xl space-y-4">
+        <div className="space-y-4">
           <CoverLetterEditor
             value={body}
             onChange={setBody}
@@ -78,8 +79,8 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
           <MutationErrorAlert error={save.error} />
           <MutationErrorAlert error={del.error} />
         </div>
-      </div>
+      </AppPage>
       {confirmDialog}
-    </div>
+    </>
   )
 }

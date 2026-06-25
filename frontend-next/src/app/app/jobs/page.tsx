@@ -3,10 +3,10 @@ import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { JobsWorkspace } from '@/components/jobs/jobs-workspace'
 import { JobsSkeleton } from '@/components/layout/app/route-skeletons'
-import { EMPTY_BOARD, EMPTY_JOBS_PAGE } from '@/lib/dashboard-defaults'
+import { EMPTY_BOARD, EMPTY_JOBS_PAGE, EMPTY_STATS } from '@/lib/dashboard-defaults'
 import { parseFilters, buildListQuery, buildBoardQuery } from '@/lib/filters'
 import type { Job } from '@/types/job'
-import type { KanbanBoard } from '@/types/dashboard'
+import type { KanbanBoard, DashboardStats } from '@/types/dashboard'
 
 export const metadata: Metadata = { title: 'Jobs' }
 
@@ -29,9 +29,9 @@ export default async function JobsPage({
   const filters = parseFilters(params)
   const view = sp['view']
 
-  // Fetched in parallel — the list and (when shown) the board are independent
-  // reads, so one round-trip instead of two.
-  const [initialJobs, initialBoard] = await Promise.all([
+  // Fetched in parallel — the list, the (when shown) board, and the headline
+  // stats are independent reads, so one round-trip instead of three.
+  const [initialJobs, initialBoard, initialStats] = await Promise.all([
     apiServer.getPage<Job>(`/api/jobs${buildListQuery(filters)}`).catch(() => EMPTY_JOBS_PAGE),
     view === 'board'
       ? apiServer
@@ -40,6 +40,7 @@ export default async function JobsPage({
           )
           .catch(() => EMPTY_BOARD)
       : Promise.resolve(EMPTY_BOARD),
+    apiServer.get<DashboardStats>('/api/dashboard/stats').catch(() => EMPTY_STATS),
   ])
 
   // useSearchParams() in JobsWorkspace requires a Suspense boundary. Its fallback
@@ -48,7 +49,7 @@ export default async function JobsPage({
   // the whole content area blank.
   return (
     <Suspense fallback={<JobsSkeleton />}>
-      <JobsWorkspace initialJobs={initialJobs} initialBoard={initialBoard} />
+      <JobsWorkspace initialJobs={initialJobs} initialBoard={initialBoard} initialStats={initialStats} />
     </Suspense>
   )
 }
