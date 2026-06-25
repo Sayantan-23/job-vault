@@ -3,10 +3,12 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-// AppShell renders SidebarNav (usePathname) and AccountMenu (useCurrentUser/useLogout).
+// AppShell renders SidebarNav (usePathname + SidebarNotifications' router/searchParams)
+// and AccountMenu (useCurrentUser/useLogout).
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
-  usePathname: () => '/app/dashboard',
+  usePathname: () => '/app/jobs',
+  useSearchParams: () => new URLSearchParams(),
 }))
 vi.mock('@/hooks/use-auth', () => ({
   useCurrentUser: () => ({ data: { name: 'Grace Hopper', email: 'grace@example.com' } }),
@@ -21,11 +23,12 @@ function renderWithProviders(ui: ReactNode) {
 }
 
 describe('AppShell', () => {
-  it('renders the primary navigation links (Profile/Settings live in the account menu, not the nav)', () => {
+  it('renders the workspace nav (no Dashboard; Profile/Settings live in the account menu)', () => {
     renderWithProviders(<AppShell>content</AppShell>)
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/app/dashboard')
+    expect(screen.getByRole('link', { name: 'Jobs' })).toHaveAttribute('href', '/app/jobs')
     expect(screen.getByRole('link', { name: 'Timeline' })).toHaveAttribute('href', '/app/timeline')
-    // Settings is no longer a top-level nav link; it moved into the account menu.
+    expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull()
+    // Settings is not a top-level nav link; it lives in the account menu.
     expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
     expect(screen.getByRole('button', { name: /open account menu/i })).toBeInTheDocument()
   })
