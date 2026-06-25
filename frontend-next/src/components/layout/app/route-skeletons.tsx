@@ -5,8 +5,9 @@ import { Skeleton } from '@/components/ui/skeleton'
  * Per-route loading skeletons, shared by each route's loading.tsx (the RSC-fetch
  * fallback) AND its page's inner `<Suspense>` (the boundary useSearchParams()
  * needs). The latter previously used `fallback={null}` — which rendered the whole
- * content area, PageHeader included, blank during client navigation. These give
- * it a layout-stable skeleton instead.
+ * content area blank during client navigation. These mirror `AppPage`'s editorial
+ * layout (centered borderless column opening on a serif `PageHeading`) so the
+ * route transition is layout-stable instead of flashing chrome.
  */
 
 function SkeletonRows({ count, className }: { count: number; className: string }) {
@@ -19,28 +20,17 @@ function SkeletonRows({ count, className }: { count: number; className: string }
   )
 }
 
-export function DashboardSkeleton() {
-  return (
-    <PageSkeleton hasActions>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <SkeletonRows count={4} className="h-24" />
-      </div>
-      <Skeleton className="mt-6 h-64" />
-    </PageSkeleton>
-  )
-}
-
 export function JobsSkeleton() {
+  // Mirrors the grouped, borderless JobList: a group-label-sized skeleton over
+  // `divide-y divide-hairline` rows, inside the workspace's max-w-4xl column.
   return (
-    <PageSkeleton hasActions>
-      <div className="mb-4 flex items-center gap-2">
-        <Skeleton className="h-9 w-64" />
-        <Skeleton className="h-9 w-24" />
-        <Skeleton className="ml-auto h-9 w-28" />
-      </div>
-      <div className="space-y-2">
-        <SkeletonRows count={8} className="h-12" />
-      </div>
+    <PageSkeleton hasActions width="max-w-4xl">
+      <Skeleton className="mb-2 h-4 w-40" />
+      <ul className="divide-y divide-hairline">
+        {Array.from({ length: 7 }).map((_, i) => (
+          <li key={i} className="h-14" />
+        ))}
+      </ul>
     </PageSkeleton>
   )
 }

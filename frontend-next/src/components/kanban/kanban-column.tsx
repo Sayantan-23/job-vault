@@ -14,7 +14,7 @@ export function KanbanColumn({ column }: { column: Column }) {
   return (
     <div className="flex h-full w-72 shrink-0 flex-col">
       <div className="mb-2 flex items-center justify-between px-1">
-        <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{meta.label}</h2>
+        <h2 className="text-sm font-medium text-muted-foreground">{meta.label}</h2>
         <span className="font-mono text-xs tabular-nums text-muted-foreground">{column.jobs.length}</span>
       </div>
       <div

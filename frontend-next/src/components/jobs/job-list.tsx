@@ -11,31 +11,48 @@ import type { Job } from '@/types/job'
 
 // A grouped, borderless, Linear-style list (not a boxed table). The incoming
 // `jobs` are already server-sorted/filtered; we only partition them client-side
-// into "Needs your attention" (anything stale/ghosted, surfaced first) and the
-// rest ("In progress"), so the actionable applications float to the top.
+// into "Needs your attention" (live-pipeline jobs that have gone stale/ghosted,
+// surfaced first) and the rest ("In progress"). Both groups PRESERVE the server
+// order so the SortMenu stays truthful — we never re-sort here.
 type Group = { label: string | null; jobs: Job[] }
 
+// Only jobs still in the active pipeline (applied / interviewing) can "need
+// attention" — a stale REJECTED/ARCHIVED/WISHLIST/OFFER job isn't actionable.
+function needsAttention(job: Job): boolean {
+  return (
+    ghostLevel(job.ghostDays) !== 'active' &&
+    (job.status === 'APPLIED' || job.status === 'INTERVIEWING')
+  )
+}
+
 function groupJobs(jobs: Job[]): Group[] {
-  const needsAttention = jobs
-    .filter((j) => ghostLevel(j.ghostDays) !== 'active')
-    .sort((a, b) => b.ghostDays - a.ghostDays)
-  const inProgress = jobs.filter((j) => ghostLevel(j.ghostDays) === 'active')
+  const needs = jobs.filter(needsAttention)
+  const inProgress = jobs.filter((j) => !needsAttention(j))
 
   const groups: Group[] = []
-  if (needsAttention.length) groups.push({ label: 'Needs your attention', jobs: needsAttention })
+  if (needs.length) groups.push({ label: 'Needs your attention', jobs: needs })
   if (inProgress.length) {
     // No label when this is the only group — there's nothing to contrast against.
-    groups.push({ label: needsAttention.length ? 'In progress' : null, jobs: inProgress })
+    groups.push({ label: needs.length ? 'In progress' : null, jobs: inProgress })
   }
   return groups
 }
 
+// Slugify a group label into a stable id so the <section> can point its
+// aria-labelledby at the <h2> (the page h1 is "Jobs", so h2 is correct here).
+function groupHeadingId(label: string): string {
+  return `job-group-${label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+}
+
 function GroupHeader({ label, count }: { label: string; count: number }) {
   return (
-    <div className="mb-2 flex items-center gap-2 px-1 text-sm font-medium text-muted-foreground">
+    <h2
+      id={groupHeadingId(label)}
+      className="mb-2 flex items-center gap-2 px-1 text-sm font-medium text-muted-foreground"
+    >
       {label}
-      <span className="font-mono text-xs tabular-nums">{count}</span>
-    </div>
+      <span className="font-mono text-[11px] tabular-nums opacity-80">{count}</span>
+    </h2>
   )
 }
 
@@ -125,7 +142,10 @@ export function JobList({
   return (
     <div className="space-y-8">
       {groups.map((group, i) => (
-        <section key={group.label ?? `group-${i}`}>
+        <section
+          key={group.label ?? `group-${i}`}
+          aria-labelledby={group.label ? groupHeadingId(group.label) : undefined}
+        >
           {group.label ? <GroupHeader label={group.label} count={group.jobs.length} /> : null}
           <ul className="divide-y divide-hairline">
             {group.jobs.map((job) => (

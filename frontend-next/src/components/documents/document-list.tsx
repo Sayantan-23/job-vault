@@ -23,7 +23,7 @@ export function DocumentList({ rows, selectedId, onSelect, onDelete, emptyText, 
   if (rows.length === 0) return <EmptyState text={emptyText} />
 
   return (
-    <ul aria-label={ariaLabel} className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+    <ul aria-label={ariaLabel} className="divide-y divide-hairline">
       {rows.map((row) => (
         <li key={row.id}>
           <DocumentListRow row={row} selected={row.id === selectedId} onSelect={onSelect} onDelete={onDelete} />

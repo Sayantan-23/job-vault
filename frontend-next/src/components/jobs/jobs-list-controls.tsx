@@ -77,9 +77,9 @@ function SortMenu({
 }
 
 // A slim, borderless in-content controls row — relocates the status filter, the
-// date-added filter, and the sort that used to live in the JobsTable header. It
-// adds no new filter capability; it only re-homes the existing controls in a
-// quiet, box-free row above the editorial list.
+// date-added filter, and the sort that used to live in the previous
+// table-header sort/filters. It adds no new filter capability; it only re-homes
+// the existing controls in a quiet, box-free row above the editorial list.
 export function JobsListControls({
   sortBy,
   sortOrder,
@@ -99,16 +99,17 @@ export function JobsListControls({
   createdTo?: string | undefined
   onDateRange: (from?: string, to?: string) => void
 }) {
-  // `group/header` keeps the ColumnFunnel triggers visible (they fade in on
-  // hover of that group; here they should always read as available controls).
+  // The funnels are `persistent` here so they read as available controls at
+  // rest — there is no header row to hover in this standalone controls row.
   return (
-    <div className="group/header mb-3 flex items-center justify-end gap-2 text-sm text-muted-foreground">
-      <ColumnFunnel label="Filter by status" active={status !== undefined}>
+    <div className="mb-3 flex items-center justify-end gap-2 text-sm text-muted-foreground">
+      <ColumnFunnel label="Filter by status" active={status !== undefined} persistent>
         <StatusFilterMenu value={status} onChange={onStatus} />
       </ColumnFunnel>
       <ColumnFunnel
         label="Filter by date added"
         active={createdFrom !== undefined || createdTo !== undefined}
+        persistent
       >
         <DateRangeMenu from={createdFrom} to={createdTo} onApply={onDateRange} />
       </ColumnFunnel>

@@ -34,14 +34,14 @@ function groupByDay(events: GlobalTimelineEvent[]): DayGroup[] {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-border p-10 text-center">
-      <p className="text-sm font-medium">No activity yet</p>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="py-16 text-center">
+      <p className="font-serif text-xl">No activity yet</p>
+      <p className="mt-2 text-sm text-muted-foreground">
         Add a job and your applications’ activity will show up here.
       </p>
       <Link
         href="/app/jobs"
-        className="mt-4 inline-block text-sm font-medium text-primary underline-offset-2 hover:underline"
+        className="mt-5 inline-block text-sm font-medium text-primary underline-offset-2 hover:underline"
       >
         Go to Jobs →
       </Link>

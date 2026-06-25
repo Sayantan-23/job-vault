@@ -92,7 +92,20 @@ export function JobsWorkspace({
         {view === 'board' ? (
           <>
             <div className="shrink-0 px-6 pt-10 sm:px-8 lg:px-12">
-              <PageHeading title="Jobs" description={<InlineStats stats={stats} />} actions={actions} />
+              <PageHeading
+                title="Jobs"
+                description={
+                  <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
+                    <InlineStats stats={stats} />
+                    {isBoardFiltered ? (
+                      <span className="text-sm text-muted-foreground">
+                        <span className="font-mono tabular-nums">{board.stats.totalJobs}</span> matching
+                      </span>
+                    ) : null}
+                  </div>
+                }
+                actions={actions}
+              />
             </div>
             <div className="min-h-0 flex-1 px-6 pb-6 sm:px-8 lg:px-12">
               <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
@@ -101,7 +114,20 @@ export function JobsWorkspace({
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-4xl px-6 py-10 sm:px-8 lg:px-12">
-              <PageHeading title="Jobs" description={<InlineStats stats={stats} />} actions={actions} />
+              <PageHeading
+                title="Jobs"
+                description={
+                  <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
+                    <InlineStats stats={stats} />
+                    {isListFiltered ? (
+                      <span className="text-sm text-muted-foreground">
+                        <span className="font-mono tabular-nums">{page.meta.total}</span> matching
+                      </span>
+                    ) : null}
+                  </div>
+                }
+                actions={actions}
+              />
               <JobsListControls
                 sortBy={filters.sortBy}
                 sortOrder={filters.sortOrder}

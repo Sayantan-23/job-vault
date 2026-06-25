@@ -9,16 +9,20 @@ import {
   AnchoredPopoverContent,
 } from '@/components/ui/anchored-popover'
 
-// A per-column filter trigger: a funnel that is hidden until the header is
-// hovered (or the button is focused), with a dot when a filter is active. The
-// menu body is passed as children and rendered in an anchored popover.
+// A per-column filter trigger: a funnel that, by default, is hidden until the
+// header is hovered (or the button is focused), with a dot when a filter is
+// active. Pass `persistent` to keep the trigger visibly available at rest (for
+// standalone controls rows where there is no header to hover). The menu body is
+// passed as children and rendered in an anchored popover.
 export function ColumnFunnel({
   label,
   active = false,
+  persistent = false,
   children,
 }: {
   label: string
   active?: boolean
+  persistent?: boolean
   children: ReactNode
 }) {
   return (
@@ -30,7 +34,11 @@ export function ColumnFunnel({
           data-active={active}
           className={cn(
             'relative inline-flex size-5 items-center justify-center rounded text-muted-foreground transition-opacity hover:text-foreground focus-visible:opacity-100 data-[state=open]:opacity-100',
-            active ? 'text-foreground opacity-100' : 'opacity-0 group-hover/header:opacity-100',
+            active
+              ? 'text-foreground opacity-100'
+              : persistent
+                ? 'opacity-70 hover:opacity-100 focus-visible:opacity-100'
+                : 'opacity-0 group-hover/header:opacity-100',
           )}
         >
           <Filter className="size-3.5" aria-hidden="true" />
