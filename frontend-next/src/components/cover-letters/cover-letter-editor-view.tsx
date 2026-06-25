@@ -42,7 +42,7 @@ export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLett
 
   return (
     <>
-      <AppPage width="wide">
+      <AppPage>
         <PageHeading
           title={letter.title ?? 'Cover letter'}
           back={{ href: '/app/cover-letters', label: 'Cover letters' }}

@@ -83,7 +83,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
 
   return (
     <>
-      <AppPage width="wide">
+      <AppPage>
         <PageHeading
           title="Cover letters"
           description="For tracked jobs or pasted descriptions"

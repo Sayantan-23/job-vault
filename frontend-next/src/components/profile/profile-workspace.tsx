@@ -33,7 +33,7 @@ export function ProfileWorkspace({ initialProfile }: { initialProfile: ProfileCo
   const nameMissing = !draft.basics.name.trim()
 
   return (
-    <AppPage width="wide">
+    <AppPage>
       <PageHeading
         title="Profile"
         description="Your master record — reused when you build personas."

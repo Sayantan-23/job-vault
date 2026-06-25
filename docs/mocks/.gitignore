@@ -1,3 +1,4 @@
 # Derived headless-Chrome renders of the .html mocks (regenerate as needed)
 shot-*.png
 smoke-*.png
+cs-*.png

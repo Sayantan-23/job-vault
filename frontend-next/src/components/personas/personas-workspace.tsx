@@ -32,7 +32,7 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
 
   return (
     <>
-      <AppPage width="wide">
+      <AppPage>
         <PageHeading
           title="Personas"
           description={

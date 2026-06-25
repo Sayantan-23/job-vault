@@ -91,7 +91,7 @@ export function JobsWorkspace({
       <div className="flex min-h-0 flex-1 flex-col">
         {view === 'board' ? (
           <>
-            <div className="shrink-0 px-6 pt-10 sm:px-8 lg:px-12">
+            <div className="shrink-0 px-6 pt-10 sm:px-8 lg:px-10">
               <PageHeading
                 title="Jobs"
                 description={
@@ -107,45 +107,43 @@ export function JobsWorkspace({
                 actions={actions}
               />
             </div>
-            <div className="min-h-0 flex-1 px-6 pb-6 sm:px-8 lg:px-12">
+            <div className="min-h-0 flex-1 px-6 pb-6 sm:px-8 lg:px-10">
               <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
             </div>
           </>
         ) : (
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="mx-auto w-full max-w-4xl px-6 py-10 sm:px-8 lg:px-12">
-              <PageHeading
-                title="Jobs"
-                description={
-                  <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
-                    <InlineStats stats={stats} />
-                    {isListFiltered ? (
-                      <span className="text-sm text-muted-foreground">
-                        <span className="font-mono tabular-nums">{page.meta.total}</span> matching
-                      </span>
-                    ) : null}
-                  </div>
-                }
-                actions={actions}
-              />
-              <JobsListControls
-                sortBy={filters.sortBy}
-                sortOrder={filters.sortOrder}
-                onSort={cycleSort}
-                status={filters.status}
-                onStatus={setStatus}
-                createdFrom={filters.createdFrom}
-                createdTo={filters.createdTo}
-                onDateRange={setDateRange}
-              />
-              <JobList
-                jobs={page.data}
-                loading={listQuery.isLoading}
-                isFiltered={isListFiltered}
-                onReset={resetAll}
-              />
-              <JobsPagination meta={page.meta} onPage={setPage} />
-            </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-10 sm:px-8 lg:px-10">
+            <PageHeading
+              title="Jobs"
+              description={
+                <div className="flex flex-wrap items-center gap-x-7 gap-y-1.5">
+                  <InlineStats stats={stats} />
+                  {isListFiltered ? (
+                    <span className="text-sm text-muted-foreground">
+                      <span className="font-mono tabular-nums">{page.meta.total}</span> matching
+                    </span>
+                  ) : null}
+                </div>
+              }
+              actions={actions}
+            />
+            <JobsListControls
+              sortBy={filters.sortBy}
+              sortOrder={filters.sortOrder}
+              onSort={cycleSort}
+              status={filters.status}
+              onStatus={setStatus}
+              createdFrom={filters.createdFrom}
+              createdTo={filters.createdTo}
+              onDateRange={setDateRange}
+            />
+            <JobList
+              jobs={page.data}
+              loading={listQuery.isLoading}
+              isFiltered={isListFiltered}
+              onReset={resetAll}
+            />
+            <JobsPagination meta={page.meta} onPage={setPage} />
           </div>
         )}
       </div>

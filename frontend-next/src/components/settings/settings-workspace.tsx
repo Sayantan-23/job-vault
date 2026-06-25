@@ -33,7 +33,7 @@ export function SettingsWorkspace() {
   const logout = useLogout()
 
   return (
-    <AppPage width="default">
+    <AppPage>
       <PageHeading title="Settings" description="Manage how JobVault looks and your account." />
       {/* A single, readable column of section cards with even spacing between
           them. (Sections have very uneven heights, so a multi-column grid left

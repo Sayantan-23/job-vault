@@ -115,7 +115,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
 
   return (
     <>
-      <AppPage width="full">
+      <AppPage>
         <PageHeading
           title="Résumés"
           description="Generate from a persona — optionally tailored to a job — or reopen a past one."

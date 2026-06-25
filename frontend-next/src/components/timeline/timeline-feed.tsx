@@ -67,7 +67,7 @@ export function TimelineFeed({ initialData }: { initialData?: Paginated<GlobalTi
   const groups = groupByDay(events)
 
   return (
-    <AppPage width="wide">
+    <AppPage>
       <PageHeading title="Timeline" description="Everything that’s happened across your job pipeline." />
       <div className="space-y-10">
         {isError ? <MutationErrorAlert error={error} /> : null}
