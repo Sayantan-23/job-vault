@@ -7,9 +7,7 @@ import {
   AnchoredPopoverTrigger,
   AnchoredPopoverContent,
 } from '@/components/ui/anchored-popover'
-import { ColumnFunnel } from './column-funnel'
-import { StatusFilterMenu } from './status-filter-menu'
-import { DateRangeMenu } from './date-range-menu'
+import { JobsFilterMenu } from './jobs-filter-menu'
 import type { SortField, SortOrder } from '@/types/filters'
 import type { JobStatus } from '@/lib/job-status'
 
@@ -79,40 +77,34 @@ function SortMenu({
 // A slim, borderless in-content controls row — relocates the status filter, the
 // date-added filter, and the sort that used to live in the previous
 // table-header sort/filters. It adds no new filter capability; it only re-homes
-// the existing controls in a quiet, box-free row above the editorial list.
+// the existing controls in a quiet, box-free row above the editorial list. The
+// status + date filters are merged into one labeled `JobsFilterMenu` so the row
+// reads as a single Filter control + a Sort control (not two bare funnels).
 export function JobsListControls({
   sortBy,
   sortOrder,
   onSort,
   status,
-  onStatus,
   createdFrom,
   createdTo,
-  onDateRange,
+  onApplyFilters,
 }: {
   sortBy: SortField
   sortOrder: SortOrder
   onSort: (field: SortField) => void
   status: JobStatus | undefined
-  onStatus: (value: JobStatus | undefined) => void
   createdFrom?: string | undefined
   createdTo?: string | undefined
-  onDateRange: (from?: string, to?: string) => void
+  onApplyFilters: (next: { status?: JobStatus | undefined; from?: string | undefined; to?: string | undefined }) => void
 }) {
-  // The funnels are `persistent` here so they read as available controls at
-  // rest — there is no header row to hover in this standalone controls row.
   return (
-    <div className="mb-3 flex items-center justify-end gap-2 text-sm text-muted-foreground">
-      <ColumnFunnel label="Filter by status" active={status !== undefined} persistent>
-        <StatusFilterMenu value={status} onChange={onStatus} />
-      </ColumnFunnel>
-      <ColumnFunnel
-        label="Filter by date added"
-        active={createdFrom !== undefined || createdTo !== undefined}
-        persistent
-      >
-        <DateRangeMenu from={createdFrom} to={createdTo} onApply={onDateRange} />
-      </ColumnFunnel>
+    <div className="mb-3 flex items-center justify-end gap-1 text-sm text-muted-foreground">
+      <JobsFilterMenu
+        status={status}
+        createdFrom={createdFrom}
+        createdTo={createdTo}
+        onApply={onApplyFilters}
+      />
       <SortMenu sortBy={sortBy} sortOrder={sortOrder} onSort={onSort} />
     </div>
   )

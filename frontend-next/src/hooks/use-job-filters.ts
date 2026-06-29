@@ -14,6 +14,10 @@ export interface UseJobFilters {
   setStatus: (value: JobStatus | undefined) => void
   setGhost: (value: GhostFilter) => void
   setDateRange: (from?: string, to?: string) => void
+  /** Commit status + date-range together in a single URL update — used by the
+   * staged filter menu so both facets apply at once (two separate setters would
+   * race on the same searchParams snapshot and the later write would win). */
+  applyFilters: (next: { status?: JobStatus | undefined; from?: string | undefined; to?: string | undefined }) => void
   /** Tap-to-sort 3-state cycle: asc -> desc -> off(default createdAt desc); createdAt toggles asc<->desc. */
   cycleSort: (field: SortField) => void
   setPage: (page: number) => void
@@ -58,6 +62,15 @@ export function useJobFilters(): UseJobFilters {
     }),
     [commit],
   )
+  const applyFilters = useCallback(
+    (next: { status?: JobStatus | undefined; from?: string | undefined; to?: string | undefined }) =>
+      commit((p) => {
+        if (next.status) p.set('status', next.status); else p.delete('status')
+        if (next.from) p.set('from', next.from); else p.delete('from')
+        if (next.to) p.set('to', next.to); else p.delete('to')
+      }),
+    [commit],
+  )
   const cycleSort = useCallback(
     (field: SortField) =>
       commit((p) => {
@@ -98,6 +111,7 @@ export function useJobFilters(): UseJobFilters {
     setStatus,
     setGhost,
     setDateRange,
+    applyFilters,
     cycleSort,
     setPage,
     resetAll,

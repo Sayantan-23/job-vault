@@ -49,7 +49,7 @@ export function JobsWorkspace({
 
   const {
     filters, isBoardFiltered, isListFiltered,
-    setSearch, setStatus, setGhost, setDateRange, cycleSort, setPage, resetAll,
+    setSearch, setGhost, applyFilters, cycleSort, setPage, resetAll,
   } = useJobFilters()
   const boardFilters = { search: filters.search, ghost: filters.ghost }
 
@@ -131,10 +131,9 @@ export function JobsWorkspace({
             sortOrder={filters.sortOrder}
             onSort={cycleSort}
             status={filters.status}
-            onStatus={setStatus}
             createdFrom={filters.createdFrom}
             createdTo={filters.createdTo}
-            onDateRange={setDateRange}
+            onApplyFilters={applyFilters}
           />
           <JobList
             jobs={page.data}

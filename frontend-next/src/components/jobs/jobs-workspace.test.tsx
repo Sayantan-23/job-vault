@@ -92,11 +92,11 @@ describe('JobsWorkspace', () => {
     expect(screen.getByLabelText(/job posting url/i)).toBeInTheDocument()
   })
 
-  it('keeps status filtering on the column funnel, not the header', () => {
+  it('keeps filtering on the merged Filter control, not the header', () => {
     render(<JobsWorkspace initialJobs={PAGE} initialBoard={EMPTY_BOARD} initialStats={EMPTY_BOARD.stats} />, { wrapper })
     // header: search + activity only
     expect(screen.getByRole('searchbox')).toBeInTheDocument()
-    // the Status column funnel renders in the default list view
-    expect(screen.getByRole('button', { name: /filter by status/i })).toBeInTheDocument()
+    // the single merged Filter control renders in the default list view
+    expect(screen.getByRole('button', { name: /filter jobs/i })).toBeInTheDocument()
   })
 })

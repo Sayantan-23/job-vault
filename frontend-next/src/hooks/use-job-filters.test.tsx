@@ -128,6 +128,29 @@ describe('useJobFilters', () => {
     expect(u.searchParams.has('to')).toBe(false)
   })
 
+  it('applyFilters commits status + from + to in a single navigation', () => {
+    searchParams.set('page', '3'); searchParams.set('view', 'board')
+    const { result } = renderHook(() => useJobFilters())
+    act(() => result.current.applyFilters({ status: 'APPLIED', from: '2022-01-01', to: '2022-12-31' }))
+    expect(replace).toHaveBeenCalledTimes(1) // one URL update, not one per facet
+    const u = new URL(lastUrl(), 'http://x')
+    expect(u.searchParams.get('status')).toBe('APPLIED')
+    expect(u.searchParams.get('from')).toBe('2022-01-01')
+    expect(u.searchParams.get('to')).toBe('2022-12-31')
+    expect(u.searchParams.has('page')).toBe(false) // filter change resets page
+    expect(u.searchParams.get('view')).toBe('board')
+  })
+
+  it('applyFilters with an empty object clears status + from + to', () => {
+    searchParams.set('status', 'APPLIED'); searchParams.set('from', '2022-01-01'); searchParams.set('to', '2022-12-31')
+    const { result } = renderHook(() => useJobFilters())
+    act(() => result.current.applyFilters({}))
+    const u = new URL(lastUrl(), 'http://x')
+    expect(u.searchParams.has('status')).toBe(false)
+    expect(u.searchParams.has('from')).toBe(false)
+    expect(u.searchParams.has('to')).toBe(false)
+  })
+
   it('resetAll clears filter params but keeps view/job', () => {
     searchParams.set('search', 'x')
     searchParams.set('status', 'APPLIED')
