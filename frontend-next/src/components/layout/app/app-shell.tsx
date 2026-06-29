@@ -40,12 +40,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="jv-account-foot mt-auto p-3">
           <AccountMenu />
         </div>
-        {/* On rail hover: a soft shadow cast off the right edge (strongest mid-height,
-            fading top + bottom) plus the collapse handle. */}
-        <div
-          aria-hidden="true"
-          className="jv-rail-edge opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-        />
+        {/* On rail hover: a soft shadow cast off the right edge (strongest
+            mid-height, fading top + bottom) plus the collapse handle — both are
+            click targets for the toggle (see SidebarToggle). */}
         <SidebarToggle />
       </aside>
       {/* Each page supplies its own in-content editorial header (PageHeading).
