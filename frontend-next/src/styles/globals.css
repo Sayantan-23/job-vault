@@ -118,6 +118,20 @@ html[data-sidebar='collapsed'] .jv-rail-brand {
     transition: none;
   }
 }
+/* Soft shadow cast off the rail's right edge (revealed on hover). A horizontal
+   gradient gives the falloff into the content; the vertical mask makes it
+   prominent mid-height and fade toward the top and bottom. */
+.jv-rail-edge {
+  position: absolute;
+  inset-block: 0;
+  left: 100%;
+  z-index: 10;
+  width: 16px;
+  pointer-events: none;
+  background: linear-gradient(to right, color-mix(in oklab, var(--foreground) 16%, transparent), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 28%, #000 72%, transparent);
+}
 
 /*
  * Overlay/surface motion for Radix-Dialog-based primitives (Sheet drawer, Dialog

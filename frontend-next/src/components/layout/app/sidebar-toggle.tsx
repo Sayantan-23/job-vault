@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { readSidebar, writeSidebar, applySidebar } from '@/lib/sidebar'
 
 /**
@@ -25,7 +25,7 @@ export function SidebarToggle() {
     applySidebar(next)
   }
 
-  const Icon = collapsed ? PanelLeftOpen : PanelLeftClose
+  const Icon = collapsed ? ChevronsRight : ChevronsLeft
   return (
     <button
       type="button"
@@ -34,7 +34,7 @@ export function SidebarToggle() {
       aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       className="pointer-events-none absolute right-0 top-1/2 z-20 grid size-7 -translate-y-1/2 translate-x-1/2 place-items-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-sm transition-opacity duration-150 hover:text-foreground group-hover:pointer-events-auto group-hover:opacity-100 focus-visible:pointer-events-auto focus-visible:opacity-100"
     >
-      <Icon className="size-3.5" aria-hidden="true" />
+      <Icon className="size-4" aria-hidden="true" />
     </button>
   )
 }
