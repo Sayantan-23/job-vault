@@ -24,6 +24,9 @@ interface Props {
   jobs: JobOption[]
   isPending: boolean
   onGenerate: (body: GenerateBody) => void
+  // Pre-selects a tracked job (e.g. opened from a JobDrawer via ?job). The bar
+  // remounts each time the sheet opens, so this is read fresh on every open.
+  initialJobId?: string | undefined
 }
 
 // Shown instead of leaving the empty picker a dead end. We deliberately do
@@ -115,17 +118,21 @@ function PasteJobFields({
   )
 }
 
-export function GenerateCoverLetterBar({ personas, jobs, isPending, onGenerate }: Props) {
+export function GenerateCoverLetterBar({ personas, jobs, isPending, onGenerate, initialJobId }: Props) {
   const [personaId, setPersonaId] = useState(personas[0]?.id ?? '')
   const [mode, setMode] = useState<JobSource>('tracked')
-  const [jobId, setJobId] = useState('')
+  const [jobId, setJobId] = useState(initialJobId ?? '')
   const [title, setTitle] = useState('')
   const [company, setCompany] = useState('')
   const [description, setDescription] = useState('')
   const [instructions, setInstructions] = useState('')
 
+  // In tracked mode require the id to be a real loaded option, not just non-empty
+  // — a stale/foreign ?job= deep-link seeds a blank-looking select that would
+  // otherwise leave Generate clickable (and 404 on submit).
+  const trackedJobValid = jobs.some((j) => j.id === jobId)
   const disabled =
-    isPending || !personaId || (mode === 'tracked' ? !jobId : !title.trim() || !company.trim())
+    isPending || !personaId || (mode === 'tracked' ? !trackedJobValid : !title.trim() || !company.trim())
 
   const handleGenerate = () => {
     const trimmedInstructions = instructions.trim()

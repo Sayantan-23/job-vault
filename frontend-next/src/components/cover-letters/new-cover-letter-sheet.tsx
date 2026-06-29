@@ -17,6 +17,8 @@ interface Props {
   isPending: boolean
   error: Error | null
   onGenerate: (body: GenerateBody) => void
+  // Pre-selects a tracked job when the sheet is opened from a JobDrawer (?job).
+  initialJobId?: string | undefined
 }
 
 function AiOffHint() {
@@ -29,7 +31,7 @@ function AiOffHint() {
 
 // The "New cover letter" generator, opened from the library header — keeps the
 // create form off the always-visible list (the surveyed pattern).
-export function NewCoverLetterSheet({ open, onOpenChange, personas, jobs, aiEnabled, isPending, error, onGenerate }: Props) {
+export function NewCoverLetterSheet({ open, onOpenChange, personas, jobs, aiEnabled, isPending, error, onGenerate, initialJobId }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="gap-0 p-6">
@@ -43,7 +45,7 @@ export function NewCoverLetterSheet({ open, onOpenChange, personas, jobs, aiEnab
           ) : personas.length === 0 ? (
             <NoPersonasHint noun="cover letter" />
           ) : (
-            <GenerateCoverLetterBar personas={personas} jobs={jobs} isPending={isPending} onGenerate={onGenerate} />
+            <GenerateCoverLetterBar personas={personas} jobs={jobs} isPending={isPending} onGenerate={onGenerate} initialJobId={initialJobId} />
           )}
           <MutationErrorAlert error={error} />
         </div>
