@@ -3,11 +3,11 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Briefcase, Users, FileText, Mail, Clock } from 'lucide-react'
-import { SidebarNotifications } from '@/components/notifications/sidebar-notifications'
 import { cn } from '@/lib/utils'
 
 // Dashboard is gone (the jobs workspace is the home now). Profile + Settings live
-// in the account menu at the bottom of the rail.
+// in the account menu at the bottom of the rail; Notifications moved out of the
+// page-nav list to the floating bell in the canvas header (AppShell).
 const NAV = [
   { href: '/app/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/app/personas', label: 'Personas', icon: Users },
@@ -41,7 +41,6 @@ export function SidebarNav() {
           </Link>
         )
       })}
-      <SidebarNotifications />
     </nav>
   )
 }

@@ -8,8 +8,9 @@ export const AnchoredPopover = PopoverPrimitive.Root
 export const AnchoredPopoverTrigger = PopoverPrimitive.Trigger
 export const AnchoredPopoverClose = PopoverPrimitive.Close
 
-// A popover anchored to its trigger (unlike ui/popover.tsx, which is pinned
-// top-right for the notification bell). Behavior from Radix; presentation ours.
+// A popover anchored to its trigger (Radix popper positioning). Behavior from
+// Radix; presentation ours. Used by the account menu, list controls, and the
+// notification bell.
 export function AnchoredPopoverContent({
   className,
   align = 'start',
