@@ -35,6 +35,18 @@ describe('GenerateCoverLetterBar', () => {
     expect(screen.queryByLabelText('Job description')).not.toBeInTheDocument()
   })
 
+  it('pre-selects the tracked job from initialJobId and sends it', async () => {
+    const { onGenerate } = renderBar({ initialJobId: 'j2' })
+    expect(screen.getByLabelText('Job')).toHaveValue('j2')
+    await userEvent.click(screen.getByRole('button', { name: 'Generate cover letter' }))
+    expect(onGenerate).toHaveBeenCalledWith({ personaId: 'p1', jobId: 'j2' })
+  })
+
+  it('keeps Generate disabled when initialJobId is a stale id not among the loaded jobs', () => {
+    renderBar({ initialJobId: 'ghost' })
+    expect(screen.getByRole('button', { name: 'Generate cover letter' })).toBeDisabled()
+  })
+
   it('toggling to paste swaps the job select for title/company/description fields', async () => {
     renderBar()
     await userEvent.click(screen.getByRole('button', { name: /paste a description/i }))

@@ -105,6 +105,26 @@ describe('ResumeWorkspace', () => {
     expect(screen.getByTestId('preview')).toBeInTheDocument()
   })
 
+  it('auto-opens the deep-linked résumé (initialResumeId) without a click', async () => {
+    mockGets({ resumes: [TAILORED] })
+    render(
+      <ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumeId="r1" initialResumes={[TAILORED]} />,
+      { wrapper },
+    )
+    expect(await screen.findByLabelText('Summary')).toHaveValue('Tailored to Acme')
+    expect(screen.getByTestId('preview')).toBeInTheDocument()
+  })
+
+  it('ignores an initialResumeId that is not in the library', async () => {
+    mockGets({ resumes: [TAILORED] })
+    render(
+      <ResumeWorkspace initialPersonas={[PERSONA]} initialPersonaId="p1" initialResumeId="missing" initialResumes={[TAILORED]} />,
+      { wrapper },
+    )
+    expect(await screen.findByRole('list', { name: 'Résumés' })).toBeInTheDocument()
+    expect(screen.queryByTestId('preview')).not.toBeInTheDocument()
+  })
+
   it('clears the editor when the open résumé is deleted', async () => {
     mockGets({ resumes: [TAILORED] })
     api.delete.mockResolvedValue(undefined)

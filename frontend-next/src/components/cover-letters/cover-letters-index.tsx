@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { CoverLetter } from '@/types/cover-letter'
@@ -35,8 +35,14 @@ function letterContext(letter: CoverLetter, jobsById: Map<string, JobOption>): s
 
 export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { confirm, confirmDialog } = useConfirm()
-  const [sheetOpen, setSheetOpen] = useState(false)
+  // The New sheet is URL-driven (?new=1) so another page (e.g. a JobDrawer) can
+  // deep-link it open with a job pre-selected (?job=<id>).
+  const sheetOpen = searchParams.get('new') === '1'
+  const presetJobId = searchParams.get('job') ?? undefined
+  const openSheet = () => router.push('/app/cover-letters?new=1')
+  const closeSheet = () => router.push('/app/cover-letters')
   const { data: status } = useAiStatus(aiStatus)
   const { data: personas = [] } = usePersonas(initialPersonas)
   const { data: letters = [] } = useAllCoverLetters(initialLetters)
@@ -74,10 +80,9 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
 
   const onGenerate = (body: GenerateBody) => {
     generate.mutate(body, {
-      onSuccess: (letter) => {
-        setSheetOpen(false)
-        router.push(`/app/cover-letters/${letter.id}`)
-      },
+      // Routing to the new letter's editor leaves the cover-letters URL (and so
+      // closes the URL-driven sheet) on its own — no separate close needed.
+      onSuccess: (letter) => router.push(`/app/cover-letters/${letter.id}`),
     })
   }
 
@@ -88,7 +93,7 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
           title="Cover letters"
           description="For tracked jobs or pasted descriptions"
           actions={
-            <Button type="button" size="sm" onClick={() => setSheetOpen(true)}>
+            <Button type="button" size="sm" onClick={openSheet}>
               <Plus className="size-4" aria-hidden="true" />
               New cover letter
             </Button>
@@ -112,13 +117,14 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
       </AppPage>
       <NewCoverLetterSheet
         open={sheetOpen}
-        onOpenChange={setSheetOpen}
+        onOpenChange={(o) => (o ? openSheet() : closeSheet())}
         personas={personas}
         jobs={jobs}
         aiEnabled={aiEnabled}
         isPending={generate.isPending}
         error={generate.error}
         onGenerate={onGenerate}
+        initialJobId={presetJobId}
       />
       {confirmDialog}
     </>

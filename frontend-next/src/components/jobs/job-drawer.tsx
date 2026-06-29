@@ -8,7 +8,7 @@ import { JobSnapshot } from './job-snapshot'
 import { TimelineSection } from './timeline/timeline-section'
 import { RemindersSection } from './reminders/reminders-section'
 import { ResumeLauncher } from './resume/resume-launcher'
-import { CoverLetterSection } from './cover-letter/cover-letter-section'
+import { CoverLetterLauncher } from './cover-letter/cover-letter-launcher'
 
 export function JobDrawer({ jobId }: { jobId: string | null }) {
   const router = useRouter()
@@ -47,7 +47,7 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
                 <ResumeLauncher jobId={job.id} />
               </div>
               <div className="border-t border-border pt-5">
-                <CoverLetterSection jobId={job.id} />
+                <CoverLetterLauncher jobId={job.id} />
               </div>
             </>
           )}

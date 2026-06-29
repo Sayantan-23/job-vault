@@ -7,8 +7,14 @@ import type { Persona } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 import type { CoverLetter } from '@/types/cover-letter'
 
-const push = vi.fn()
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
+// The New sheet is URL-driven (?new=1 / ?job=), so navigation is mocked with a
+// mutable params holder a test can set before render.
+const nav = vi.hoisted(() => ({ push: vi.fn(), params: new URLSearchParams() }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: nav.push }),
+  usePathname: () => '/app/cover-letters',
+  useSearchParams: () => nav.params,
+}))
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() }, ApiError: class extends Error {} }))
 
 import { apiClient } from '@/lib/api-client'
@@ -44,7 +50,10 @@ function mockGets(letters: CoverLetter[], personas: Persona[] = PERSONAS) {
   })
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  nav.params = new URLSearchParams()
+})
 
 describe('CoverLettersIndex', () => {
   it('lists tracked and adhoc letters with job context + persona names, and no generator on the page', async () => {
@@ -54,7 +63,7 @@ describe('CoverLettersIndex', () => {
     expect(screen.getByText('Initech · Staff Eng')).toBeInTheDocument()
     expect(await screen.findByText('Acme · SWE')).toBeInTheDocument()
     expect(within(screen.getByRole('list', { name: 'Cover letters' })).getByText('Backend')).toBeInTheDocument()
-    // The generator is NOT on the page until the New sheet is opened.
+    // The generator lives in the (closed) sheet — not mounted on the page.
     expect(screen.queryByRole('button', { name: 'Generate cover letter' })).not.toBeInTheDocument()
   })
 
@@ -62,22 +71,53 @@ describe('CoverLettersIndex', () => {
     mockGets(LETTERS)
     render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
     await userEvent.click(screen.getByText('Acme — cover letter'))
-    expect(push).toHaveBeenCalledWith('/app/cover-letters/cl1')
+    expect(nav.push).toHaveBeenCalledWith('/app/cover-letters/cl1')
   })
 
-  it('opens the New sheet and generates, then routes to the new letter', async () => {
+  it('opens the New sheet by routing to ?new=1', async () => {
+    mockGets(LETTERS)
+    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: /new cover letter/i }))
+    expect(nav.push).toHaveBeenCalledWith('/app/cover-letters?new=1')
+  })
+
+  it('renders the generator when the URL carries ?new=1', async () => {
+    nav.params = new URLSearchParams('new=1')
+    mockGets(LETTERS)
+    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    expect(await screen.findByRole('button', { name: 'Generate cover letter' })).toBeInTheDocument()
+  })
+
+  it('pre-selects the tracked job from ?job= when the sheet is opened', async () => {
+    nav.params = new URLSearchParams('new=1&job=j1')
+    mockGets(LETTERS)
+    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    await screen.findByRole('option', { name: 'SWE — Acme' })
+    expect(screen.getByLabelText('Job')).toHaveValue('j1')
+  })
+
+  it('generates from the open sheet, then routes to the new letter', async () => {
+    nav.params = new URLSearchParams('new=1')
     const NEW: CoverLetter = { ...TRACKED, id: 'cl3', bodyMarkdown: 'Fresh draft' }
     mockGets(LETTERS)
     api.post.mockResolvedValue(NEW)
     render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
 
-    await userEvent.click(screen.getByRole('button', { name: /new cover letter/i }))
     await screen.findByRole('option', { name: 'SWE — Acme' })
     await userEvent.selectOptions(screen.getByLabelText('Job'), 'j1')
     await userEvent.click(screen.getByRole('button', { name: 'Generate cover letter' }))
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith('/api/cover-letters', { personaId: 'p1', jobId: 'j1' }))
-    await waitFor(() => expect(push).toHaveBeenCalledWith('/app/cover-letters/cl3'))
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/app/cover-letters/cl3'))
+  })
+
+  it('routes back to the bare path when the sheet is dismissed', async () => {
+    nav.params = new URLSearchParams('new=1')
+    mockGets(LETTERS)
+    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    await screen.findByRole('button', { name: 'Generate cover letter' })
+    await userEvent.keyboard('{Escape}')
+    expect(nav.push).toHaveBeenCalledWith('/app/cover-letters')
   })
 
   it('deletes a letter from its row', async () => {
@@ -91,18 +131,18 @@ describe('CoverLettersIndex', () => {
   })
 
   it('shows the AI-off hint inside the New sheet but still lists the library', async () => {
+    nav.params = new URLSearchParams('new=1')
     mockGets(LETTERS)
     render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_OFF} />, { wrapper })
     expect(screen.getByText('Acme — cover letter')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /new cover letter/i }))
     expect(screen.getByText(/not configured/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Generate cover letter' })).not.toBeInTheDocument()
   })
 
   it('shows a create-persona hint in the sheet when there are no personas', async () => {
+    nav.params = new URLSearchParams('new=1')
     mockGets(LETTERS, [])
     render(<CoverLettersIndex initialPersonas={[]} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
-    await userEvent.click(screen.getByRole('button', { name: /new cover letter/i }))
     expect(screen.getByRole('link', { name: /create a persona/i })).toHaveAttribute('href', '/app/personas')
   })
 

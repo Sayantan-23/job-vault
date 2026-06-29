@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 import { apiServer } from '@/lib/api-server'
 import { CoverLettersIndex } from '@/components/cover-letters/cover-letters-index'
+import { CoverLettersSkeleton } from '@/components/layout/app/route-skeletons'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { CoverLetter } from '@/types/cover-letter'
 
@@ -18,5 +20,11 @@ export default async function CoverLettersPage() {
     apiServer.get<AiStatus>('/api/ai/status').catch(() => undefined),
   ])
 
-  return <CoverLettersIndex initialPersonas={personas} initialLetters={letters} aiStatus={aiStatus} />
+  // useSearchParams() in CoverLettersIndex (the URL-driven New sheet) requires a
+  // Suspense boundary; the skeleton fallback covers client-nav remounts.
+  return (
+    <Suspense fallback={<CoverLettersSkeleton />}>
+      <CoverLettersIndex initialPersonas={personas} initialLetters={letters} aiStatus={aiStatus} />
+    </Suspense>
+  )
 }

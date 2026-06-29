@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Persona } from '@/types/persona'
 import type { GeneratedResume, ResumeContent } from '@/types/resume'
 import { useGenerateResume, useUpdateResume, useResumes, useDeleteResume } from '@/hooks/use-resumes'
@@ -27,6 +27,9 @@ interface Props {
   initialPersonas?: Persona[] | undefined
   initialPersonaId: string
   initialJobId?: string
+  // Deep-link a specific résumé open (?resume=<id>) — selected once it appears
+  // in the library; opening from a JobDrawer launcher row.
+  initialResumeId?: string
   initialResumes?: GeneratedResume[] | undefined
 }
 
@@ -37,7 +40,7 @@ function resumeContext(r: GeneratedResume, jobsById: Map<string, JobOption>): st
   return job ? `${job.company} · ${job.title}` : 'General'
 }
 
-export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobId, initialResumes }: Props) {
+export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobId, initialResumeId, initialResumes }: Props) {
   const { data: personas = [] } = usePersonas(initialPersonas)
   const [personaId, setPersonaId] = useState(initialPersonaId || personas[0]?.id || '')
   const [jobId, setJobId] = useState(initialJobId ?? '')
@@ -48,11 +51,25 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
   const del = useDeleteResume()
   const { data: jobs = [] } = useJobOptions()
   const { data: allResumes = [] } = useResumes(undefined, initialResumes)
-  const editorPane = useRevealBelowLg<HTMLDivElement>()
+  const { ref: editorRef, reveal: revealEditor } = useRevealBelowLg<HTMLDivElement>()
   const { confirm, confirmDialog } = useConfirm()
 
   const jobsById = useMemo(() => new Map(jobs.map((j) => [j.id, j])), [jobs])
   const personaNames = useMemo(() => new Map(personas.map((p) => [p.id, p.name])), [personas])
+
+  // Open the deep-linked résumé (?resume=<id>) once it lands in the library.
+  // Tracks the applied id (not a boolean) so navigating to a different ?resume
+  // re-opens, but a manual row click afterwards is never clobbered.
+  const appliedResumeId = useRef<string | null>(null)
+  useEffect(() => {
+    if (!initialResumeId || appliedResumeId.current === initialResumeId) return
+    const target = allResumes.find((r) => r.id === initialResumeId)
+    if (!target) return
+    appliedResumeId.current = initialResumeId
+    setResume(target)
+    setContent(target.content)
+    revealEditor()
+  }, [initialResumeId, allResumes, revealEditor])
 
   const rows: DocumentRow[] = allResumes.map((r) => ({
     id: r.id,
@@ -67,7 +84,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
     if (selected) {
       setResume(selected)
       setContent(selected.content)
-      editorPane.reveal()
+      revealEditor()
     }
   }
 
@@ -107,7 +124,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
         onSuccess: (r) => {
           setResume(r)
           setContent(r.content)
-          editorPane.reveal()
+          revealEditor()
         },
       },
     )
@@ -150,7 +167,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
 
           {/* Always-mounted wrapper so reveal() has a scroll target even
               before the editor mounts on select/generate. */}
-          <div ref={editorPane.ref}>
+          <div ref={editorRef}>
             {resume && content ? (
               <div className="grid gap-6 lg:grid-cols-2">
                 {/* Editor — scrolls with the page. */}
