@@ -46,12 +46,9 @@ export function AccountMenu() {
         </button>
       </AnchoredPopoverTrigger>
 
-      <AnchoredPopoverContent
-        side="top"
-        align="start"
-        sideOffset={8}
-        className="w-[var(--radix-popover-trigger-width)]"
-      >
+      {/* Fixed width — the trigger shrinks to just the avatar when the rail is
+          collapsed, so binding to --radix-popover-trigger-width crushed the menu. */}
+      <AnchoredPopoverContent side="top" align="start" sideOffset={8} className="w-56">
         <div className="flex items-center gap-2.5 px-2.5 py-2">
           <MonogramAvatar name={name} />
           <Identity name={name} email={email} />
