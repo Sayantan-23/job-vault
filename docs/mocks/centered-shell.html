@@ -61,7 +61,10 @@ a{color:inherit;text-decoration:none}
 .nav .dot{margin-left:auto;width:6px;height:6px;border-radius:999px;background:var(--ghost-ghosted)}
 .foot{margin-top:auto;padding-top:14px}
 .foot a{display:flex;align-items:center;gap:11px;padding:7px 12px;border-radius:7px;color:var(--muted-foreground);font-size:13.5px}
-.avatar{width:26px;height:26px;border-radius:999px;background:color-mix(in oklab,var(--primary) 18%,var(--background));color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.avatar{width:32px;height:32px;border-radius:8px;background:color-mix(in oklab,var(--primary) 18%,var(--background));color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.foot a:hover,body[data-showtoggle] .foot a{color:var(--foreground);background:var(--accent)}
+body[data-collapsed='1'] .foot{padding-left:8px;padding-right:8px}
+body[data-collapsed='1'] .foot a{width:fit-content;margin-inline:auto;padding:4px;border-radius:10px}
 
 .main{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto}    /* main scrolls at the WINDOW edge */
 .main::-webkit-scrollbar{width:12px}

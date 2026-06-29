@@ -112,6 +112,18 @@ html[data-sidebar='collapsed'] .jv-rail-brand {
   padding-left: 0;
   padding-right: 0;
 }
+/* Collapsed account trigger: shrink to a neat square hover halo around the
+   avatar (instead of a full-width, too-tall rectangle). */
+html[data-sidebar='collapsed'] .jv-account-foot {
+  padding: 8px;
+}
+html[data-sidebar='collapsed'] .jv-account-trigger {
+  width: fit-content;
+  margin-inline: auto;
+  gap: 0;
+  padding: 4px;
+  border-radius: 10px;
+}
 @media (prefers-reduced-motion: reduce) {
   .jv-rail,
   .jv-content-col {

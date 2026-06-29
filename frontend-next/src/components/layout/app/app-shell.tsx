@@ -36,7 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className="jv-rail-label text-[15px] font-semibold tracking-tight">JobVault</span>
         </div>
         <SidebarNav />
-        <div className="mt-auto p-3">
+        <div className="jv-account-foot mt-auto p-3">
           <AccountMenu />
         </div>
         {/* On rail hover: a soft shadow cast off the right edge (strongest mid-height,
