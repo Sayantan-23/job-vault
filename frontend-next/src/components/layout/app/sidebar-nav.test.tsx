@@ -3,11 +3,10 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-// SidebarNav now also renders SidebarNotifications (useRouter/useSearchParams + a query).
+// SidebarNav is now a pure page-nav list (the notification bell moved to the
+// canvas header), so it only needs usePathname.
 vi.mock('next/navigation', () => ({
   usePathname: () => '/app/jobs',
-  useRouter: () => ({ push: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
 }))
 
 import { SidebarNav } from './sidebar-nav'
@@ -32,8 +31,8 @@ describe('SidebarNav', () => {
     expect(screen.getByRole('link', { name: 'Résumés' })).toHaveAttribute('href', '/app/resumes')
   })
 
-  it('renders Notifications as a rail entry (not the old header bell)', () => {
+  it('no longer carries the notifications bell (it moved to the canvas header)', () => {
     renderNav(<SidebarNav />)
-    expect(screen.getByRole('button', { name: /notifications/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /notifications/i })).toBeNull()
   })
 })

@@ -2,6 +2,7 @@
 
 import { Ghost, Bell, ArrowRightLeft, Info } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { relativeTime } from '@/lib/relative-time'
 import type { Notification, NotificationType } from '@/types/notification'
 
 const TYPE_ICON: Record<NotificationType, typeof Bell> = {
@@ -30,9 +31,20 @@ export function NotificationItem({
       )}
     >
       <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-      <span className={cn('text-sm leading-snug', notification.isRead ? 'font-normal' : 'font-medium')}>
-        {notification.message}
+      <span className="min-w-0 flex-1 space-y-1">
+        <span
+          className={cn('block text-sm leading-snug', notification.isRead ? 'font-normal' : 'font-medium')}
+        >
+          {notification.message}
+        </span>
+        <span className="block text-xs text-muted-foreground">{relativeTime(notification.createdAt)}</span>
       </span>
+      {notification.isRead ? null : (
+        <span
+          className="mt-1.5 size-1.5 shrink-0 rounded-full bg-ghost-ghosted"
+          aria-hidden="true"
+        />
+      )}
     </button>
   )
 }

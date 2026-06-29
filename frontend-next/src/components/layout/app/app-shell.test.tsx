@@ -3,8 +3,8 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
-// AppShell renders SidebarNav (usePathname + SidebarNotifications' router/searchParams)
-// and AccountMenu (useCurrentUser/useLogout).
+// AppShell renders SidebarNav (usePathname), the NotificationBell (useRouter + a
+// query), and AccountMenu (useCurrentUser/useLogout).
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
   usePathname: () => '/app/jobs',
@@ -31,6 +31,14 @@ describe('AppShell', () => {
     // Settings is not a top-level nav link; it lives in the account menu.
     expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
     expect(screen.getByRole('button', { name: /open account menu/i })).toBeInTheDocument()
+  })
+
+  it('mounts the notification bell in the canvas header (not the nav list)', () => {
+    renderWithProviders(<AppShell>content</AppShell>)
+    const bell = screen.getByRole('button', { name: /notifications/i })
+    expect(bell).toBeInTheDocument()
+    // It's a header utility, not one of the rail's page-nav links.
+    expect(screen.queryByRole('link', { name: /notifications/i })).toBeNull()
   })
 
   it('renders its children in the main region', () => {

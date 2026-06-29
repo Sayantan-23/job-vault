@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 import { AccountMenu } from './account-menu'
 import { SidebarNav } from './sidebar-nav'
 import { SidebarToggle } from './sidebar-toggle'
@@ -49,7 +50,21 @@ export function AppShell({ children }: { children: ReactNode }) {
       </aside>
       {/* Each page supplies its own in-content editorial header (PageHeading).
           `app-scroll` styles the window-edge scrollbar thin + on-theme. */}
-      <main className="app-scroll flex min-w-0 flex-1 flex-col overflow-y-auto">{children}</main>
+      <main className="app-scroll flex min-w-0 flex-1 flex-col overflow-y-auto">
+        {/* The notification bell floats at the top-right of the canvas — a
+            featherweight header that stays put on scroll. It shares the page's
+            content column + padding so it lines up above each PageHeading's
+            actions. Zero-height + pointer-events-none so it never displaces or
+            blocks the page beneath; only the bell itself is interactive. */}
+        <div className="pointer-events-none sticky top-0 z-30 h-0">
+          <div className="jv-content-col w-full px-6 pt-4 sm:px-8 lg:px-10">
+            <div className="flex justify-end">
+              <NotificationBell className="pointer-events-auto" />
+            </div>
+          </div>
+        </div>
+        {children}
+      </main>
     </div>
   )
 }
