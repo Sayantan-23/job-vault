@@ -1,0 +1,1345 @@
+/* =========================================================================
+   JobVault landing — "The Circuit of One Search" (Trace Network)
+   Ported verbatim from docs/mocks/landing-prototype.html <style> block.
+   The :root token block lives in styles/web/theme.css; the html/body resets
+   are owned by globals.css (Tailwind preflight + the body base styles).
+   ========================================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ---- backdrop: warm drafting field (NO grid) ---- */
+.bg-baseline,
+.bg-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.bg-baseline {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--ink) 4%, transparent) 0 1px,
+    transparent 1px 122px
+  );
+  -webkit-mask-image: radial-gradient(150% 100% at 50% 0%, #000 36%, transparent 86%);
+  mask-image: radial-gradient(150% 100% at 50% 0%, #000 36%, transparent 86%);
+}
+.bg-noise {
+  opacity: 0.022;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+}
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ---- typography ---- */
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: '';
+  width: 14px;
+  height: 1.5px;
+  background: var(--accent);
+  display: inline-block;
+}
+.band-dark .eyebrow {
+  color: var(--on-ink-soft);
+}
+
+h1,
+h2 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+h1 em,
+h2 em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent-strong);
+}
+.band-dark h2 em {
+  color: color-mix(in srgb, var(--accent) 60%, white);
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    transform 0.15s var(--ease),
+    background 0.2s,
+    border-color 0.2s;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+.btn-ghost:hover {
+  border-color: var(--ink-faint);
+}
+.btn-on-ink {
+  background: var(--on-ink);
+  color: var(--ink-bg);
+}
+.btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- nav ---- */
+nav.bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(10px);
+}
+.bar .wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16.5px;
+  letter-spacing: -0.01em;
+  position: relative;
+}
+.brand .mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: var(--ink);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+}
+.navlinks {
+  display: flex;
+  gap: 28px;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+.navlinks a:hover {
+  color: var(--ink);
+}
+.navright {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.navright .login {
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+@media (max-width: 880px) {
+  .navlinks {
+    display: none;
+  }
+}
+
+/* ---- shared trace styles ---- */
+.trace {
+  fill: none;
+  stroke: var(--trace);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.trace-faint {
+  fill: none;
+  stroke: var(--trace-faint);
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+.trace-live {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  /* a longer lit dash reads as one smooth traveling current (was 16) */
+  stroke-dasharray: 30 100000;
+  stroke-dashoffset: var(--o0, 0);
+  opacity: 0;
+}
+.energized .trace-live {
+  opacity: 0.42;
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  transition: opacity 0.4s var(--ease);
+}
+.junction {
+  fill: var(--surface);
+  stroke: var(--trace);
+  stroke-width: 1.5;
+}
+.junction.lit {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+@keyframes flow {
+  from {
+    stroke-dashoffset: var(--o0);
+    opacity: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+.flowing {
+  animation: flow 0.62s linear forwards;
+  animation-delay: var(--d, 0ms);
+}
+
+/* contact shadow for floating node groups */
+.contact {
+  position: absolute;
+  left: 50%;
+  bottom: -16px;
+  width: 78%;
+  height: 26px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, oklch(0.3 0.02 60 / 0.16), transparent 72%);
+  filter: blur(3px);
+  pointer-events: none;
+}
+
+/* ---- node card (the app shell card, flat + hairline) ---- */
+.node {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 11px;
+  padding: 12px 13px;
+  position: absolute;
+  transition:
+    border-color 0.3s var(--ease),
+    transform 0.3s var(--ease),
+    box-shadow 0.3s;
+}
+.node.lit {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--hairline));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.node .nlabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+.node .ntitle {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.15;
+  margin-top: 3px;
+}
+.node .nmeta {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  margin-top: 7px;
+}
+.tap {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
+  border: 1px solid var(--accent-soft);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 2px 6px;
+  margin-top: 8px;
+}
+
+/* line bars used inside mini doc sheets */
+.lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.ln {
+  height: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.5s var(--ease);
+  transition-delay: var(--i, 0ms);
+}
+.filled .ln {
+  clip-path: inset(0 0 0 0);
+}
+.ln.accent {
+  background: var(--accent);
+}
+
+/* ---- HERO ---- */
+.hero {
+  padding: 64px 0 56px;
+}
+.hero .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  gap: 40px;
+  align-items: center;
+}
+.hero h1 {
+  font-size: clamp(2.7rem, 4.4vw, 3.8rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  margin-top: 20px;
+  text-wrap: balance;
+}
+.hero h1 em {
+  /* the italic line reads a touch tighter/optically-larger than the roman line */
+  letter-spacing: -0.026em;
+}
+.hero .deck {
+  margin-top: 20px;
+  max-width: 29rem;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.hero .cta {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.stage {
+  position: relative;
+  width: 600px;
+  max-width: 100%;
+  height: 482px;
+  margin-left: auto;
+}
+.stage svg.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: visible;
+}
+.stage .node,
+.stage .sheetgroup,
+.stage .pipe,
+.stage .fork {
+  z-index: 2;
+}
+.fork {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+}
+.fork .jdot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--trace);
+  transition:
+    background 0.3s,
+    border-color 0.3s;
+}
+.fork.lit .jdot {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* mini document sheets in hero */
+.sheetgroup {
+  position: absolute;
+}
+.sheet {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  box-shadow: 0 14px 30px -22px oklch(0.3 0.02 60 / 0.5);
+  padding: 13px 13px 15px;
+}
+.sheet .shead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet .stype {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.sheet .sname {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  margin-top: 6px;
+}
+.sheet .sctx {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+
+/* mini pipeline node in hero */
+.pipe {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 11px;
+  overflow: hidden;
+}
+.pipe .ptop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 11px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.pipe .ptop .pname {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.pipe .ptop .pcount {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.pipe .pcards {
+  padding: 9px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.pcard {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: var(--surface);
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.4s var(--ease),
+    transform 0.4s var(--ease);
+}
+.dropped .pcard {
+  opacity: 1;
+  transform: none;
+}
+.pcard .prole {
+  font-size: 12px;
+  font-weight: 500;
+}
+.pcard .pco {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+.pcard .ptick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+}
+.fdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.fdot.f {
+  background: var(--fresh);
+}
+.fdot.c {
+  background: var(--cool);
+}
+.fdot.x {
+  background: var(--cold);
+}
+
+/* ---- generic section ---- */
+section {
+  padding: 96px 0;
+  position: relative;
+}
+.sec-head {
+  max-width: 36rem;
+}
+.sec-head h2 {
+  font-size: clamp(1.9rem, 3vw, 2.55rem);
+  line-height: 1.08;
+  margin-top: 14px;
+}
+.sec-head p {
+  color: var(--ink-soft);
+  font-size: 16px;
+  margin-top: 15px;
+}
+
+/* ---- CAPTURE (extension) ---- */
+.capture .wrap {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 56px;
+  align-items: center;
+}
+.popup {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px -36px oklch(0.3 0.02 60 / 0.5);
+  overflow: hidden;
+}
+.popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
+}
+.pop-bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 13px;
+  border-bottom: 1px solid var(--hairline-soft);
+  background: var(--surface-2);
+}
+.pop-bar .dots {
+  display: flex;
+  gap: 6px;
+}
+.pop-bar .dots span {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: oklch(0.87 0.004 75);
+}
+.pop-bar .ptitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.pop-body {
+  padding: 14px;
+}
+.field {
+  margin-bottom: 11px;
+}
+.field .k {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.field .v {
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 3px;
+  min-height: 18px;
+}
+.pop-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 14px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.saved {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--fresh);
+  font-weight: 500;
+}
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+
+/* ---- DOCUMENTS (real type-set sheets) ---- */
+.docs {
+  position: relative;
+}
+.docs .wrap {
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  gap: 56px;
+  align-items: center;
+}
+.docstage {
+  position: relative;
+  height: 470px;
+}
+.paper {
+  position: absolute;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  box-shadow: 0 30px 70px -40px oklch(0.3 0.02 60 / 0.55);
+  border-radius: 3px;
+}
+/* Two clearly-separated tailored documents: the cover letter fans out lower-left
+   (its label + greeting stay readable), the résumé sits on top to the right. */
+.resume {
+  width: 338px;
+  height: 438px;
+  left: 176px;
+  top: 0;
+  transform: rotate(1.8deg);
+  padding: 26px 26px;
+  z-index: 2;
+}
+.cover {
+  width: 300px;
+  height: 398px;
+  left: 0;
+  top: 60px;
+  transform: rotate(-3deg);
+  padding: 22px 22px;
+  z-index: 1;
+}
+/* Document-type label at the top of each sheet, so both papers are unmistakably
+   "a résumé" and "a cover letter". */
+.doctype {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ink-faint);
+  margin-bottom: 9px;
+}
+.paper .ctx {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--accent-strong);
+  border: 1px solid var(--accent-soft);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 3px 7px;
+  display: inline-block;
+}
+.paper .cand {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  margin-top: 13px;
+}
+.paper .contact {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  margin-top: 5px;
+}
+.paper .seph {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+  margin: 16px 0 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.paper .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.paper .role {
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.paper .when {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+.paper .biz {
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  margin-bottom: 6px;
+}
+.docline {
+  height: 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+  margin: 5px 0;
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.55s var(--ease);
+  transition-delay: var(--i, 0ms);
+}
+.filled .docline {
+  clip-path: inset(0 0 0 0);
+}
+.refine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 9px 0 3px;
+}
+.refine s {
+  color: var(--ink-faint);
+  text-decoration-color: var(--vermilion);
+  font-size: 11px;
+}
+.refine .new {
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 500;
+}
+.refine .tag {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: auto;
+}
+.cover .ctext {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+  margin-top: 12px;
+}
+.cover .sign {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  margin-top: 14px;
+}
+/* Rectangular rubber stamp — reads "TAILORED" cleanly on one line (the old
+   circular stamp split the word into "TAILO / RED"). */
+.stamp {
+  position: absolute;
+  right: 18px;
+  bottom: 24px;
+  width: 132px;
+  height: 52px;
+  z-index: 3;
+  transform: rotate(-8deg) scale(0.7);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.35s;
+}
+.stamped .stamp {
+  transform: rotate(-8deg) scale(1);
+  opacity: 0.92;
+}
+/* The stamp label must use the brand mono. next/font never registers the human
+   name "Geist Mono" (only the obfuscated family reachable via the CSS var), so
+   the token has to reach the SVG <text> through CSS, not a font-family attr. */
+.stamp text {
+  font-family: var(--font-mono);
+}
+.corner-fold {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 0 22px 22px;
+  border-color: transparent transparent var(--surface-2) transparent;
+  filter: drop-shadow(-1px -1px 1px oklch(0.3 0.02 60 / 0.12));
+}
+.refine-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.rchip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  padding: 6px 11px;
+}
+
+/* ---- PIPELINE dark band ---- */
+.band-dark {
+  background: var(--ink-bg);
+  color: var(--on-ink);
+  border-top: 1px solid var(--ink-hairline);
+  border-bottom: 1px solid var(--ink-hairline);
+}
+.band-dark .wrap {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 56px;
+  align-items: center;
+}
+.band-dark h2 {
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  line-height: 1.08;
+  margin-top: 15px;
+}
+.band-dark .deck {
+  color: var(--on-ink-soft);
+  font-size: 16px;
+  margin-top: 16px;
+  max-width: 24rem;
+}
+.board-wrap {
+  position: relative;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--ink-hairline);
+  border-radius: 13px;
+  overflow: hidden;
+  background: var(--ink-bg-2);
+}
+.col {
+  padding: 15px 13px 20px;
+  border-right: 1px solid var(--ink-hairline);
+}
+.col:last-child {
+  border-right: none;
+}
+/* On phones the three equal columns crush to ~75px and clip card text; stack
+   them so each row stays readable, swapping the column rules for row rules. */
+@media (max-width: 640px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+  .col {
+    border-right: none;
+    border-bottom: 1px solid var(--ink-hairline);
+  }
+  .col:last-child {
+    border-bottom: none;
+  }
+}
+.col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.col-head .name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-ink-soft);
+}
+.col-head .count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--on-ink-soft);
+  opacity: 0.7;
+}
+.dcard {
+  background: oklch(1 0 0 / 0.03);
+  border: 1px solid var(--ink-hairline);
+  border-radius: 9px;
+  padding: 10px 11px;
+  margin-bottom: 9px;
+}
+.dcard .role {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--on-ink);
+}
+.dcard .co {
+  font-size: 11px;
+  color: var(--on-ink-soft);
+}
+.dcard .meta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--on-ink-soft);
+}
+.dcard[data-stale] {
+  border-left: 2px solid var(--vermilion);
+}
+.dcard[data-stale] .nudge {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--cold) 70%, white);
+  border: 1px solid var(--ink-hairline);
+  border-radius: 7px;
+  padding: 6px 9px;
+}
+.stale-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cold);
+}
+.band-dark[data-shown] .dcard[data-stale] .stale-dot {
+  animation: pulse 2.2s var(--ease) infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cold) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+/* ---- CAPABILITIES (wiring legend) ---- */
+.caps-wrap {
+  position: relative;
+  padding-left: 30px;
+  margin-top: 40px;
+}
+.rail {
+  position: absolute;
+  left: 6px;
+  top: 8px;
+  bottom: 8px;
+  width: 1.5px;
+  background: var(--trace);
+  transform-origin: top;
+  transform: scaleY(0);
+  transition: transform 1s var(--ease);
+}
+[data-shown] .rail {
+  transform: scaleY(1);
+}
+/* One continuous wire, six taps: a single column reads the "same wire" headline
+   literally (every capability is a terminal on the one rail), and it removes the
+   old two-column layout's floating, unconnected junction dots. */
+.caps {
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 760px;
+}
+.cap {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 28px;
+  padding: 20px 2px;
+  border-top: 1px solid var(--hairline);
+  position: relative;
+}
+.cap:last-child {
+  border-bottom: 1px solid var(--hairline);
+}
+.cap::before {
+  content: '';
+  position: absolute;
+  left: -28px;
+  top: 26px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1.5px solid var(--trace);
+  transition:
+    background 0.25s,
+    border-color 0.25s;
+}
+.cap:hover::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.cap .t {
+  font-size: 14.5px;
+  font-weight: 600;
+}
+.cap .term {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  margin-top: 3px;
+}
+.cap .d {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+@media (max-width: 760px) {
+  .caps {
+    grid-template-columns: 1fr;
+    column-gap: 0;
+  }
+  .cap {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+}
+
+/* ---- CLOSING ----
+   §7a fix: the converge SVG occupies the section's TOP PADDING only and must
+   never overlap the headline. Generous padding-top reserves the band; the
+   converge SVG (height 150px, pinned top:0) lands its convergence point at
+   y=150px, leaving >=32px clearance above the first headline line (which
+   begins at padding-top 200px). Headline + CTA render above the SVG. */
+.closing {
+  text-align: center;
+  padding: 164px 0 120px;
+  position: relative;
+}
+.closing .converge {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 980px;
+  max-width: 100%;
+  height: 124px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}
+.closing .wrap {
+  position: relative;
+  z-index: 2;
+}
+.closing h2 {
+  font-size: clamp(2.1rem, 3.6vw, 3rem);
+  line-height: 1.06;
+  max-width: 17ch;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+.closing .cta {
+  margin-top: 28px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---- footer ---- */
+footer {
+  border-top: 1px solid var(--hairline);
+  padding: 56px 0 44px;
+  position: relative;
+}
+footer .wrap {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  gap: 32px;
+}
+footer .col h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  font-weight: 600;
+  margin: 0 0 14px;
+  font-family: var(--font-mono);
+}
+footer .col a {
+  display: block;
+  font-size: 14px;
+  color: var(--ink-soft);
+  padding: 5px 0;
+}
+footer .col a:hover {
+  color: var(--ink);
+}
+footer .blurb {
+  font-size: 14px;
+  color: var(--ink-soft);
+  max-width: 22rem;
+  margin: 14px 0 0;
+}
+footer .copy {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--hairline-soft);
+  margin-top: 24px;
+  padding-top: 22px;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+}
+@media (max-width: 760px) {
+  footer .wrap {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---- motion utilities ---- */
+.intro {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: rise 0.7s var(--ease) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+  transition-delay: var(--rd, 0ms);
+}
+.reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 1080px) {
+  .stage {
+    transform: scale(0.82);
+    transform-origin: top right;
+  }
+}
+@media (max-width: 940px) {
+  .hero .wrap,
+  .capture .wrap,
+  .docs .wrap,
+  .band-dark .wrap {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .stage {
+    transform: none;
+    margin: 0 auto;
+  }
+}
+
+/* ---- MOBILE HERO: stacked vertical signal chain (decision #5) ----
+   Below 720px the desktop's 600px absolutely-positioned chain would blow the
+   single-column grid track past the viewport (clipping the deck under the
+   scope's `overflow-x: clip` backstop) and, when scaled, read tiny and cramped.
+   Instead the chain reflows into a real, full-width vertical stack in product
+   order (the DOM order already is Persona -> Job -> fork -> Docs -> Pipe), and
+   hero.tsx reroutes the wire as one top-to-bottom spine. The prototype px
+   offsets live inline (left/top/width), so `!important` is needed to release
+   them back to normal flow here — desktop keeps the inline coordinates. */
+@media (max-width: 720px) {
+  /* copy: a normal single-column block that wraps within the viewport */
+  .hero .deck {
+    max-width: none;
+  }
+  .hero .cta {
+    flex-wrap: wrap;
+  }
+
+  .stage {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    margin: 0 auto;
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    padding: 6px 0 10px;
+  }
+  /* flex items honour z-index while static, so the wires SVG (z-index:1) still
+     threads behind the node cards (z-index:2) */
+  .stage .node,
+  .stage .fork,
+  .stage .sheetgroup,
+  .stage .pipe {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+  }
+  .stage .node,
+  .stage .pipe {
+    width: 100% !important;
+    max-width: 300px;
+  }
+  .stage .fork {
+    width: 13px !important;
+    height: 13px !important;
+  }
+  /* the résumé + cover pair: un-stack the rotated overlap into a clean 2-up row */
+  .stage .sheetgroup {
+    width: 100% !important;
+    max-width: 320px;
+    height: auto !important;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+  }
+  .stage .sheet {
+    position: relative !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+  }
+  .stage .sheet.resume {
+    order: 0;
+  }
+  .stage .sheet.cover {
+    order: 1;
+  }
+}
+
+/* ---- MOBILE DOCUMENTS: stack the two real sheets ----
+   The big type-set sheets extend to ~410px and start clipping just under 480px.
+   Rather than scale the type down to ~8px, reflow them into two full-width
+   sheets in normal flow (résumé first), un-rotated, sized to their content. */
+@media (max-width: 480px) {
+  .docstage {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+  .docs .resume,
+  .docs .cover {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-width: 340px;
+    height: auto;
+    z-index: auto;
+  }
+  .docs .resume {
+    order: 0;
+  }
+  .docs .cover {
+    order: 1;
+  }
+}
+
+/* No-JS fallback: the reveal sections ship at opacity:0 and are unhidden by the
+   client IntersectionObserver. If scripting is disabled the observer never
+   fires, so force the settled visible state (reduced-motion is already handled
+   below with its own forced final state). */
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .intro,
+  .reveal {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .ln,
+  .docline {
+    transition: none !important;
+    clip-path: inset(0 0 0 0) !important;
+  }
+  .pcard,
+  .stamp {
+    transition: none !important;
+  }
+  .rail {
+    transition: none !important;
+    transform: scaleY(1) !important;
+  }
+  /* The stale-card freshness dot pulses infinitely once its band reveals; stop
+     it and let it rest in its lit final state under reduced motion. */
+  .stale-dot {
+    animation: none !important;
+  }
+}

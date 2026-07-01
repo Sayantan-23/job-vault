@@ -1,19 +1,21 @@
 import type { ReactNode } from 'react'
+import { WebNav } from '@/components/layout/web/web-nav'
+import { WebFooter } from '@/components/layout/web/web-footer'
 
+// Public-surface chrome for "The Circuit of One Search" landing. The two fixed
+// backdrop layers (warm baseline rhythm + faint noise) sit behind `.shell`,
+// which carries the nav, the page sections, and the footer. All styling comes
+// from styles/web/landing.css (no Tailwind utilities on the bespoke visuals).
 export function WebShell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <header className="border-b">
-        <div className="mx-auto max-w-5xl px-6 py-4 text-sm font-medium">
-          JobVault — Public Pages
-        </div>
-      </header>
-      <main className="flex-1">{children}</main>
-      <footer className="border-t">
-        <div className="mx-auto max-w-5xl px-6 py-4 text-xs text-muted-foreground">
-          © JobVault
-        </div>
-      </footer>
-    </div>
+    <>
+      <div className="bg-baseline" aria-hidden="true" />
+      <div className="bg-noise" aria-hidden="true" />
+      <div className="shell">
+        <WebNav />
+        {children}
+        <WebFooter />
+      </div>
+    </>
   )
 }

@@ -1,22 +1,94 @@
+/*
+ * Public (web) surface theme — the warm editorial scope.
+ *
+ * Mirrors the app shell's light tokens (styles/app/theme.css) so the public
+ * site carries the same brand, and additionally declares every bespoke
+ * "Circuit of One Search" landing variable that landing.css consumes, ported
+ * verbatim from docs/mocks/landing-prototype.html.
+ *
+ * Light-only v1 — the web scope intentionally has no `.dark` variant.
+ *
+ * Note on overlaps: `--accent` and `--hairline` exist in BOTH the standard
+ * token set and the prototype's bespoke set. The prototype values win here,
+ * because landing.css reads `--accent` as the muted-indigo current (not the
+ * app's gray hover surface) and `--hairline` as the prototype's faint rule.
+ */
 [data-theme-scope='web'] {
-  --background: oklch(0.985 0.005 240);
-  --foreground: oklch(0.18 0.04 260);
-  --card: oklch(1 0 0 / 0.6);
-  --card-foreground: oklch(0.18 0.04 260);
+  /* Paint the warm-stone base on the scope wrapper itself. body resolves
+     `var(--background)` outside this scope (where it is undefined) so it would
+     fall back to the white html canvas; painting here guarantees the brand's
+     warm base across the whole landing. `overflow-x: clip` backstops the
+     absolutely-positioned hero/document compositions on very narrow viewports
+     without creating a scroll container (so the sticky nav keeps working). */
+  background: var(--bg);
+  min-height: 100vh;
+  overflow-x: clip;
+
+  /* ---- standard tokens (Tailwind utilities resolve these via @theme inline) ---- */
+  --background: oklch(0.992 0.004 80);
+  --foreground: oklch(0.23 0.012 60);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.23 0.012 60);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.04 260);
-  --primary: oklch(0.62 0.18 280);
+  --popover-foreground: oklch(0.23 0.012 60);
+  --primary: oklch(0.55 0.12 270);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.94 0.02 260);
-  --secondary-foreground: oklch(0.22 0.04 260);
-  --muted: oklch(0.94 0.01 260);
-  --muted-foreground: oklch(0.45 0.02 260);
-  --accent: oklch(0.78 0.12 200);
-  --accent-foreground: oklch(0.18 0.04 260);
+  --secondary: oklch(0.96 0.005 75);
+  --secondary-foreground: oklch(0.27 0.01 60);
+  --muted: oklch(0.96 0.005 75);
+  --muted-foreground: oklch(0.52 0.012 60);
+  --accent-foreground: oklch(0.27 0.01 60);
   --destructive: oklch(0.6 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
-  --border: oklch(0.88 0.01 260);
-  --input: oklch(0.88 0.01 260);
-  --ring: oklch(0.62 0.18 280);
+  --border: oklch(0.91 0.004 75);
+  --input: oklch(0.89 0.004 75);
+  --ring: oklch(0.55 0.12 270);
   --radius: 0.75rem;
+
+  /* Status palette — reserved for application health only. */
+  --ghost-active: oklch(0.7 0.15 155);
+  --ghost-stale: oklch(0.78 0.15 75);
+  --ghost-ghosted: oklch(0.63 0.2 20);
+
+  /* ---- bespoke landing variables (carried verbatim from the prototype) ---- */
+  --bg: oklch(0.992 0.004 80);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.985 0.004 80);
+  --ink: oklch(0.23 0.012 60);
+  --ink-soft: oklch(0.52 0.012 60);
+  --ink-faint: oklch(0.55 0.012 60); /* darkened from 0.64 -> ~4.6:1 WCAG-AA on small mono labels */
+  --hairline: oklch(0.91 0.004 75);
+  --hairline-soft: oklch(0.945 0.004 75);
+
+  --accent: oklch(0.54 0.115 270);
+  --accent-strong: oklch(0.47 0.12 270);
+  --accent-soft: color-mix(in srgb, oklch(0.54 0.115 270) 12%, transparent);
+  --on-accent: oklch(0.99 0 0);
+
+  --trace: oklch(0.85 0.006 75); /* dormant wire */
+  --trace-faint: oklch(0.89 0.004 75);
+
+  /* one earned warm accent: stamp ink + stale rule only */
+  --vermilion: oklch(0.55 0.18 32);
+
+  /* product-only freshness */
+  --fresh: oklch(0.7 0.13 155);
+  --cool: oklch(0.8 0.14 80);
+  --cold: oklch(0.62 0.2 25);
+
+  /* single dark band */
+  --ink-bg: oklch(0.205 0.012 60);
+  --ink-bg-2: oklch(0.255 0.012 60);
+  --on-ink: oklch(0.95 0.005 80);
+  --on-ink-soft: oklch(0.72 0.01 70);
+  --ink-hairline: oklch(1 0 0 / 0.1);
+  --trace-ink: oklch(1 0 0 / 0.16);
+
+  --maxw: 1180px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Fonts map onto the existing next/font CSS vars (no Google-Fonts link). */
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
