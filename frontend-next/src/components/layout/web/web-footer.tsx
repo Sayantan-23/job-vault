@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
-// Record-style colophon over hairlines (Product / Company / Legal). A faint
-// trace exits the bottom edge of the page elsewhere to close the wire metaphor.
+// Record-style colophon over hairlines (Product / Company / Legal).
 // Server component; links route to the landing anchors and the public sub-pages.
 export function WebFooter() {
   return (
@@ -35,12 +34,6 @@ export function WebFooter() {
           <Link href="/terms">Terms</Link>
         </div>
         <div className="copy">© 2026 JobVault. Built for people in the middle of a job search.</div>
-        {/* Exit trace: the page circuit leaving toward the bottom edge, closing
-            the wire metaphor the nav seed-trace opens. */}
-        <svg className="footer-exit" viewBox="0 0 12 44" fill="none" aria-hidden="true">
-          <circle className="junction" cx="6" cy="4" r="3.5" />
-          <path className="trace-faint" d="M6 8 V44" />
-        </svg>
       </div>
     </footer>
   )

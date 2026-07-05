@@ -8,13 +8,6 @@ export function WebNav() {
     <nav className="bar">
       <div className="wrap">
         <Link className="brand" href="/">
-          {/* Seed trace: a stub of the page circuit entering from the left edge
-              and soldering under the brand mark (the wire the whole page runs
-              on). Hidden on the mobile nav. */}
-          <svg className="nav-seed" viewBox="0 0 90 10" fill="none" aria-hidden="true">
-            <path className="trace-faint" d="M0 5 H84" />
-            <circle className="junction" cx="86" cy="5" r="3" />
-          </svg>
           <span className="mark">J</span> JobVault
         </Link>
         <div className="navlinks">

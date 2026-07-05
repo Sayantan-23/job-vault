@@ -1,223 +1,25 @@
 'use client'
 
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import Link from 'next/link'
-import { anchor, ns, orth, orthV, type Side } from '@/components/web/landing/trace'
-import { prefersReducedMotion } from '@/components/web/landing/use-reveal'
 
 // `CSSProperties` doesn't type CSS custom properties (the `--d`/`--i` setters
-// the prototype hands to landing.css). Cast through a parameter (not an inline
-// object-literal assertion) so it satisfies @typescript-eslint/consistent-type-assertions.
+// landing.css reads). Cast through a parameter (not an inline object-literal
+// assertion) so it satisfies @typescript-eslint/consistent-type-assertions.
 function cssVars<T extends Record<string, string | number>>(vars: T): CSSProperties {
   return vars as CSSProperties
 }
 
 /**
- * Hero — the signature live signal chain. A Persona node and an
- * extension-captured Job feed a forking junction that energizes a tailored
- * Résumé + Cover-letter (filling line-by-line) which recombine into the
- * Pipeline where a card drops into Applied. On mount one ~2.2s accent current
- * traverses the whole path in real product order, lighting each node, then the
- * stage settles to a calm energized state. Traces re-derive from live anchor
- * rects on resize so the wiring stays pixel-aligned. Under reduced motion every
- * node resolves straight to its final lit/filled/dropped state, no traversal.
+ * Hero — copy stack plus a static composed stage: a Persona node, an
+ * extension-captured Job, the tailored Résumé + Cover-letter sheets, and the
+ * Applied pipeline card. The copy rides the CSS `.intro` load stagger.
  *
- * At <=720px the CSS reflows the absolutely-positioned nodes into a centered
- * vertical stack (Persona -> Job -> fork -> Résumé + Cover-letter -> Pipeline);
- * this effect detects that mode via matchMedia and routes the wire as a single
- * top-to-bottom spine (`orthV`) instead of the horizontal desktop anchors. The
- * on-load pulse runs in whichever mode the page loads in; crossing the
- * breakpoint later rebuilds the wire in the new orientation and settles it to
- * the lit state. Mode is re-read live on every relayout, so no stale geometry.
+ * ponytail: no wiring / choreography — T3 replaces this stage wholesale. The
+ * sheets ship with `filled` and the pipe with `dropped` so their lines/card
+ * render in their final visible state without any JS.
  */
 export function Hero() {
-  const stageRef = useRef<HTMLDivElement | null>(null)
-  const wiresRef = useRef<SVGSVGElement | null>(null)
-
-  useEffect(() => {
-    const stage = stageRef.current
-    const wires = wiresRef.current
-    if (!stage || !wires) return
-
-    const persona = stage.querySelector<HTMLElement>('#n-persona')
-    const job = stage.querySelector<HTMLElement>('#n-job')
-    const fork = stage.querySelector<HTMLElement>('#n-fork')
-    const docs = stage.querySelector<HTMLElement>('#n-docs')
-    const pipe = stage.querySelector<HTMLElement>('#n-pipe')
-    if (!persona || !job || !fork || !docs || !pipe) return
-    const sheets = Array.from(docs.querySelectorAll<HTMLElement>('.sheet'))
-
-    const reduce = prefersReducedMotion()
-    // <=720px flips the chain into the stacked vertical routing; re-read live on
-    // every (re)build so crossing the breakpoint reroutes the wire without a
-    // full remount.
-    const mq = window.matchMedia('(max-width: 720px)')
-    const seg: SVGPathElement[] = []
-    const timeouts: ReturnType<typeof setTimeout>[] = []
-    let chainRan = false
-    let roFirst = true
-    let rafId = 0
-
-    // Re-derive every trace <path> from the live node anchor rects. Horizontal
-    // desktop routing (Persona/Job -> fork -> Docs -> Pipe via `orth`) or, when
-    // stacked, a single top-to-bottom spine threading each node in order (via
-    // `orthV`), which is what the reflowed vertical layout reads as.
-    const buildChain = () => {
-      const stacked = mq.matches
-      const sr = stage.getBoundingClientRect()
-      wires.setAttribute('viewBox', `0 0 ${sr.width} ${sr.height}`)
-      wires.innerHTML = ''
-      seg.length = 0
-      const conns: Array<[HTMLElement, Side, HTMLElement, Side]> = stacked
-        ? [
-            [persona, 'b', job, 't'],
-            [job, 'b', fork, 't'],
-            [fork, 'b', docs, 't'],
-            [docs, 'b', pipe, 't'],
-          ]
-        : [
-            [persona, 'r', fork, 'l'],
-            [job, 'r', fork, 'l'],
-            [fork, 'r', docs, 'l'],
-            [docs, 'b', pipe, 't'],
-          ]
-      const route = stacked ? orthV : orth
-      // Read all geometry first, then write all paths — never interleave an
-      // anchor rect read after an appendChild, so layout flushes at most once.
-      const ds = conns.map(([fromEl, fromSide, toEl, toSide]) =>
-        route(anchor(stage, fromEl, fromSide), anchor(stage, toEl, toSide), 12),
-      )
-      for (const d of ds) {
-        const base = ns('path')
-        base.setAttribute('d', d)
-        base.setAttribute('class', 'trace')
-        const live = ns('path')
-        live.setAttribute('d', d)
-        live.setAttribute('class', 'trace-live')
-        wires.appendChild(base)
-        wires.appendChild(live)
-        seg.push(live)
-      }
-    }
-
-    // One continuous current at a CONSTANT speed: each segment's duration is
-    // proportional to its length, and each starts exactly when the pulse reaches
-    // its origin junction, so the light flows smoothly end-to-end without
-    // stalling between segments. Desktop feeds the fork from Persona + Job in
-    // parallel, then fork -> docs -> pipe; the stacked spine runs one segment at
-    // a time down the wire, lighting each node as the current arrives.
-    const runChain = () => {
-      if (reduce) {
-        stage.classList.add('energized')
-        persona.classList.add('lit')
-        job.classList.add('lit')
-        fork.classList.add('lit')
-        sheets.forEach((s) => s.classList.add('filled'))
-        pipe.classList.add('dropped')
-        return
-      }
-      const [s0, s1, s2, s3] = seg
-      if (!s0 || !s1 || !s2 || !s3) return
-      const v = 0.42 // px per ms — the current's constant travel speed
-      const l0 = Math.max(1, s0.getTotalLength())
-      const l1 = Math.max(1, s1.getTotalLength())
-      const l2 = Math.max(1, s2.getTotalLength())
-      const l3 = Math.max(1, s3.getTotalLength())
-
-      const flow = (p: SVGPathElement, delay: number, dur: number) => {
-        p.style.setProperty('--o0', `${p.getTotalLength() + 36}px`)
-        p.style.animationDuration = `${dur}ms`
-        p.style.animationDelay = `${delay}ms`
-        // Restart the keyframe: force a reflow between class removal and re-add.
-        p.classList.remove('flowing')
-        p.getBoundingClientRect()
-        p.classList.add('flowing')
-      }
-      const at = (fn: () => void, t: number) => timeouts.push(setTimeout(fn, t))
-
-      if (mq.matches) {
-        const t0 = 200
-        const t1 = t0 + l0 / v
-        const t2 = t1 + l1 / v
-        const t3 = t2 + l2 / v
-        const end = t3 + l3 / v
-        flow(s0, t0, l0 / v)
-        flow(s1, t1, l1 / v)
-        flow(s2, t2, l2 / v)
-        flow(s3, t3, l3 / v)
-        at(() => persona.classList.add('lit'), t0)
-        at(() => job.classList.add('lit'), t1)
-        at(() => fork.classList.add('lit'), t2)
-        at(() => sheets.forEach((s) => s.classList.add('filled')), t3)
-        at(() => pipe.classList.add('dropped'), end)
-        at(() => stage.classList.add('energized'), end + 220)
-      } else {
-        const t0 = 250
-        const forkArrive = t0 + Math.max(l0, l1) / v
-        const docsArrive = forkArrive + l2 / v
-        const pipeArrive = docsArrive + l3 / v
-        flow(s0, t0, l0 / v)
-        flow(s1, t0, l1 / v)
-        flow(s2, forkArrive, l2 / v)
-        flow(s3, docsArrive, l3 / v)
-        at(() => {
-          persona.classList.add('lit')
-          job.classList.add('lit')
-        }, t0)
-        at(() => fork.classList.add('lit'), forkArrive)
-        at(() => sheets.forEach((s) => s.classList.add('filled')), docsArrive)
-        at(() => pipe.classList.add('dropped'), pipeArrive)
-        at(() => stage.classList.add('energized'), pipeArrive + 220)
-      }
-    }
-
-    // Rebuild the wire (in the current mode's orientation) and, once the initial
-    // pulse has run, settle it straight to the lit state — no re-traversal.
-    const relayout = () => {
-      buildChain()
-      if (chainRan) stage.classList.add('energized')
-    }
-
-    // Reflow traces on resize; settle to energized once the run has happened.
-    let ro: ResizeObserver | null = null
-    if (typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(() => {
-        // The mandatory initial ResizeObserver callback is delivered AFTER the
-        // rAF that kicks off the chain (per the HTML rendering-update ordering),
-        // so it must be a pure no-op — otherwise its buildChain() would wipe the
-        // freshly-created `flowing` paths and silently kill the hero pulse. The
-        // rAF's own buildChain always builds the chain, so skipping here is safe
-        // regardless of which fires first.
-        if (roFirst) {
-          roFirst = false
-          return
-        }
-        relayout()
-      })
-      ro.observe(stage)
-    }
-
-    // Crossing the 720px breakpoint reroutes the wire (horizontal <-> vertical).
-    // The ResizeObserver also fires on the reflow, but this makes the mode switch
-    // explicit and reroutes even if the stage box happens not to change size.
-    mq.addEventListener('change', relayout)
-
-    rafId = requestAnimationFrame(() => {
-      buildChain()
-      if (!chainRan) {
-        chainRan = true
-        runChain()
-      }
-    })
-
-    return () => {
-      cancelAnimationFrame(rafId)
-      ro?.disconnect()
-      mq.removeEventListener('change', relayout)
-      timeouts.forEach((t) => clearTimeout(t))
-    }
-  }, [])
-
   return (
     <header className="hero" id="how">
       <div className="wrap">
@@ -255,16 +57,8 @@ export function Hero() {
           </div>
         </div>
 
-        {/* THE LIVE SIGNAL CHAIN (all code-built) */}
-        <div className="stage intro" id="chain" ref={stageRef} style={cssVars({ '--d': '360ms' })}>
-          <svg
-            className="wires"
-            id="wires"
-            ref={wiresRef}
-            preserveAspectRatio="none"
-            aria-hidden="true"
-          />
-
+        {/* Static composed stage (no wiring) */}
+        <div className="stage intro" id="chain" style={cssVars({ '--d': '360ms' })}>
           <div className="node" id="n-persona" style={{ left: 0, top: 40, width: 178 }}>
             <div className="nlabel">Persona</div>
             <div className="nhead">
@@ -289,17 +83,13 @@ export function Hero() {
             <span className="tap">via extension</span>
           </div>
 
-          <div className="fork" id="n-fork" style={{ left: 234, top: 180 }}>
-            <div className="jdot" />
-          </div>
-
           <div
             className="sheetgroup"
             id="n-docs"
             style={{ left: 292, top: 14, width: 276, height: 232 }}
           >
             <div
-              className="sheet cover"
+              className="sheet cover filled"
               style={{ left: 0, top: 26, width: 150, height: 188, transform: 'rotate(-7deg)' }}
             >
               <div className="stype">Cover letter</div>
@@ -312,7 +102,7 @@ export function Hero() {
               </div>
             </div>
             <div
-              className="sheet resume"
+              className="sheet resume filled"
               style={{ left: 100, top: 0, width: 172, height: 220, transform: 'rotate(2deg)' }}
             >
               <div className="shead">
@@ -331,7 +121,7 @@ export function Hero() {
             </div>
           </div>
 
-          <div className="pipe" id="n-pipe" style={{ left: 314, top: 282, width: 236 }}>
+          <div className="pipe dropped" id="n-pipe" style={{ left: 314, top: 282, width: 236 }}>
             <div className="ptop">
               <span className="pname">Applied</span>
               <span className="pcount">+1</span>

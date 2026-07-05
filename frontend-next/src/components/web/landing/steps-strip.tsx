@@ -11,12 +11,9 @@ function cssVars<T extends Record<string, string | number>>(vars: T): CSSPropert
 }
 
 // How-it-works strip: the hero's baseboard, not a headed section. Three verb
-// terminals (Capture -> Generate -> Track) sit on one horizontal hairline rail
-// that reads as the visual continuation of the hero's circuit. No SVG and no
-// per-step imperative work — the whole strip rides the global `.reveal` fade,
-// and on reveal each junction dot lights left-to-right purely on a CSS
-// transition-delay keyed off its `--i` index. landing.css owns the rail, the
-// stagger, and the reduced-motion / <=720px vertical-rail fallbacks.
+// terminals (Capture -> Generate -> Track) as a plain three-column band that
+// rides the global `.reveal` fade. landing.css owns the layout, the `--i`
+// stagger, and the <=720px stacked fallback.
 const STEPS: Array<{ term: string; line: string }> = [
   { term: 'Capture', line: 'One click saves the posting, from any board.' },
   { term: 'Generate', line: 'A résumé and letter, tailored to each job and persona.' },
@@ -32,7 +29,6 @@ export function StepsStrip() {
         <div className="steps reveal" ref={steps.ref}>
           {STEPS.map((s, i) => (
             <div key={s.term} className="step" style={cssVars({ '--i': i })}>
-              <span className="step-dot" />
               <div className="step-body">
                 <div className="step-term">{s.term}</div>
                 <div className="step-line">{s.line}</div>

@@ -165,21 +165,6 @@ nav.bar {
   letter-spacing: -0.01em;
   position: relative;
 }
-/* Seed trace trailing left from the brand mark into the nav gutter (the page
-   circuit "entering" under the wordmark). Sits just under the mark, behind it. */
-.nav-seed {
-  position: absolute;
-  top: calc(100% + 3px);
-  left: -68px;
-  width: 90px;
-  height: 10px;
-  pointer-events: none;
-}
-@media (max-width: 880px) {
-  .nav-seed {
-    display: none;
-  }
-}
 .brand .mark {
   width: 26px;
   height: 26px;
@@ -216,62 +201,6 @@ nav.bar {
   }
 }
 
-/* ---- shared trace styles ---- */
-.trace {
-  fill: none;
-  /* darker than the --trace token so dormant wires read on the warm-stone bg
-     (token stays 0.85 for other uses; this is the landing-local stroke) */
-  stroke: oklch(0.82 0.008 75);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.trace-faint {
-  fill: none;
-  stroke: var(--trace-faint);
-  stroke-width: 1.25;
-  stroke-linecap: round;
-}
-.trace-live {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2.25;
-  stroke-linecap: round;
-  /* a longer lit dash reads as one smooth traveling current (was 16) */
-  stroke-dasharray: 30 100000;
-  stroke-dashoffset: var(--o0, 0);
-  opacity: 0;
-}
-.energized .trace-live {
-  opacity: 0.42;
-  stroke-dasharray: none;
-  stroke-dashoffset: 0;
-  transition: opacity 0.4s var(--ease);
-}
-.junction {
-  fill: var(--surface);
-  stroke: var(--trace);
-  stroke-width: 1.5;
-}
-.junction.lit {
-  fill: var(--accent);
-  stroke: var(--accent);
-}
-@keyframes flow {
-  from {
-    stroke-dashoffset: var(--o0);
-    opacity: 1;
-  }
-  to {
-    stroke-dashoffset: 0;
-    opacity: 1;
-  }
-}
-.flowing {
-  animation: flow 0.62s linear forwards;
-  animation-delay: var(--d, 0ms);
-}
-
 /* contact shadow for floating node groups */
 .contact {
   position: absolute;
@@ -296,10 +225,6 @@ nav.bar {
     border-color 0.3s var(--ease),
     transform 0.3s var(--ease),
     box-shadow 0.3s;
-}
-.node.lit {
-  border-color: color-mix(in srgb, var(--accent) 55%, var(--hairline));
-  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 .node .nlabel {
   font-family: var(--font-mono);
@@ -442,39 +367,10 @@ nav.bar {
   height: 482px;
   margin-left: auto;
 }
-.stage svg.wires {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  overflow: visible;
-}
 .stage .node,
 .stage .sheetgroup,
-.stage .pipe,
-.stage .fork {
+.stage .pipe {
   z-index: 2;
-}
-.fork {
-  position: absolute;
-  width: 13px;
-  height: 13px;
-}
-.fork .jdot {
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1.5px solid var(--trace);
-  transition:
-    background 0.3s,
-    border-color 0.3s;
-}
-.fork.lit .jdot {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
 /* mini document sheets in hero */
@@ -611,41 +507,12 @@ nav.bar {
   grid-template-columns: repeat(3, 1fr);
   gap: 24px;
 }
-/* the rail runs between the first and last dot centers (each at 1/6 and 5/6) */
-.steps::before {
-  content: '';
-  position: absolute;
-  left: calc(100% / 6);
-  right: calc(100% / 6);
-  top: 5px;
-  height: 1.5px;
-  background: var(--trace);
-}
 .step {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-}
-.step-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 1.5px solid var(--trace);
-  position: relative;
-  z-index: 1;
-  transition:
-    background 0.4s var(--ease),
-    border-color 0.4s var(--ease),
-    box-shadow 0.4s var(--ease);
-  transition-delay: calc(var(--i, 0) * 140ms);
-}
-.steps[data-shown] .step-dot {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
 }
 .step-body {
   margin-top: 16px;
@@ -664,19 +531,11 @@ nav.bar {
   max-width: 24ch;
   margin-top: 7px;
 }
-/* Phones: the rail turns vertical on the left, terminals stack as a list. */
+/* Phones: terminals stack as a list. */
 @media (max-width: 720px) {
   .steps {
     grid-template-columns: 1fr;
     gap: 0;
-  }
-  .steps::before {
-    left: 5px;
-    right: auto;
-    top: 14px;
-    bottom: 14px;
-    width: 1.5px;
-    height: auto;
   }
   .step {
     flex-direction: row;
@@ -684,9 +543,6 @@ nav.bar {
     text-align: left;
     gap: 16px;
     padding: 10px 0;
-  }
-  .step-dot {
-    flex: none;
   }
   .step-body {
     margin-top: 0;
@@ -723,25 +579,11 @@ section {
   align-items: center;
 }
 /* Popup + pills as one grounded object: a fit-to-popup relative column that
-   carries the shared .contact shadow and hosts the two circuit stubs. */
+   carries the shared .contact shadow. */
 .cap-unit {
   position: relative;
   width: 360px;
   max-width: 100%;
-}
-/* Static hairline stubs entering the popup's left-middle and exiting its
-   right-middle, each ending in a junction dot on the popup border. Predictable
-   anchor points for the future full-page spine (T11). */
-.cap-stub {
-  position: absolute;
-  top: 110px;
-  pointer-events: none;
-}
-.cap-stub-l {
-  right: 100%;
-}
-.cap-stub-r {
-  left: 100%;
 }
 .popup {
   position: relative;
@@ -856,16 +698,6 @@ section {
   gap: 44px;
   align-items: center;
 }
-/* the fan wire overlays the whole stage, threaded behind the cards/rows */
-.fork-wires {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-  overflow: visible;
-}
 /* release the .node absolute default back into the grid cell */
 .fork-node {
   position: relative;
@@ -882,7 +714,6 @@ section {
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  /* left inset leaves room for the incoming trace + its junction dot */
   padding: 14px 0 14px 26px;
   /* rows fade in top-to-bottom on reveal; --i is the per-row stagger */
   opacity: 0;
@@ -1631,28 +1462,11 @@ section {
   padding: 0 2px 22px 30px;
 }
 
-/* ---- CLOSING ----
-   §7a fix: the converge SVG occupies the section's TOP PADDING only and must
-   never overlap the headline. Generous padding-top reserves the band; the
-   converge SVG (height 150px, pinned top:0) lands its convergence point at
-   y=150px, leaving >=32px clearance above the first headline line (which
-   begins at padding-top 200px). Headline + CTA render above the SVG. */
+/* ---- CLOSING ---- */
 .closing {
   text-align: center;
   padding: 164px 0 120px;
   position: relative;
-}
-.closing .converge {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  transform: translateX(-50%);
-  width: 980px;
-  max-width: 100%;
-  height: 124px;
-  pointer-events: none;
-  overflow: visible;
-  z-index: 0;
 }
 .closing .wrap {
   position: relative;
@@ -1716,74 +1530,15 @@ footer .copy {
   font-size: 12.5px;
   color: var(--ink-faint);
 }
-/* Exit trace under the colophon, centered, dropping toward the page's bottom. */
-.footer-exit {
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: 12px;
-  height: 44px;
-  margin-top: 6px;
-  pointer-events: none;
-}
 @media (max-width: 760px) {
   footer .wrap {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-/* ---- CONNECTIVE SPINE ----
-   The one continuous circuit stitching every section into a single wire (built
-   in spine.tsx). Its SVG pins over the whole `.landing` column and sits ABOVE
-   the sections (routed through the empty gutters, so it kisses each anchor
-   without touching cards or text — and so its ink segment reads on top of the
-   opaque dark band). pointer-events are off; the nav (z-index 50) still wins. */
+/* The landing sections' positioned column. */
 .landing {
   position: relative;
-}
-.spine-wires {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1;
-  pointer-events: none;
-  overflow: visible;
-}
-.spine {
-  fill: none;
-  stroke: var(--trace-faint);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-/* Inside the dark band the faint warm stroke would vanish; swap to the ink token
-   that reads on the near-black surface. */
-.spine-ink {
-  stroke: var(--trace-ink);
-}
-/* Accent overlay each segment pulses on reveal, then settles to a calm lit tint
-   (mirrors .trace-live, but per-segment so an un-fired segment stays dormant). */
-.spine-live {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-dasharray: 30 100000;
-  stroke-dashoffset: var(--o0, 0);
-  opacity: 0;
-}
-.spine-live.energized {
-  opacity: 0.4;
-  stroke-dasharray: none;
-  stroke-dashoffset: 0;
-  transition: opacity 0.4s var(--ease);
-}
-/* Phones stack the sections with no gutters to thread; drop the spine and let the
-   per-section vertical rails carry the circuit metaphor. */
-@media (max-width: 720px) {
-  .spine-wires {
-    display: none;
-  }
 }
 
 /* ---- motion utilities ---- */
@@ -1830,55 +1585,23 @@ footer .copy {
     transform: none;
     margin: 0 auto;
   }
-  /* Stacked single column: the horizontal stubs would float off the centered
-     popup, so drop them. */
-  .cap-stub {
-    display: none;
-  }
 
-  /* Personas fork: node above, rows below. The horizontal fan only reads across
-     two columns, so drop it and let a static left rail with junction dots carry
-     the node -> rows relationship (metaphor survives, nothing overflows). */
+  /* Personas fork: node above, rows below. */
   .fork-stage {
     grid-template-columns: 1fr;
     gap: 30px;
   }
-  .fork-wires {
-    display: none;
-  }
-  .fork-rows {
-    border-left: 1px solid var(--hairline);
-  }
   .frow {
-    position: relative;
     padding-left: 20px;
-  }
-  .frow::before {
-    content: '';
-    position: absolute;
-    left: -4px;
-    top: 22px;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--surface);
-    border: 1.5px solid var(--trace);
-  }
-  .fork-stage[data-shown] .frow::before {
-    background: var(--accent);
-    border-color: var(--accent);
   }
 }
 
-/* ---- MOBILE HERO: stacked vertical signal chain (decision #5) ----
-   Below 720px the desktop's 600px absolutely-positioned chain would blow the
-   single-column grid track past the viewport (clipping the deck under the
-   scope's `overflow-x: clip` backstop) and, when scaled, read tiny and cramped.
-   Instead the chain reflows into a real, full-width vertical stack in product
-   order (the DOM order already is Persona -> Job -> fork -> Docs -> Pipe), and
-   hero.tsx reroutes the wire as one top-to-bottom spine. The prototype px
-   offsets live inline (left/top/width), so `!important` is needed to release
-   them back to normal flow here — desktop keeps the inline coordinates. */
+/* ---- MOBILE HERO: stacked stage ----
+   Below 720px the desktop's 600px absolutely-positioned stage would blow the
+   single-column grid track past the viewport. Reflow the cards into a real,
+   full-width vertical stack in product order (Persona -> Job -> Docs -> Pipe).
+   The prototype px offsets live inline (left/top/width), so `!important` is
+   needed to release them back to normal flow here. */
 @media (max-width: 720px) {
   /* copy: a normal single-column block that wraps within the viewport */
   .hero .deck {
@@ -1901,10 +1624,7 @@ footer .copy {
     gap: 30px;
     padding: 6px 0 10px;
   }
-  /* flex items honour z-index while static, so the wires SVG (z-index:1) still
-     threads behind the node cards (z-index:2) */
   .stage .node,
-  .stage .fork,
   .stage .sheetgroup,
   .stage .pipe {
     position: static !important;
@@ -1915,10 +1635,6 @@ footer .copy {
   .stage .pipe {
     width: 100% !important;
     max-width: 300px;
-  }
-  .stage .fork {
-    width: 13px !important;
-    height: 13px !important;
   }
   /* the résumé + cover pair: un-stack the rotated overlap into a clean 2-up row */
   .stage .sheetgroup {
@@ -2019,9 +1735,7 @@ footer .copy {
     opacity: 1 !important;
     transform: none !important;
   }
-  /* Steps-strip dots land lit instantly (data-shown is still stamped); the FAQ
-     marker toggles its rotate/color with no transition. */
-  .step-dot,
+  /* The FAQ marker toggles its rotate/color with no transition. */
   .faq-mark,
   .faq-mark::before,
   .faq-mark::after {
@@ -2038,13 +1752,7 @@ footer .copy {
     transform: scaleX(1) !important;
   }
   .pcard,
-  .stamp,
-  .trace-live,
-  .energized .trace-live {
-    transition: none !important;
-  }
-  /* The spine lands lit instantly (spine.tsx settles every segment on build). */
-  .spine-live {
+  .stamp {
     transition: none !important;
   }
   .cap::after {
