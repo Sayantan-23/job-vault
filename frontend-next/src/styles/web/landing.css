@@ -165,6 +165,21 @@ nav.bar {
   letter-spacing: -0.01em;
   position: relative;
 }
+/* Seed trace trailing left from the brand mark into the nav gutter (the page
+   circuit "entering" under the wordmark). Sits just under the mark, behind it. */
+.nav-seed {
+  position: absolute;
+  top: calc(100% + 3px);
+  left: -68px;
+  width: 90px;
+  height: 10px;
+  pointer-events: none;
+}
+@media (max-width: 880px) {
+  .nav-seed {
+    display: none;
+  }
+}
 .brand .mark {
   width: 26px;
   height: 26px;
@@ -1701,9 +1716,73 @@ footer .copy {
   font-size: 12.5px;
   color: var(--ink-faint);
 }
+/* Exit trace under the colophon, centered, dropping toward the page's bottom. */
+.footer-exit {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: 12px;
+  height: 44px;
+  margin-top: 6px;
+  pointer-events: none;
+}
 @media (max-width: 760px) {
   footer .wrap {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---- CONNECTIVE SPINE ----
+   The one continuous circuit stitching every section into a single wire (built
+   in spine.tsx). Its SVG pins over the whole `.landing` column and sits ABOVE
+   the sections (routed through the empty gutters, so it kisses each anchor
+   without touching cards or text — and so its ink segment reads on top of the
+   opaque dark band). pointer-events are off; the nav (z-index 50) still wins. */
+.landing {
+  position: relative;
+}
+.spine-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+.spine {
+  fill: none;
+  stroke: var(--trace-faint);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* Inside the dark band the faint warm stroke would vanish; swap to the ink token
+   that reads on the near-black surface. */
+.spine-ink {
+  stroke: var(--trace-ink);
+}
+/* Accent overlay each segment pulses on reveal, then settles to a calm lit tint
+   (mirrors .trace-live, but per-segment so an un-fired segment stays dormant). */
+.spine-live {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 30 100000;
+  stroke-dashoffset: var(--o0, 0);
+  opacity: 0;
+}
+.spine-live.energized {
+  opacity: 0.4;
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  transition: opacity 0.4s var(--ease);
+}
+/* Phones stack the sections with no gutters to thread; drop the spine and let the
+   per-section vertical rails carry the circuit metaphor. */
+@media (max-width: 720px) {
+  .spine-wires {
+    display: none;
   }
 }
 
@@ -1945,6 +2024,10 @@ footer .copy {
   }
   .pcard,
   .stamp {
+    transition: none !important;
+  }
+  /* The spine lands lit instantly (spine.tsx settles every segment on build). */
+  .spine-live {
     transition: none !important;
   }
   .cap::after {

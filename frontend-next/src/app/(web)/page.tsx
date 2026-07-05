@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Spine } from '@/components/web/landing/spine'
 import { Hero } from '@/components/web/landing/hero'
 import { StepsStrip } from '@/components/web/landing/steps-strip'
 import { CaptureSection } from '@/components/web/landing/capture-section'
@@ -20,8 +21,12 @@ export const metadata: Metadata = {
 // fork → Résumé + Cover letter → Pipeline → capabilities → closing); the nav,
 // backdrop, and footer come from WebShell (the (web) layout).
 export default function LandingPage() {
+  // `.landing` is the positioned column the Spine measures against and pins its
+  // full-height SVG over; it must be the first child so the wire builds from
+  // live section rects.
   return (
-    <>
+    <div className="landing">
+      <Spine />
       <Hero />
       <StepsStrip />
       <CaptureSection />
@@ -31,6 +36,6 @@ export default function LandingPage() {
       <CapabilitiesSection />
       <FaqSection />
       <ClosingSection />
-    </>
+    </div>
   )
 }
