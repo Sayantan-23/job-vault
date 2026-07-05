@@ -1,10 +1,12 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-06-22
+> **Last Updated**: 2026-07-05
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
 > **Design Style**: Glassmorphism (frosted glass light + matching dark theme) · Subtle animations · Nuxt UI v4
+
+> **2026-07-05 — Legacy folders removed**: the original `backend/` (NestJS) and `frontend/` (Nuxt) reference stacks were deleted now that the Express/Next rebuild is self-sufficient. Original behavior/contracts remain readable via git history. Active code lives only in `backend-express/` + `frontend-next/` (+ `extension/`).
 
 ---
 
