@@ -1080,6 +1080,11 @@ h2 em {
     display: block;
     padding: 104px 0 64px;
   }
+  /* Collapse the two-column split: copy full-width, collage centered below.
+     (`.hero { display:block }` alone leaves the inner .wrap grid two-column.) */
+  .hero .wrap {
+    display: block;
+  }
   .hero .deck {
     max-width: none;
   }
@@ -1876,6 +1881,9 @@ section {
 }
 .iword {
   display: inline-block;
+  /* inline-block trims the trailing space inside each word span, so restore the
+     inter-word gap explicitly (a bare margin, harmless on the centered last word). */
+  margin-right: 0.26em;
 }
 .interstitial em {
   font-style: italic;

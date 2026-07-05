@@ -32,7 +32,7 @@ export function Hero() {
             <em>whole search.</em>
           </h1>
           <p className="deck intro" style={cssVars({ '--d': '140ms' })}>
-            Capture postings in one click, generate tailored resumes and cover letters, and track
+            Capture postings in one click, generate tailored résumés and cover letters, and track
             every role before it goes cold.
           </p>
           <div className="cta intro" style={cssVars({ '--d': '240ms' })}>
