@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { Hero } from '@/components/web/landing/hero'
+import { StepsStrip } from '@/components/web/landing/steps-strip'
 import { CaptureSection } from '@/components/web/landing/capture-section'
 import { ForkSection } from '@/components/web/landing/fork-section'
 import { DocumentsSection } from '@/components/web/landing/documents-section'
 import { PipelineSection } from '@/components/web/landing/pipeline-section'
 import { CapabilitiesSection } from '@/components/web/landing/capabilities-section'
+import { FaqSection } from '@/components/web/landing/faq-section'
 import { ClosingSection } from '@/components/web/landing/closing-section'
 
 export const metadata: Metadata = {
@@ -21,11 +23,13 @@ export default function LandingPage() {
   return (
     <>
       <Hero />
+      <StepsStrip />
       <CaptureSection />
       <ForkSection />
       <DocumentsSection />
       <PipelineSection />
       <CapabilitiesSection />
+      <FaqSection />
       <ClosingSection />
     </>
   )
