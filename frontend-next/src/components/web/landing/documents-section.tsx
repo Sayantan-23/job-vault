@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useState, type CSSProperties } from 'react'
 import { prefersReducedMotion, useReveal } from '@/components/web/landing/use-reveal'
 
 // `CSSProperties` doesn't type CSS custom properties (the `--rd`/`--i` setters
@@ -22,21 +22,55 @@ export function DocumentsSection() {
   const head = useReveal<HTMLDivElement>()
   const stage = useReveal<HTMLDivElement>({ threshold: 0.3 })
   const [filled, setFilled] = useState(false)
+  const [refined, setRefined] = useState(false)
   const [stamped, setStamped] = useState(false)
 
   useEffect(() => {
     if (!stage.shown) return
     setFilled(true)
     if (prefersReducedMotion()) {
+      setRefined(true)
       setStamped(true)
       return
     }
-    const id = window.setTimeout(() => setStamped(true), 1600)
-    return () => window.clearTimeout(id)
+    // shown → lines fill → +700ms the AI-refine beat (chip lights, strikethrough
+    // draws, replacement wipes in) → +1600ms the TAILORED stamp presses down.
+    const t1 = window.setTimeout(() => setRefined(true), 700)
+    const t2 = window.setTimeout(() => setStamped(true), 1600)
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
   }, [stage.shown])
 
+  // Unique-per-instance filter/mask ids (colons from useId break url(#…) refs).
+  const uid = useId().replace(/:/g, '')
+  const distressId = `stamp-distress-${uid}`
+  const maskId = `stamp-mask-${uid}`
+
+  // The stamp artwork, rendered twice: once as a blurred low-alpha ink-bleed
+  // underlay, once as the masked/distressed ink on top. Reusing one element
+  // reference keeps the two groups in lockstep.
+  const stampArt = (
+    <>
+      <rect x="3" y="3" width="126" height="46" rx="7" fill="none" stroke="var(--vermilion)" strokeWidth="2.5" />
+      <rect x="7.5" y="7.5" width="117" height="37" rx="4" fill="none" stroke="var(--vermilion)" strokeWidth="1" />
+      <text
+        x="66"
+        y="32"
+        textAnchor="middle"
+        fontSize="17"
+        fontWeight="600"
+        letterSpacing="3.5"
+        fill="var(--vermilion)"
+      >
+        TAILORED
+      </text>
+    </>
+  )
+
   const coverClass = `paper cover${filled ? ' filled' : ''}`
-  const resumeClass = `paper resume${filled ? ' filled' : ''}${stamped ? ' stamped' : ''}`
+  const resumeClass = `paper resume${filled ? ' filled' : ''}${refined ? ' refined' : ''}${stamped ? ' stamped' : ''}`
 
   return (
     <section className="docs" id="documents">
@@ -50,10 +84,28 @@ export function DocumentsSection() {
             role. Refine the tone, keep a reusable library, and export to PDF.
           </p>
           <div className="refine-controls">
-            <span className="rchip">Humanize</span>
+            <span className={`rchip${refined ? ' lit' : ''}`}>Humanize</span>
             <span className="rchip">Shorten</span>
             <span className="rchip">Make longer</span>
             <span className="rchip">Fix grammar</span>
+          </div>
+          <div className="exports">
+            <span className="export-cap">exports</span>
+            <span className="export-chip">PDF</span>
+            <span className="export-chip">LaTeX</span>
+            <span className="export-chip">
+              Open in Overleaf
+              <svg viewBox="0 0 12 12" aria-hidden="true">
+                <path
+                  d="M3.5 8.5 8.5 3.5M4.5 3.5h4v4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
           </div>
         </div>
         <div
@@ -112,7 +164,7 @@ export function DocumentsSection() {
             <div className="refine">
               <s>Worked on the billing system and helped the team.</s>
             </div>
-            <div className="refine">
+            <div className="refine repl">
               <span className="new">Cut invoice errors 31% by rebuilding the billing engine.</span>
               <span className="tag">humanize</span>
             </div>
@@ -122,37 +174,41 @@ export function DocumentsSection() {
             <div className="docline" style={cssVars({ '--i': '360ms', width: '72%' })} />
             <div className="corner-fold" title="Export PDF" />
             <svg className="stamp" viewBox="0 0 132 52" aria-hidden="true">
-              <rect
-                x="3"
-                y="3"
-                width="126"
-                height="46"
-                rx="7"
-                fill="none"
-                stroke="var(--vermilion)"
-                strokeWidth="2.5"
-              />
-              <rect
-                x="7.5"
-                y="7.5"
-                width="117"
-                height="37"
-                rx="4"
-                fill="none"
-                stroke="var(--vermilion)"
-                strokeWidth="1"
-              />
-              <text
-                x="66"
-                y="32"
-                textAnchor="middle"
-                fontSize="17"
-                fontWeight="600"
-                letterSpacing="3.5"
-                fill="var(--vermilion)"
-              >
-                TAILORED
-              </text>
+              <defs>
+                {/* Distressed ink: fractal-noise displacement erodes the crisp
+                    vector edges so strokes look pressed and broken, not printed. */}
+                <filter id={distressId} x="-20%" y="-20%" width="140%" height="140%">
+                  <feTurbulence
+                    type="fractalNoise"
+                    baseFrequency="0.9"
+                    numOctaves="2"
+                    seed="7"
+                    result="noise"
+                  />
+                  <feDisplacementMap
+                    in="SourceGraphic"
+                    in2="noise"
+                    scale="2.6"
+                    xChannelSelector="R"
+                    yChannelSelector="G"
+                  />
+                </filter>
+                {/* Uneven ink pressure: top-right prints solid, the far corner
+                    fades to ~60% so the impression isn't machine-even. */}
+                <radialGradient id={`${maskId}-grad`} cx="74%" cy="24%" r="92%">
+                  <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+                  <stop offset="55%" stopColor="#fff" stopOpacity="0.94" />
+                  <stop offset="100%" stopColor="#fff" stopOpacity="0.6" />
+                </radialGradient>
+                <mask id={maskId}>
+                  <rect width="132" height="52" fill={`url(#${maskId}-grad)`} />
+                </mask>
+              </defs>
+              {/* Ink bleed: a blurred, faint duplicate haloing the impression. */}
+              <g className="stamp-bleed">{stampArt}</g>
+              <g filter={`url(#${distressId})`} mask={`url(#${maskId})`}>
+                {stampArt}
+              </g>
             </svg>
           </div>
         </div>

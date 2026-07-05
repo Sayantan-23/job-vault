@@ -819,10 +819,38 @@ section {
   gap: 8px;
   margin: 9px 0 3px;
 }
+/* The struck line's strikethrough draws (scaleX) once the résumé is refined,
+   rather than shipping pre-struck — the native line is swapped for a pseudo-rule
+   we can animate. */
 .refine s {
+  position: relative;
   color: var(--ink-faint);
-  text-decoration-color: var(--vermilion);
+  text-decoration: none;
   font-size: 11px;
+}
+.refine s::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 1.5px;
+  background: var(--vermilion);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease);
+}
+.refined .refine s::after {
+  transform: scaleX(1);
+}
+/* The replacement line + its tag wipe in on refine (clip-path, like a docline). */
+.refine.repl {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 0.55s var(--ease);
+  transition-delay: 0.15s;
+}
+.refined .refine.repl {
+  clip-path: inset(0 0 0 0);
 }
 .refine .new {
   color: var(--accent-strong);
@@ -876,6 +904,11 @@ section {
 .stamp text {
   font-family: var(--font-mono);
 }
+/* Ink-bleed underlay: a soft, faint halo of the same impression. */
+.stamp-bleed {
+  filter: blur(1px);
+  opacity: 0.12;
+}
 .corner-fold {
   position: absolute;
   right: 0;
@@ -900,6 +933,47 @@ section {
   border: 1px solid var(--hairline);
   border-radius: 7px;
   padding: 6px 11px;
+  transition:
+    color 0.35s var(--ease),
+    border-color 0.35s var(--ease),
+    background 0.35s var(--ease);
+}
+/* The chip the refine demo applies lights to the accent to show it firing. */
+.rchip.lit {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+/* Export affordances — the same pill recipe, stated quietly under the copy. */
+.exports {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+.exports .export-cap {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-right: 2px;
+}
+.export-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+.export-chip svg {
+  width: 12px;
+  height: 12px;
+  color: var(--ink-faint);
 }
 
 /* ---- PIPELINE dark band ---- */
@@ -1383,9 +1457,14 @@ footer .copy {
     transform: none !important;
   }
   .ln,
-  .docline {
+  .docline,
+  .refine.repl {
     transition: none !important;
     clip-path: inset(0 0 0 0) !important;
+  }
+  .refine s::after {
+    transition: none !important;
+    transform: scaleX(1) !important;
   }
   .pcard,
   .stamp {
