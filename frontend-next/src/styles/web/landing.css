@@ -311,80 +311,6 @@ h2 em {
   pointer-events: none;
 }
 
-/* ---- node card (the app shell card, flat + hairline) ---- */
-.node {
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  border-radius: 11px;
-  padding: 12px 13px;
-  position: absolute;
-  transition:
-    border-color 0.3s var(--ease),
-    transform 0.3s var(--ease),
-    box-shadow 0.3s;
-}
-.node .nlabel {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ink-faint);
-}
-.node .ntitle {
-  font-family: var(--font-serif);
-  font-size: 15px;
-  line-height: 1.15;
-  margin-top: 3px;
-}
-.node .nmeta {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  margin-top: 7px;
-}
-/* persona node enrichments: serif-initial monogram + neutral mono chips */
-.node .nhead {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
-}
-.node .nhead .ntitle {
-  margin-top: 0;
-}
-.nmono {
-  flex: none;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  border: 1px solid var(--hairline);
-  background: var(--surface-2);
-  font-family: var(--font-serif);
-  font-size: 12px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ink-soft);
-}
-.node .nchips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-  margin-top: 8px;
-}
-.nchip {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-faint);
-  border: 1px solid var(--hairline);
-  background: var(--surface-2);
-  border-radius: 5px;
-  padding: 2px 6px;
-}
-
 /* =========================================================================
    HERO + VAULT COLLAGE
    Split layout: copy stack (left) + a composed collage of five faithful mini
@@ -1237,53 +1163,112 @@ section {
   animation: ext-beat-in 0.55s var(--ease) 1.65s both;
 }
 
-/* ---- PERSONAS FORK (one persona -> every tailored draft) ----
-   Head stacked on top, then a two-column schematic: the persona node (~0.4fr)
-   fans through one code-built SVG into the generated doc rows (~0.6fr). */
+/* ---- PERSONAS (one persona -> every tailored draft) ----
+   Head + deck stacked on top, then a two-column composition: a faithful persona
+   card (left, mirrors the real PersonaCard) and an evenly spaced doc list
+   (right), connected by whitespace only. The list is centered as a block
+   against the card (align-items: center). */
 #personas .sec-head {
   margin-bottom: 42px;
 }
-.fork-stage {
-  position: relative;
+.persona-stage {
   display: grid;
-  grid-template-columns: 0.4fr 0.6fr;
-  gap: 44px;
+  grid-template-columns: 340px 1fr;
+  gap: 56px;
   align-items: center;
 }
-/* release the .node absolute default back into the grid cell */
-.fork-node {
-  position: relative;
-  z-index: 2;
-  justify-self: start;
-  width: 190px;
+/* persona card — real UI: rounded-lg (8px) hairline, p-4, white surface */
+.pcard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 16px;
 }
-.fork-rows {
-  position: relative;
-  z-index: 2;
+.pcard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
 }
-.frow {
+.pcard-name {
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.pcard-count {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.pcard-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.pcard-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pcard-ibtn {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--ink-faint);
+}
+.pcard-ibtn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+.pcard-summary {
+  margin-top: 12px;
+  min-height: 2.5rem;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.pcard-btn {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+/* generated-doc list — even vertical rhythm: identical row padding, hairline
+   between rows only (never a top+bottom cage). */
+.doc-list {
+  display: flex;
+  flex-direction: column;
+}
+.doc-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 0 14px 26px;
+  padding: 14px 0;
 }
-/* sparse hairlines: dividers between rows only, never a top+bottom cage */
-.frow + .frow {
+.doc-row + .doc-row {
   border-top: 1px solid var(--hairline-soft);
 }
-.fr-title {
+.doc-title {
   font-family: var(--font-serif);
   font-size: 16px;
   line-height: 1.2;
 }
-.fr-ctx {
+.doc-ctx {
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--ink-faint);
   margin-top: 5px;
 }
-.fr-date {
+.doc-date {
   flex: none;
   font-family: var(--font-mono);
   font-size: 10.5px;
@@ -2147,14 +2132,13 @@ section {
     grid-template-columns: 1fr;
     gap: 40px;
   }
+}
 
-  /* Personas fork: node above, rows below. */
-  .fork-stage {
+/* Personas: below 720px stack the card above the full-width doc list. */
+@media (max-width: 720px) {
+  .persona-stage {
     grid-template-columns: 1fr;
     gap: 30px;
-  }
-  .frow {
-    padding-left: 20px;
   }
 }
 

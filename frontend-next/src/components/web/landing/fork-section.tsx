@@ -1,6 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
+import { Pencil, Trash2 } from 'lucide-react'
 import { useReveal } from '@/components/web/landing/use-reveal'
 
 // `CSSProperties` doesn't type CSS custom properties (the `--i` setters
@@ -11,14 +12,12 @@ function cssVars<T extends Record<string, string | number>>(vars: T): CSSPropert
 }
 
 /**
- * Personas fork — the "one persona, every tailored draft" beat. A single
- * Persona node on the left, four generated document rows on the right (two
- * résumés, two cover letters, different companies), as a plain two-column
- * layout. On scroll-reveal the rows fade in top-to-bottom (`--i` per-row
- * stagger, owned by landing.css). At <=940px the CSS reflows into one column
- * (node above, rows below).
- *
- * ponytail: temporary plain layout — T6 redesigns this section wholesale.
+ * Personas — the "one persona, every tailored draft" beat. Head + deck stacked
+ * on top, then a two-column composition: a faithful persona card (left, mirrors
+ * the real `PersonaCard`) and an evenly spaced list of generated documents
+ * (right), connected by whitespace only — no drawn fan. On scroll-reveal the
+ * card and rows fade-rise with the uniform `.reveal` + `--i` stagger. At
+ * <=720px the CSS reflows into one column (card above, rows below).
  */
 export function ForkSection() {
   const { ref } = useReveal<HTMLDivElement>()
@@ -36,51 +35,59 @@ export function ForkSection() {
           </p>
         </div>
 
-        <div className="fork-stage">
-          <div className="node fork-node reveal" id="f-node" style={cssVars({ '--i': 1 })}>
-            <div className="nlabel">Persona</div>
-            <div className="nhead">
-              <span className="nmono">M</span>
-              <div className="ntitle">Senior PM</div>
+        <div className="persona-stage">
+          <div className="pcard reveal" style={cssVars({ '--i': 1 })}>
+            <div className="pcard-head">
+              <div className="pcard-id">
+                <div className="pcard-name">Senior PM</div>
+                <div className="pcard-count">
+                  <span className="pcard-num">3</span> roles ·{' '}
+                  <span className="pcard-num">4</span> skill groups
+                </div>
+              </div>
+              <div className="pcard-actions">
+                <span className="pcard-ibtn">
+                  <Pencil aria-hidden="true" />
+                </span>
+                <span className="pcard-ibtn">
+                  <Trash2 aria-hidden="true" />
+                </span>
+              </div>
             </div>
-            <div className="nchips">
-              <span className="nchip">Product</span>
-              <span className="nchip">Roadmap</span>
-              <span className="nchip">SQL</span>
-            </div>
-            <div className="nmeta" style={{ color: 'var(--accent-strong)' }}>
-              3 / 5 used
-            </div>
+            <p className="pcard-summary">
+              Product leader focused on B2B fintech; ships data-heavy roadmaps with small teams.
+            </p>
+            <div className="pcard-btn">Generate résumé</div>
           </div>
 
-          <div className="fork-rows">
-            <div className="frow reveal" style={cssVars({ '--i': 2 })}>
-              <div className="fr-main">
-                <div className="fr-title">Résumé for Ramp</div>
-                <div className="fr-ctx">Senior PM · tailored</div>
+          <div className="doc-list">
+            <div className="doc-row reveal" style={cssVars({ '--i': 2 })}>
+              <div className="doc-main">
+                <div className="doc-title">Résumé for Ramp</div>
+                <div className="doc-ctx">Senior PM · tailored</div>
               </div>
-              <div className="fr-date">Jun 28</div>
+              <div className="doc-date">Jun 28</div>
             </div>
-            <div className="frow reveal" style={cssVars({ '--i': 3 })}>
-              <div className="fr-main">
-                <div className="fr-title">Cover letter for Loops</div>
-                <div className="fr-ctx">Senior PM · refined</div>
+            <div className="doc-row reveal" style={cssVars({ '--i': 3 })}>
+              <div className="doc-main">
+                <div className="doc-title">Cover letter for Loops</div>
+                <div className="doc-ctx">Senior PM · refined</div>
               </div>
-              <div className="fr-date">Jun 26</div>
+              <div className="doc-date">Jun 26</div>
             </div>
-            <div className="frow reveal" style={cssVars({ '--i': 4 })}>
-              <div className="fr-main">
-                <div className="fr-title">Résumé for Figment</div>
-                <div className="fr-ctx">Senior PM · exported</div>
+            <div className="doc-row reveal" style={cssVars({ '--i': 4 })}>
+              <div className="doc-main">
+                <div className="doc-title">Résumé for Figment</div>
+                <div className="doc-ctx">Senior PM · exported</div>
               </div>
-              <div className="fr-date">Jun 22</div>
+              <div className="doc-date">Jun 22</div>
             </div>
-            <div className="frow reveal" style={cssVars({ '--i': 5 })}>
-              <div className="fr-main">
-                <div className="fr-title">Cover letter for Aerial</div>
-                <div className="fr-ctx">Senior PM · draft</div>
+            <div className="doc-row reveal" style={cssVars({ '--i': 5 })}>
+              <div className="doc-main">
+                <div className="doc-title">Cover letter for Aerial</div>
+                <div className="doc-ctx">Senior PM · draft</div>
               </div>
-              <div className="fr-date">Jun 19</div>
+              <div className="doc-date">Jun 19</div>
             </div>
           </div>
         </div>
