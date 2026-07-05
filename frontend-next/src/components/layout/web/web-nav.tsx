@@ -1,27 +1,49 @@
 import Link from 'next/link'
+import { BrandChip } from '@/components/layout/web/brand-chip'
 
-// Sticky hairline nav, mono-flavored. Server component (no client JS) — links
-// are plain next/link anchors, CTAs are the custom `.btn` system (no shadcn
-// primitives on the public surface).
+// Page links carried by the header (routes exist as stubs; real pages later).
+const NAV_LINKS = [
+  { href: '/faq', label: 'FAQ' },
+  { href: '/about', label: 'About' },
+  { href: '/contact', label: 'Contact' },
+  { href: '/login', label: 'Login' },
+]
+
+// Floating pill nav — detached from the top edge, centered, one line at desktop.
+// Server component: the desktop links are plain anchors and the mobile disclosure
+// is a native <details>, so there is zero client JS on the public surface.
 export function WebNav() {
   return (
-    <nav className="bar">
+    <nav className="nav" aria-label="Main">
       <div className="wrap">
-        <Link className="brand" href="/">
-          <span className="mark">J</span> JobVault
-        </Link>
-        <div className="navlinks">
-          <Link href="/#how">How it connects</Link>
-          <Link href="/#documents">Documents</Link>
-          <Link href="/#extension">Extension</Link>
-        </div>
-        <div className="navright">
-          <Link className="login" href="/login">
-            Log in
-          </Link>
-          <Link className="btn btn-primary" href="/register">
-            Start free
-          </Link>
+        <div className="nav-pill">
+          <BrandChip />
+
+          <div className="nav-links">
+            {NAV_LINKS.map((link) => (
+              <Link key={link.href} href={link.href}>
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="nav-right">
+            <Link className="btn btn-primary nav-cta" href="/register">
+              Start free
+            </Link>
+            <details className="nav-menu">
+              <summary className="nav-menu-toggle" aria-label="Menu">
+                <span className="nav-menu-bars" aria-hidden="true" />
+              </summary>
+              <div className="nav-menu-panel">
+                {NAV_LINKS.map((link) => (
+                  <Link key={link.href} href={link.href}>
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </details>
+          </div>
         </div>
       </div>
     </nav>
