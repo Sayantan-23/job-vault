@@ -342,22 +342,6 @@ h2 em {
   color: var(--ink-faint);
   margin-top: 7px;
 }
-.tap {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent-strong);
-  border: 1px solid var(--accent-soft);
-  background: var(--accent-soft);
-  border-radius: 5px;
-  padding: 2px 6px;
-  margin-top: 8px;
-}
-
 /* persona node enrichments: serif-initial monogram + neutral mono chips */
 .node .nhead {
   display: flex;
@@ -401,46 +385,37 @@ h2 em {
   padding: 2px 6px;
 }
 
-/* line bars used inside mini doc sheets */
-.lines {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
-}
-.ln {
-  height: 5px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--ink) 12%, transparent);
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.5s var(--ease);
-  transition-delay: var(--i, 0ms);
-}
-.filled .ln {
-  clip-path: inset(0 0 0 0);
-}
-.ln.accent {
-  background: var(--accent);
-}
-
-/* ---- HERO ---- */
+/* =========================================================================
+   HERO + VAULT COLLAGE
+   Split layout: copy stack (left) + a composed collage of five faithful mini
+   product surfaces (right). Radius system used across the mini surfaces:
+   14px popup / 12px cards / 8-9px inner cards + buttons / ~4px paper sheets;
+   badge + pill = 999px. Geometry (position/rotate/scale/z) lives on the
+   per-surface `.vc-*` classes; only the load-stagger `--d` is set inline.
+   ========================================================================= */
 .hero {
-  padding: 64px 0 40px;
+  min-height: calc(100dvh - 76px); /* 76px ~ the sticky pill nav footprint */
+  display: flex;
+  align-items: center;
+  padding: 40px 0;
 }
 .hero .wrap {
   display: grid;
-  grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
   gap: 40px;
   align-items: center;
 }
 .hero h1 {
   font-size: clamp(2.7rem, 4.4vw, 3.8rem);
-  line-height: 1;
+  /* italic accent line needs descender clearance: >=1.1 leading + a little
+     bottom padding so the "whole search." tails never clip. */
+  line-height: 1.1;
   letter-spacing: -0.03em;
-  margin-top: 20px;
   text-wrap: balance;
 }
 .hero h1 em {
+  display: inline-block;
+  padding-bottom: 0.06em;
   /* the italic line reads a touch tighter/optically-larger than the roman line */
   letter-spacing: -0.026em;
 }
@@ -457,123 +432,540 @@ h2 em {
   margin-top: 28px;
 }
 
-.stage {
+/* ---- collage container (desktop: absolutely-composed) ---- */
+.vault-collage {
   position: relative;
-  width: 600px;
+  width: 640px;
+  height: 520px;
   max-width: 100%;
-  height: 482px;
-  margin-left: auto;
+  justify-self: end;
 }
-.stage .node,
-.stage .sheetgroup,
-.stage .pipe {
+.vc-item {
+  position: absolute;
+  opacity: 0;
+  animation: vc-rise 0.72s var(--ease) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes vc-rise {
+  from {
+    opacity: 0;
+    translate: 0 22px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+/* Graded depth back -> front: letter, résumé, board, phone, popup. The phone
+   sits in FRONT of the résumé/board so its screen rows and the "in
+   development" tag never clip mid-word behind another surface (a truncated
+   word reads as a bug, not depth). Rotations held between -5deg and 4deg. */
+.vc-letter {
+  left: 214px;
+  top: 166px;
   z-index: 2;
+  rotate: -5deg;
+}
+.vc-resume {
+  left: 300px;
+  top: 4px;
+  z-index: 3;
+  rotate: 3deg;
+}
+.vc-board {
+  left: 352px;
+  top: 336px;
+  z-index: 4;
+  rotate: 2deg;
+}
+.vc-phone {
+  left: 464px;
+  top: 10px;
+  z-index: 5;
+  rotate: 4deg;
+  scale: 0.97;
+}
+.vc-popup {
+  left: 0;
+  top: 40px;
+  z-index: 6;
+  rotate: -4deg;
 }
 
-/* mini document sheets in hero */
-.sheetgroup {
+/* ---- floating stat badges ---- */
+.vc-badge {
   position: absolute;
-}
-.sheet {
-  position: absolute;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  border-radius: 6px;
-  box-shadow: 0 14px 30px -22px oklch(0.3 0.02 60 / 0.5);
-  padding: 13px 13px 15px;
-}
-.sheet .shead {
-  display: flex;
+  z-index: 7;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-}
-.sheet .stype {
+  gap: 7px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-}
-.sheet .sdate {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ink-faint);
-}
-.sheet .sname {
-  font-family: var(--font-serif);
-  font-size: 14px;
-  margin-top: 6px;
-}
-.sheet .sctx {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ink-faint);
-  margin-top: 2px;
-}
-
-/* mini pipeline node in hero */
-.pipe {
-  position: absolute;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  border-radius: 11px;
-  overflow: hidden;
-}
-.pipe .ptop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 11px;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-.pipe .ptop .pname {
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 11px;
   color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px -14px oklch(0.3 0.02 60 / 0.42);
+  opacity: 0;
+  /* rise once, then bob forever; the bob is delayed until after the entrance
+     so the badge only starts floating once it has settled. */
+  animation-name: vc-rise, vc-bob;
+  animation-duration: 0.6s, var(--bob, 7s);
+  animation-timing-function: var(--ease), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: forwards, none;
+  animation-delay: var(--d, 0ms), calc(var(--d, 0ms) + 0.6s);
 }
-.pipe .ptop .pcount {
+@keyframes vc-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+.vc-badge-a {
+  left: 402px;
+  top: -14px;
+}
+.vc-badge-b {
+  left: 118px;
+  top: 406px;
+}
+.vc-badge-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.vc-dot-fresh {
+  background: var(--fresh);
+}
+.vc-dot-cold {
+  background: var(--cold);
+}
+
+/* ---- shared mini-surface bits ---- */
+.mini-bar {
+  height: 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+  margin-bottom: 5px;
+}
+.mini-w95 {
+  width: 95%;
+}
+.mini-w88 {
+  width: 88%;
+}
+.mini-w80 {
+  width: 80%;
+}
+.mini-w70 {
+  width: 70%;
+}
+.mini-w60 {
+  width: 60%;
+}
+
+/* ---- mini: board column ---- */
+.mini-board {
+  width: 236px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 12px 11px;
+  box-shadow: 0 18px 40px -28px oklch(0.3 0.02 60 / 0.4);
+}
+.mini-board-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.mini-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+.mini-board-count {
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--ink-faint);
+  margin-left: auto;
 }
-.pipe .pcards {
-  padding: 9px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.pcard {
+.mini-jcard {
   border: 1px solid var(--hairline);
   border-radius: 8px;
-  padding: 8px 9px;
   background: var(--surface);
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 0.4s var(--ease),
-    transform 0.4s var(--ease);
+  padding: 9px 10px;
 }
-.dropped .pcard {
-  opacity: 1;
-  transform: none;
+.mini-jcard + .mini-jcard {
+  margin-top: 8px;
 }
-.pcard .prole {
-  font-size: 12px;
+.mini-jtitle {
+  font-size: 12.5px;
   font-weight: 500;
+  color: var(--ink);
 }
-.pcard .pco {
-  font-size: 10.5px;
+.mini-jmeta {
+  font-size: 11px;
   color: var(--ink-faint);
+  margin-top: 2px;
 }
-.pcard .ptick {
+.mini-ghost {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 7px;
+  gap: 5px;
+  margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: 9.5px;
+  font-size: 10.5px;
+}
+.mini-ghost svg {
+  width: 12px;
+  height: 12px;
+}
+.mini-ghost-fresh {
+  color: var(--fresh);
+}
+.mini-ghost-stale {
+  color: var(--cool);
+}
+
+/* ---- mini: extension popup ---- */
+.mini-popup {
+  width: 232px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -28px oklch(0.3 0.02 60 / 0.45);
+}
+.mini-popup-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.mini-popup-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.mini-popup-mark svg {
+  width: 12px;
+  height: 12px;
+}
+.mini-popup-brand {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mini-popup-gear {
+  width: 15px;
+  height: 15px;
+  margin-left: auto;
   color: var(--ink-faint);
 }
+.mini-popup-body {
+  padding: 13px 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mini-popup-src {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mini-popup-srclabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.mini-popup-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.mini-popup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-popup-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.mini-popup-v {
+  font-size: 12px;
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 6px 8px;
+}
+.mini-popup-btn {
+  margin-top: 2px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 9px;
+  padding: 8px;
+}
+
+/* ---- mini: résumé sheet ---- */
+.mini-resume {
+  width: 216px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 24px 50px -34px oklch(0.3 0.02 60 / 0.5);
+}
+.mini-resume-name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+}
+.mini-resume-contact {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-align: center;
+  color: var(--ink-faint);
+  margin-top: 4px;
+}
+.mini-resume-sec {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--accent);
+  padding-bottom: 3px;
+  margin: 14px 0 8px;
+}
+.mini-resume-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 7px;
+}
+.mini-resume-co {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mini-resume-date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+/* ---- mini: cover letter sheet ---- */
+.mini-letter {
+  width: 196px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 24px 50px -34px oklch(0.3 0.02 60 / 0.5);
+}
+.mini-letter-from {
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.mini-letter-greet {
+  font-size: 11px;
+  color: var(--ink);
+  margin: 14px 0 10px;
+}
+.mini-letter-para {
+  margin-bottom: 10px;
+}
+.mini-letter-sign {
+  font-size: 11px;
+  color: var(--ink);
+  margin-top: 6px;
+}
+.mini-letter-name {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--ink);
+  margin-top: 3px;
+}
+
+/* ---- mini: phone frame (mobile teaser) ---- */
+.mini-phone {
+  position: relative;
+  width: 172px;
+  height: 344px;
+  border: 1px solid var(--hairline);
+  border-radius: 28px;
+  background: var(--surface);
+  padding: 8px;
+  box-shadow: 0 26px 55px -34px oklch(0.3 0.02 60 / 0.5);
+}
+.mini-phone-bezel {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mini-phone-speaker {
+  width: 34px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ink);
+  opacity: 0.5;
+}
+.mini-phone-screen {
+  height: calc(100% - 28px);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 18px;
+  background: var(--surface-2);
+  padding: 12px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.mini-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  padding: 9px 10px;
+}
+.mini-phone-title {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mini-phone-chip {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.mini-phone-tag {
+  position: absolute;
+  left: 50%;
+  bottom: -12px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+/* ---- collage: intermediate scale so the right surfaces don't clip before
+   the split collapses ---- */
+@media (min-width: 981px) and (max-width: 1200px) {
+  .vault-collage {
+    scale: 0.86;
+    transform-origin: top right;
+  }
+}
+
+/* ---- collage: <=980px the split stacks; collage reflows to a centered
+   column of the three anchor surfaces (popup / résumé / board) ---- */
+@media (max-width: 980px) {
+  .hero {
+    min-height: 0;
+    display: block;
+    padding: 104px 0 64px;
+  }
+  .hero .deck {
+    max-width: none;
+  }
+  .hero .cta {
+    flex-wrap: wrap;
+  }
+  .vault-collage {
+    width: 100%;
+    max-width: 340px;
+    height: auto;
+    margin: 28px auto 0;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+  .vc-item {
+    position: relative;
+    left: auto;
+    top: auto;
+    rotate: 0deg;
+    scale: 1;
+  }
+  .vc-phone,
+  .vc-letter {
+    display: none;
+  }
+  .vc-badge-a {
+    left: auto;
+    right: -6px;
+    top: 6px;
+  }
+  .vc-badge-b {
+    left: -6px;
+    top: auto;
+    bottom: 36px;
+  }
+}
+@media (max-width: 720px) {
+  .vc-badge {
+    display: none;
+  }
+}
+@media (max-width: 560px) {
+  .vc-board {
+    display: none;
+  }
+}
+
 .fdot {
   width: 6px;
   height: 6px;
@@ -1697,23 +2089,12 @@ section {
   transform: none;
 }
 
-@media (max-width: 1080px) {
-  .stage {
-    transform: scale(0.82);
-    transform-origin: top right;
-  }
-}
 @media (max-width: 940px) {
-  .hero .wrap,
   .capture .wrap,
   .docs .wrap,
   .band-dark .wrap {
     grid-template-columns: 1fr;
     gap: 40px;
-  }
-  .stage {
-    transform: none;
-    margin: 0 auto;
   }
 
   /* Personas fork: node above, rows below. */
@@ -1723,72 +2104,6 @@ section {
   }
   .frow {
     padding-left: 20px;
-  }
-}
-
-/* ---- MOBILE HERO: stacked stage ----
-   Below 720px the desktop's 600px absolutely-positioned stage would blow the
-   single-column grid track past the viewport. Reflow the cards into a real,
-   full-width vertical stack in product order (Persona -> Job -> Docs -> Pipe).
-   The prototype px offsets live inline (left/top/width), so `!important` is
-   needed to release them back to normal flow here. */
-@media (max-width: 720px) {
-  /* copy: a normal single-column block that wraps within the viewport */
-  .hero .deck {
-    max-width: none;
-  }
-  .hero .cta {
-    flex-wrap: wrap;
-  }
-
-  .stage {
-    position: relative;
-    width: 100%;
-    max-width: 400px;
-    height: auto;
-    margin: 0 auto;
-    transform: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 30px;
-    padding: 6px 0 10px;
-  }
-  .stage .node,
-  .stage .sheetgroup,
-  .stage .pipe {
-    position: static !important;
-    left: auto !important;
-    top: auto !important;
-  }
-  .stage .node,
-  .stage .pipe {
-    width: 100% !important;
-    max-width: 300px;
-  }
-  /* the résumé + cover pair: un-stack the rotated overlap into a clean 2-up row */
-  .stage .sheetgroup {
-    width: 100% !important;
-    max-width: 320px;
-    height: auto !important;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    align-items: start;
-  }
-  .stage .sheet {
-    position: relative !important;
-    left: auto !important;
-    top: auto !important;
-    width: auto !important;
-    height: auto !important;
-    transform: none !important;
-  }
-  .stage .sheet.resume {
-    order: 0;
-  }
-  .stage .sheet.cover {
-    order: 1;
   }
 }
 
@@ -1836,20 +2151,16 @@ section {
   .cap::after {
     transform: none;
   }
-  /* The line bars (hero mini-sheets + résumé) and the Applied pipeline card only
-     reach their visible state when JS adds `.filled`/`.dropped`; force the final
-     state so the sheets and card aren't blank/invisible with scripting off. */
-  .ln,
+  /* The document line bars only reach their visible state when JS adds
+     `.filled`; force the final state so the sheets aren't blank with scripting
+     off. (The hero collage runs on pure-CSS animations, so it needs no fallback
+     here — the animations play without JS.) */
   .docline,
   .refine.repl {
     clip-path: inset(0 0 0 0);
   }
   .refine s::after {
     transform: scaleX(1);
-  }
-  .pcard {
-    opacity: 1;
-    transform: none;
   }
 }
 
@@ -1865,13 +2176,20 @@ section {
     opacity: 1 !important;
     transform: none !important;
   }
+  /* Hero collage: settle every surface + badge into the final state, no rise or
+     bob (rotate/scale are static tilt, so they stay). */
+  .vc-item,
+  .vc-badge {
+    animation: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
   /* The FAQ marker toggles its rotate/color with no transition. */
   .faq-mark,
   .faq-mark::before,
   .faq-mark::after {
     transition: none !important;
   }
-  .ln,
   .docline,
   .refine.repl {
     transition: none !important;
@@ -1881,7 +2199,6 @@ section {
     transition: none !important;
     transform: scaleX(1) !important;
   }
-  .pcard,
   .stamp {
     transition: none !important;
   }
