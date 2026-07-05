@@ -1329,20 +1329,6 @@ section {
   padding-left: 30px;
   margin-top: 40px;
 }
-.rail {
-  position: absolute;
-  left: 6px;
-  top: 8px;
-  bottom: 8px;
-  width: 1.5px;
-  background: var(--trace);
-  transform-origin: top;
-  transform: scaleY(0);
-  transition: transform 1s var(--ease);
-}
-[data-shown] .rail {
-  transform: scaleY(1);
-}
 /* One continuous wire, six taps: a single column reads the "same wire" headline
    literally (every capability is a terminal on the one rail), and it removes the
    old two-column layout's floating, unconnected junction dots. */
@@ -1358,6 +1344,8 @@ section {
   padding: 20px 2px;
   border-top: 1px solid var(--hairline);
   position: relative;
+  color: inherit;
+  text-decoration: none;
 }
 .cap:last-child {
   border-bottom: 1px solid var(--hairline);
@@ -1375,10 +1363,40 @@ section {
   transition:
     background 0.25s,
     border-color 0.25s;
+  z-index: 1;
 }
-.cap:hover::before {
+/* Per-row rail segment. Stacked edge-to-edge (top:0/bottom:0 with no row gaps)
+   the six segments read as one wire, but each lights independently on
+   hover/focus and staggers its reveal draw-in via the row's `--i` delay. */
+.cap::after {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 0;
+  bottom: 0;
+  width: 1.5px;
+  background: var(--trace);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition:
+    transform 0.7s var(--ease) calc(var(--i, 0) * 0.08s),
+    background 0.25s var(--ease);
+}
+[data-shown] .cap::after {
+  transform: scaleY(1);
+}
+.cap:hover::before,
+.cap:focus-visible::before {
   background: var(--accent);
   border-color: var(--accent);
+}
+.cap:hover::after,
+.cap:focus-visible::after {
+  background: var(--accent);
+}
+.cap:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
 }
 .cap .t {
   font-size: 14.5px;
@@ -1393,8 +1411,20 @@ section {
   margin-top: 3px;
 }
 .cap .d {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
   font-size: 14px;
   color: var(--ink-soft);
+}
+.cap-fact {
+  margin-left: auto;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+  color: var(--ink-faint);
+  white-space: nowrap;
 }
 @media (max-width: 760px) {
   .caps {
@@ -1699,6 +1729,9 @@ footer .copy {
     opacity: 1;
     transform: none;
   }
+  .cap::after {
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1727,7 +1760,7 @@ footer .copy {
   .stamp {
     transition: none !important;
   }
-  .rail {
+  .cap::after {
     transition: none !important;
     transform: scaleY(1) !important;
   }
