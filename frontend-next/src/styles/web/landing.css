@@ -7,6 +7,9 @@
 
 html {
   scroll-behavior: smooth;
+  /* Single vertical-rhythm knob for section padding (landing-scope only, so it
+     lives here — not theme.css). Closing keeps a larger top pad on purpose. */
+  --sec-pad: 96px;
 }
 
 /* ---- backdrop: warm drafting field (NO grid) ---- */
@@ -18,13 +21,16 @@ html {
   pointer-events: none;
 }
 .bg-baseline {
+  /* Faint drafting-paper tooth, NOT section dividers: fainter ink + wider
+     spacing so the rules never read as borders, and a tighter radial fade so
+     they die out well before the content-heavy center. */
   background-image: repeating-linear-gradient(
     to bottom,
-    color-mix(in srgb, var(--ink) 4%, transparent) 0 1px,
-    transparent 1px 122px
+    color-mix(in srgb, var(--ink) 2.5%, transparent) 0 1px,
+    transparent 1px 160px
   );
-  -webkit-mask-image: radial-gradient(150% 100% at 50% 0%, #000 36%, transparent 86%);
-  mask-image: radial-gradient(150% 100% at 50% 0%, #000 36%, transparent 86%);
+  -webkit-mask-image: radial-gradient(150% 100% at 50% 0%, #000 22%, transparent 72%);
+  mask-image: radial-gradient(150% 100% at 50% 0%, #000 22%, transparent 72%);
 }
 .bg-noise {
   opacity: 0.022;
@@ -337,7 +343,7 @@ nav.bar {
 
 /* ---- HERO ---- */
 .hero {
-  padding: 64px 0 56px;
+  padding: 64px 0 40px;
 }
 .hero .wrap {
   display: grid;
@@ -527,7 +533,7 @@ nav.bar {
 
 /* ---- generic section ---- */
 section {
-  padding: 96px 0;
+  padding: var(--sec-pad) 0;
   position: relative;
 }
 .sec-head {
@@ -631,7 +637,9 @@ section {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 22px;
+  /* Tuck the source pills right under the popup so the two read as one composed
+     unit (was 22px, which orphaned the row). */
+  margin-top: 16px;
 }
 .pill {
   font-family: var(--font-mono);
