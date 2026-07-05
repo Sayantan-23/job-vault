@@ -739,6 +739,110 @@ h2 em {
   padding: 8px;
 }
 
+/* Full-size popup (capture section): the same markup at the real 360px / 14px
+   spec — h-10 fields, p-5 body, larger wordmark. */
+.mini-popup--full {
+  width: 360px;
+  max-width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 20px 46px -32px oklch(0.3 0.02 60 / 0.4);
+}
+.mini-popup--full .mini-popup-bar {
+  gap: 9px;
+  padding: 13px 18px;
+}
+.mini-popup--full .mini-popup-brand {
+  font-size: 16px;
+}
+.mini-popup--full .mini-popup-gear {
+  width: 17px;
+  height: 17px;
+}
+.mini-popup--full .mini-popup-body {
+  padding: 20px;
+  gap: 16px;
+}
+.mini-popup--full .mini-popup-srclabel {
+  font-size: 11px;
+}
+.mini-popup--full .mini-popup-pill {
+  font-size: 11px;
+  padding: 3px 11px;
+}
+.mini-popup--full .mini-popup-field {
+  gap: 6px;
+}
+.mini-popup--full .mini-popup-k {
+  font-size: 11px;
+}
+.mini-popup--full .mini-popup-v {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  font-size: 13.5px;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+.mini-popup--full .mini-popup-btn {
+  margin-top: 4px;
+  font-size: 13.5px;
+  border-radius: 10px;
+  padding: 11px;
+}
+
+/* Success view: centered green check, serif confirmation, saved job, actions. */
+.mini-popup-success {
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.mini-popup-check {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--fresh) 16%, transparent);
+  color: var(--fresh);
+}
+.mini-popup-check svg {
+  width: 24px;
+  height: 24px;
+}
+.mini-popup-done {
+  margin-top: 16px;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mini-popup-sub {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.mini-popup-sub-title {
+  color: var(--ink);
+  font-weight: 500;
+}
+.mini-popup-sub-co {
+  color: var(--ink-soft);
+}
+.mini-popup-actions {
+  margin-top: 22px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mini-popup-btn--ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+}
+
 /* ---- mini: résumé sheet ---- */
 .mini-resume {
   width: 216px;
@@ -1063,115 +1167,74 @@ section {
 /* ---- CAPTURE (extension) ---- */
 .capture .wrap {
   display: grid;
-  grid-template-columns: 1.05fr 0.95fr;
+  grid-template-columns: 0.95fr 1.05fr;
   gap: 56px;
   align-items: center;
 }
-/* Popup + pills as one grounded object: a fit-to-popup relative column that
-   carries the shared .contact shadow. */
-.cap-unit {
+/* Two-beat popup: capture + success stacked in one 360px frame. Capture is the
+   flow layer (holds the stage height); success is the centered overlay that
+   crossfades in on reveal and is the resting / reduced-motion / no-JS state. */
+.ext-stage {
   position: relative;
   width: 360px;
   max-width: 100%;
 }
-.popup {
+.ext-layer--capture {
   position: relative;
-  width: 360px;
-  max-width: 100%;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  background: var(--surface);
-  /* lighter than before: the unit's shared .contact shadow now grounds the group */
-  box-shadow: 0 16px 42px -32px oklch(0.3 0.02 60 / 0.42);
-  overflow: hidden;
+  opacity: 1;
 }
-.popup::before {
-  content: '';
+.ext-layer--success {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent-soft), transparent);
-}
-.pop-bar {
+  inset: 0;
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 10px 13px;
-  border-bottom: 1px solid var(--hairline-soft);
-  background: var(--surface-2);
+  justify-content: center;
+  opacity: 0;
 }
-.pop-bar .dots {
-  display: flex;
-  gap: 6px;
-}
-.pop-bar .dots span {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: oklch(0.87 0.004 75);
-}
-.pop-bar .ptitle {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-faint);
-}
-.pop-body {
-  padding: 14px;
-}
-.field {
-  margin-bottom: 11px;
-}
-.field .k {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-}
-.field .v {
-  font-size: 14px;
-  font-weight: 500;
-  margin-top: 3px;
-  min-height: 18px;
-}
-.pop-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 11px 14px;
-  border-top: 1px solid var(--hairline-soft);
-}
-.saved {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: var(--fresh);
-  font-weight: 500;
-}
-/* The popup footer's quiet dedupe micro-label (extracted from inline styles). */
-.pop-note {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink-faint);
-}
-.pills {
+/* Source pills tucked under the popup; forced to one line at >=720px. */
+.ext-pills {
+  margin-top: 18px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  /* Tuck the source pills tight under the popup so the two read as one composed
-     unit sharing the .cap-unit contact shadow. */
-  margin-top: 12px;
+  gap: 7px;
 }
-.pill {
+.ext-pill {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--ink-soft);
   border: 1px solid var(--hairline);
   border-radius: 20px;
-  padding: 5px 12px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+@media (min-width: 720px) {
+  .ext-pills {
+    flex-wrap: nowrap;
+  }
+}
+/* The capture -> success crossfade. Gated on the section's `data-shown` so it
+   plays once as the section reveals (~1.6s in). No timers, no JS state. */
+@keyframes ext-beat-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+}
+@keyframes ext-beat-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+[data-shown] .ext-layer--capture {
+  animation: ext-beat-out 0.5s var(--ease) 1.6s forwards;
+}
+[data-shown] .ext-layer--success {
+  animation: ext-beat-in 0.55s var(--ease) 1.65s both;
 }
 
 /* ---- PERSONAS FORK (one persona -> every tailored draft) ----
@@ -2135,6 +2198,13 @@ section {
     opacity: 1;
     transform: none;
   }
+  /* No observer fires, so the two-beat never runs: rest on the success state. */
+  .ext-layer--capture {
+    opacity: 0;
+  }
+  .ext-layer--success {
+    opacity: 1;
+  }
   /* The document line bars only reach their visible state when JS adds
      `.filled`; force the final state so the sheets aren't blank with scripting
      off. (The hero collage runs on pure-CSS animations, so it needs no fallback
@@ -2166,6 +2236,15 @@ section {
     animation: none !important;
     opacity: 1 !important;
     translate: none !important;
+  }
+  /* Capture two-beat: no crossfade — rest on the final success state. */
+  .ext-layer--capture {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+  .ext-layer--success {
+    animation: none !important;
+    opacity: 1 !important;
   }
   /* The FAQ marker toggles its rotate/color with no transition. */
   .faq-mark,
