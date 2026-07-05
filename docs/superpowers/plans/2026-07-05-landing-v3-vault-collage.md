@@ -2,7 +2,7 @@
 
 **Branch:** `landing-page-redesign` (continue on it). Commit per task, never push.
 **Mode:** Redesign-overhaul of the v2 landing. The circuit/trace concept is retired; the new cohesion model comes from the 4 reference teardowns (tasteskill.dev, floria, collectiveos, caveman.so).
-**Status:** PLANNED 2026-07-05.
+**Status:** EXECUTED 2026-07-05 (12 tasks, commits `55ddee4..3842847`; gates green incl. production Docker build).
 
 ## Owner decisions (this round)
 

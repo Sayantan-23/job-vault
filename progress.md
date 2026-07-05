@@ -10,9 +10,25 @@
 
 ---
 
-## Public Landing Redesign — "Circuit of One Search" (v1 + v2 deepening, on `landing-page-redesign`, 2026-07-05)
+## Public Landing Redesign — v3 "The Vault Collage" (on `landing-page-redesign`, 2026-07-05)
 
-> Plans: `docs/superpowers/plans/2026-06-30-public-pages-landing-redesign.md` (v1) + `2026-07-05-landing-page-deepening.md` (v2). Branch NOT yet merged.
+> Plans: `docs/superpowers/plans/2026-06-30-public-pages-landing-redesign.md` (v1) + `2026-07-05-landing-page-deepening.md` (v2) + `2026-07-05-landing-v3-vault-collage.md` (v3). Branch NOT yet merged.
+>
+> **v3 (owner-driven overhaul after the v2 browser pass):** the drawn circuit/trace concept is **retired** — cohesion now comes from the reference-teardown model (tasteskill/floria/collectiveos/caveman): one warm canvas, one dark inversion with gradient seams, one uniform IO reveal choreography, faithful real-UI mockups, giant ghost wordmark texture. No animation library (Motion/GSAP evaluated and rejected; IO + CSS suffices). Executed via opus subagents, Fable advising.
+
+- [x] v3 T1: demolition — spine, nav seed-trace, footer exit-trace, capture stubs, fork fan, converge, steps rail, hero chain choreography + dead CSS (about 1200 lines removed)
+- [x] v3 T2: floating pill nav (page links FAQ/About/Contact/Login + Start free) + light footer with giant ghost JOBVAULT wordmark, link columns, honest "iOS and Android app in development." line; shared `BrandChip`
+- [x] v3 T3: **vault-collage hero** — copy stack left, five faithful mini real-UI surfaces right (extension popup, résumé, letter, board column, phone frame + "Mobile · in development" tag) at graded depth with load stagger + floating stat badges; reusable `mini/` component family
+- [x] v3 T4: one uniform `.reveal` fade-rise + `--i` stagger across every section (bespoke v2 choreography removed)
+- [x] v3 T5: capture section — pixel-faithful 360px popup (TopBar wordmark, Captured-from badge, labeled fields, Save button; **no invented window chrome**) with a CSS-only capture→success beat; source pills one line
+- [x] v3 T6: personas — real persona-card structure (name, edit/delete icons, counts line, summary, Generate résumé) + evenly spaced borderless doc list; no drawn fan
+- [x] v3 T7: documents — true business-letter letter + single-column ATS résumé (shared mini sheets via `size` prop), TAILORED rubber stamp preserved, refine beat simplified to one CSS swap, exports row kept
+- [x] v3 T8: dark Track band = the page's single theme flip — 150px gradient seams, ghost wordmark behind the board, real GhostMeter ticks (Clock/Timer/Ghost + mono days) with company·location lines, watchline type bump, eyebrow removed
+- [x] v3 T9: capabilities section deleted (wire-era leftover); word-staggered serif interstitial "Every application, accounted for."; steps strip quieted (mono terms, hairlines between columns only); closing/FAQ verified
+- [x] v3 T10+T11: copy pre-flight (zero em/en dashes rendered, 0 eyebrows, CTA-intent lock, mid-dot ration) + responsive/reduced-motion/no-JS audit at 390/720/1024/1440 (fixed hero mobile collapse + interstitial word spacing)
+- [x] v3 T12: gates green — typecheck, lint, **539 tests**, production Docker build (`a154d47`); CDP + headless visual review
+
+### v1 + v2 history (superseded by v3)
 
 - [x] v1: full landing in `(web)/` — warm theme, `landing.css`, WebNav/WebFooter, 6 sections + trace/reveal helpers (commit `ef4f567`)
 - [x] v2 T1: dead CTAs wired (`/register`, `#extension`), eyebrows trimmed to budget (3)
