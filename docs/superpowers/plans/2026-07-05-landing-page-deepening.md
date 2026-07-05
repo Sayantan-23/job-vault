@@ -2,6 +2,7 @@
 
 **Branch:** `landing-page-redesign` (already on it). Commit per task, never push.
 **Mode:** Redesign-evolve. Direction locked (2026-06-30 plan); this finishes and deepens it.
+**Status:** EXECUTED 2026-07-05 — all 13 tasks done, gates green (typecheck, lint, 539 tests, production Docker build).
 **Copy this plan** to `docs/superpowers/plans/2026-07-05-landing-page-deepening.md` at execution start (repo convention).
 
 ## Context

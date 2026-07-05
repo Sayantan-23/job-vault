@@ -1,10 +1,31 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-06-22
+> **Last Updated**: 2026-07-05
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
 > **Design Style**: Glassmorphism (frosted glass light + matching dark theme) · Subtle animations · Nuxt UI v4
+
+---
+
+## Public Landing Redesign — "Circuit of One Search" (v1 + v2 deepening, on `landing-page-redesign`, 2026-07-05)
+
+> Plans: `docs/superpowers/plans/2026-06-30-public-pages-landing-redesign.md` (v1) + `2026-07-05-landing-page-deepening.md` (v2). Branch NOT yet merged.
+
+- [x] v1: full landing in `(web)/` — warm theme, `landing.css`, WebNav/WebFooter, 6 sections + trace/reveal helpers (commit `ef4f567`)
+- [x] v2 T1: dead CTAs wired (`/register`, `#extension`), eyebrows trimmed to budget (3)
+- [x] v2 T2: rhythm pass — quieter baseline (2.5%/160px), `--sec-pad`, composed sections
+- [x] v2 T3: hero chain recomposed — tighter geometry, 2px wires, fanned sheets, docked Applied card, enriched nodes
+- [x] v2 T4: rubber-stamp TAILORED (turbulence erosion + pressure mask + bleed), refine demo (Humanize chip → strikethrough → replacement), exports row (PDF / LaTeX / Overleaf)
+- [x] v2 T5: capture popup+pills as one unit with spine stub junctions
+- [x] v2 T6: NEW personas fork section — persona node fans into 4 tailored-doc rows
+- [x] v2 T7: dark band deepened — full board, freshness legend, watchline timeline strip (5 dated events, pulsing ghost alert)
+- [x] v2 T8: capabilities as interactive wiring legend — per-row rail segments, honest mono facts, anchor links
+- [x] v2 T9: how-it-works strip (Capture / Generate / Track terminals on one rail)
+- [x] v2 T10: inline FAQ (4 native details/summary, honest answers, no /faq link)
+- [x] v2 T11: **the connective spine** — one full-page wire threading every section, ink segment through the dark band, 7 junctions; nav seed-trace + footer exit-trace
+- [x] v2 T12: mobile (390/720/940) + reduced-motion + no-JS + copy + a11y audit pass
+- [x] v2 T13: gates green — typecheck, lint, **539 tests**, production Docker build; CDP-scrolled visual verification
 
 ---
 
