@@ -728,6 +728,81 @@ section {
   padding: 5px 12px;
 }
 
+/* ---- PERSONAS FORK (one persona -> every tailored draft) ----
+   Head stacked on top, then a two-column schematic: the persona node (~0.4fr)
+   fans through one code-built SVG into the generated doc rows (~0.6fr). */
+#personas .sec-head {
+  margin-bottom: 42px;
+}
+.fork-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 0.4fr 0.6fr;
+  gap: 44px;
+  align-items: center;
+}
+/* the fan wire overlays the whole stage, threaded behind the cards/rows */
+.fork-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  overflow: visible;
+}
+/* release the .node absolute default back into the grid cell */
+.fork-node {
+  position: relative;
+  z-index: 2;
+  justify-self: start;
+  width: 190px;
+}
+.fork-rows {
+  position: relative;
+  z-index: 2;
+}
+.frow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  /* left inset leaves room for the incoming trace + its junction dot */
+  padding: 14px 0 14px 26px;
+  /* rows fade in top-to-bottom on reveal; --i is the per-row stagger */
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease);
+  transition-delay: var(--i, 0ms);
+}
+.fork-stage[data-shown] .frow {
+  opacity: 1;
+  transform: none;
+}
+/* sparse hairlines: dividers between rows only, never a top+bottom cage */
+.frow + .frow {
+  border-top: 1px solid var(--hairline-soft);
+}
+.fr-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.2;
+}
+.fr-ctx {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  margin-top: 5px;
+}
+.fr-date {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
 /* ---- DOCUMENTS (real type-set sheets) ---- */
 .docs {
   position: relative;
@@ -1358,6 +1433,39 @@ footer .copy {
   .cap-stub {
     display: none;
   }
+
+  /* Personas fork: node above, rows below. The horizontal fan only reads across
+     two columns, so drop it and let a static left rail with junction dots carry
+     the node -> rows relationship (metaphor survives, nothing overflows). */
+  .fork-stage {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .fork-wires {
+    display: none;
+  }
+  .fork-rows {
+    border-left: 1px solid var(--hairline);
+  }
+  .frow {
+    position: relative;
+    padding-left: 20px;
+  }
+  .frow::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 22px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1.5px solid var(--trace);
+  }
+  .fork-stage[data-shown] .frow::before {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
 }
 
 /* ---- MOBILE HERO: stacked vertical signal chain (decision #5) ----
@@ -1472,7 +1580,8 @@ footer .copy {
    fires, so force the settled visible state (reduced-motion is already handled
    below with its own forced final state). */
 @media (scripting: none) {
-  .reveal {
+  .reveal,
+  .frow {
     opacity: 1;
     transform: none;
   }
@@ -1483,7 +1592,8 @@ footer .copy {
     scroll-behavior: auto;
   }
   .intro,
-  .reveal {
+  .reveal,
+  .frow {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;

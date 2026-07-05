@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Hero } from '@/components/web/landing/hero'
 import { CaptureSection } from '@/components/web/landing/capture-section'
+import { ForkSection } from '@/components/web/landing/fork-section'
 import { DocumentsSection } from '@/components/web/landing/documents-section'
 import { PipelineSection } from '@/components/web/landing/pipeline-section'
 import { CapabilitiesSection } from '@/components/web/landing/capabilities-section'
@@ -21,6 +22,7 @@ export default function LandingPage() {
     <>
       <Hero />
       <CaptureSection />
+      <ForkSection />
       <DocumentsSection />
       <PipelineSection />
       <CapabilitiesSection />
