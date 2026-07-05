@@ -157,7 +157,7 @@ export function DocumentsSection() {
             <div className="seph">Experience</div>
             <div className="row">
               <span className="role">Senior Product Manager</span>
-              <span className="when">2021–now</span>
+              <span className="when">2021-now</span>
             </div>
             <div className="biz">Brico · payments platform</div>
             <div className="docline" style={cssVars({ '--i': '80ms' })} />

@@ -1990,6 +1990,21 @@ footer .copy {
   .cap::after {
     transform: none;
   }
+  /* The line bars (hero mini-sheets + résumé) and the Applied pipeline card only
+     reach their visible state when JS adds `.filled`/`.dropped`; force the final
+     state so the sheets and card aren't blank/invisible with scripting off. */
+  .ln,
+  .docline,
+  .refine.repl {
+    clip-path: inset(0 0 0 0);
+  }
+  .refine s::after {
+    transform: scaleX(1);
+  }
+  .pcard {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2023,7 +2038,9 @@ footer .copy {
     transform: scaleX(1) !important;
   }
   .pcard,
-  .stamp {
+  .stamp,
+  .trace-live,
+  .energized .trace-live {
     transition: none !important;
   }
   /* The spine lands lit instantly (spine.tsx settles every segment on build). */
