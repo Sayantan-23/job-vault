@@ -84,7 +84,6 @@ export function CaptureSection() {
           </div>
         </div>
         <div className="sec-head reveal" ref={head.ref} style={headStyle}>
-          <span className="eyebrow">The entry point</span>
           <h2>
             Save any posting in <em>one click</em>.
           </h2>

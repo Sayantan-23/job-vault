@@ -42,7 +42,6 @@ export function DocumentsSection() {
     <section className="docs" id="documents">
       <div className="wrap">
         <div className="sec-head reveal" ref={head.ref}>
-          <span className="eyebrow">The signature output</span>
           <h2>
             Drafts that read like <em>you wrote them</em>.
           </h2>

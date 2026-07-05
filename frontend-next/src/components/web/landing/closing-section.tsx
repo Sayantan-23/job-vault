@@ -140,7 +140,7 @@ export function ClosingSection() {
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </Link>
-          <a className="btn btn-ghost" href="#">
+          <a className="btn btn-ghost" href="#extension">
             Add to Chrome
           </a>
         </div>

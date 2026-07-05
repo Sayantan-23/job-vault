@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, type CSSProperties } from 'react'
+import Link from 'next/link'
 import { anchor, ns, orth, orthV, type Side } from '@/components/web/landing/trace'
 import { prefersReducedMotion } from '@/components/web/landing/use-reveal'
 
@@ -234,7 +235,7 @@ export function Hero() {
             and watched so nothing goes cold.
           </p>
           <div className="cta intro" style={cssVars({ '--d': '280ms' })}>
-            <a className="btn btn-primary" href="#">
+            <Link className="btn btn-primary" href="/register">
               Start free
               <svg
                 viewBox="0 0 24 24"
@@ -247,7 +248,7 @@ export function Hero() {
               >
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
-            </a>
+            </Link>
             <a className="btn btn-ghost" href="#documents">
               See the documents
             </a>
