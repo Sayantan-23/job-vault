@@ -19,20 +19,39 @@ export function CaptureSection() {
   // rule only bans assertions on object literals, not on a named const).
   const headVars = { '--rd': '80ms' }
   const headStyle = headVars as CSSProperties
-  // The prototype's inline "no duplicate" micro-label has no landing.css class,
-  // so its mono/size/color tokens stay inline (named-const cast, same rule).
-  const noDuplicateVars = {
-    fontFamily: 'var(--font-mono)',
-    fontSize: '10px',
-    color: 'var(--ink-faint)',
-  }
-  const noDuplicateStyle = noDuplicateVars as CSSProperties
 
   return (
     <section className="capture" id="extension">
       <div className="wrap">
         <div className="cap-visual reveal" ref={visual.ref}>
-          <div className="popup">
+          {/* Popup + source pills compose as one grounded object: pills tucked
+              tight beneath, a single soft .contact shadow under the whole unit,
+              and two static trace stubs threading it into the page circuit
+              (spine picks these up in T11). Stubs hidden below 940px. */}
+          <div className="cap-unit">
+            <svg
+              className="cap-stub cap-stub-l"
+              viewBox="0 0 84 20"
+              width="84"
+              height="20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path className="trace-faint" d="M0 10 H74" />
+              <circle className="junction" cx="77" cy="10" r="3.5" />
+            </svg>
+            <svg
+              className="cap-stub cap-stub-r"
+              viewBox="0 0 96 20"
+              width="96"
+              height="20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle className="junction" cx="7" cy="10" r="3.5" />
+              <path className="trace-faint" d="M10 10 H96" />
+            </svg>
+            <div className="popup">
             <div className="pop-bar">
               <span className="dots">
                 <span />
@@ -72,15 +91,17 @@ export function CaptureSection() {
                 </svg>
                 Saved to Wishlist
               </span>
-              <span style={noDuplicateStyle}>no duplicate</span>
+              <span className="pop-note">no duplicate</span>
             </div>
           </div>
-          <div className="pills">
-            <span className="pill">LinkedIn</span>
-            <span className="pill">Indeed</span>
-            <span className="pill">Naukri</span>
-            <span className="pill">Greenhouse</span>
-            <span className="pill">+ any site</span>
+            <div className="pills">
+              <span className="pill">LinkedIn</span>
+              <span className="pill">Indeed</span>
+              <span className="pill">Naukri</span>
+              <span className="pill">Greenhouse</span>
+              <span className="pill">+ any site</span>
+            </div>
+            <div className="contact" aria-hidden="true" />
           </div>
         </div>
         <div className="sec-head reveal" ref={head.ref} style={headStyle}>

@@ -607,6 +607,27 @@ section {
   gap: 56px;
   align-items: center;
 }
+/* Popup + pills as one grounded object: a fit-to-popup relative column that
+   carries the shared .contact shadow and hosts the two circuit stubs. */
+.cap-unit {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+}
+/* Static hairline stubs entering the popup's left-middle and exiting its
+   right-middle, each ending in a junction dot on the popup border. Predictable
+   anchor points for the future full-page spine (T11). */
+.cap-stub {
+  position: absolute;
+  top: 110px;
+  pointer-events: none;
+}
+.cap-stub-l {
+  right: 100%;
+}
+.cap-stub-r {
+  left: 100%;
+}
 .popup {
   position: relative;
   width: 360px;
@@ -614,7 +635,8 @@ section {
   border: 1px solid var(--hairline);
   border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 24px 60px -36px oklch(0.3 0.02 60 / 0.5);
+  /* lighter than before: the unit's shared .contact shadow now grounds the group */
+  box-shadow: 0 16px 42px -32px oklch(0.3 0.02 60 / 0.42);
   overflow: hidden;
 }
 .popup::before {
@@ -683,13 +705,19 @@ section {
   color: var(--fresh);
   font-weight: 500;
 }
+/* The popup footer's quiet dedupe micro-label (extracted from inline styles). */
+.pop-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+}
 .pills {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  /* Tuck the source pills right under the popup so the two read as one composed
-     unit (was 22px, which orphaned the row). */
-  margin-top: 16px;
+  /* Tuck the source pills tight under the popup so the two read as one composed
+     unit sharing the .cap-unit contact shadow. */
+  margin-top: 12px;
 }
 .pill {
   font-family: var(--font-mono);
@@ -1324,6 +1352,11 @@ footer .copy {
   .stage {
     transform: none;
     margin: 0 auto;
+  }
+  /* Stacked single column: the horizontal stubs would float off the centered
+     popup, so drop them. */
+  .cap-stub {
+    display: none;
   }
 }
 
