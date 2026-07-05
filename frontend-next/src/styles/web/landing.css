@@ -298,19 +298,6 @@ h2 em {
   }
 }
 
-/* contact shadow for floating node groups */
-.contact {
-  position: absolute;
-  left: 50%;
-  bottom: -16px;
-  width: 78%;
-  height: 26px;
-  transform: translateX(-50%);
-  background: radial-gradient(closest-side, oklch(0.3 0.02 60 / 0.16), transparent 72%);
-  filter: blur(3px);
-  pointer-events: none;
-}
-
 /* =========================================================================
    HERO + VAULT COLLAGE
    Split layout: copy stack (left) + a composed collage of five faithful mini
@@ -819,6 +806,121 @@ h2 em {
   color: var(--ink-faint);
 }
 
+/* ---- résumé sheet: full (documents section) ----
+   Reads as a real single-column ATS résumé: wider paper, letter-like type, a
+   role line + • bullets, a one-line Skills row, and the tailoring theater (the
+   refine swap + the stamp), positioned relative for the absolute stamp. */
+.mini-resume--full {
+  position: relative;
+  width: 340px;
+  border-radius: 4px;
+  padding: 30px 30px 34px;
+}
+.mini-resume--full .mini-resume-name {
+  font-size: 22px;
+}
+.mini-resume--full .mini-resume-contact {
+  font-size: 10px;
+  margin-top: 6px;
+}
+.mini-resume--full .mini-resume-sec {
+  font-size: 11px;
+  margin: 18px 0 9px;
+}
+.mini-resume--full .mini-resume-co {
+  font-size: 13px;
+}
+.mini-resume--full .mini-resume-date {
+  font-size: 10px;
+}
+.mini-resume--full .mini-bar {
+  height: 5px;
+  margin-bottom: 6px;
+}
+.mini-resume-role {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 2px 0 8px;
+}
+.mini-resume-bullet {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.mini-resume-bullet .mini-bar {
+  flex: 1;
+  margin-bottom: 0;
+}
+.mini-resume-dot {
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1;
+  flex: none;
+}
+.mini-resume-skills {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.mini-resume-skills .mini-bar {
+  flex: 1;
+  margin-bottom: 0;
+}
+.mini-resume-skilllabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: none;
+}
+
+/* The refine beat: one bullet's weak line is struck and swapped for the sharper
+   one. Old + new occupy the same grid cell and crossfade. Base = old shown; the
+   swap plays once when a `[data-shown]` ancestor (the stage) reveals. */
+.mini-refine-swap {
+  display: inline-grid;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.mini-refine-old,
+.mini-refine-new {
+  grid-area: 1 / 1;
+}
+.mini-refine-old {
+  position: relative;
+  color: var(--ink-faint);
+}
+.mini-refine-old::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 1.5px;
+  background: var(--vermilion);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease);
+}
+.mini-refine-new {
+  color: var(--accent-strong);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+}
+[data-shown] .mini-refine-old::after {
+  transform: scaleX(1);
+  transition-delay: 1.2s;
+}
+[data-shown] .mini-refine-old {
+  opacity: 0;
+  transition: opacity 0.4s var(--ease) 1.75s;
+}
+[data-shown] .mini-refine-new {
+  opacity: 1;
+  transition-delay: 1.75s;
+}
+
 /* ---- mini: cover letter sheet ---- */
 .mini-letter {
   width: 196px;
@@ -851,6 +953,42 @@ h2 em {
   font-size: 13px;
   color: var(--ink);
   margin-top: 3px;
+}
+
+/* ---- cover letter sheet: full (documents section) ----
+   Reads as a real business letter: wider paper, letter-like type, and a real
+   opening sentence before the grey bars stand in for the rest. */
+.mini-letter--full {
+  width: 300px;
+  border-radius: 4px;
+  padding: 32px 30px 34px;
+}
+.mini-letter--full .mini-letter-from {
+  font-size: 11px;
+}
+.mini-letter--full .mini-letter-greet {
+  font-size: 13px;
+  margin: 20px 0 14px;
+}
+.mini-letter--full .mini-letter-para {
+  margin-bottom: 14px;
+}
+.mini-letter--full .mini-bar {
+  height: 5px;
+  margin-bottom: 6px;
+}
+.mini-letter-lead {
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.mini-letter--full .mini-letter-sign {
+  font-size: 13px;
+  margin-top: 10px;
+}
+.mini-letter--full .mini-letter-name {
+  font-size: 15px;
 }
 
 /* ---- mini: phone frame (mobile teaser) ---- */
@@ -1276,192 +1414,59 @@ section {
 }
 
 /* ---- DOCUMENTS (real type-set sheets) ---- */
+/* Stacked showcase: centered head + refine chips, the two fanned sheets, then
+   the exports row beneath. The sheets are wide, so a stacked composition reads
+   better than a side-by-side split. */
 .docs {
   position: relative;
 }
 .docs .wrap {
-  display: grid;
-  grid-template-columns: 0.92fr 1.08fr;
-  gap: 56px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
 }
+.docs .sec-head {
+  max-width: 40rem;
+  text-align: center;
+}
+.docs .refine-controls {
+  justify-content: center;
+}
+/* The two sheets fanned like paper on a desk: cover letter behind-left, the
+   résumé on top-right. Sheets are absolutely positioned (their heights are
+   content-driven) so the stage carries an explicit height. */
 .docstage {
   position: relative;
-  height: 470px;
+  width: 560px;
+  max-width: 100%;
+  height: 448px;
+  margin: 6px auto 0;
 }
-.paper {
+.doc-fan {
   position: absolute;
-  background: var(--surface);
-  border: 1px solid var(--hairline);
-  box-shadow: 0 30px 70px -40px oklch(0.3 0.02 60 / 0.55);
-  border-radius: 3px;
-}
-/* Two clearly-separated tailored documents: the cover letter fans out lower-left
-   (its label + greeting stay readable), the résumé sits on top to the right. */
-.resume {
-  width: 338px;
-  height: 438px;
-  left: 176px;
   top: 0;
-  transform: rotate(1.8deg);
-  padding: 26px 26px;
-  z-index: 2;
 }
-.cover {
-  width: 300px;
-  height: 398px;
-  left: 0;
-  top: 60px;
+.doc-fan-letter {
+  left: 8px;
+  top: 34px;
   transform: rotate(-3deg);
-  padding: 22px 22px;
   z-index: 1;
 }
-/* Document-type label at the top of each sheet, so both papers are unmistakably
-   "a résumé" and "a cover letter". */
-.doctype {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--ink-faint);
-  margin-bottom: 9px;
+.doc-fan-resume {
+  left: 220px;
+  top: 0;
+  transform: rotate(2deg);
+  z-index: 2;
 }
-.paper .ctx {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  color: var(--accent-strong);
-  border: 1px solid var(--accent-soft);
-  background: var(--accent-soft);
-  border-radius: 5px;
-  padding: 3px 7px;
-  display: inline-block;
-}
-.paper .cand {
-  font-family: var(--font-serif);
-  font-size: 22px;
-  margin-top: 13px;
-}
-.paper .contact {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  color: var(--ink-faint);
-  margin-top: 5px;
-}
-.paper .seph {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ink-soft);
-  margin: 16px 0 8px;
-  padding-bottom: 5px;
-  border-bottom: 1px solid var(--hairline-soft);
-}
-.paper .row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-.paper .role {
-  font-size: 11.5px;
-  font-weight: 600;
-}
-.paper .when {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  color: var(--ink-faint);
-}
-.paper .biz {
-  font-size: 10.5px;
-  color: var(--ink-faint);
-  margin-bottom: 6px;
-}
-.docline {
-  height: 5px;
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--ink) 11%, transparent);
-  margin: 5px 0;
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.55s var(--ease);
-  transition-delay: var(--i, 0ms);
-}
-.filled .docline {
-  clip-path: inset(0 0 0 0);
-}
-.refine {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 9px 0 3px;
-}
-/* The struck line's strikethrough draws (scaleX) once the résumé is refined,
-   rather than shipping pre-struck — the native line is swapped for a pseudo-rule
-   we can animate. */
-.refine s {
-  position: relative;
-  color: var(--ink-faint);
-  text-decoration: none;
-  font-size: 11px;
-}
-.refine s::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 52%;
-  height: 1.5px;
-  background: var(--vermilion);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.5s var(--ease);
-}
-.refined .refine s::after {
-  transform: scaleX(1);
-}
-/* The replacement line + its tag wipe in on refine (clip-path, like a docline). */
-.refine.repl {
-  clip-path: inset(0 100% 0 0);
-  transition: clip-path 0.55s var(--ease);
-  transition-delay: 0.15s;
-}
-.refined .refine.repl {
-  clip-path: inset(0 0 0 0);
-}
-.refine .new {
-  color: var(--accent-strong);
-  font-size: 11px;
-  font-weight: 500;
-}
-.refine .tag {
-  font-family: var(--font-mono);
-  font-size: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ink-faint);
-  border: 1px solid var(--hairline);
-  border-radius: 4px;
-  padding: 1px 5px;
-  margin-left: auto;
-}
-.cover .ctext {
-  font-size: 11px;
-  line-height: 1.7;
-  color: var(--ink-soft);
-  margin-top: 12px;
-}
-.cover .sign {
-  font-family: var(--font-serif);
-  font-size: 16px;
-  margin-top: 14px;
-}
-/* Rectangular rubber stamp — reads "TAILORED" cleanly on one line (the old
-   circular stamp split the word into "TAILO / RED"). */
+/* Rectangular rubber stamp on the résumé — reads "TAILORED" cleanly on one line.
+   It presses in with an overshoot ~2s after the stage reveals; gated on the
+   stage's `[data-shown]`, so it plays once (no JS state). */
 .stamp {
   position: absolute;
-  right: 18px;
-  bottom: 24px;
-  width: 132px;
-  height: 52px;
+  right: 20px;
+  bottom: 22px;
+  width: 128px;
+  height: 50px;
   z-index: 3;
   transform: rotate(-8deg) scale(0.7);
   opacity: 0;
@@ -1469,9 +1474,10 @@ section {
     transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
     opacity 0.35s;
 }
-.stamped .stamp {
+[data-shown] .stamp {
   transform: rotate(-8deg) scale(1);
   opacity: 0.92;
+  transition-delay: 2.05s;
 }
 /* The stamp label must use the brand mono. next/font never registers the human
    name "Geist Mono" (only the obfuscated family reachable via the CSS var), so
@@ -1483,17 +1489,6 @@ section {
 .stamp-bleed {
   filter: blur(1px);
   opacity: 0.12;
-}
-.corner-fold {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 0 22px 22px;
-  border-color: transparent transparent var(--surface-2) transparent;
-  filter: drop-shadow(-1px -1px 1px oklch(0.3 0.02 60 / 0.12));
 }
 .refine-controls {
   display: flex;
@@ -1513,20 +1508,23 @@ section {
     border-color 0.35s var(--ease),
     background 0.35s var(--ease);
 }
-/* The chip the refine demo applies lights to the accent to show it firing. */
-.rchip.lit {
+/* The refine beat lights the "Humanize" chip as the sheets reveal — gated on
+   the stage's `[data-shown]`, in sync with the résumé's line swap. */
+[data-shown] .rchip-humanize {
   color: var(--accent-strong);
   border-color: var(--accent);
   background: var(--accent-soft);
+  transition-delay: 1.2s;
 }
 
-/* Export affordances — the same pill recipe, stated quietly under the copy. */
+/* Export affordances — the same pill recipe, stated quietly beneath the sheets. */
 .exports {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-top: 18px;
+  margin-top: 30px;
 }
 .exports .export-cap {
   font-family: var(--font-mono);
@@ -2127,7 +2125,6 @@ section {
 
 @media (max-width: 940px) {
   .capture .wrap,
-  .docs .wrap,
   .band-dark .wrap {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -2143,33 +2140,36 @@ section {
 }
 
 /* ---- MOBILE DOCUMENTS: stack the two real sheets ----
-   The big type-set sheets extend to ~410px and start clipping just under 480px.
-   Rather than scale the type down to ~8px, reflow them into two full-width
-   sheets in normal flow (résumé first), un-rotated, sized to their content. */
-@media (max-width: 480px) {
+   The full sheets fan and overlap past ~720px. Below that, reflow them into two
+   centered sheets in normal flow (résumé first, so the stamp stays visible),
+   lightly rotated. */
+@media (max-width: 720px) {
   .docstage {
+    width: 100%;
     height: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 22px;
+    gap: 26px;
   }
-  .docs .resume,
-  .docs .cover {
+  .doc-fan {
     position: relative;
     left: auto;
     top: auto;
-    transform: none;
-    width: 100%;
-    max-width: 340px;
-    height: auto;
     z-index: auto;
   }
-  .docs .resume {
+  .doc-fan-resume {
     order: 0;
+    transform: rotate(1.5deg);
   }
-  .docs .cover {
+  .doc-fan-letter {
     order: 1;
+    transform: rotate(-1.5deg);
+  }
+  .mini-resume--full,
+  .mini-letter--full {
+    width: 100%;
+    max-width: 320px;
   }
 }
 
@@ -2189,16 +2189,27 @@ section {
   .ext-layer--success {
     opacity: 1;
   }
-  /* The document line bars only reach their visible state when JS adds
-     `.filled`; force the final state so the sheets aren't blank with scripting
-     off. (The hero collage runs on pure-CSS animations, so it needs no fallback
-     here — the animations play without JS.) */
-  .docline,
-  .refine.repl {
-    clip-path: inset(0 0 0 0);
+  /* The résumé's refine swap, stamp, and lit chip all gate on `[data-shown]`,
+     which never lands without JS. Force their final refined + stamped state so
+     the sheet reads as tailored. (The hero collage runs on pure-CSS animations,
+     so it needs no fallback here.) */
+  .mini-refine-old {
+    opacity: 0;
   }
-  .refine s::after {
+  .mini-refine-old::after {
     transform: scaleX(1);
+  }
+  .mini-refine-new {
+    opacity: 1;
+  }
+  .stamp {
+    transform: rotate(-8deg) scale(1);
+    opacity: 0.92;
+  }
+  .rchip-humanize {
+    color: var(--accent-strong);
+    border-color: var(--accent);
+    background: var(--accent-soft);
   }
 }
 
@@ -2236,17 +2247,29 @@ section {
   .faq-mark::after {
     transition: none !important;
   }
-  .docline,
-  .refine.repl {
+  /* Documents: rest on the final refined + stamped state, no swap or press. */
+  .mini-refine-old {
     transition: none !important;
-    clip-path: inset(0 0 0 0) !important;
+    opacity: 0 !important;
   }
-  .refine s::after {
+  .mini-refine-old::after {
     transition: none !important;
     transform: scaleX(1) !important;
   }
+  .mini-refine-new {
+    transition: none !important;
+    opacity: 1 !important;
+  }
+  .rchip-humanize {
+    transition: none !important;
+    color: var(--accent-strong) !important;
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+  }
   .stamp {
     transition: none !important;
+    transform: rotate(-8deg) scale(1) !important;
+    opacity: 0.92 !important;
   }
   /* The stale-card freshness dot pulses infinitely once its band reveals; stop
      it and let it rest in its lit final state under reduced motion. */
