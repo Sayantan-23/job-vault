@@ -1209,6 +1209,120 @@ section {
     box-shadow: 0 0 0 5px transparent;
   }
 }
+/* Freshness legend: leads the board, decoding the ticks on each card. */
+.fresh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--on-ink-soft);
+}
+.legend-item .lg-range {
+  opacity: 0.6;
+}
+/* Timeline / reminders strip: one wire beneath the board carrying a job's life
+   from capture to follow-up. The ghost-alert dot pulses once the band reveals
+   (gated on [data-shown], like .stale-dot); the follow-up dot resolves green. */
+.watchline {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+.wl-rail {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.wl-rail::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 4px;
+  height: 1.5px;
+  background: var(--trace-ink);
+}
+.wl-event {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.wl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--on-ink-soft);
+  border: 2px solid var(--ink-bg);
+  box-sizing: content-box;
+}
+.wl-dot.lit {
+  background: var(--accent);
+}
+.wl-dot.ghost {
+  background: var(--cold);
+}
+.wl-dot.resolved {
+  background: var(--fresh);
+}
+.band-dark[data-shown] .wl-dot.ghost {
+  animation: pulse 2.2s var(--ease) infinite;
+}
+.wl-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--on-ink);
+}
+.wl-date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--on-ink-soft);
+  opacity: 0.6;
+}
+.wl-caption {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--on-ink-soft);
+}
+/* Phones: the wire turns vertical, the rail becomes a left border and events
+   stack as a list so nothing scrolls sideways. */
+@media (max-width: 720px) {
+  .wl-rail {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .wl-rail::before {
+    left: 4px;
+    right: auto;
+    top: 12px;
+    bottom: 12px;
+    height: auto;
+    width: 1.5px;
+  }
+  .wl-event {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    padding: 8px 0;
+  }
+  .wl-date {
+    margin-left: auto;
+  }
+}
 /* ---- CAPABILITIES (wiring legend) ---- */
 .caps-wrap {
   position: relative;
@@ -1619,7 +1733,8 @@ footer .copy {
   }
   /* The stale-card freshness dot pulses infinitely once its band reveals; stop
      it and let it rest in its lit final state under reduced motion. */
-  .stale-dot {
+  .stale-dot,
+  .wl-dot.ghost {
     animation: none !important;
   }
 }

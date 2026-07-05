@@ -21,12 +21,22 @@ export function PipelineSection() {
             Nothing slips, <em>nothing goes cold</em>.
           </h2>
           <p className="deck">
-            Every application lands in the pipeline carrying a freshness tick. Green while it is
-            fresh, amber as it cools, red when it has gone quiet too long, with a nudge to follow
-            up.
+            Every application carries a freshness tick, and the board tells you the moment one needs
+            a nudge.
           </p>
         </div>
         <div className="board-wrap">
+          <div className="fresh-legend">
+            <span className="legend-item">
+              <span className="fdot f" /> fresh <span className="lg-range">0-3d</span>
+            </span>
+            <span className="legend-item">
+              <span className="fdot c" /> cooling <span className="lg-range">4-9d</span>
+            </span>
+            <span className="legend-item">
+              <span className="fdot x" /> cold <span className="lg-range">10d+</span>
+            </span>
+          </div>
           <div className="board">
             <div className="col">
               <div className="col-head">
@@ -87,7 +97,7 @@ export function PipelineSection() {
             <div className="col">
               <div className="col-head">
                 <span className="name">Offer</span>
-                <span className="count">1</span>
+                <span className="count">2</span>
               </div>
               <div className="dcard">
                 <div className="role">Frontend Engineer</div>
@@ -96,8 +106,47 @@ export function PipelineSection() {
                   <span className="fdot f" /> reviewing terms
                 </div>
               </div>
+              <div className="dcard">
+                <div className="role">Staff Engineer</div>
+                <div className="co">Meridian Labs</div>
+                <div className="meta">
+                  <span className="fdot f" /> negotiating start date
+                </div>
+              </div>
             </div>
           </div>
+        </div>
+        <div className="watchline">
+          <div className="wl-rail">
+            <div className="wl-event">
+              <span className="wl-dot" />
+              <span className="wl-label">saved via extension</span>
+              <span className="wl-date">Jun 2</span>
+            </div>
+            <div className="wl-event">
+              <span className="wl-dot lit" />
+              <span className="wl-label">applied</span>
+              <span className="wl-date">Jun 3</span>
+            </div>
+            <div className="wl-event">
+              <span className="wl-dot lit" />
+              <span className="wl-label">reminder set</span>
+              <span className="wl-date">Jun 5</span>
+            </div>
+            <div className="wl-event">
+              <span className="wl-dot ghost" />
+              <span className="wl-label">quiet 14d · ghost alert</span>
+              <span className="wl-date">Jun 17</span>
+            </div>
+            <div className="wl-event">
+              <span className="wl-dot resolved" />
+              <span className="wl-label">follow-up sent</span>
+              <span className="wl-date">Jun 18</span>
+            </div>
+          </div>
+          <p className="wl-caption">
+            Every job keeps its own timeline. Reminders land in real time.
+          </p>
         </div>
       </div>
     </section>
