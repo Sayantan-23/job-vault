@@ -3,6 +3,13 @@
 import type { CSSProperties } from 'react'
 import { useReveal } from '@/components/web/landing/use-reveal'
 
+// `CSSProperties` doesn't type CSS custom properties (the `--i` reveal-stagger
+// index). Cast through a parameter (not an inline object-literal assertion) so
+// it satisfies @typescript-eslint/consistent-type-assertions.
+function cssVars<T extends Record<string, string | number>>(vars: T): CSSProperties {
+  return vars as CSSProperties
+}
+
 // CAPTURE (extension): the solder-tap browser-chrome popup auto-extracting
 // Title/Company/Location, source pills, and a quiet dedupe state ("no
 // duplicate" / Saved to Wishlist). The prototype animates this purely through
@@ -10,20 +17,12 @@ import { useReveal } from '@/components/web/landing/use-reveal'
 // stamps data-shown; landing.css owns the transition (and the complete
 // reduced-motion final state).
 export function CaptureSection() {
-  const visual = useReveal<HTMLDivElement>()
-  const head = useReveal<HTMLDivElement>()
-
-  // Reveal delay handed to landing.css via the `--rd` custom property (matches
-  // the prototype's `style="--rd:80ms"`). CSSProperties doesn't type custom
-  // props, so we widen via an identifier cast (the `consistent-type-assertions`
-  // rule only bans assertions on object literals, not on a named const).
-  const headVars = { '--rd': '80ms' }
-  const headStyle = headVars as CSSProperties
+  const { ref } = useReveal<HTMLDivElement>()
 
   return (
     <section className="capture" id="extension">
-      <div className="wrap">
-        <div className="cap-visual reveal" ref={visual.ref}>
+      <div className="wrap" ref={ref}>
+        <div className="cap-visual reveal" style={cssVars({ '--i': 0 })}>
           {/* Popup + source pills compose as one grounded object: pills tucked
               tight beneath, a single soft .contact shadow under the whole unit. */}
           <div className="cap-unit">
@@ -80,7 +79,7 @@ export function CaptureSection() {
             <div className="contact" aria-hidden="true" />
           </div>
         </div>
-        <div className="sec-head reveal" ref={head.ref} style={headStyle}>
+        <div className="sec-head reveal" style={cssVars({ '--i': 1 })}>
           <h2>
             Save any posting in <em>one click</em>.
           </h2>

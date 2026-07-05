@@ -3,9 +3,9 @@
 import { useEffect, useId, useState, type CSSProperties } from 'react'
 import { prefersReducedMotion, useReveal } from '@/components/web/landing/use-reveal'
 
-// `CSSProperties` doesn't type CSS custom properties (the `--rd`/`--i` setters
-// the prototype hands to landing.css). Cast through a parameter (not an inline
-// object-literal assertion) so it satisfies @typescript-eslint/consistent-type-assertions.
+// `CSSProperties` doesn't type CSS custom properties (the `--i` docline setters
+// handed to landing.css). Cast through a parameter (not an inline object-literal
+// assertion) so it satisfies @typescript-eslint/consistent-type-assertions.
 function cssVars<T extends Record<string, string | number>>(vars: T): CSSProperties {
   return vars as CSSProperties
 }
@@ -108,11 +108,7 @@ export function DocumentsSection() {
             </span>
           </div>
         </div>
-        <div
-          className="docstage reveal"
-          ref={stage.ref}
-          style={cssVars({ '--rd': '60ms' })}
-        >
+        <div className="docstage reveal" ref={stage.ref}>
           <div className={coverClass}>
             <div className="doctype">Cover letter</div>
             <div className="ctx">tailored to Ramp · Senior PM</div>

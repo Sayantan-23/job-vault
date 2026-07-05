@@ -1204,17 +1204,6 @@ section {
   justify-content: space-between;
   gap: 16px;
   padding: 14px 0 14px 26px;
-  /* rows fade in top-to-bottom on reveal; --i is the per-row stagger */
-  opacity: 0;
-  transform: translateY(12px);
-  transition:
-    opacity 0.6s var(--ease),
-    transform 0.6s var(--ease);
-  transition-delay: var(--i, 0ms);
-}
-.fork-stage[data-shown] .frow {
-  opacity: 1;
-  transform: none;
 }
 /* sparse hairlines: dividers between rows only, never a top+bottom cage */
 .frow + .frow {
@@ -1801,8 +1790,8 @@ section {
   z-index: 1;
 }
 /* Per-row rail segment. Stacked edge-to-edge (top:0/bottom:0 with no row gaps)
-   the six segments read as one wire, but each lights independently on
-   hover/focus and staggers its reveal draw-in via the row's `--i` delay. */
+   the six segments read as one wire; each lights independently on hover/focus.
+   The row's entrance is the uniform `.reveal` fade (rows carry `.reveal`). */
 .cap::after {
   content: '';
   position: absolute;
@@ -1811,14 +1800,7 @@ section {
   bottom: 0;
   width: 1.5px;
   background: var(--trace);
-  transform: scaleY(0);
-  transform-origin: top;
-  transition:
-    transform 0.7s var(--ease) calc(var(--i, 0) * 0.08s),
-    background 0.25s var(--ease);
-}
-[data-shown] .cap::after {
-  transform: scaleY(1);
+  transition: background 0.25s var(--ease);
 }
 .cap:hover::before,
 .cap:focus-visible::before {
@@ -2076,14 +2058,20 @@ section {
     transform: none;
   }
 }
+/* The ONE landing reveal choreography (hero excepted — it has its own load-in):
+   fade + small rise, played once when a section enters the viewport. `useReveal`
+   stamps `data-shown` on the observed wrapper; each reveal — a child under that
+   wrapper, or a self-observing element carrying its own `data-shown` — settles to
+   the final state, staggered by its `--i` index. No per-section systems. */
 .reveal {
   opacity: 0;
-  transform: translateY(22px);
+  transform: translateY(20px);
   transition:
-    opacity 0.7s var(--ease),
-    transform 0.7s var(--ease);
-  transition-delay: var(--rd, 0ms);
+    opacity 0.55s var(--ease),
+    transform 0.55s var(--ease);
+  transition-delay: calc(var(--i, 0) * 80ms);
 }
+[data-shown] .reveal,
 .reveal[data-shown] {
   opacity: 1;
   transform: none;
@@ -2143,12 +2131,8 @@ section {
    fires, so force the settled visible state (reduced-motion is already handled
    below with its own forced final state). */
 @media (scripting: none) {
-  .reveal,
-  .frow {
+  .reveal {
     opacity: 1;
-    transform: none;
-  }
-  .cap::after {
     transform: none;
   }
   /* The document line bars only reach their visible state when JS adds
@@ -2169,8 +2153,7 @@ section {
     scroll-behavior: auto;
   }
   .intro,
-  .reveal,
-  .frow {
+  .reveal {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
@@ -2201,10 +2184,6 @@ section {
   }
   .stamp {
     transition: none !important;
-  }
-  .cap::after {
-    transition: none !important;
-    transform: scaleY(1) !important;
   }
   /* The stale-card freshness dot pulses infinitely once its band reveals; stop
      it and let it rest in its lit final state under reduced motion. */

@@ -10,11 +10,10 @@ import { useReveal } from '@/components/web/landing/use-reveal'
 // fades the content in. Under reduced motion the board resolves static (CSS).
 export function PipelineSection() {
   const { ref: bandRef } = useReveal<HTMLElement>({ threshold: 0.3 })
-  const { ref: wrapRef } = useReveal<HTMLDivElement>({ threshold: 0.2 })
 
   return (
     <section ref={bandRef} className="band-dark" id="pipeline">
-      <div ref={wrapRef} className="wrap reveal">
+      <div className="wrap reveal">
         <div className="pipe-copy">
           <span className="eyebrow">The destination, watched</span>
           <h2>

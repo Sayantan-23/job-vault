@@ -8,12 +8,11 @@ import { useReveal } from '@/components/web/landing/use-reveal'
 // terminals, each row carrying a mono term and a CSS junction dot (`.cap::before`).
 // Each row also owns its own rail segment (`.cap::after`) in the left gutter:
 // hovering/focusing a row lights BOTH its dot and its segment to accent. The
-// stacked segments read as one continuous wire and stagger their draw-in on
-// reveal via a per-row `--i` delay. Rows whose section exists render as anchors
-// (`#pipeline`, `#personas`, `#documents`, `#extension`); Timeline & reminders
-// lives inside #pipeline so it stays a plain div. No imperative SVG: the reveal
-// only stamps `data-shown`, and reduced-motion is handled entirely in
-// landing.css (segments static-lit, reveals snapped to their final state).
+// stacked segments read as one continuous wire. Rows fade in on scroll via the
+// uniform `.reveal` choreography, staggered by a per-row `--i` index (the
+// `caps-wrap` observer stamps `data-shown`). Rows whose section exists render as
+// anchors (`#pipeline`, `#personas`, `#documents`, `#extension`); Timeline &
+// reminders lives inside #pipeline so it stays a plain div.
 type Cap = {
   t: string
   term: string
@@ -68,13 +67,6 @@ export function CapabilitiesSection() {
   const head = useReveal<HTMLDivElement>()
   const caps = useReveal<HTMLDivElement>()
 
-  // Reveal delay handed to landing.css via the `--rd` custom property (matches
-  // the prototype's `style="--rd:90ms"`). CSSProperties doesn't type custom
-  // props, so we widen via an identifier cast (the `consistent-type-assertions`
-  // rule only bans assertions on object literals, not on a named const).
-  const railVars = { '--rd': '90ms' }
-  const capsStyle = railVars as CSSProperties
-
   return (
     <section id="features">
       <div className="wrap">
@@ -84,7 +76,7 @@ export function CapabilitiesSection() {
             Every part on the <em>same wire</em>.
           </h2>
         </div>
-        <div className="caps-wrap reveal" ref={caps.ref} style={capsStyle}>
+        <div className="caps-wrap" ref={caps.ref}>
           <div className="caps">
             {CAPS.map((c, i) => {
               const rowVars = { '--i': i }
@@ -102,11 +94,11 @@ export function CapabilitiesSection() {
                 </>
               )
               return c.href ? (
-                <a key={c.t} className="cap" href={c.href} style={rowStyle}>
+                <a key={c.t} className="cap reveal" href={c.href} style={rowStyle}>
                   {inner}
                 </a>
               ) : (
-                <div key={c.t} className="cap" style={rowStyle}>
+                <div key={c.t} className="cap reveal" style={rowStyle}>
                   {inner}
                 </div>
               )

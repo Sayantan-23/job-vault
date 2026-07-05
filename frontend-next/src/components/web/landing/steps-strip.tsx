@@ -26,9 +26,9 @@ export function StepsStrip() {
   return (
     <section className="steps-strip" aria-label="How it works">
       <div className="wrap">
-        <div className="steps reveal" ref={steps.ref}>
+        <div className="steps" ref={steps.ref}>
           {STEPS.map((s, i) => (
-            <div key={s.term} className="step" style={cssVars({ '--i': i })}>
+            <div key={s.term} className="step reveal" style={cssVars({ '--i': i })}>
               <div className="step-body">
                 <div className="step-term">{s.term}</div>
                 <div className="step-line">{s.line}</div>
