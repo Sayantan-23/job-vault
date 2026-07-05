@@ -204,8 +204,10 @@ nav.bar {
 /* ---- shared trace styles ---- */
 .trace {
   fill: none;
-  stroke: var(--trace);
-  stroke-width: 1.5;
+  /* darker than the --trace token so dormant wires read on the warm-stone bg
+     (token stays 0.85 for other uses; this is the landing-local stroke) */
+  stroke: oklch(0.82 0.008 75);
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -218,7 +220,7 @@ nav.bar {
 .trace-live {
   fill: none;
   stroke: var(--accent);
-  stroke-width: 2;
+  stroke-width: 2.25;
   stroke-linecap: round;
   /* a longer lit dash reads as one smooth traveling current (was 16) */
   stroke-dasharray: 30 100000;
@@ -317,6 +319,49 @@ nav.bar {
   border-radius: 5px;
   padding: 2px 6px;
   margin-top: 8px;
+}
+
+/* persona node enrichments: serif-initial monogram + neutral mono chips */
+.node .nhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.node .nhead .ntitle {
+  margin-top: 0;
+}
+.nmono {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-soft);
+}
+.node .nchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+.nchip {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  border-radius: 5px;
+  padding: 2px 6px;
 }
 
 /* line bars used inside mini doc sheets */
@@ -439,6 +484,11 @@ nav.bar {
   font-size: 9.5px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  color: var(--ink-faint);
+}
+.sheet .sdate {
+  font-family: var(--font-mono);
+  font-size: 9px;
   color: var(--ink-faint);
 }
 .sheet .sname {

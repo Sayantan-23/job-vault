@@ -265,34 +265,42 @@ export function Hero() {
             aria-hidden="true"
           />
 
-          <div className="node" id="n-persona" style={{ left: 0, top: 40, width: 182 }}>
+          <div className="node" id="n-persona" style={{ left: 0, top: 40, width: 178 }}>
             <div className="nlabel">Persona</div>
-            <div className="ntitle">Senior PM</div>
-            <div className="nmeta">skills · salary · experience</div>
+            <div className="nhead">
+              <span className="nmono">M</span>
+              <div className="ntitle">Senior PM</div>
+            </div>
+            <div className="nchips">
+              <span className="nchip">Product</span>
+              <span className="nchip">Roadmap</span>
+              <span className="nchip">SQL</span>
+            </div>
             <div className="nmeta" style={{ color: 'var(--accent-strong)' }}>
               3 / 5 used
             </div>
           </div>
 
-          <div className="node" id="n-job" style={{ left: 0, top: 262, width: 182 }}>
+          <div className="node" id="n-job" style={{ left: 0, top: 214, width: 178 }}>
             <div className="nlabel">Job</div>
             <div className="ntitle">Senior PM</div>
             <div className="nmeta">Ramp · San Francisco</div>
+            <div className="nmeta">$160-190k · hybrid</div>
             <span className="tap">via extension</span>
           </div>
 
-          <div className="fork" id="n-fork" style={{ left: 268, top: 208 }}>
+          <div className="fork" id="n-fork" style={{ left: 234, top: 180 }}>
             <div className="jdot" />
           </div>
 
           <div
             className="sheetgroup"
             id="n-docs"
-            style={{ left: 332, top: 8, width: 250, height: 240 }}
+            style={{ left: 292, top: 14, width: 276, height: 232 }}
           >
             <div
               className="sheet cover"
-              style={{ left: 0, top: 18, width: 160, height: 200, transform: 'rotate(3deg)' }}
+              style={{ left: 0, top: 26, width: 150, height: 188, transform: 'rotate(-7deg)' }}
             >
               <div className="stype">Cover letter</div>
               <div className="lines">
@@ -305,10 +313,11 @@ export function Hero() {
             </div>
             <div
               className="sheet resume"
-              style={{ left: 74, top: 0, width: 172, height: 222, transform: 'rotate(-1.6deg)' }}
+              style={{ left: 100, top: 0, width: 172, height: 220, transform: 'rotate(2deg)' }}
             >
               <div className="shead">
                 <span className="stype">Résumé</span>
+                <span className="sdate">2021-now</span>
               </div>
               <div className="sname">Maya Okafor</div>
               <div className="sctx">tailored to Ramp · Senior PM</div>
@@ -322,7 +331,7 @@ export function Hero() {
             </div>
           </div>
 
-          <div className="pipe" id="n-pipe" style={{ left: 356, top: 300, width: 236 }}>
+          <div className="pipe" id="n-pipe" style={{ left: 314, top: 282, width: 236 }}>
             <div className="ptop">
               <span className="pname">Applied</span>
               <span className="pcount">+1</span>
