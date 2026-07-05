@@ -1,21 +1,27 @@
 'use client'
 
+import { Clock, Timer, Ghost, Send } from 'lucide-react'
 import { useReveal } from '@/components/web/landing/use-reveal'
 
-// The single dark band ("the watch"): a flat hairline kanban (Applied /
-// Interviewing / Offer). Each card carries a 7px freshness tick + mono
-// day-count; the one stale card grows a vermilion left rule, a follow-up nudge,
-// and a pulsing stale-dot. On reveal `useReveal` stamps `data-shown` on the
-// band, which starts the stale-dot pulse via landing.css; the inner .wrap.reveal
-// fades the content in. Under reduced motion the board resolves static (CSS).
+// The single dark band ("the watch"): the page's one theme flip, gradient-seamed
+// into the warm canvas top and bottom (no hard border). A flat hairline kanban
+// (Applied / Interviewing / Offer) where each card carries the real GhostMeter
+// tick (Clock green / Timer amber / Ghost rose + mono day-count); the one ghosted
+// card grows a rose left rule, a follow-up nudge, and a pulsing ghost icon. On
+// reveal `useReveal` stamps `data-shown` on the band, starting the ghost-icon +
+// watchline pulses via landing.css; the inner .wrap.reveal fades content in.
+// Under reduced motion the board resolves static (CSS). A giant clipped
+// "JOBVAULT" wordmark sits at ~3% ink behind the board as texture.
 export function PipelineSection() {
   const { ref: bandRef } = useReveal<HTMLElement>({ threshold: 0.3 })
 
   return (
     <section ref={bandRef} className="band-dark" id="pipeline">
+      <p className="band-ghost" aria-hidden="true">
+        JOBVAULT
+      </p>
       <div className="wrap reveal">
         <div className="pipe-copy">
-          <span className="eyebrow">The destination, watched</span>
           <h2>
             Nothing slips, <em>nothing goes cold</em>.
           </h2>
@@ -42,34 +48,24 @@ export function PipelineSection() {
                 <span className="name">Applied</span>
                 <span className="count">6</span>
               </div>
-              <div className="dcard" data-stale="">
+              <div className="dcard" data-ghosted="">
                 <div className="role">Product Designer</div>
-                <div className="co">Ramp</div>
-                <div className="meta">
-                  <span className="stale-dot" /> quiet 14 days
+                <div className="co">Ramp · Remote</div>
+                <div className="meta gm gm-ghosted">
+                  <Ghost className="gm-icon" aria-hidden="true" />
+                  <span className="gm-days">15d</span>
                 </div>
                 <div className="nudge">
-                  <svg
-                    width="13"
-                    height="13"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z" />
-                  </svg>
+                  <Send className="nudge-icon" aria-hidden="true" />
                   Send a follow-up
                 </div>
               </div>
               <div className="dcard">
                 <div className="role">Frontend Engineer</div>
-                <div className="co">Loops</div>
-                <div className="meta">
-                  <span className="fdot c" /> quiet 5 days
+                <div className="co">Loops · SF</div>
+                <div className="meta gm gm-stale">
+                  <Timer className="gm-icon" aria-hidden="true" />
+                  <span className="gm-days">9d</span>
                 </div>
               </div>
             </div>
@@ -80,16 +76,18 @@ export function PipelineSection() {
               </div>
               <div className="dcard">
                 <div className="role">Product Engineer</div>
-                <div className="co">Figment</div>
-                <div className="meta">
-                  <span className="fdot f" /> final round Thu
+                <div className="co">Figment · Remote</div>
+                <div className="meta gm gm-active">
+                  <Clock className="gm-icon" aria-hidden="true" />
+                  <span className="gm-days">2d</span>
                 </div>
               </div>
               <div className="dcard">
                 <div className="role">UX Engineer</div>
-                <div className="co">Aerial</div>
-                <div className="meta">
-                  <span className="fdot f" /> recruiter call done
+                <div className="co">Aerial · New York</div>
+                <div className="meta gm gm-active">
+                  <Clock className="gm-icon" aria-hidden="true" />
+                  <span className="gm-days">3d</span>
                 </div>
               </div>
             </div>
@@ -100,16 +98,18 @@ export function PipelineSection() {
               </div>
               <div className="dcard">
                 <div className="role">Frontend Engineer</div>
-                <div className="co">Northwind</div>
-                <div className="meta">
-                  <span className="fdot f" /> reviewing terms
+                <div className="co">Northwind · Remote</div>
+                <div className="meta gm gm-active">
+                  <Clock className="gm-icon" aria-hidden="true" />
+                  <span className="gm-days">1d</span>
                 </div>
               </div>
               <div className="dcard">
                 <div className="role">Staff Engineer</div>
-                <div className="co">Meridian Labs</div>
-                <div className="meta">
-                  <span className="fdot f" /> negotiating start date
+                <div className="co">Meridian Labs · Austin</div>
+                <div className="meta gm gm-active">
+                  <Clock className="gm-icon" aria-hidden="true" />
+                  <span className="gm-days">3d</span>
                 </div>
               </div>
             </div>
@@ -134,7 +134,7 @@ export function PipelineSection() {
             </div>
             <div className="wl-event">
               <span className="wl-dot ghost" />
-              <span className="wl-label">quiet 14d · ghost alert</span>
+              <span className="wl-label">quiet 15d · ghost alert</span>
               <span className="wl-date">Jun 17</span>
             </div>
             <div className="wl-event">

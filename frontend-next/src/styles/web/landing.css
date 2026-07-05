@@ -72,10 +72,6 @@ html {
   background: var(--accent);
   display: inline-block;
 }
-.band-dark .eyebrow {
-  color: var(--on-ink-soft);
-}
-
 h1,
 h2 {
   font-family: var(--font-serif);
@@ -1550,13 +1546,55 @@ section {
 }
 
 /* ---- PIPELINE dark band ---- */
+/* The page's one theme flip. No hard border: gradient seams (Floria device) melt
+   the warm page canvas into the ink over ~150px at each edge, so the inversion
+   has no visible dividing line. `overflow: hidden` also clips the ghost wordmark. */
 .band-dark {
   background: var(--ink-bg);
   color: var(--on-ink);
-  border-top: 1px solid var(--ink-hairline);
-  border-bottom: 1px solid var(--ink-hairline);
+  position: relative;
+  overflow: hidden;
+}
+.band-dark::before,
+.band-dark::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 150px;
+  z-index: 0;
+  pointer-events: none;
+}
+.band-dark::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--bg), transparent);
+}
+.band-dark::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--bg), transparent);
+}
+/* Giant clipped wordmark, ~3% of the on-ink color: texture behind the board,
+   same treatment family as .footer-ghost (adapted for the dark surface). */
+.band-ghost {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(6rem, 17vw, 18rem);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--on-ink) 3%, transparent);
+  pointer-events: none;
+  user-select: none;
 }
 .band-dark .wrap {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 0.82fr 1.18fr;
   gap: 56px;
@@ -1565,7 +1603,6 @@ section {
 .band-dark h2 {
   font-size: clamp(1.9rem, 3vw, 2.5rem);
   line-height: 1.08;
-  margin-top: 15px;
 }
 .band-dark .deck {
   color: var(--on-ink-soft);
@@ -1638,19 +1675,34 @@ section {
   font-size: 11px;
   color: var(--on-ink-soft);
 }
+/* Card freshness row: the real GhostMeter — a lucide icon (clock/timer/ghost)
+   plus a mono day-count, colored by level to match the legend dots. */
 .dcard .meta {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   margin-top: 9px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--on-ink-soft);
+  font-size: 11px;
+  font-weight: 500;
 }
-.dcard[data-stale] {
-  border-left: 2px solid var(--vermilion);
+.gm-icon {
+  width: 14px;
+  height: 14px;
 }
-.dcard[data-stale] .nudge {
+.gm-active {
+  color: var(--fresh);
+}
+.gm-stale {
+  color: var(--cool);
+}
+.gm-ghosted {
+  color: var(--cold);
+}
+.dcard[data-ghosted] {
+  border-left: 2px solid var(--cold);
+}
+.dcard[data-ghosted] .nudge {
   margin-top: 10px;
   display: inline-flex;
   gap: 7px;
@@ -1661,14 +1713,23 @@ section {
   border-radius: 7px;
   padding: 6px 9px;
 }
-.stale-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--cold);
+.nudge-icon {
+  width: 13px;
+  height: 13px;
 }
-.band-dark[data-shown] .dcard[data-stale] .stale-dot {
-  animation: pulse 2.2s var(--ease) infinite;
+/* The ghost tick pulses once its band reveals, drawing the eye to the one card
+   that needs a nudge; rests static under reduced motion / no JS. */
+.band-dark[data-shown] .dcard[data-ghosted] .gm-icon {
+  animation: ghost-pulse 2.2s var(--ease) infinite;
+}
+@keyframes ghost-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
 }
 @keyframes pulse {
   0%,
@@ -1727,7 +1788,7 @@ section {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 11px;
   text-align: center;
 }
 .wl-dot {
@@ -1752,14 +1813,14 @@ section {
 }
 .wl-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12.5px;
   color: var(--on-ink);
 }
 .wl-date {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 11px;
   color: var(--on-ink-soft);
-  opacity: 0.6;
+  opacity: 0.8;
 }
 .wl-caption {
   margin-top: 16px;
@@ -2271,9 +2332,9 @@ section {
     transform: rotate(-8deg) scale(1) !important;
     opacity: 0.92 !important;
   }
-  /* The stale-card freshness dot pulses infinitely once its band reveals; stop
-     it and let it rest in its lit final state under reduced motion. */
-  .stale-dot,
+  /* The ghosted card's tick + the watchline ghost dot pulse infinitely once the
+     band reveals; stop them and let them rest static under reduced motion. */
+  .dcard[data-ghosted] .gm-icon,
   .wl-dot.ghost {
     animation: none !important;
   }
