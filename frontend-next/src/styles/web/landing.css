@@ -1783,48 +1783,78 @@ section {
 /* The page's one theme flip. No hard border: gradient seams (Floria device) melt
    the warm page canvas into the ink over ~150px at each edge, so the inversion
    has no visible dividing line. `overflow: hidden` also clips the ghost wordmark. */
-.band-dark {
-  background: var(--ink-bg);
-  color: var(--on-ink);
-  position: relative;
-  overflow: hidden;
+/* The Track section: a warm-canvas wrapper whose only job is to give the inset
+   dark panel side gutters (so the warm base shows around it) at any width. */
+.pipeline {
+  padding-left: 24px;
+  padding-right: 24px;
 }
-.band-dark::before,
-.band-dark::after {
+/* The inset rounded dark panel (Floria pattern) — floats on the canvas, crisp
+   edges, no seams. Slightly wider than the content --maxw so the inner .wrap
+   keeps its 1180px alignment while the panel breathes. The vertical ink gradient
+   keeps the surface from reading dead-flat; .band-dark::before adds one subtle
+   indigo glow. Entrance scale/radius come from motion inline styles (transform
+   only) — no opacity, so no-JS renders it fully visible. */
+.band-dark {
+  position: relative;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(52px, 6vw, 84px) 0;
+  border-radius: 40px;
+  background: linear-gradient(to bottom, var(--ink-bg), var(--ink-bg-2));
+  color: var(--on-ink);
+  overflow: hidden;
+  transition: border-radius 0.7s var(--ease);
+}
+/* Radius eases to its settled value once the panel reveals (CSS, so it stays
+   breakpoint-aware and works without the motion scale). */
+.band-dark[data-shown] {
+  border-radius: 28px;
+}
+/* Inner atmosphere: one large, faint indigo glow seated upper-right. */
+.band-dark::before {
   content: '';
   position: absolute;
-  left: 0;
-  right: 0;
-  height: 150px;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
+  background: radial-gradient(
+    58% 52% at 84% 12%,
+    color-mix(in srgb, var(--accent) 7%, transparent),
+    transparent 72%
+  );
 }
-.band-dark::before {
-  top: 0;
-  background: linear-gradient(to bottom, var(--bg), transparent);
-}
-.band-dark::after {
-  bottom: 0;
-  background: linear-gradient(to top, var(--bg), transparent);
-}
-/* Giant clipped wordmark, ~3% of the on-ink color: texture behind the board,
-   same treatment family as .footer-ghost (adapted for the dark surface). */
+/* Giant clipped wordmark, ~3.5% of the on-ink color: texture sitting on the
+   panel's bottom edge, cropped by the rounded corners (panel overflow:hidden). */
 .band-ghost {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  bottom: -0.14em;
+  transform: translateX(-50%);
   margin: 0;
   z-index: 0;
   font-family: var(--font-serif);
   font-weight: 600;
-  font-size: clamp(6rem, 17vw, 18rem);
+  font-size: clamp(4.5rem, 16vw, 15rem);
   line-height: 0.8;
   letter-spacing: -0.03em;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--on-ink) 3%, transparent);
+  color: color-mix(in srgb, var(--on-ink) 3.5%, transparent);
   pointer-events: none;
   user-select: none;
+}
+/* Phones: tighter gutters and a smaller settled radius. */
+@media (max-width: 720px) {
+  .pipeline {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .band-dark {
+    border-radius: 24px;
+  }
+  .band-dark[data-shown] {
+    border-radius: 20px;
+  }
 }
 .band-dark .wrap {
   position: relative;
@@ -2400,6 +2430,11 @@ section {
     opacity: 1;
     transform: none;
   }
+  /* The radius eases on `[data-shown]`, which never lands without JS: rest on the
+     settled panel radius so it never sticks at the 40px entrance value. */
+  .band-dark {
+    border-radius: 28px;
+  }
   /* No observer fires, so the beat never runs: show the final stacked state
      (both cards, success on top, capture receded behind). */
   .ext-layer--capture {
@@ -2500,5 +2535,10 @@ section {
   .dcard[data-ghosted] .gm-icon,
   .wl-dot.ghost {
     animation: none !important;
+  }
+  /* Panel rests on its settled radius, no ease. */
+  .band-dark {
+    border-radius: 28px !important;
+    transition: none !important;
   }
 }
