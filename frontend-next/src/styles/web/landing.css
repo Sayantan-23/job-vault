@@ -36,7 +36,7 @@ html {
   /* Warm paper tooth: fractalNoise multiplied onto the warm canvas so it reads
      as paper grain, never visible noise. ~4.5% keeps the tooth faintly visible
      on large displays without touching text contrast. */
-  opacity: 0.045;
+  opacity: 0.055;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -340,17 +340,17 @@ h2 em {
   background:
     radial-gradient(
       70% 66% at 74% 42%,
-      color-mix(in srgb, var(--accent) 14%, transparent),
+      color-mix(in srgb, var(--accent) 18%, transparent),
       transparent 70%
     ),
     radial-gradient(
       84% 74% at 12% 8%,
-      color-mix(in srgb, var(--ink) 6%, transparent),
+      color-mix(in srgb, var(--ink) 8%, transparent),
       transparent 72%
     ),
     radial-gradient(
       80% 70% at 72% 100%,
-      color-mix(in srgb, var(--ink) 7%, transparent),
+      color-mix(in srgb, var(--ink) 9%, transparent),
       transparent 74%
     );
 }
@@ -417,8 +417,8 @@ h2 em {
    mid-word (a truncated word reads as a bug, not depth) — only its right edge
    tucks under the phone. Rotations held between -5deg and 4deg. */
 .vc-letter {
-  left: 28px;
-  top: 296px;
+  left: 214px;
+  top: 166px;
   z-index: 2;
   rotate: -5deg;
 }
@@ -429,13 +429,15 @@ h2 em {
   rotate: 3deg;
 }
 .vc-board {
-  left: 208px;
-  top: 324px;
+  left: 352px;
+  top: 336px;
   z-index: 4;
   rotate: 2deg;
 }
 .vc-phone {
-  left: 436px;
+  /* wider phone (214px): pulled left to 426px so the right edge lands on the
+     640px collage container (426 + 214 = 640). */
+  left: 426px;
   top: 10px;
   z-index: 5;
   rotate: 4deg;
@@ -487,8 +489,8 @@ h2 em {
   top: -14px;
 }
 .vc-badge-b {
-  left: 468px;
-  top: 464px;
+  left: 118px;
+  top: 406px;
 }
 .vc-badge-dot {
   flex: none;
@@ -1039,8 +1041,8 @@ h2 em {
    place that breaks the 12-14px card / 8px input radius system (a phone shell). */
 .mini-phone {
   position: relative;
-  width: 200px;
-  height: 412px;
+  width: 214px;
+  height: 441px;
   border-radius: 28px;
   background: var(--ink-bg);
   padding: 5px;
@@ -1458,7 +1460,7 @@ section {
   pointer-events: none;
   background: radial-gradient(
     54% 54% at 50% 46%,
-    color-mix(in srgb, var(--accent) 9%, transparent),
+    color-mix(in srgb, var(--accent) 12%, transparent),
     transparent 70%
   );
 }

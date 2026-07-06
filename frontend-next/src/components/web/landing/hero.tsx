@@ -27,9 +27,9 @@ export function Hero() {
       <div className="wrap">
         <div className="hero-copy">
           <h1 className="intro" style={cssVars({ '--d': '40ms' })}>
-            One vault for the
+            Applications go quiet.
             <br />
-            <em>whole search.</em>
+            <em>Yours won&apos;t</em>.
           </h1>
           <p className="deck intro" style={cssVars({ '--d': '140ms' })}>
             Capture postings in one click, generate tailored résumés and cover letters, and track
