@@ -1,14 +1,16 @@
 import Link from 'next/link'
 import { BrandChip } from '@/components/layout/web/brand-chip'
+import { FooterWordmark } from '@/components/layout/web/footer-wordmark'
 
-// Light-warm footer with a giant ghost wordmark texture behind the columns.
-// Server component; page links mirror the nav (routes are public sub-pages).
+// Dark footer ending every public page: a giant ghost "JOBVAULT" wordmark band
+// sits on top (separating it from the closing CTA on the landing page), then the
+// brand + link columns on the ink surface. Self-contained (owns its dark bg), so
+// it reads right whether it follows the landing's closing CTA (flush, same ink
+// token = one block) or stands alone under a sub-page's warm content.
 export function WebFooter() {
   return (
     <footer className="site-footer">
-      <div className="footer-ghost" aria-hidden="true">
-        JOBVAULT
-      </div>
+      <FooterWordmark />
       <div className="wrap footer-inner">
         <div className="footer-cols">
           <div className="footer-brand">

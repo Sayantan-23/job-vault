@@ -132,6 +132,16 @@ h2 em {
   background: var(--on-ink);
   color: var(--ink-bg);
 }
+/* Secondary CTA on an ink surface: on-ink outline (mirrors .btn-ghost for dark). */
+.btn-outline-ink {
+  background: transparent;
+  color: var(--on-ink);
+  border-color: var(--ink-hairline);
+}
+.btn-outline-ink:hover {
+  border-color: var(--on-ink-soft);
+  background: color-mix(in srgb, var(--on-ink) 6%, transparent);
+}
 .btn svg {
   width: 16px;
   height: 16px;
@@ -2207,55 +2217,79 @@ section {
   padding: 0 2px 22px 30px;
 }
 
-/* ---- CLOSING ---- */
+/* ---- DARK FINALE: closing CTA + footer share one ink surface ----
+   The page's last block is one dark full-bleed finale (warm canvas above → crisp
+   straight ink edge here). The closing CTA and the footer use the SAME ink token
+   and the footer carries no top border, so they read as one continuous block with
+   no visible seam; the giant wordmark band (owned by the footer) sits between the
+   CTA and the columns. The footer is self-contained, so it also stands alone under
+   a sub-page's warm content. */
 .closing {
   text-align: center;
-  padding: 164px 0 120px;
+  padding: clamp(96px, 12vw, 148px) 0 clamp(52px, 7vw, 80px);
+  background: var(--ink-bg);
+  color: var(--on-ink);
   position: relative;
-}
-.closing .wrap {
-  position: relative;
-  z-index: 2;
 }
 .closing h2 {
   font-size: clamp(2.1rem, 3.6vw, 3rem);
   line-height: 1.06;
   max-width: 17ch;
   margin: 0 auto;
-  position: relative;
-  z-index: 2;
+}
+/* Accent phrase lightened so the indigo reads on ink (mirrors .band-dark h2 em). */
+.closing h2 em {
+  color: color-mix(in srgb, var(--accent) 60%, white);
+}
+.closing-deck {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--on-ink-soft);
+  max-width: 48ch;
+  margin: 18px auto 0;
 }
 .closing .cta {
-  margin-top: 28px;
+  margin-top: 30px;
   display: flex;
   justify-content: center;
   gap: 12px;
 }
 
-/* ---- footer (light-warm, giant ghost wordmark) ---- */
+/* ---- footer (dark ink, giant ghost wordmark band on top) ---- */
 .site-footer {
   position: relative;
   overflow: hidden;
-  border-top: 1px solid var(--hairline);
-  padding: 72px 0 40px;
+  background: var(--ink-bg);
+  color: var(--on-ink);
+  padding: 0 0 40px;
 }
-/* Background texture: one huge clipped wordmark at ~3% ink. */
-.footer-ghost {
-  position: absolute;
-  left: 50%;
-  bottom: -0.16em;
-  transform: translateX(-50%);
-  margin: 0;
-  z-index: 0;
+/* Brand lockup text is ink-dark by default (nav); recolor it for the ink footer. */
+.site-footer .brand {
+  color: var(--on-ink);
+}
+/* Wordmark band: one huge single-line "JOBVAULT" at ~4% on-ink, nearly the
+   container width, cropped only at the block's side padding. Owns its own band so
+   it separates the CTA from the columns. Horizontal drift comes from the motion
+   inline transform (client leaf); no opacity gating, so no-JS renders it fine. */
+.footer-wordmark {
+  position: relative;
+  overflow: hidden;
+  height: clamp(160px, 20vw, 250px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: clamp(28px, 4vw, 48px);
+}
+.footer-wordmark-text {
   font-family: var(--font-serif);
   font-weight: 600;
-  font-size: clamp(6rem, 17vw, 19rem);
+  font-size: clamp(4rem, 18vw, 17rem);
   line-height: 0.8;
   letter-spacing: -0.03em;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--ink) 3%, transparent);
-  pointer-events: none;
+  color: color-mix(in srgb, var(--on-ink) 4%, transparent);
   user-select: none;
+  will-change: transform;
 }
 .footer-inner {
   position: relative;
@@ -2269,13 +2303,14 @@ section {
 .footer-strap {
   font-family: var(--font-serif);
   font-size: 16px;
-  color: var(--ink-soft);
+  color: var(--on-ink-soft);
   max-width: 24ch;
   margin: 16px 0 0;
 }
 .footer-note {
   font-size: 13px;
-  color: var(--ink-faint);
+  color: var(--on-ink-soft);
+  opacity: 0.75;
   margin: 10px 0 0;
 }
 .footer-col h4 {
@@ -2284,26 +2319,26 @@ section {
   text-transform: uppercase;
   letter-spacing: 0.1em;
   font-weight: 600;
-  color: var(--ink-faint);
+  color: var(--on-ink-soft);
   margin: 0 0 14px;
 }
 .footer-col a {
   display: block;
   font-size: 14px;
-  color: var(--ink-soft);
+  color: var(--on-ink-soft);
   padding: 5px 0;
   transition: color 0.15s var(--ease);
 }
 .footer-col a:hover {
-  color: var(--ink);
+  color: var(--on-ink);
 }
 .footer-colophon {
   margin-top: 56px;
   padding-top: 22px;
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--ink-hairline);
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--ink-faint);
+  color: var(--on-ink-soft);
 }
 @media (max-width: 760px) {
   .footer-cols {
@@ -2311,6 +2346,17 @@ section {
   }
   .footer-brand {
     grid-column: 1 / -1;
+  }
+}
+/* Phones: the CTA stack goes vertical and the wordmark band shrinks. */
+@media (max-width: 720px) {
+  .closing .cta {
+    flex-direction: column;
+    align-items: center;
+  }
+  .footer-wordmark {
+    height: 90px;
+    margin-bottom: 26px;
   }
 }
 
