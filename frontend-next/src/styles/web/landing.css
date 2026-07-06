@@ -401,13 +401,14 @@ h2 em {
     translate: 0 0;
   }
 }
-/* Graded depth back -> front: letter, résumé, board, phone, popup. The phone
-   sits in FRONT of the résumé/board so its screen rows and the "in
-   development" tag never clip mid-word behind another surface (a truncated
-   word reads as a bug, not depth). Rotations held between -5deg and 4deg. */
+/* Graded depth back -> front: letter, résumé, board, phone, popup. The letter
+   sits bottom-left under the popup so its greeting + body lines stay readable;
+   the board sits left of the phone so its chip + card titles never clip
+   mid-word (a truncated word reads as a bug, not depth) — only its right edge
+   tucks under the phone. Rotations held between -5deg and 4deg. */
 .vc-letter {
-  left: 214px;
-  top: 166px;
+  left: 28px;
+  top: 296px;
   z-index: 2;
   rotate: -5deg;
 }
@@ -418,17 +419,16 @@ h2 em {
   rotate: 3deg;
 }
 .vc-board {
-  left: 352px;
-  top: 336px;
+  left: 208px;
+  top: 324px;
   z-index: 4;
   rotate: 2deg;
 }
 .vc-phone {
-  left: 464px;
+  left: 436px;
   top: 10px;
   z-index: 5;
   rotate: 4deg;
-  scale: 0.97;
 }
 .vc-popup {
   left: 0;
@@ -477,8 +477,8 @@ h2 em {
   top: -14px;
 }
 .vc-badge-b {
-  left: 118px;
-  top: 406px;
+  left: 468px;
+  top: 464px;
 }
 .vc-badge-dot {
   flex: none;
@@ -586,7 +586,7 @@ h2 em {
 
 /* ---- mini: extension popup ---- */
 .mini-popup {
-  width: 232px;
+  width: 266px;
   background: var(--surface);
   border: 1px solid var(--hairline);
   border-radius: 14px;
@@ -1023,69 +1023,176 @@ h2 em {
   font-size: 15px;
 }
 
-/* ---- mini: phone frame (mobile teaser) ---- */
+/* ---- mini: phone frame (mobile teaser) ----
+   Modern phone: thin dark bezel, pill dynamic island, a status bar, and a mini
+   JobVault jobs list on the warm app canvas. The 28px outer radius is the only
+   place that breaks the 12-14px card / 8px input radius system (a phone shell). */
 .mini-phone {
   position: relative;
-  width: 172px;
-  height: 344px;
-  border: 1px solid var(--hairline);
+  width: 200px;
+  height: 412px;
   border-radius: 28px;
-  background: var(--surface);
-  padding: 8px;
-  box-shadow: 0 26px 55px -34px oklch(0.3 0.02 60 / 0.5);
+  background: var(--ink-bg);
+  padding: 5px;
+  box-shadow: 0 26px 55px -34px oklch(0.3 0.02 60 / 0.55);
 }
-.mini-phone-bezel {
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.mini-phone-speaker {
-  width: 34px;
-  height: 4px;
+.mini-phone-island {
+  position: absolute;
+  z-index: 2;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58px;
+  height: 15px;
   border-radius: 999px;
-  background: var(--ink);
-  opacity: 0.5;
+  background: oklch(0.14 0.01 60);
 }
 .mini-phone-screen {
-  height: calc(100% - 28px);
-  border: 1px solid var(--hairline-soft);
-  border-radius: 18px;
-  background: var(--surface-2);
-  padding: 12px 11px;
+  height: 100%;
+  border-radius: 23px;
+  background: var(--bg);
+  padding: 9px 11px 10px;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  overflow: hidden;
 }
-.mini-phone-row {
+.mini-phone-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 2px;
+  height: 20px;
+}
+.mini-phone-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mini-phone-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-soft);
+}
+.mini-phone-signal svg {
+  width: 11px;
+  height: 11px;
+}
+.mini-phone-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 3px 12px;
+}
+.mini-phone-mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.mini-phone-mark svg {
+  width: 11px;
+  height: 11px;
+}
+.mini-phone-brand {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mini-phone-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  padding: 0 3px 7px;
+}
+.mini-phone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mini-phone-card {
   display: flex;
   align-items: center;
   gap: 8px;
   background: var(--surface);
   border: 1px solid var(--hairline);
-  border-radius: 9px;
-  padding: 9px 10px;
+  border-radius: 12px;
+  padding: 10px 11px;
 }
-.mini-phone-title {
-  font-size: 11.5px;
+.mini-phone-card-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mini-phone-card-title {
+  font-size: 12px;
   font-weight: 500;
   color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.mini-phone-chip {
+.mini-phone-card-meta {
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.mini-phone-days {
   margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   font-family: var(--font-mono);
-  font-size: 8.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--accent-strong);
-  background: var(--accent-soft);
-  border-radius: 5px;
-  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.mini-phone-days svg {
+  width: 11px;
+  height: 11px;
+}
+.mini-phone-days--fresh {
+  color: var(--fresh);
+}
+.mini-phone-days--stale {
+  color: var(--cool);
+}
+.mini-phone-tabs {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 10px 7px;
+  border-top: 1px solid var(--hairline-soft);
+  color: var(--ink-faint);
+}
+.mini-phone-tabs svg {
+  width: 12px;
+  height: 12px;
+}
+.mini-phone-tabs .mini-phone-tab--active {
+  color: var(--accent);
+}
+.mini-phone-home {
+  margin: 0 auto;
+  width: 96px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 26%, transparent);
 }
 .mini-phone-tag {
   position: absolute;
   left: 50%;
-  bottom: -12px;
+  bottom: -26px;
   transform: translateX(-50%);
   white-space: nowrap;
   font-family: var(--font-mono);
