@@ -24,7 +24,7 @@ export function CaptureSection() {
   return (
     <section className="capture" id="extension">
       <div className="wrap" ref={ref}>
-        <div className="cap-visual reveal" style={cssVars({ '--i': 0 })}>
+        <div className="cap-visual viz-glow reveal" style={cssVars({ '--i': 0 })}>
           <div className="ext-stage">
             {/* Capture holds the frame height; it ends hidden, so it's the
                 aria-hidden layer. Success is the meaningful resting state. */}

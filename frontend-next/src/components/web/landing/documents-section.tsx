@@ -35,7 +35,7 @@ export function DocumentsSection() {
           </div>
         </div>
 
-        <div className="docstage reveal" ref={stage.ref}>
+        <div className="docstage viz-glow reveal" ref={stage.ref}>
           <div className="doc-fan doc-fan-letter">
             <MiniLetterSheet size="full" />
           </div>

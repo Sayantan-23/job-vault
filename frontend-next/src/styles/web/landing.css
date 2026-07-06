@@ -33,7 +33,10 @@ html {
   mask-image: radial-gradient(150% 100% at 50% 0%, #000 22%, transparent 72%);
 }
 .bg-noise {
-  opacity: 0.022;
+  /* Warm paper tooth: fractalNoise multiplied onto the warm canvas so it reads
+     as paper grain, never visible noise. ~4.5% keeps the tooth faintly visible
+     on large displays without touching text contrast. */
+  opacity: 0.045;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -307,6 +310,39 @@ h2 em {
   display: flex;
   align-items: center;
   padding: 40px 0;
+  /* Own stacking context so the atmosphere `::before` (z-index:-1) seats behind
+     the copy + collage but above the page canvas. */
+  position: relative;
+  isolation: isolate;
+}
+/* ---- HERO ATMOSPHERE ----
+   Three heavily-diffused washes give the empty hero gentle depth (squint test:
+   soft light, not shapes). One large muted-indigo glow tucked behind the
+   right-side collage, then two warm washes a few % darker than the canvas placed
+   on a diagonal like soft window light. Pure `::before` (no markup), static, and
+   below all content — text contrast is untouched (AA holds). */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6% -8%; /* bleed past the hero box so the glows stay edgeless */
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      70% 66% at 74% 42%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      84% 74% at 12% 8%,
+      color-mix(in srgb, var(--ink) 6%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      80% 70% at 72% 100%,
+      color-mix(in srgb, var(--ink) 7%, transparent),
+      transparent 74%
+    );
 }
 .hero .wrap {
   display: grid;
@@ -1228,6 +1264,28 @@ section {
   color: var(--ink-soft);
   font-size: 16px;
   margin-top: 15px;
+}
+
+/* ---- SECTION VISUAL GLOW ----
+   A much smaller, fainter cousin of the hero indigo glow, seated behind a
+   section's product visual (capture popup, documents fan) so the surfaces lift
+   off the flat canvas. Shared class on the visual wrapper; pure `::before`,
+   static, below content. */
+.viz-glow {
+  position: relative;
+  isolation: isolate;
+}
+.viz-glow::before {
+  content: '';
+  position: absolute;
+  inset: -14%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    54% 54% at 50% 46%,
+    color-mix(in srgb, var(--accent) 9%, transparent),
+    transparent 70%
+  );
 }
 
 /* ---- CAPTURE (extension) ---- */
