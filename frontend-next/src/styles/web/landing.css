@@ -2124,17 +2124,17 @@ section {
    settles staggered by its `--i` index; "accounted for." is the italic accent
    phrase. Reduced-motion / no-JS fall back through the shared `.reveal` rules. */
 .interstitial {
-  padding: 132px 0;
+  padding: 200px 0;
   text-align: center;
 }
 .interstitial-line {
   margin: 0 auto;
-  max-width: 18ch;
+  max-width: 15ch;
   font-family: var(--font-serif);
   font-weight: 500;
   letter-spacing: -0.02em;
-  line-height: 1.08;
-  font-size: clamp(2.8rem, 5vw, 4.5rem);
+  line-height: 1.06;
+  font-size: clamp(3.5rem, 7.5vw, 7rem);
   color: var(--ink);
 }
 .iword {
@@ -2185,39 +2185,19 @@ section {
   line-height: 1.3;
   letter-spacing: -0.01em;
 }
-/* Plus marker (two hairlines) that rotates to an x + lights accent on open. */
-.faq-mark {
+/* lucide Plus icon that rotates to an x + lights accent on open. */
+.faq-icon {
   flex: none;
-  position: relative;
-  width: 14px;
-  height: 14px;
-  transition: transform 0.3s var(--ease);
+  width: 18px;
+  height: 18px;
+  color: var(--ink-faint);
+  transition:
+    transform 0.3s var(--ease),
+    color 0.25s var(--ease);
 }
-.faq-mark::before,
-.faq-mark::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  background: var(--ink-faint);
-  transition: background 0.25s var(--ease);
-}
-.faq-mark::before {
-  width: 14px;
-  height: 1.5px;
-  transform: translate(-50%, -50%);
-}
-.faq-mark::after {
-  width: 1.5px;
-  height: 14px;
-  transform: translate(-50%, -50%);
-}
-.faq-item[open] .faq-mark {
+.faq-item[open] .faq-icon {
   transform: rotate(45deg);
-}
-.faq-item[open] .faq-mark::before,
-.faq-item[open] .faq-mark::after {
-  background: var(--accent);
+  color: var(--accent);
 }
 .faq-a {
   font-size: 15px;
@@ -2501,9 +2481,7 @@ section {
     transform: translate(0, 0) rotate(-1deg) !important;
   }
   /* The FAQ marker toggles its rotate/color with no transition. */
-  .faq-mark,
-  .faq-mark::before,
-  .faq-mark::after {
+  .faq-icon {
     transition: none !important;
   }
   /* Documents: rest on the final refined + stamped state, no swap or press. */

@@ -1,5 +1,7 @@
 'use client'
 
+import { Plus } from 'lucide-react'
+
 import { useReveal } from '@/components/web/landing/use-reveal'
 
 // FAQ: four straight answers on the honest edges of the product (free tier, the
@@ -43,7 +45,7 @@ export function FaqSection() {
           {FAQS.map((f) => (
             <details key={f.q} className="faq-item">
               <summary>
-                <span className="faq-mark" aria-hidden="true" />
+                <Plus className="faq-icon" aria-hidden="true" />
                 <span className="faq-q">{f.q}</span>
               </summary>
               <p className="faq-a">{f.a}</p>
