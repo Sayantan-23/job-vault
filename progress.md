@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-07-05
+> **Last Updated**: 2026-07-06
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -27,6 +27,7 @@
 - [x] v3 T9: capabilities section deleted (wire-era leftover); word-staggered serif interstitial "Every application, accounted for."; steps strip quieted (mono terms, hairlines between columns only); closing/FAQ verified
 - [x] v3 T10+T11: copy pre-flight (zero em/en dashes rendered, 0 eyebrows, CTA-intent lock, mid-dot ration) + responsive/reduced-motion/no-JS audit at 390/720/1024/1440 (fixed hero mobile collapse + interstitial word spacing)
 - [x] v3 T12: gates green — typecheck, lint, **539 tests**, production Docker build (`a154d47`); CDP + headless visual review
+- [x] **v3.1 owner-feedback round (2026-07-06, commits `44e1362..583556e`)**: `motion` (framer-motion v12) adopted for scroll-linked effects; tactile background (paper-grain bump + hero atmosphere washes + shared `.viz-glow` indigo glows); hero collage rebalanced (266px popup, modern 200x412 phone with dynamic island, status bar, 4-row list + tab bar); how-it-works strip gains numbered chips + lucide icons + connector hairline (Floria pattern); capture beat reworked to a **card stack** (success card lands atop the still-visible capture card); dark Track band rebuilt as an **inset rounded panel** (28px radius, fog seams deleted, inner indigo glow, wordmark seated on the panel's bottom edge, motion scale-in entrance); interstitial scaled to statement size (`clamp(3.5rem,7.5vw,7rem)`); FAQ pluses now lucide `Plus` rotating 45 degrees; **closing CTA + footer merged into a dark finale** with the giant JOBVAULT wordmark band sitting between CTA and link columns (scroll drift via motion). Gates green (typecheck, lint, 539 tests, production Docker build). Hero headline copy pending owner pick.
 
 ### v1 + v2 history (superseded by v3)
 

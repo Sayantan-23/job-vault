@@ -3,6 +3,7 @@
 **Branch:** `landing-page-redesign` (continue on it). Commit per task, never push.
 **Mode:** Redesign-overhaul of the v2 landing. The circuit/trace concept is retired; the new cohesion model comes from the 4 reference teardowns (tasteskill.dev, floria, collectiveos, caveman.so).
 **Status:** EXECUTED 2026-07-05 (12 tasks, commits `55ddee4..3842847`; gates green incl. production Docker build).
+**v3.1 (2026-07-06, commits `44e1362..583556e`):** owner-feedback round after the v3 browser pass, executed against fresh reference re-reads (`frontend-next/references/screenshots/`). `motion` v12 adopted (owner authorized; scroll effects planned). Changes: tactile background (paper grain + hero atmosphere + `.viz-glow`), collage rebalance (wider popup, modern phone with dynamic island + tab bar), Floria-style numbered/iconed how-it-works, capture card-stack beat (previous state stays visible), dark Track band as inset rounded panel (seams deleted), statement-size interstitial, lucide FAQ pluses, and a merged dark finale (closing CTA + footer, wordmark band between them). Hero headline copy still pending owner pick.
 
 ## Owner decisions (this round)
 
