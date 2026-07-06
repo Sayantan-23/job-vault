@@ -1294,19 +1294,36 @@ h2 em {
 }
 
 /* ---- HOW-IT-WORKS STRIP (the hero's baseboard) ----
-   A slim band, NOT a full section: three verb-noun terminals (Capture /
-   Generate / Track) in three equal columns, hairline verticals BETWEEN columns
-   only (no outer box, no numbers, no dots, no rail). A mono uppercase term rides
-   above a short sans muted line; each column fades in on reveal, staggered by
-   its `--i` index. <=720px the terminals stack as a plain list. */
+   A slim band, NOT a full section: three verb terminals (Capture / Generate /
+   Track) in three equal columns. Each leads with a round numbered dot-chip
+   (mono "01"/"02"/"03") and an accent lucide icon over the mono uppercase term
+   and a short muted line. A hairline connector runs behind the chips linking
+   the three (Floria pattern), stopping at the outer chips. Columns fade in on
+   reveal, staggered by `--i`. <=720px the terminals stack; the connector turns
+   into a short vertical hairline dropping from each chip to the next. */
 .steps-strip {
   padding: 40px 0 56px;
   position: relative;
 }
 .steps {
+  --chip: 40px;
+  --chip-pt: 8px;
   position: relative;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  padding-top: var(--chip-pt);
+}
+/* Horizontal connector: passes through the chip row, ending under the two
+   outer chips (their opaque surface masks the line, so it reads as linking). */
+.steps::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--chip-pt) + var(--chip) / 2);
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 1px;
+  background: var(--hairline);
+  z-index: 0;
 }
 .step {
   position: relative;
@@ -1314,11 +1331,33 @@ h2 em {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 4px 28px;
+  padding: 0 28px;
 }
-/* Hairline dividers sit between columns only (skip the first). */
-.step + .step {
-  border-left: 1px solid var(--hairline);
+.step-chip {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--chip);
+  height: var(--chip);
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.step-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.step-icon {
+  display: inline-flex;
+  color: var(--accent);
 }
 .step-term {
   font-family: var(--font-mono);
@@ -1332,22 +1371,41 @@ h2 em {
   line-height: 1.5;
   color: var(--ink-soft);
   max-width: 24ch;
-  margin-top: 10px;
+  margin-top: 8px;
 }
-/* Phones: terminals stack as a list, no verticals. */
+/* Phones: terminals stack; the horizontal connector is replaced by a short
+   vertical hairline dropping from each chip to the next. */
 @media (max-width: 720px) {
   .steps {
     grid-template-columns: 1fr;
+    padding-top: 0;
+  }
+  .steps::before {
+    display: none;
   }
   .step {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     text-align: left;
     gap: 16px;
-    padding: 10px 0;
+    padding: 12px 0;
   }
-  .step + .step {
-    border-left: 0;
+  .step:not(:last-child) .step-chip::after {
+    content: '';
+    position: absolute;
+    top: calc(100% + 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 22px;
+    background: var(--hairline);
+  }
+  .step-chip {
+    flex-shrink: 0;
+  }
+  .step-head {
+    justify-content: flex-start;
+    margin-top: 0;
   }
   .step-line {
     max-width: none;
