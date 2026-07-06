@@ -1460,13 +1460,18 @@ section {
   gap: 56px;
   align-items: center;
 }
-/* Two-beat popup: capture + success stacked in one 360px frame. Capture is the
-   flow layer (holds the stage height); success is the centered overlay that
-   crossfades in on reveal and is the resting / reduced-motion / no-JS state. */
+/* Card-stack popup: capture + success in one frame. Capture is the flow layer
+   (a 360px card holding the stage height, top-left); success is a second 360px
+   card that drops in on top, offset 24px down-right, so the capture card peeks
+   behind it (dimmed + scaled, like a physical card placed on top of another).
+   The stage reserves the 24px offset room (border-box padding) so the beat
+   plays with no layout shift. Success is the resting / reduced-motion / no-JS
+   state. */
 .ext-stage {
   position: relative;
-  width: 360px;
+  width: 384px; /* 360px card + 24px down-right offset */
   max-width: 100%;
+  padding: 0 24px 24px 0;
 }
 .ext-layer--capture {
   position: relative;
@@ -1474,10 +1479,8 @@ section {
 }
 .ext-layer--success {
   position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  top: 24px;
+  left: 24px;
   opacity: 0;
 }
 /* Source pills tucked under the popup; forced to one line at >=720px. */
@@ -1501,29 +1504,31 @@ section {
     flex-wrap: nowrap;
   }
 }
-/* The capture -> success crossfade. Gated on the section's `data-shown` so it
-   plays once as the section reveals (~1.6s in). No timers, no JS state. */
-@keyframes ext-beat-out {
+/* The card-stack beat. Gated on the section's `data-shown` so it plays once as
+   the section reveals (~1.6s in). No timers, no JS state. Beat 1: only the
+   capture card. Beat 2: the capture card recedes (dims + shrinks behind) while
+   the success card drops onto it from below-right with a settling tilt. */
+@keyframes ext-card-recede {
   to {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.985);
+    opacity: 0.75;
+    transform: scale(0.97);
   }
 }
-@keyframes ext-beat-in {
+@keyframes ext-card-drop {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translate(18px, 26px) rotate(-3deg);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: translate(0, 0) rotate(-1deg);
   }
 }
 [data-shown] .ext-layer--capture {
-  animation: ext-beat-out 0.5s var(--ease) 1.6s forwards;
+  animation: ext-card-recede 0.5s var(--ease) 1.6s forwards;
 }
 [data-shown] .ext-layer--success {
-  animation: ext-beat-in 0.55s var(--ease) 1.65s both;
+  animation: ext-card-drop 0.55s var(--ease) 1.65s both;
 }
 
 /* ---- PERSONAS (one persona -> every tailored draft) ----
@@ -2395,12 +2400,15 @@ section {
     opacity: 1;
     transform: none;
   }
-  /* No observer fires, so the two-beat never runs: rest on the success state. */
+  /* No observer fires, so the beat never runs: show the final stacked state
+     (both cards, success on top, capture receded behind). */
   .ext-layer--capture {
-    opacity: 0;
+    opacity: 0.75;
+    transform: scale(0.97);
   }
   .ext-layer--success {
     opacity: 1;
+    transform: translate(0, 0) rotate(-1deg);
   }
   /* The résumé's refine swap, stamp, and lit chip all gate on `[data-shown]`,
      which never lands without JS. Force their final refined + stamped state so
@@ -2445,14 +2453,17 @@ section {
     opacity: 1 !important;
     translate: none !important;
   }
-  /* Capture two-beat: no crossfade — rest on the final success state. */
+  /* Capture card-stack: no beat — rest on the final stacked state (both cards,
+     success on top, capture receded behind). */
   .ext-layer--capture {
     animation: none !important;
-    opacity: 0 !important;
+    opacity: 0.75 !important;
+    transform: scale(0.97) !important;
   }
   .ext-layer--success {
     animation: none !important;
     opacity: 1 !important;
+    transform: translate(0, 0) rotate(-1deg) !important;
   }
   /* The FAQ marker toggles its rotate/color with no transition. */
   .faq-mark,

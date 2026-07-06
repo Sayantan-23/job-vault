@@ -11,13 +11,13 @@ function cssVars<T extends Record<string, string | number>>(vars: T): CSSPropert
   return vars as CSSProperties
 }
 
-// CAPTURE (extension): a faithful full-size capture popup playing a two-beat
-// capture -> success swap when the section reveals, plus the source pills row.
-// Both popup states are rendered stacked in one 360px frame: capture is the
-// flow layer (holds the stage height), success the centered overlay that
-// crossfades in. The swap is pure CSS gated on the section's `data-shown` (see
-// landing.css) — no timers — and resolves straight to success under
-// reduced-motion / no-JS.
+// CAPTURE (extension): two faithful full-size popup cards playing a card-stack
+// beat when the section reveals, plus the source pills row. Capture is the flow
+// layer (holds the stage height); on reveal it recedes behind while the success
+// card drops onto it, offset down-right, so the capture card peeks out from
+// under. The beat is pure CSS gated on the section's `data-shown` (see
+// landing.css) — no timers — and resolves straight to the final stacked state
+// under reduced-motion / no-JS.
 export function CaptureSection() {
   const { ref } = useReveal<HTMLDivElement>()
 
