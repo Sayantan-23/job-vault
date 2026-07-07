@@ -1485,15 +1485,40 @@ section {
   max-width: 100%;
   padding: 0 24px 24px 0;
 }
+/* Resting stacked state (also the SSR / no-JS / reduced-motion render): success
+   on top offset down-right with a settling tilt, capture receded behind (dimmed
+   + scaled). `CaptureDeck` overrides these transforms imperatively with motion
+   once hydrated (entrance drop + drag-to-swap); the transforms below match its
+   FRONT/BACK slots so the hand-off is seamless. Capture stays in flow to hold
+   the stage height; success is absolute at the same origin, shifted by
+   transform. */
 .ext-layer--capture {
   position: relative;
-  opacity: 1;
+  transform: scale(0.97);
+  opacity: 0.75;
+  z-index: 1;
 }
 .ext-layer--success {
   position: absolute;
-  top: 24px;
-  left: 24px;
-  opacity: 0;
+  top: 0;
+  left: 0;
+  transform: translate(24px, 24px) rotate(-1deg);
+  opacity: 1;
+  z-index: 2;
+}
+/* The top card is a grab surface; only it receives the drag (pointer events
+   never start on the empty stage around the cards). */
+.ext-card-grab {
+  cursor: grab;
+}
+.ext-card-grab:active {
+  cursor: grabbing;
+}
+.ext-hint {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
 }
 /* Source pills tucked under the popup; forced to one line at >=720px. */
 .ext-pills {
@@ -1516,32 +1541,9 @@ section {
     flex-wrap: nowrap;
   }
 }
-/* The card-stack beat. Gated on the section's `data-shown` so it plays once as
-   the section reveals (~1.6s in). No timers, no JS state. Beat 1: only the
-   capture card. Beat 2: the capture card recedes (dims + shrinks behind) while
-   the success card drops onto it from below-right with a settling tilt. */
-@keyframes ext-card-recede {
-  to {
-    opacity: 0.75;
-    transform: scale(0.97);
-  }
-}
-@keyframes ext-card-drop {
-  from {
-    opacity: 0;
-    transform: translate(18px, 26px) rotate(-3deg);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) rotate(-1deg);
-  }
-}
-[data-shown] .ext-layer--capture {
-  animation: ext-card-recede 0.5s var(--ease) 1.6s forwards;
-}
-[data-shown] .ext-layer--success {
-  animation: ext-card-drop 0.55s var(--ease) 1.65s both;
-}
+/* The entrance drop + drag-to-swap now live in `CaptureDeck` (motion), not CSS
+   keyframes; the resting styles above are the SSR / no-JS / reduced-motion
+   state. */
 
 /* ---- PERSONAS (one persona -> every tailored draft) ----
    Head + deck stacked on top, then a two-column composition: a faithful persona
@@ -2463,16 +2465,8 @@ section {
   .band-dark {
     border-radius: 28px;
   }
-  /* No observer fires, so the beat never runs: show the final stacked state
-     (both cards, success on top, capture receded behind). */
-  .ext-layer--capture {
-    opacity: 0.75;
-    transform: scale(0.97);
-  }
-  .ext-layer--success {
-    opacity: 1;
-    transform: translate(0, 0) rotate(-1deg);
-  }
+  /* The capture deck's resting stacked state is its CSS base, so scripting:none
+     already shows both cards (success on top, capture receded) — no override. */
   /* The résumé's refine swap, stamp, and lit chip all gate on `[data-shown]`,
      which never lands without JS. Force their final refined + stamped state so
      the sheet reads as tailored. (The hero collage runs on pure-CSS animations,
@@ -2516,18 +2510,9 @@ section {
     opacity: 1 !important;
     translate: none !important;
   }
-  /* Capture card-stack: no beat — rest on the final stacked state (both cards,
-     success on top, capture receded behind). */
-  .ext-layer--capture {
-    animation: none !important;
-    opacity: 0.75 !important;
-    transform: scale(0.97) !important;
-  }
-  .ext-layer--success {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: translate(0, 0) rotate(-1deg) !important;
-  }
+  /* Capture deck: `CaptureDeck` skips its entrance under reduced motion and
+     rests on the CSS stacked state (drag-to-swap stays instant), so no override
+     is needed here. */
   /* The FAQ marker toggles its rotate/color with no transition. */
   .faq-icon {
     transition: none !important;

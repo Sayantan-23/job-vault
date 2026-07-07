@@ -1,7 +1,7 @@
 'use client'
 
 import type { CSSProperties } from 'react'
-import { MiniExtensionPopup } from '@/components/web/landing/mini/extension-popup'
+import { CaptureDeck } from '@/components/web/landing/capture-deck'
 import { useReveal } from '@/components/web/landing/use-reveal'
 
 // `CSSProperties` doesn't type CSS custom properties (the `--i` reveal-stagger
@@ -11,13 +11,11 @@ function cssVars<T extends Record<string, string | number>>(vars: T): CSSPropert
   return vars as CSSProperties
 }
 
-// CAPTURE (extension): two faithful full-size popup cards playing a card-stack
-// beat when the section reveals, plus the source pills row. Capture is the flow
-// layer (holds the stage height); on reveal it recedes behind while the success
-// card drops onto it, offset down-right, so the capture card peeks out from
-// under. The beat is pure CSS gated on the section's `data-shown` (see
-// landing.css) — no timers — and resolves straight to the final stacked state
-// under reduced-motion / no-JS.
+// CAPTURE (extension): an interactive 2-card deck (capture + success popups)
+// plus the source pills row. `CaptureDeck` ('use client', motion) plays the
+// entrance drop when the section reveals, then lets the user grab the top card
+// and drag it to swap the two. SSR / no-JS / reduced-motion render the resting
+// stacked state (success on top, capture receded) straight from landing.css.
 export function CaptureSection() {
   const { ref } = useReveal<HTMLDivElement>()
 
@@ -25,16 +23,8 @@ export function CaptureSection() {
     <section className="capture" id="extension">
       <div className="wrap" ref={ref}>
         <div className="cap-visual viz-glow reveal" style={cssVars({ '--i': 0 })}>
-          <div className="ext-stage">
-            {/* Capture holds the frame height; it ends hidden, so it's the
-                aria-hidden layer. Success is the meaningful resting state. */}
-            <div className="ext-layer ext-layer--capture" aria-hidden="true">
-              <MiniExtensionPopup size="full" state="capture" />
-            </div>
-            <div className="ext-layer ext-layer--success">
-              <MiniExtensionPopup size="full" state="success" />
-            </div>
-          </div>
+          <CaptureDeck />
+          <p className="ext-hint">drag to flip</p>
           <div className="ext-pills">
             <span className="ext-pill">LinkedIn</span>
             <span className="ext-pill">Indeed</span>
