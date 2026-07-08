@@ -365,12 +365,14 @@ h2 em {
   align-items: center;
 }
 .hero h1 {
-  font-size: clamp(2.7rem, 4.4vw, 3.8rem);
+  /* sized so "Applications go quiet." holds one line in the ~500px copy column.
+     No text-wrap:balance here: with the explicit <br> it re-breaks the long
+     first line to match the short second one. */
+  font-size: clamp(2.5rem, 4vw, 3.3rem);
   /* italic accent line needs descender clearance: >=1.1 leading + a little
      bottom padding so the "whole search." tails never clip. */
   line-height: 1.1;
   letter-spacing: -0.03em;
-  text-wrap: balance;
 }
 .hero h1 em {
   display: inline-block;

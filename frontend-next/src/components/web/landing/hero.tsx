@@ -33,7 +33,7 @@ export function Hero() {
           <h1 className="intro" style={cssVars({ '--d': '40ms' })}>
             Applications go quiet.
             <br />
-            <em>Yours won&apos;t</em>.
+            <em>Yours won&apos;t.</em>
           </h1>
           <p className="deck intro" style={cssVars({ '--d': '140ms' })}>
             Capture postings in one click, generate tailored résumés and cover letters, and track
