@@ -33,12 +33,16 @@ html {
   mask-image: radial-gradient(150% 100% at 50% 0%, #000 22%, transparent 72%);
 }
 .bg-noise {
-  /* Warm paper tooth: fractalNoise multiplied onto the warm canvas so it reads
-     as paper grain, never visible noise. ~4.5% keeps the tooth faintly visible
-     on large displays without touching text contrast. */
-  opacity: 0.055;
+  /* Warm plaster/paper texture: a real tileable 512px asset (seamless via
+     wrapped noise lattices) multiplied onto the warm canvas. Visibility comes
+     from the asset's ~19-level mottling, not the opacity dial. It sits at
+     z-index 0 behind `.shell` (z-index 1), so opaque dark sections paint over
+     it and stay untouched by the multiply. */
+  opacity: 0.9;
   mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("/textures/paper.png");
+  background-repeat: repeat;
+  background-size: 512px 512px;
 }
 
 .shell {
