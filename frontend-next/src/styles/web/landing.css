@@ -421,28 +421,28 @@ h2 em {
    mid-word (a truncated word reads as a bug, not depth) — only its right edge
    tucks under the phone. Rotations held between -5deg and 4deg. */
 .vc-letter {
-  left: 214px;
-  top: 166px;
+  left: 100px;
+  top: 293px;
   z-index: 2;
   rotate: -5deg;
 }
 .vc-resume {
-  left: 300px;
-  top: 4px;
+  left: 241px;
+  top: -22px;
   z-index: 3;
   rotate: 3deg;
 }
 .vc-board {
-  left: 352px;
-  top: 336px;
+  left: 263px;
+  top: 227px;
   z-index: 4;
-  rotate: 2deg;
+  rotate: 11deg;
 }
 .vc-phone {
-  /* wider phone (214px): pulled left to 426px so the right edge lands on the
-     640px collage container (426 + 214 = 640). */
-  left: 426px;
-  top: 10px;
+  /* wider phone (240px): right edge lands on the 640px collage container
+     (400 + 240 = 640). */
+  left: 400px;
+  top: 30px;
   z-index: 5;
   rotate: 4deg;
 }
@@ -451,6 +451,17 @@ h2 em {
   top: 40px;
   z-index: 6;
   rotate: -4deg;
+}
+
+/* ---- drag affordance (per-card elastic grab, spring-back in JS) ---- */
+.vc-drag {
+  cursor: grab;
+  /* own compositor layer: drag moves transform every frame; without this the
+     shadowed card DOM can repaint per frame and stutter. */
+  will-change: transform;
+}
+.vc-drag:active {
+  cursor: grabbing;
 }
 
 /* ---- floating stat badges ---- */
@@ -489,7 +500,7 @@ h2 em {
   }
 }
 .vc-badge-a {
-  left: 402px;
+  left: 382px;
   top: -14px;
 }
 .vc-badge-b {
@@ -1045,7 +1056,7 @@ h2 em {
    place that breaks the 12-14px card / 8px input radius system (a phone shell). */
 .mini-phone {
   position: relative;
-  width: 214px;
+  width: 240px;
   height: 441px;
   border-radius: 28px;
   background: var(--ink-bg);

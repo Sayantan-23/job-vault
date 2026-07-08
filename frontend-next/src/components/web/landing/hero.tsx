@@ -5,6 +5,7 @@ import { MiniLetterSheet } from './mini/letter-sheet'
 import { MiniResumeSheet } from './mini/resume-sheet'
 import { MiniBoardColumn } from './mini/board-column'
 import { MiniExtensionPopup } from './mini/extension-popup'
+import { DraggableCard } from './draggable-card'
 
 // `CSSProperties` doesn't type CSS custom properties (the `--d`/`--bob` setters
 // landing.css reads). Cast through a parameter (not an inline object-literal
@@ -18,8 +19,11 @@ function cssVars<T extends Record<string, string | number>>(vars: T): CSSPropert
  * the `.intro` load stagger. Right: the "vault collage", five faithful mini
  * product surfaces composed at graded depth with two floating stat badges. The
  * whole collage rises in on load via the same pure-CSS `.intro`/`--d` stagger
- * (no JS, so hero stays a server component; reduced-motion + scripting:none land
- * in the final state automatically). The collage is decorative → aria-hidden.
+ * (so hero stays a server component; reduced-motion + scripting:none land in the
+ * final state automatically). Each mini surface is wrapped in a client-only
+ * `<DraggableCard>` for playful elastic drag-and-spring-back — an interactive
+ * leaf that doesn't affect the pure-CSS entrance stagger. The collage is
+ * decorative → aria-hidden.
  */
 export function Hero() {
   return (
@@ -60,19 +64,29 @@ export function Hero() {
             in landing.css per-surface class; only the stagger `--d` is inline. */}
         <div className="vault-collage" aria-hidden="true">
           <div className="vc-item vc-phone" style={cssVars({ '--d': '360ms' })}>
-            <MiniPhoneFrame />
+            <DraggableCard>
+              <MiniPhoneFrame />
+            </DraggableCard>
           </div>
           <div className="vc-item vc-letter" style={cssVars({ '--d': '450ms' })}>
-            <MiniLetterSheet />
+            <DraggableCard>
+              <MiniLetterSheet />
+            </DraggableCard>
           </div>
           <div className="vc-item vc-resume" style={cssVars({ '--d': '540ms' })}>
-            <MiniResumeSheet />
+            <DraggableCard>
+              <MiniResumeSheet />
+            </DraggableCard>
           </div>
           <div className="vc-item vc-board" style={cssVars({ '--d': '630ms' })}>
-            <MiniBoardColumn />
+            <DraggableCard>
+              <MiniBoardColumn />
+            </DraggableCard>
           </div>
           <div className="vc-item vc-popup" style={cssVars({ '--d': '720ms' })}>
-            <MiniExtensionPopup />
+            <DraggableCard>
+              <MiniExtensionPopup />
+            </DraggableCard>
           </div>
 
           <div
