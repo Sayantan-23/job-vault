@@ -1,7 +1,14 @@
 'use client'
 
 import { useCallback, useRef } from 'react'
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react'
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+  type MotionStyle,
+  type MotionValue,
+} from 'motion/react'
 import { Clock, Timer, Ghost, Send } from 'lucide-react'
 import { useReveal } from '@/components/web/landing/use-reveal'
 
@@ -25,8 +32,15 @@ import { useReveal } from '@/components/web/landing/use-reveal'
 // mobile) and no-JS-safe. Guarded by `useReducedMotion` (reduced = static final
 // state). No opacity is ever touched, so no-JS/`scripting:none` renders content
 // fully visible.
+// `MotionStyle` doesn't type CSS custom-property keys (motion supports them at
+// runtime); cast through a parameter, mirroring hero.tsx's cssVars.
+function motionVars(vars: Record<string, MotionValue<number>>): MotionStyle {
+  return vars as MotionStyle
+}
+
 export function PipelineSection() {
   const { ref: revealRef } = useReveal<HTMLDivElement>({ threshold: 0.3 })
+  const watchlineRef = useRef<HTMLDivElement | null>(null)
   const panelRef = useRef<HTMLDivElement | null>(null)
   const reduce = useReducedMotion()
 
@@ -46,6 +60,17 @@ export function PipelineSection() {
   const scale = useTransform(scrollYProgress, [0, 1], [0.9, 1])
   // Top edge tilted toward the viewer (card revealed face-up), settling flat.
   const rotateX = useTransform(scrollYProgress, [0, 1], [-8, 0])
+
+  // Watchline draw is scroll-scrubbed (not time-based): 0 when the strip incl.
+  // its caption has just entered the viewport bottom, 1 when the strip's
+  // center reaches 65% down the viewport (a touch before the middle). The
+  // progress lands as a `--wl-p` CSS var; landing.css maps it to the wire's
+  // scaleX and each dot's clamp() ramp, so scrolling back un-draws it.
+  const { scrollYProgress: wlProgress } = useScroll({
+    target: watchlineRef,
+    offset: ['end end', 'center 0.65'],
+  })
+  const watchlineStyle = motionVars({ '--wl-p': wlProgress })
 
   return (
     <section className="pipeline" id="pipeline">
@@ -152,7 +177,11 @@ export function PipelineSection() {
               </div>
             </div>
           </div>
-          <div className="watchline">
+          <motion.div
+            className="watchline"
+            ref={watchlineRef}
+            style={reduce ? {} : watchlineStyle}
+          >
             <div className="wl-rail">
               <div className="wl-event">
                 <span className="wl-dot" />
@@ -183,7 +212,7 @@ export function PipelineSection() {
             <p className="wl-caption">
               Every job keeps its own timeline. Reminders land in real time.
             </p>
-          </div>
+          </motion.div>
         </div>
       </motion.div>
     </section>

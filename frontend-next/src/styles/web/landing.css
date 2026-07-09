@@ -2086,8 +2086,14 @@ section {
   opacity: 0.6;
 }
 /* Timeline / reminders strip: one wire beneath the board carrying a job's life
-   from capture to follow-up. The ghost-alert dot pulses once the band reveals
-   (gated on [data-shown], like .stale-dot); the follow-up dot resolves green. */
+   from capture to follow-up. The draw is scroll-scrubbed: the component lands
+   scroll progress on the strip as `--wl-p` (0 = strip + caption just entered
+   the viewport bottom, 1 = strip at the vertical middle). The wire's scaleX
+   tracks it directly; each dot scales in over a short clamp() ramp ending
+   exactly when the wire tip (at fraction `--wl-t`, events evenly spaced via
+   space-between) reaches it. `--wl-p` defaults to 1, so reduced motion (no
+   inline var) rests drawn. The ghost-alert dot pulses once the band reveals;
+   the follow-up dot resolves green. */
 .watchline {
   grid-column: 1 / -1;
   margin-top: 8px;
@@ -2107,6 +2113,8 @@ section {
   top: 4px;
   height: 1.5px;
   background: var(--trace-ink);
+  transform: scaleX(var(--wl-p, 1));
+  transform-origin: left center;
 }
 .wl-event {
   position: relative;
@@ -2117,6 +2125,21 @@ section {
   gap: 11px;
   text-align: center;
 }
+.wl-event:nth-child(1) {
+  --wl-t: 0;
+}
+.wl-event:nth-child(2) {
+  --wl-t: 0.25;
+}
+.wl-event:nth-child(3) {
+  --wl-t: 0.5;
+}
+.wl-event:nth-child(4) {
+  --wl-t: 0.75;
+}
+.wl-event:nth-child(5) {
+  --wl-t: 1;
+}
 .wl-dot {
   width: 9px;
   height: 9px;
@@ -2124,6 +2147,8 @@ section {
   background: var(--on-ink-soft);
   border: 2px solid var(--ink-bg);
   box-sizing: content-box;
+  /* Grows over the last 8% of wire travel before the tip arrives at --wl-t. */
+  transform: scale(clamp(0, (var(--wl-p, 1) - var(--wl-t, 0) + 0.08) * 12.5, 1));
 }
 .wl-dot.lit {
   background: var(--accent);
@@ -2168,6 +2193,8 @@ section {
     bottom: 12px;
     height: auto;
     width: 1.5px;
+    transform: scaleY(var(--wl-p, 1));
+    transform-origin: center top;
   }
   .wl-event {
     flex-direction: row;
@@ -2524,6 +2551,12 @@ section {
   .band-dark {
     border-radius: 28px;
   }
+  /* The watchline draw scrubs on an inline `--wl-p` var the SSR HTML ships as
+     0; without JS it never advances, so rest on the drawn state. */
+  .wl-rail::before,
+  .wl-dot {
+    transform: none;
+  }
   /* The capture deck's resting stacked state is its CSS base, so scripting:none
      already shows both cards (success on top, capture receded) — no override. */
   /* The résumé's refine swap, stamp, and lit chip all gate on `[data-shown]`,
@@ -2611,6 +2644,12 @@ section {
   .dcard[data-ghosted] .gm-icon,
   .wl-dot.ghost {
     animation: none !important;
+  }
+  /* Watchline scrub rests drawn (the component skips the inline `--wl-p` var
+     under reduced motion; force the final transform regardless). */
+  .wl-rail::before,
+  .wl-dot {
+    transform: none !important;
   }
   /* Panel rests on its settled radius, no ease. */
   .band-dark {
