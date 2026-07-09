@@ -18,7 +18,8 @@ import { useReveal } from '@/components/web/landing/use-reveal'
 // ghost-icon + watchline pulses via landing.css; the inner .wrap.reveal fades
 // content in. Under reduced motion the board resolves static (CSS).
 //
-// Scroll-linked entrance: `useScroll`/`useTransform` scale the panel 0.96 -> 1 as
+// Scroll-linked entrance: `useScroll`/`useTransform` scale the panel 0.9 -> 1 and
+// tip it from rotateX(-8deg) -> 0 (top edge toward the viewer, settling flat) as
 // it enters view (transform-only, cheap). The border-radius eases 40 -> settled on
 // reveal via CSS (`.band-dark[data-shown]`) so it stays breakpoint-aware (20px on
 // mobile) and no-JS-safe. Guarded by `useReducedMotion` (reduced = static final
@@ -40,13 +41,19 @@ export function PipelineSection() {
 
   const { scrollYProgress } = useScroll({
     target: panelRef,
-    offset: ['start end', 'start center'],
+    offset: ['start end', 'center center'],
   })
-  const scale = useTransform(scrollYProgress, [0, 1], [0.96, 1])
+  const scale = useTransform(scrollYProgress, [0, 1], [0.9, 1])
+  // Top edge tilted toward the viewer (card revealed face-up), settling flat.
+  const rotateX = useTransform(scrollYProgress, [0, 1], [-8, 0])
 
   return (
     <section className="pipeline" id="pipeline">
-      <motion.div ref={setPanel} className="band-dark" style={reduce ? {} : { scale }}>
+      <motion.div
+        ref={setPanel}
+        className="band-dark"
+        style={reduce ? {} : { scale, rotateX, transformPerspective: 1200 }}
+      >
         <p className="band-ghost" aria-hidden="true">
           JOBVAULT
         </p>
