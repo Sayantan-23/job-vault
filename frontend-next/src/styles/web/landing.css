@@ -2247,6 +2247,23 @@ section {
 }
 .faq-item {
   border-top: 1px solid var(--hairline);
+  /* lets block-size transition to/from `auto` for the open/close slide */
+  interpolate-size: allow-keywords;
+}
+/* smooth open/close of the native disclosure; browsers without
+   ::details-content / interpolate-size just toggle instantly as before */
+.faq-item::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size 0.3s var(--ease),
+    opacity 0.25s var(--ease),
+    content-visibility 0.3s allow-discrete;
+}
+.faq-item[open]::details-content {
+  block-size: auto;
+  opacity: 1;
 }
 /* only items 2-4 carry a rule (border-top), so the first has no cap above it */
 .faq-item:first-child {
