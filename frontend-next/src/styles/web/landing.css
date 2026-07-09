@@ -2236,6 +2236,36 @@ section {
   font-style: italic;
   color: var(--accent);
 }
+/* Scroll-scrubbed accent flip: the line carries `--ip` (0 = just entered, 1 =
+   settled) and each accent letter a `--lt` start threshold. The in-flow italic
+   glyph is transparent (holds the settled layout only). `--flip` is a near-step
+   (0→1 in ~0.005 of progress) so at any frame exactly ONE of the two glyph
+   layers is painted — ::before the resting non-italic letter, ::after the
+   italic one — never a blend (no double-image mid-flip). A separate, delayed
+   `--op` ramp then brightens the now-italic letter from faint to full, so the
+   flip lands first and the color deepens a beat later. `--ip` defaults to 1, so
+   reduced motion (component skips the inline var) rests on the italic line. */
+.ilit {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  --flip: clamp(0, (var(--ip, 1) - var(--lt, 0)) * 200, 1);
+  --op: clamp(0, (var(--ip, 1) - var(--lt, 0) - 0.12) * 6, 1);
+}
+.ilit::before,
+.ilit::after {
+  content: attr(data-ch);
+  position: absolute;
+  inset: 0;
+  color: var(--accent);
+}
+.ilit::before {
+  font-style: normal;
+  opacity: calc(0.35 * (1 - var(--flip)));
+}
+.ilit::after {
+  opacity: calc(var(--flip) * (0.35 + 0.65 * var(--op)));
+}
 
 /* ---- FAQ (native accordion, no Radix on the public surface) ----
    Hairline-separated <details> rows: serif question, sans answer clamped to a
@@ -2574,6 +2604,13 @@ section {
   .wl-dot {
     transform: none;
   }
+  /* Same for the interstitial's inline `--ip`: rest on the settled italic. */
+  .ilit::before {
+    opacity: 0;
+  }
+  .ilit::after {
+    opacity: 1;
+  }
   /* The capture deck's resting stacked state is its CSS base, so scripting:none
      already shows both cards (success on top, capture receded) — no override. */
   /* The résumé's refine swap, stamp, and lit chip all gate on `[data-shown]`,
@@ -2667,6 +2704,13 @@ section {
   .wl-rail::before,
   .wl-dot {
     transform: none !important;
+  }
+  /* Interstitial letter flip rests settled italic likewise. */
+  .ilit::before {
+    opacity: 0 !important;
+  }
+  .ilit::after {
+    opacity: 1 !important;
   }
   /* Panel rests on its settled radius, no ease. */
   .band-dark {
