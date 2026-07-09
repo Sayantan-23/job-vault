@@ -22,7 +22,14 @@ function dragCapable(): boolean {
  * springs back to its resting spot with a bounce. Enabled after mount so the
  * server render stays inert and low-end devices never pay for the drag layer.
  */
-export function DraggableCard({ children }: { children: ReactNode }) {
+export function DraggableCard({
+  children,
+  elastic = 0.35,
+}: {
+  children: ReactNode
+  /** Per-side drag give (motion dragElastic): higher = farther travel that way. */
+  elastic?: number | { top?: number; left?: number; right?: number; bottom?: number }
+}) {
   const [enabled, setEnabled] = useState(false)
   useEffect(() => {
     setEnabled(dragCapable())
@@ -32,7 +39,7 @@ export function DraggableCard({ children }: { children: ReactNode }) {
       className={enabled ? 'vc-drag' : undefined}
       drag={enabled}
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
-      dragElastic={0.35}
+      dragElastic={elastic}
       dragMomentum={false}
       dragTransition={{ bounceStiffness: 260, bounceDamping: 14 }}
       whileDrag={{ scale: 1.03 }}

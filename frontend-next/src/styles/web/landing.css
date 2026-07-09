@@ -1503,25 +1503,34 @@ section {
   padding: 0 24px 24px 0;
 }
 /* Resting stacked state (also the SSR / no-JS / reduced-motion render): success
-   on top offset down-right with a settling tilt, capture receded behind (dimmed
-   + scaled). `CaptureDeck` overrides these transforms imperatively with motion
-   once hydrated (entrance drop + drag-to-swap); the transforms below match its
-   FRONT/BACK slots so the hand-off is seamless. Capture stays in flow to hold
-   the stage height; success is absolute at the same origin, shifted by
+   on top offset down-right, capture receded behind (slightly scaled, full
+   opacity). `CaptureDeck` overrides these transforms imperatively with motion
+   once hydrated (entrance slide-in + drag-to-swap); the transforms below match
+   its FRONT/BACK slots so the hand-off is seamless. Capture stays in flow to
+   hold the stage height; success is absolute at the same origin, shifted by
    transform. */
 .ext-layer--capture {
   position: relative;
-  transform: scale(0.97);
-  opacity: 0.75;
+  transform: scale(0.95);
   z-index: 1;
 }
 .ext-layer--success {
   position: absolute;
   top: 0;
   left: 0;
-  transform: translate(24px, 24px) rotate(-1deg);
+  transform: translate(24px, 24px);
   opacity: 1;
   z-index: 2;
+}
+/* Depth: both cards cast a real shadow; the top card's is heavier. Shadow
+   lives on the inner popup (motion owns the layer's transform/opacity) and
+   transitions on its own as `ext-layer--top` moves between cards on swap. */
+.ext-layer .mini-popup {
+  box-shadow: 0 22px 46px -22px oklch(0.3 0.02 60 / 0.5);
+  transition: box-shadow 0.35s ease;
+}
+.ext-layer--top .mini-popup {
+  box-shadow: 0 30px 60px -24px oklch(0.3 0.02 60 / 0.58);
 }
 /* The top card is a grab surface; only it receives the drag (pointer events
    never start on the empty stage around the cards). */
@@ -1584,6 +1593,9 @@ section {
   border: 1px solid var(--hairline);
   border-radius: 8px;
   padding: 16px;
+  box-shadow:
+    0 1px 2px oklch(0.3 0.02 60 / 0.08),
+    0 14px 34px -22px oklch(0.3 0.02 60 / 0.5);
 }
 .pcard-head {
   display: flex;
@@ -1706,18 +1718,37 @@ section {
 .doc-fan {
   position: absolute;
   top: 0;
+  /* Entrance: each sheet slides in straight from its own lower corner (letter
+     from bottom-left, résumé from bottom-right) with a slight overshoot, gated
+     on the stage's `[data-shown]`. Uses `translate` so it never fights the
+     resting rotate (transform) or the inner drag layer's per-frame transform.
+     `--fx` flips the direction per sheet; `--fan-dist` shrinks on mobile. */
+  --fan-dist: 72px;
+  opacity: 0;
+  translate: calc(var(--fx, -1) * var(--fan-dist)) 40px;
+  transition:
+    opacity 0.6s var(--ease),
+    translate 0.7s cubic-bezier(0.3, 1.25, 0.45, 1);
 }
 .doc-fan-letter {
+  --fx: -1;
   left: 8px;
   top: 34px;
   transform: rotate(-3deg);
   z-index: 1;
 }
 .doc-fan-resume {
+  --fx: 1;
   left: 220px;
   top: 0;
   transform: rotate(2deg);
   z-index: 2;
+  /* The top sheet lands a beat after the letter. */
+  transition-delay: 120ms;
+}
+.docstage[data-shown] .doc-fan {
+  opacity: 1;
+  translate: none;
 }
 /* Rectangular rubber stamp on the résumé — reads "TAILORED" cleanly on one line.
    It presses in with an overshoot ~2s after the stage reveals; gated on the
@@ -2453,6 +2484,11 @@ section {
     top: auto;
     z-index: auto;
   }
+  /* Smaller entrance slide: the sheets fill the viewport width here, so the
+     desktop ±72px offset would bleed past the edge and widen the page. */
+  .doc-fan {
+    --fan-dist: 28px;
+  }
   .doc-fan-resume {
     order: 0;
     transform: rotate(1.5deg);
@@ -2476,6 +2512,12 @@ section {
   .reveal {
     opacity: 1;
     transform: none;
+  }
+  /* The document sheets' side-slide entrance gates on `[data-shown]`, which
+     never lands without JS: rest on the settled fanned state. */
+  .doc-fan {
+    opacity: 1;
+    translate: none;
   }
   /* The radius eases on `[data-shown]`, which never lands without JS: rest on the
      settled panel radius so it never sticks at the 40px entrance value. */
@@ -2534,7 +2576,13 @@ section {
   .faq-icon {
     transition: none !important;
   }
-  /* Documents: rest on the final refined + stamped state, no swap or press. */
+  /* Documents: rest on the final refined + stamped state, no swap or press,
+     and the sheets sit fanned with no slide-in entrance. */
+  .doc-fan {
+    transition: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
   .mini-refine-old {
     transition: none !important;
     opacity: 0 !important;

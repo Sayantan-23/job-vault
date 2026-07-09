@@ -19,16 +19,22 @@ import { MiniExtensionPopup } from '@/components/web/landing/mini/extension-popu
 // override the CSS resting styles without fighting them.
 //
 // Entrance (first in-view, motion allowed): capture alone for a beat, then the
-// success card drops onto it. After that the deck is interactive: the TOP card
+// success card slides in from the right on top. After that the deck is
+// interactive: the TOP card
 // is draggable (a nested drag surface with `dragSnapToOrigin`), and dragging it
 // past a threshold swaps it to the back while the other card springs forward.
 type Card = 'capture' | 'success'
 
 // Deck slots. `x`/`y` are translate (motion writes them as transform, matching
 // the CSS resting transforms so hand-off is seamless). Front sits offset
-// down-right with a settling tilt; back sits at origin, dimmed and scaled.
-const FRONT = { x: 24, y: 24, rotate: -1, scale: 1, opacity: 1, zIndex: 2 }
-const BACK = { x: 0, y: 0, rotate: 0, scale: 0.97, opacity: 0.75, zIndex: 1 }
+// down-right at full size; back sits at origin, slightly scaled. Both cards
+// stay fully opaque — depth comes from the scale step, the offset, and the
+// heavier shadow on the top card (`ext-layer--top`). zIndex flips instantly
+// (not through the spring) so stacking is never ambiguous mid-animation.
+// `opacity: 1` is kept in the slots so a swap heals the entrance's fade-in
+// if the user grabs the card mid-entrance.
+const FRONT = { x: 24, y: 24, scale: 1, opacity: 1 }
+const BACK = { x: 0, y: 0, scale: 0.95, opacity: 1 }
 
 // A drag counts as a swap past ~120px horizontal travel or a firm flick.
 const SWAP_DISTANCE = 120
@@ -36,9 +42,15 @@ const SWAP_VELOCITY = 500
 
 const SPRING = { type: 'spring', stiffness: 320, damping: 30 } as const
 
+// How long capture sits alone before success slides in. Short — long enough
+// to register the "before" state, not so long the user scrolls past it.
+const BEAT = 0.6
+
 export function CaptureDeck() {
   const [scope, animate] = useAnimate<HTMLDivElement>()
-  const inView = useInView(scope, { once: true, amount: 0.4 })
+  // Low threshold so the beat starts as soon as the deck peeks in — the
+  // entrance must finish before the user can scroll past the section.
+  const inView = useInView(scope, { once: true, amount: 0.25 })
   const reduce = useReducedMotion()
 
   const captureRef = useRef<HTMLDivElement | null>(null)
@@ -64,12 +76,27 @@ export function CaptureDeck() {
       return
     }
 
-    // Pre-entrance: capture alone (full), success hidden just below-right.
-    animate(cap, { x: 0, y: 0, rotate: 0, scale: 1, opacity: 1, zIndex: 1 }, { duration: 0 })
-    animate(suc, { x: 18, y: 40, rotate: -3, scale: 1, opacity: 0, zIndex: 2 }, { duration: 0 })
-    // The drop: capture recedes, success settles onto the front slot.
-    animate(cap, { scale: 0.97, opacity: 0.75 }, { ...SPRING, delay: 1.4 })
-    animate(suc, { x: 24, y: 24, rotate: -1, opacity: 1 }, { ...SPRING, delay: 1.4 })
+    // The pre-set MUST be awaited before the delayed animations start: a
+    // later `animate` on the same properties interrupts an unfinished
+    // duration-0 one before it commits, so a same-tick sequence samples the
+    // resting values as the spring's start and the entrance never shows.
+    const run = async () => {
+      // Pre-entrance: capture alone (full), success parked off to the right.
+      await Promise.all([
+        animate(cap, { x: 0, y: 0, scale: 1, opacity: 1, zIndex: 1 }, { duration: 0 }),
+        animate(suc, { x: 200, y: 24, scale: 1, opacity: 0, zIndex: 2 }, { duration: 0 }),
+      ])
+      // The beat, then the swap: capture recedes while success slides in from
+      // the right on top. Opacity ramps on a quick tween (not the spring) so
+      // the card is fully visible for most of its travel — the slide reads.
+      animate(cap, BACK, { ...SPRING, delay: BEAT })
+      animate(
+        suc,
+        { x: 24, y: 24, opacity: 1 },
+        { ...SPRING, delay: BEAT, opacity: { delay: BEAT, duration: 0.25, ease: 'easeOut' } },
+      )
+    }
+    void run()
     entered.current = true
   }, [inView, reduce, animate])
 
@@ -81,6 +108,10 @@ export function CaptureDeck() {
     if (!cap || !suc) return
     const transition = reduce ? { duration: 0 } : SPRING
     const capFront = top === 'capture'
+    // z-order flips immediately so the incoming card is unambiguously on top
+    // while both cards travel to their slots.
+    animate(cap, { zIndex: capFront ? 2 : 1 }, { duration: 0 })
+    animate(suc, { zIndex: capFront ? 1 : 2 }, { duration: 0 })
     animate(cap, capFront ? FRONT : BACK, transition)
     animate(suc, capFront ? BACK : FRONT, transition)
   }, [top, reduce, animate])
@@ -119,7 +150,11 @@ function Deck({
   children: ReactNode
 }) {
   return (
-    <div ref={cardRef} className={`ext-layer ext-layer--${card}`} aria-hidden={card === 'capture'}>
+    <div
+      ref={cardRef}
+      className={`ext-layer ext-layer--${card}${isTop ? ' ext-layer--top' : ''}`}
+      aria-hidden={card === 'capture'}
+    >
       <motion.div
         className={isTop ? 'ext-card-grab' : undefined}
         drag={isTop}

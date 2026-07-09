@@ -1,5 +1,6 @@
 'use client'
 
+import { DraggableCard } from '@/components/web/landing/draggable-card'
 import { MiniLetterSheet } from '@/components/web/landing/mini/letter-sheet'
 import { MiniResumeSheet } from '@/components/web/landing/mini/resume-sheet'
 import { useReveal } from '@/components/web/landing/use-reveal'
@@ -36,11 +37,19 @@ export function DocumentsSection() {
         </div>
 
         <div className="docstage viz-glow reveal" ref={stage.ref}>
+          {/* Entrance: each sheet slides in from its own lower corner on reveal
+              (CSS, gated on `[data-shown]`). Drag reuses the hero's DraggableCard
+              (capability-gated, spring-back); the elastic is asymmetric so each
+              sheet pulls far toward its outer edge but barely into its sibling. */}
           <div className="doc-fan doc-fan-letter">
-            <MiniLetterSheet size="full" />
+            <DraggableCard elastic={{ left: 0.5, right: 0.1, top: 0.2, bottom: 0.2 }}>
+              <MiniLetterSheet size="full" />
+            </DraggableCard>
           </div>
           <div className="doc-fan doc-fan-resume">
-            <MiniResumeSheet size="full" />
+            <DraggableCard elastic={{ left: 0.1, right: 0.5, top: 0.2, bottom: 0.2 }}>
+              <MiniResumeSheet size="full" />
+            </DraggableCard>
           </div>
         </div>
 
