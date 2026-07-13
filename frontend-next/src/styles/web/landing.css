@@ -302,7 +302,7 @@ h2 em {
   border-radius: 5px;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 768px) {
   .nav-links {
     display: none;
   }
@@ -367,8 +367,10 @@ h2 em {
 .hero h1 {
   /* sized so "Applications go quiet." holds one line in the ~500px copy column.
      No text-wrap:balance here: with the explicit <br> it re-breaks the long
-     first line to match the short second one. */
-  font-size: clamp(2.5rem, 4vw, 3.3rem);
+     first line to match the short second one. Min lowered to 2rem so it keeps
+     shrinking below ~1000px (narrow tablet columns) instead of clamping at 40px
+     and wrapping; desktop (4vw > 40px) is unchanged. */
+  font-size: clamp(2rem, 4vw, 3.3rem);
   /* italic accent line needs descender clearance: >=1.1 leading + a little
      bottom padding so the "whole search." tails never clip. */
   line-height: 1.1;
@@ -1235,27 +1237,46 @@ h2 em {
   padding: 3px 9px;
 }
 
-/* ---- collage: intermediate scale so the right surfaces don't clip before
-   the split collapses ---- */
-@media (min-width: 981px) and (max-width: 1200px) {
+/* ---- collage: across the whole two-column range (769–1200) the collage rides
+   near full size at ~0.86 and bleeds past the right viewport edge — that's the
+   intended look. `transform-origin: top right` keeps the bleed on the right,
+   away from the copy, so shrinking the visual never eats the headline. Above
+   1200 it sits at full 1.0. Below 769 the split stacks (see the block below). */
+@media (min-width: 769px) and (max-width: 1200px) {
   .vault-collage {
     scale: 0.86;
     transform-origin: top right;
   }
 }
 
-/* ---- collage: <=980px the split stacks; collage reflows to a centered
-   column of the three anchor surfaces (popup / résumé / board) ---- */
-@media (max-width: 980px) {
+/* ---- collage: below 769 the split stacks. The FULL desktop composition is
+   kept (all five surfaces + badges); the whole 640×520 stage is zoomed to fit
+   the column — `zoom` reflows the box, so no overflow or dead space. ---- */
+
+@media (max-width: 768px) {
   .hero {
     min-height: 0;
     display: block;
-    padding: 104px 0 64px;
+    /* nav is sticky (in-flow), so it already reserves its own space above —
+       only a small breathing gap is needed here, not room for the nav. */
+    padding: 32px 0 56px;
+  }
+  /* Tighter page gutters on phones (desktop is 28px) so content — headline
+     especially — uses the width instead of sitting in a narrow center strip. */
+  .wrap {
+    padding: 0 18px;
   }
   /* Collapse the two-column split: copy full-width, collage centered below.
      (`.hero { display:block }` alone leaves the inner .wrap grid two-column.) */
   .hero .wrap {
     display: block;
+  }
+  /* Headline on phones. Two knobs: MIN (floor — how big it stays on the
+     smallest screens; at this size "Applications go quiet." wraps to two lines
+     below ~390px) and MAX (ceiling on big phones/portrait tablets). The middle
+     term tracks the column so mid-size phones fill the width. */
+  .hero h1 {
+    font-size: clamp(2rem, calc(8.6vw - 3px), 3.4rem);
   }
   .hero .deck {
     max-width: none;
@@ -1264,46 +1285,20 @@ h2 em {
     flex-wrap: wrap;
   }
   .vault-collage {
-    width: 100%;
-    max-width: 340px;
-    height: auto;
-    margin: 28px auto 0;
-    justify-self: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
-  }
-  .vc-item {
-    position: relative;
-    left: auto;
-    top: auto;
-    rotate: 0deg;
-    scale: 1;
-  }
-  .vc-phone,
-  .vc-letter {
-    display: none;
-  }
-  .vc-badge-a {
-    left: auto;
-    right: -6px;
-    top: 6px;
-  }
-  .vc-badge-b {
-    left: -6px;
-    top: auto;
-    bottom: 36px;
+    zoom: 0.75;
+    margin: 40px auto 0;
   }
 }
-@media (max-width: 720px) {
-  .vc-badge {
-    display: none;
+/* Smaller phones: step the stage down so the 640px composition clears the
+   gutters as the column narrows. */
+@media (max-width: 640px) {
+  .vault-collage {
+    zoom: 0.55;
   }
 }
-@media (max-width: 560px) {
-  .vc-board {
-    display: none;
+@media (max-width: 400px) {
+  .vault-collage {
+    zoom: 0.42;
   }
 }
 
@@ -1404,7 +1399,7 @@ h2 em {
 }
 /* Phones: terminals stack; the horizontal connector is replaced by a short
    vertical hairline dropping from each chip to the next. */
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .steps {
     grid-template-columns: 1fr;
     padding-top: 0;
@@ -1562,7 +1557,7 @@ section {
   padding: 4px 10px;
   white-space: nowrap;
 }
-@media (min-width: 720px) {
+@media (min-width: 640px) {
   .ext-pills {
     flex-wrap: nowrap;
   }
@@ -1906,7 +1901,7 @@ section {
   user-select: none;
 }
 /* Phones: tighter gutters and a smaller settled radius. */
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .pipeline {
     padding-left: 12px;
     padding-right: 12px;
@@ -2180,7 +2175,7 @@ section {
 }
 /* Phones: the wire turns vertical, the rail becomes a left border and events
    stack as a list so nothing scrolls sideways. */
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .wl-rail {
     flex-direction: column;
     align-items: stretch;
@@ -2466,7 +2461,7 @@ section {
   font-size: 12px;
   color: var(--on-ink-soft);
 }
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .footer-cols {
     grid-template-columns: 1fr 1fr;
   }
@@ -2475,7 +2470,7 @@ section {
   }
 }
 /* Phones: the CTA stack goes vertical and the wordmark band shrinks. */
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .closing .cta {
     flex-direction: column;
     align-items: center;
@@ -2523,7 +2518,7 @@ section {
   transform: none;
 }
 
-@media (max-width: 940px) {
+@media (max-width: 768px) {
   .capture .wrap,
   .band-dark .wrap {
     grid-template-columns: 1fr;
@@ -2531,8 +2526,8 @@ section {
   }
 }
 
-/* Personas: below 720px stack the card above the full-width doc list. */
-@media (max-width: 720px) {
+/* Personas: below 768px (md) stack the card above the full-width doc list. */
+@media (max-width: 768px) {
   .persona-stage {
     grid-template-columns: 1fr;
     gap: 30px;
@@ -2540,10 +2535,10 @@ section {
 }
 
 /* ---- MOBILE DOCUMENTS: stack the two real sheets ----
-   The full sheets fan and overlap past ~720px. Below that, reflow them into two
+   The full sheets fan and overlap past ~640px. Below that, reflow them into two
    centered sheets in normal flow (résumé first, so the stamp stays visible),
    lightly rotated. */
-@media (max-width: 720px) {
+@media (max-width: 640px) {
   .docstage {
     width: 100%;
     height: auto;

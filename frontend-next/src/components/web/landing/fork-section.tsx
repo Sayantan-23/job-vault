@@ -17,7 +17,7 @@ function cssVars<T extends Record<string, string | number>>(vars: T): CSSPropert
  * the real `PersonaCard`) and an evenly spaced list of generated documents
  * (right), connected by whitespace only — no drawn fan. On scroll-reveal the
  * card and rows fade-rise with the uniform `.reveal` + `--i` stagger. At
- * <=720px the CSS reflows into one column (card above, rows below).
+ * <=768px the CSS reflows into one column (card above, rows below).
  */
 export function ForkSection() {
   const { ref } = useReveal<HTMLDivElement>()
