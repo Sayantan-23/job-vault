@@ -2591,7 +2591,7 @@ section {
     top: auto;
     margin-left: 22px; /* sit right, leaving the left gutter for the peek */
     z-index: 2;
-    transform: rotate(2deg);
+    transform: rotate(3deg);
   }
   .doc-fan-letter {
     position: absolute;
@@ -2600,7 +2600,7 @@ section {
        for its bottom-left corner to clear the résumé's bottom edge and peek. */
     top: 72px;
     z-index: 1;
-    transform: rotate(-3.5deg);
+    transform: rotate(-6deg);
   }
   .mini-resume--full,
   .mini-letter--full {
