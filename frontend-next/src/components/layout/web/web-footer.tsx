@@ -31,6 +31,13 @@ export function WebFooter() {
             <Link href="/faq">FAQ</Link>
             <Link href="/contact">Contact</Link>
           </nav>
+
+          <nav className="footer-col" aria-label="Legal">
+            <h4>Legal</h4>
+            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/terms">Terms of Service</Link>
+            <Link href="/cookies">Cookie Policy</Link>
+          </nav>
         </div>
 
         <div className="footer-colophon">

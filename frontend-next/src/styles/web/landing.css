@@ -2418,7 +2418,7 @@ section {
 }
 .footer-cols {
   display: grid;
-  grid-template-columns: 1.6fr 1fr 1fr;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
   gap: 40px;
 }
 .footer-strap {
