@@ -303,6 +303,10 @@ h2 em {
 }
 
 @media (max-width: 768px) {
+  html {
+    /* Tighter vertical rhythm on mobile — 96px reads as dead space on a phone. */
+    --sec-pad: 60px;
+  }
   .nav-links {
     display: none;
   }
@@ -1962,6 +1966,11 @@ section {
   .col:last-child {
     border-bottom: none;
   }
+  /* Stacked, 10 cards is a long scroll; the story lands in one card per stage.
+     Keep the first card in each column (Applied's is the ghosted money-shot). */
+  .col .dcard:last-child {
+    display: none;
+  }
 }
 .col-head {
   display: flex;
@@ -2182,7 +2191,9 @@ section {
     gap: 0;
   }
   .wl-rail::before {
-    left: 4px;
+    /* Dot is 9px + 2px border (content-box) = 13px wide, center at 6.5px;
+       center the 1.5px wire on it: 6.5 - 0.75. */
+    left: 5.75px;
     right: auto;
     top: 12px;
     bottom: 12px;
@@ -2523,6 +2534,25 @@ section {
   .band-dark .wrap {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+  /* Single column: head (copy) on top, the card deck below (desktop keeps the
+     deck-left / head-right split). */
+  .capture .sec-head {
+    order: -1;
+  }
+}
+/* The capture deck is a fixed-px composition (360px card + 24px offset = 384px
+   stage); below ~440px it outgrows the gutter and pushes the page wider than the
+   viewport (clipping the cards and the heading). `zoom` reflows the box to fit —
+   same trick as the hero collage. */
+@media (max-width: 440px) {
+  .ext-stage {
+    zoom: 0.86;
+  }
+}
+@media (max-width: 380px) {
+  .ext-stage {
+    zoom: 0.74;
   }
 }
 
