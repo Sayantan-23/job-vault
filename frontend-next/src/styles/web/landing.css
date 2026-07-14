@@ -2564,42 +2564,53 @@ section {
   }
 }
 
-/* ---- MOBILE DOCUMENTS: stack the two real sheets ----
-   The full sheets fan and overlap past ~640px. Below that, reflow them into two
-   centered sheets in normal flow (résumé first, so the stamp stays visible),
-   lightly rotated. */
+/* ---- MOBILE DOCUMENTS: compact peek stack ----
+   The full sheets fan and overlap past ~640px. Below that a plain vertical stack
+   reads as two repeated cards, so collapse them into one paper-pair object: the
+   résumé on top (stamp stays visible) with the cover letter peeking from behind-
+   left + below — each keeps its own resting tilt. Fixed-px stage so the résumé in
+   normal flow drives the height and the letter (absolute) just peeks; `zoom`
+   guards the smallest viewports like the capture deck. */
 @media (max-width: 640px) {
   .docstage {
-    width: 100%;
-    height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 26px;
-  }
-  .doc-fan {
     position: relative;
-    left: auto;
-    top: auto;
-    z-index: auto;
+    display: block;
+    width: 322px;
+    max-width: 100%;
+    height: auto;
+    margin: 6px auto 0;
   }
-  /* Smaller entrance slide: the sheets fill the viewport width here, so the
-     desktop ±72px offset would bleed past the edge and widen the page. */
+  /* Smaller entrance slide: at this width the desktop ±72px offset would bleed
+     past the page edge. */
   .doc-fan {
     --fan-dist: 28px;
   }
   .doc-fan-resume {
-    order: 0;
-    transform: rotate(1.5deg);
+    position: relative; /* in normal flow → drives the stage height */
+    left: auto;
+    top: auto;
+    margin-left: 22px; /* sit right, leaving the left gutter for the peek */
+    z-index: 2;
+    transform: rotate(2deg);
   }
   .doc-fan-letter {
-    order: 1;
-    transform: rotate(-1.5deg);
+    position: absolute;
+    left: 0;
+    /* The letter is shorter than the résumé, so it must start far enough down
+       for its bottom-left corner to clear the résumé's bottom edge and peek. */
+    top: 72px;
+    z-index: 1;
+    transform: rotate(-3.5deg);
   }
   .mini-resume--full,
   .mini-letter--full {
-    width: 100%;
-    max-width: 320px;
+    width: 300px;
+    max-width: none;
+  }
+}
+@media (max-width: 360px) {
+  .docstage {
+    zoom: 0.9;
   }
 }
 
