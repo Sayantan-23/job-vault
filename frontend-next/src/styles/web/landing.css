@@ -190,6 +190,9 @@ h2 em {
   pointer-events: auto;
   display: flex;
   align-items: center;
+  /* space-between so brand sits left and actions sit right once .nav-links
+     (which carries margin-left:auto on desktop) is hidden on mobile. */
+  justify-content: space-between;
   gap: 20px;
   height: 60px;
   padding: 0 12px 0 16px;
@@ -406,6 +409,11 @@ h2 em {
   height: 520px;
   max-width: 100%;
   justify-self: end;
+  /* Own stacking context so the per-surface z-indices (2–5) stay contained here
+     instead of leaking to the hero level — otherwise the phone (z-index:5) would
+     paint above the tablet-band right-edge fade overlay (.hero::after, z-index:2)
+     and the crop fade would do nothing. */
+  isolation: isolate;
 }
 .vc-item {
   position: absolute;
@@ -1242,14 +1250,35 @@ h2 em {
 }
 
 /* ---- collage: across the whole two-column range (769–1200) the collage rides
-   near full size at ~0.86 and bleeds past the right viewport edge — that's the
-   intended look. `transform-origin: top right` keeps the bleed on the right,
-   away from the copy, so shrinking the visual never eats the headline. Above
-   1200 it sits at full 1.0. Below 769 the split stacks (see the block below). */
+   near full size (zoom 0.92) and bleeds past the right viewport edge on purpose,
+   with a right-edge fade mask dissolving the outermost surface into the canvas
+   so the crop reads as intended, not a hard chop. Above 1200 it sits fully
+   contained at 1.0 (no mask). Below 769 the split stacks (see the block below). */
 @media (min-width: 769px) and (max-width: 1200px) {
+  /* Deliberate crop: keep the collage near full size (zoom 0.92) so the mini
+     surfaces stay legible, and let it bleed off the right viewport edge on
+     purpose. A light `zoom` keeps the cut shallow. */
   .vault-collage {
-    scale: 0.86;
-    transform-origin: top right;
+    zoom: 0.92;
+  }
+  /* A right-edge fade dissolves the outermost surface (the phone) into the
+     canvas so the bleed reads as "the app continues beyond the frame", not a
+     hard chop. This is an OVERLAY strip at the viewport edge — NOT a mask on the
+     collage: `mask-clip: border-box` would hard-clip the surfaces that overflow
+     the collage box on the top/left too (the résumé/popup), chopping them. The
+     overlay only touches the right edge and leaves the rest untouched. Fades to
+     the rendered canvas colour (the `.hero::before` atmosphere tints `--bg`, so
+     a raw `--bg` here would leave a bright seam). */
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 190px;
+    background: linear-gradient(to right, transparent, oklch(0.945 0.005 75));
+    pointer-events: none;
+    z-index: 2;
   }
 }
 

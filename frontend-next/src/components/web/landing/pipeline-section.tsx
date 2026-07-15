@@ -85,7 +85,7 @@ export function PipelineSection() {
         <div className="wrap reveal">
           <div className="pipe-copy">
             <h2>
-              Nothing slips, <em>nothing goes cold</em>.
+              Nothing slips, <em>nothing goes cold.</em>
             </h2>
             <p className="deck">
               Every application carries a freshness tick, and the board tells you the moment one

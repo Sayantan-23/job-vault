@@ -22,7 +22,7 @@ export function ClosingSection() {
     <section className="closing">
       <div className="wrap" ref={wrapRef}>
         <h2 className="serif reveal" style={cssVars({ '--i': 0 })}>
-          Start the search that <em>stays warm</em>.
+          Start the search that <em>stays warm.</em>
         </h2>
         <p className="closing-deck reveal" style={cssVars({ '--i': 1 })}>
           Free to use. The extension, the board, and your first tailored documents included.

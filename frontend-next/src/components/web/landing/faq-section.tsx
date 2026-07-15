@@ -38,7 +38,7 @@ export function FaqSection() {
       <div className="wrap">
         <div className="sec-head reveal" ref={head.ref}>
           <h2>
-            Questions, <em>answered straight</em>.
+            Questions, <em>answered straight.</em>
           </h2>
         </div>
         <div className="faq reveal" ref={list.ref}>

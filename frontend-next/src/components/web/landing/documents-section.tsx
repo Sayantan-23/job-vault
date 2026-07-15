@@ -22,7 +22,7 @@ export function DocumentsSection() {
       <div className="wrap">
         <div className="sec-head reveal" ref={head.ref}>
           <h2>
-            Drafts that read like <em>you</em>.
+            Drafts that read like <em>you.</em>
           </h2>
           <p>
             One persona and one job produce a tailored résumé and cover letter. Refine the tone, keep

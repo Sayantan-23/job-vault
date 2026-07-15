@@ -35,7 +35,7 @@ export function CaptureSection() {
         </div>
         <div className="sec-head reveal" style={cssVars({ '--i': 1 })}>
           <h2>
-            Save any posting in <em>one click</em>.
+            Save any posting in <em>one click.</em>
           </h2>
           <p>
             The Chrome extension reads the posting off the page and drops it into your pipeline. No
