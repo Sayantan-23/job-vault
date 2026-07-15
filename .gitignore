@@ -15,3 +15,6 @@ frontend/nul
 /example_resume.tex
 
 .claude/worktrees/
+
+# Playwright CLI scratch output (screenshots, logs, page dumps)
+.playwright-cli/
