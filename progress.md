@@ -32,7 +32,7 @@
 
 - [x] **Merged to master 2026-07-15** (merge `ea152f1`, `--no-ff`).
 
-## Public Sub-Pages (on `public-pages` worktree branch off master, 2026-07-15)
+## Public Sub-Pages (on `public-pages` worktree branch off master, 2026-07-15 — **merged to master 2026-07-15**)
 
 > The 5 ComingSoon stubs replaced + the missing `/cookies` route added (footer linked it → 404). Built by opus subagents (foundation+FAQ → about ∥ contact ∥ legal×3), Fable reviewing. All server components, zero client JS, no backend changes.
 
