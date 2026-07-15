@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { isSessionReachable } from '@/lib/auth-gate'
+import { isSessionReachable, safeNextPath } from '@/lib/auth-gate'
 import { extractCookieValues, mergeCookieHeader } from '@/lib/middleware-cookies'
 
 // Server-side proxy target, same as next.config rewrites + api-server.ts. The
@@ -20,13 +20,30 @@ function isPrefetch(req: NextRequest): boolean {
   )
 }
 
+// Logged-out /app/* requests bounce to /login carrying the original URL in
+// ?next=, so login/register can land the user back where they were headed.
+function loginRedirect(req: NextRequest): NextResponse {
+  const next = req.nextUrl.pathname + req.nextUrl.search
+  return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}`, req.url))
+}
+
 export async function middleware(req: NextRequest): Promise<NextResponse> {
   const accessToken = req.cookies.get('accessToken')?.value
   const refreshToken = req.cookies.get('refreshToken')?.value
+  const reachable = isSessionReachable({ accessToken, refreshToken })
+
+  // /login and /register are pointless for a logged-in user -> send them to
+  // the app (or wherever ?next= was pointing).
+  const { pathname } = req.nextUrl
+  if (pathname === '/login' || pathname === '/register') {
+    if (!reachable) return NextResponse.next()
+    const next = safeNextPath(req.nextUrl.searchParams.get('next'))
+    return NextResponse.redirect(new URL(next ?? '/app/jobs', req.url))
+  }
 
   // Neither cookie -> genuinely logged out.
-  if (!isSessionReachable({ accessToken, refreshToken })) {
-    return NextResponse.redirect(new URL('/login', req.url))
+  if (!reachable) {
+    return loginRedirect(req)
   }
 
   // A live access-token cookie means an unexpired token (its maxAge equals the
@@ -51,7 +68,7 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
       setCookies = typeof res.headers.getSetCookie === 'function' ? res.headers.getSetCookie() : []
     } else if (res.status === 401) {
       // The refresh token is revoked/expired -> the session is unrecoverable.
-      const redirect = NextResponse.redirect(new URL('/login', req.url))
+      const redirect = loginRedirect(req)
       redirect.cookies.delete('accessToken')
       redirect.cookies.delete('refreshToken')
       return redirect
@@ -79,5 +96,5 @@ export async function middleware(req: NextRequest): Promise<NextResponse> {
 }
 
 export const config = {
-  matcher: ['/app/:path*'],
+  matcher: ['/app/:path*', '/login', '/register'],
 }

@@ -3,14 +3,18 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { RegisterFormSchema, type RegisterFormValues } from '@/schemas/auth'
 import { useRegister } from '@/hooks/use-auth'
+import { safeNextPath } from '@/lib/auth-gate'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export function RegisterForm() {
   const registerMutation = useRegister()
+  // Keep the post-auth destination alive across the login <-> register hop.
+  const next = safeNextPath(useSearchParams().get('next'))
   const {
     register,
     handleSubmit,
@@ -88,7 +92,10 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Link href="/login" className="font-medium text-primary hover:underline">
+        <Link
+          href={next ? `/login?next=${encodeURIComponent(next)}` : '/login'}
+          className="font-medium text-primary hover:underline"
+        >
           Sign in
         </Link>
       </p>

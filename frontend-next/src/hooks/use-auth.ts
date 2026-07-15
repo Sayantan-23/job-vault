@@ -3,10 +3,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/lib/api-client'
+import { safeNextPath } from '@/lib/auth-gate'
 import type { AuthUser } from '@/types/auth'
 import type { LoginValues, RegisterValues } from '@/schemas/auth'
 
 const CURRENT_USER_KEY = ['currentUser'] as const
+
+// Where to land after login/register: the validated ?next= the middleware
+// attached when it bounced a logged-out /app/* visit here, else the app home.
+// Read from window at success time (not useSearchParams) so the auth pages
+// stay static — onSuccess only ever runs in the browser.
+function postAuthDestination(): string {
+  return safeNextPath(new URLSearchParams(window.location.search).get('next')) ?? '/app/jobs'
+}
 
 export function useCurrentUser() {
   return useQuery({
@@ -23,7 +32,7 @@ export function useLogin() {
     mutationFn: (values: LoginValues) => apiClient.post<AuthUser>('/api/auth/login', values),
     onSuccess: (user) => {
       qc.setQueryData(CURRENT_USER_KEY, user)
-      router.push('/app/jobs')
+      router.push(postAuthDestination())
     },
   })
 }
@@ -35,7 +44,7 @@ export function useRegister() {
     mutationFn: (values: RegisterValues) => apiClient.post<AuthUser>('/api/auth/register', values),
     onSuccess: (user) => {
       qc.setQueryData(CURRENT_USER_KEY, user)
-      router.push('/app/jobs')
+      router.push(postAuthDestination())
     },
   })
 }

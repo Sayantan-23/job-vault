@@ -3,14 +3,18 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { LoginSchema, type LoginValues } from '@/schemas/auth'
 import { useLogin } from '@/hooks/use-auth'
+import { safeNextPath } from '@/lib/auth-gate'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 export function LoginForm() {
   const login = useLogin()
+  // Keep the post-auth destination alive across the login <-> register hop.
+  const next = safeNextPath(useSearchParams().get('next'))
   const {
     register,
     handleSubmit,
@@ -62,7 +66,10 @@ export function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground">
         No account?{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
+        <Link
+          href={next ? `/register?next=${encodeURIComponent(next)}` : '/register'}
+          className="font-medium text-primary hover:underline"
+        >
           Create one
         </Link>
       </p>
