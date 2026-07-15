@@ -1,11 +1,14 @@
 import type { ReactNode } from 'react'
 import { WebNav } from '@/components/layout/web/web-nav'
 import { WebFooter } from '@/components/layout/web/web-footer'
+import { ClosingSection } from '@/components/web/landing/closing-section'
 
 // Public-surface chrome for "The Circuit of One Search" landing. The two fixed
 // backdrop layers (warm baseline rhythm + faint noise) sit behind `.shell`,
-// which carries the nav, the page sections, and the footer. All styling comes
-// from styles/web/landing.css (no Tailwind utilities on the bespoke visuals).
+// which carries the nav, the page sections, and the dark finale (closing CTA +
+// footer share one ink surface) that now ends EVERY public page, not just the
+// landing. All styling comes from styles/web/landing.css (no Tailwind utilities
+// on the bespoke visuals).
 export function WebShell({ children }: { children: ReactNode }) {
   return (
     <>
@@ -14,6 +17,7 @@ export function WebShell({ children }: { children: ReactNode }) {
       <div className="shell">
         <WebNav />
         {children}
+        <ClosingSection />
         <WebFooter />
       </div>
     </>

@@ -7,7 +7,6 @@ import { DocumentsSection } from '@/components/web/landing/documents-section'
 import { PipelineSection } from '@/components/web/landing/pipeline-section'
 import { Interstitial } from '@/components/web/landing/interstitial'
 import { FaqSection } from '@/components/web/landing/faq-section'
-import { ClosingSection } from '@/components/web/landing/closing-section'
 
 export const metadata: Metadata = {
   // Absolute, so the root layout's "%s — JobVault" template doesn't double it.
@@ -17,9 +16,9 @@ export const metadata: Metadata = {
 }
 
 // Server component. Sections render in real product order (Capture → Personas →
-// Documents → Track dark band → kinetic interstitial → FAQ → closing); the nav,
-// backdrop, and footer come from WebShell (the (web) layout). `.landing` is a
-// plain positioned column the sections live in.
+// Documents → Track dark band → kinetic interstitial → FAQ); the nav, backdrop,
+// and the dark finale (closing CTA + footer) come from WebShell (the (web)
+// layout). `.landing` is a plain positioned column the sections live in.
 export default function LandingPage() {
   return (
     <div className="landing">
@@ -31,7 +30,6 @@ export default function LandingPage() {
       <PipelineSection />
       <Interstitial />
       <FaqSection />
-      <ClosingSection />
     </div>
   )
 }
