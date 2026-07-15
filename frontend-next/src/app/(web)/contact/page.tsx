@@ -1,63 +1,35 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 
-import { SubpageHeader } from '@/components/web/subpage-header'
-import { ContactChannel } from '@/components/web/contact/contact-channel'
+import { EmailHero, SecondaryLinks } from '@/components/web/contact/contact-hero'
 import '@/styles/web/pages/contact.css'
 
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Get in touch with JobVault. Email us about anything — general questions, bugs, or your data — and a real person reads it.',
+    'Get in touch with JobVault. Email a real person — general questions, bugs, or your data. No form, no ticket queue.',
 }
 
-// Server component, zero client JS. Frontend-only: no form, no backend endpoint —
-// just mailto links. Three hairline-separated channels + a quiet closing note.
-const CHANNELS = [
-  {
-    label: 'General',
-    description: 'Questions, feedback, or anything else on your mind.',
-    email: 'support@jobvault.app',
-    href: 'mailto:support@jobvault.app',
-  },
-  {
-    label: 'Bugs',
-    description: 'Something broke — tell us what you did and what you expected.',
-    email: 'support@jobvault.app',
-    href: 'mailto:support@jobvault.app?subject=Bug%20report',
-  },
-  {
-    label: 'Privacy & data',
-    description: 'Questions about your data, exports, or your account.',
-    email: 'support@jobvault.app',
-    href: 'mailto:support@jobvault.app?subject=Privacy',
-  },
-]
+// Server component, zero client JS. The whole page is one oversized mailto:
+// a centered vertical stack made intentional by scale, not by rows.
+const EMAIL = 'support@jobvault.app'
 
 export default function ContactPage() {
   return (
-    <main className="subpage">
+    <main className="subpage contact-page">
       <div className="wrap">
-        <SubpageHeader
-          eyebrow="Contact"
-          title={
-            <>
-              A real inbox, <em>not a ticket queue.</em>
-            </>
-          }
-          lede="Email us and a human reads it — no bots, no forms, no runaround."
-        />
+        <div className="contact-stack">
+          <span className="eyebrow contact-kicker">Contact</span>
 
-        <div className="contact-channels">
-          {CHANNELS.map((c) => (
-            <ContactChannel key={c.label} {...c} />
-          ))}
+          <h1 className="contact-statement">
+            Say it to a person, <em>not a form.</em>
+          </h1>
+
+          <EmailHero email={EMAIL} />
+
+          <p className="contact-micro">usually replies within a couple of days</p>
+
+          <SecondaryLinks email={EMAIL} />
         </div>
-
-        <p className="contact-note">
-          Answers usually land within a couple of days. Before you write, the{' '}
-          <Link href="/faq">FAQ</Link> may already have what you need.
-        </p>
       </div>
     </main>
   )
