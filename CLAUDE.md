@@ -81,6 +81,8 @@ This repo uses the **superpowers** skills, not the old sub-agent system (those a
 3. Execute the plan task-by-task (TDD, commit per task). Substantial slices may be orchestrated via the `Workflow` tool: implement → adversarial read-only verify → solo ground-truth gates. (Don't run multiple `next build`/`vitest` in the same dir concurrently — they race on `.next`/caches.)
 4. Verify (typecheck + lint + tests + a smoke test against the Docker stack), update `progress.md`, then move on.
 
+For **UI/visual changes**, verify in-browser with the `playwright-cli` skill (screenshot at desktop + mobile widths, e.g. 1440 / 1024 / 390) and eyeball the result before claiming done — don't rely on tests alone.
+
 Slice order (per the spec): Foundation → Auth → **Jobs** → Dashboard/Kanban → Timeline/Reminders/Notifications → Filters/Search/List.
 
 ## Environment variables

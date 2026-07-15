@@ -1,12 +1,51 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-07-05
+> **Last Updated**: 2026-07-07
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
 > **Design Style**: Glassmorphism (frosted glass light + matching dark theme) · Subtle animations · Nuxt UI v4
 
 > **2026-07-05 — Legacy folders removed**: the original `backend/` (NestJS) and `frontend/` (Nuxt) reference stacks were deleted now that the Express/Next rebuild is self-sufficient. Original behavior/contracts remain readable via git history. Active code lives only in `backend-express/` + `frontend-next/` (+ `extension/`).
+
+---
+
+## Public Landing Redesign — v3 "The Vault Collage" (on `landing-page-redesign`, 2026-07-05)
+
+> Plans: `docs/superpowers/plans/2026-06-30-public-pages-landing-redesign.md` (v1) + `2026-07-05-landing-page-deepening.md` (v2) + `2026-07-05-landing-v3-vault-collage.md` (v3). Branch NOT yet merged.
+>
+> **v3 (owner-driven overhaul after the v2 browser pass):** the drawn circuit/trace concept is **retired** — cohesion now comes from the reference-teardown model (tasteskill/floria/collectiveos/caveman): one warm canvas, one dark inversion with gradient seams, one uniform IO reveal choreography, faithful real-UI mockups, giant ghost wordmark texture. No animation library (Motion/GSAP evaluated and rejected; IO + CSS suffices). Executed via opus subagents, Fable advising.
+
+- [x] v3 T1: demolition — spine, nav seed-trace, footer exit-trace, capture stubs, fork fan, converge, steps rail, hero chain choreography + dead CSS (about 1200 lines removed)
+- [x] v3 T2: floating pill nav (page links FAQ/About/Contact/Login + Start free) + light footer with giant ghost JOBVAULT wordmark, link columns, honest "iOS and Android app in development." line; shared `BrandChip`
+- [x] v3 T3: **vault-collage hero** — copy stack left, five faithful mini real-UI surfaces right (extension popup, résumé, letter, board column, phone frame + "Mobile · in development" tag) at graded depth with load stagger + floating stat badges; reusable `mini/` component family
+- [x] v3 T4: one uniform `.reveal` fade-rise + `--i` stagger across every section (bespoke v2 choreography removed)
+- [x] v3 T5: capture section — pixel-faithful 360px popup (TopBar wordmark, Captured-from badge, labeled fields, Save button; **no invented window chrome**) with a CSS-only capture→success beat; source pills one line
+- [x] v3 T6: personas — real persona-card structure (name, edit/delete icons, counts line, summary, Generate résumé) + evenly spaced borderless doc list; no drawn fan
+- [x] v3 T7: documents — true business-letter letter + single-column ATS résumé (shared mini sheets via `size` prop), TAILORED rubber stamp preserved, refine beat simplified to one CSS swap, exports row kept
+- [x] v3 T8: dark Track band = the page's single theme flip — 150px gradient seams, ghost wordmark behind the board, real GhostMeter ticks (Clock/Timer/Ghost + mono days) with company·location lines, watchline type bump, eyebrow removed
+- [x] v3 T9: capabilities section deleted (wire-era leftover); word-staggered serif interstitial "Every application, accounted for."; steps strip quieted (mono terms, hairlines between columns only); closing/FAQ verified
+- [x] v3 T10+T11: copy pre-flight (zero em/en dashes rendered, 0 eyebrows, CTA-intent lock, mid-dot ration) + responsive/reduced-motion/no-JS audit at 390/720/1024/1440 (fixed hero mobile collapse + interstitial word spacing)
+- [x] v3 T12: gates green — typecheck, lint, **539 tests**, production Docker build (`a154d47`); CDP + headless visual review
+- [x] **v3.1 owner-feedback round (2026-07-06, commits `44e1362..583556e`)**: `motion` (framer-motion v12) adopted for scroll-linked effects; tactile background (paper-grain bump + hero atmosphere washes + shared `.viz-glow` indigo glows); hero collage rebalanced (266px popup, modern 200x412 phone with dynamic island, status bar, 4-row list + tab bar); how-it-works strip gains numbered chips + lucide icons + connector hairline (Floria pattern); capture beat reworked to a **card stack** (success card lands atop the still-visible capture card); dark Track band rebuilt as an **inset rounded panel** (28px radius, fog seams deleted, inner indigo glow, wordmark seated on the panel's bottom edge, motion scale-in entrance); interstitial scaled to statement size (`clamp(3.5rem,7.5vw,7rem)`); FAQ pluses now lucide `Plus` rotating 45 degrees; **closing CTA + footer merged into a dark finale** with the giant JOBVAULT wordmark band sitting between CTA and link columns (scroll drift via motion). Gates green (typecheck, lint, 539 tests, production Docker build).
+- [x] **v3.2 second feedback round (2026-07-07, commits `f45983d..86b16d5`)**: hero headline swapped to "Applications go quiet. *Yours won't*."; background atmosphere bumped one notch (glow 18%, washes 8/9%, grain 0.055); collage restored to the original v3 composition (owner preferred it) while keeping the new card designs, phone widened to 214x441; capture section became an **interactive drag-to-flip deck** (`capture-deck.tsx`, motion drag + spring swap, 120px offset / 500 velocity threshold, "drag to flip" hint, CSS keyframe beat deleted, no-JS renders the stacked state). Gates green incl. production Docker build.
+
+### v1 + v2 history (superseded by v3)
+
+- [x] v1: full landing in `(web)/` — warm theme, `landing.css`, WebNav/WebFooter, 6 sections + trace/reveal helpers (commit `ef4f567`)
+- [x] v2 T1: dead CTAs wired (`/register`, `#extension`), eyebrows trimmed to budget (3)
+- [x] v2 T2: rhythm pass — quieter baseline (2.5%/160px), `--sec-pad`, composed sections
+- [x] v2 T3: hero chain recomposed — tighter geometry, 2px wires, fanned sheets, docked Applied card, enriched nodes
+- [x] v2 T4: rubber-stamp TAILORED (turbulence erosion + pressure mask + bleed), refine demo (Humanize chip → strikethrough → replacement), exports row (PDF / LaTeX / Overleaf)
+- [x] v2 T5: capture popup+pills as one unit with spine stub junctions
+- [x] v2 T6: NEW personas fork section — persona node fans into 4 tailored-doc rows
+- [x] v2 T7: dark band deepened — full board, freshness legend, watchline timeline strip (5 dated events, pulsing ghost alert)
+- [x] v2 T8: capabilities as interactive wiring legend — per-row rail segments, honest mono facts, anchor links
+- [x] v2 T9: how-it-works strip (Capture / Generate / Track terminals on one rail)
+- [x] v2 T10: inline FAQ (4 native details/summary, honest answers, no /faq link)
+- [x] v2 T11: **the connective spine** — one full-page wire threading every section, ink segment through the dark band, 7 junctions; nav seed-trace + footer exit-trace
+- [x] v2 T12: mobile (390/720/940) + reduced-motion + no-JS + copy + a11y audit pass
+- [x] v2 T13: gates green — typecheck, lint, **539 tests**, production Docker build; CDP-scrolled visual verification
 
 ---
 

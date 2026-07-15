@@ -1,18 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "mcp__stitch__generate_screen_from_text",
-      "mcp__stitch__list_screens",
-      "mcp__stitch__get_screen",
-      "mcp__stitch__get_project",
-      "mcp__stitch__edit_screens",
       "WebSearch",
       "Bash(yarn build)",
       "Bash(yarn add:*)",
-      "mcp__nuxt-ui-remote__get-component",
       "Bash(curl:*)",
       "Bash(wsl bash:*)",
-      "mcp__nuxt-ui-remote__list-components",
       "Bash(wsl docker:*)",
       "Bash(wsl curl:*)",
       "Bash(wsl -- docker exec frontend-app-1 cat /app/.nuxt/routes.mjs 2>&1 | head -80)"

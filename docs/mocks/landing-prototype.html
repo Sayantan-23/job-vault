@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JobVault — Circuit of One Search</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet" />
+<style>
+  /* =========================================================================
+     JobVault landing — "The Circuit of One Search" (Trace Network)
+     Standalone DESIGN prototype. All product visuals are live HTML/CSS/SVG.
+     Brand tokens carried verbatim from the editorial-shell app.
+     ========================================================================= */
+
+  :root {
+    --bg:           oklch(0.992 0.004 80);
+    --surface:      oklch(1 0 0);
+    --surface-2:    oklch(0.985 0.004 80);
+    --ink:          oklch(0.23 0.012 60);
+    --ink-soft:     oklch(0.52 0.012 60);
+    --ink-faint:    oklch(0.64 0.01 60);
+    --hairline:     oklch(0.91 0.004 75);
+    --hairline-soft:oklch(0.945 0.004 75);
+
+    --accent:       oklch(0.54 0.115 270);
+    --accent-strong:oklch(0.47 0.12 270);
+    --accent-soft:  color-mix(in srgb, oklch(0.54 0.115 270) 12%, transparent);
+    --on-accent:    oklch(0.99 0 0);
+
+    --trace:        oklch(0.85 0.006 75);   /* dormant wire */
+    --trace-faint:  oklch(0.89 0.004 75);
+
+    /* one earned warm accent: stamp ink + stale rule only */
+    --vermilion:    oklch(0.55 0.18 32);
+
+    /* product-only freshness */
+    --fresh: oklch(0.70 0.13 155);
+    --cool:  oklch(0.80 0.14 80);
+    --cold:  oklch(0.62 0.20 25);
+
+    /* single dark band */
+    --ink-bg:       oklch(0.205 0.012 60);
+    --ink-bg-2:     oklch(0.255 0.012 60);
+    --on-ink:       oklch(0.95 0.005 80);
+    --on-ink-soft:  oklch(0.72 0.01 70);
+    --ink-hairline: oklch(1 0 0 / 0.10);
+    --trace-ink:    oklch(1 0 0 / 0.16);
+
+    --font-serif: 'Newsreader', Georgia, serif;
+    --font-sans:  'Geist', system-ui, -apple-system, sans-serif;
+    --font-mono:  'Geist Mono', ui-monospace, monospace;
+    --radius: 0.75rem;
+    --maxw: 1180px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--font-sans); font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* ---- backdrop: warm drafting field (NO grid) ---- */
+  .bg-baseline, .bg-noise { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .bg-baseline {
+    background-image: repeating-linear-gradient(to bottom, color-mix(in srgb, var(--ink) 4%, transparent) 0 1px, transparent 1px 122px);
+    -webkit-mask-image: radial-gradient(150% 100% at 50% 0%, #000 36%, transparent 86%);
+    mask-image: radial-gradient(150% 100% at 50% 0%, #000 36%, transparent 86%);
+  }
+  .bg-noise {
+    opacity: 0.022; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .shell { position: relative; z-index: 1; }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 28px; }
+
+  /* ---- typography ---- */
+  .serif { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.01em; }
+  .eyebrow {
+    font-family: var(--font-mono); font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.14em; color: var(--ink-soft); display: inline-flex; align-items: center; gap: 10px;
+  }
+  .eyebrow::before { content: ""; width: 14px; height: 1.5px; background: var(--accent); display: inline-block; }
+  .band-dark .eyebrow { color: var(--on-ink-soft); }
+
+  h1, h2 { font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.02em; margin: 0; }
+  h1 em, h2 em { font-style: italic; font-weight: 500; color: var(--accent-strong); }
+  .band-dark h2 em { color: color-mix(in srgb, var(--accent) 60%, white); }
+
+  /* ---- buttons ---- */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-sans);
+    font-size: 14.5px; font-weight: 500; padding: 11px 18px; border-radius: 9px; cursor: pointer;
+    border: 1px solid transparent; transition: transform .15s var(--ease), background .2s, border-color .2s; white-space: nowrap;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn-primary { background: var(--accent); color: var(--on-accent); }
+  .btn-primary:hover { background: var(--accent-strong); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--hairline); }
+  .btn-ghost:hover { border-color: var(--ink-faint); }
+  .btn-on-ink { background: var(--on-ink); color: var(--ink-bg); }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* ---- nav ---- */
+  nav.bar { position: sticky; top: 0; z-index: 50; height: 66px; display: flex; align-items: center;
+    border-bottom: 1px solid var(--hairline); background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(10px); }
+  .bar .wrap { display: flex; align-items: center; justify-content: space-between; position: relative; }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16.5px; letter-spacing: -0.01em; position: relative; }
+  .brand .mark { width: 26px; height: 26px; border-radius: 7px; background: var(--ink); color: var(--bg);
+    display: grid; place-items: center; font-family: var(--font-serif); font-size: 16px; font-weight: 600; }
+  .navlinks { display: flex; gap: 28px; font-size: 14.5px; color: var(--ink-soft); }
+  .navlinks a:hover { color: var(--ink); }
+  .navright { display: flex; align-items: center; gap: 14px; }
+  .navright .login { font-size: 14.5px; color: var(--ink-soft); }
+  .seed-trace { position: absolute; left: -28px; top: 50%; width: 90px; height: 2px; pointer-events: none; }
+  @media (max-width: 880px) { .navlinks { display: none; } }
+
+  /* ---- shared trace styles ---- */
+  .trace { fill: none; stroke: var(--trace); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .trace-faint { fill: none; stroke: var(--trace-faint); stroke-width: 1.25; stroke-linecap: round; }
+  .trace-live { fill: none; stroke: var(--accent); stroke-width: 1.75; stroke-linecap: round;
+    stroke-dasharray: 16 100000; stroke-dashoffset: var(--o0, 0); opacity: 0; }
+  .energized .trace-live { opacity: 0.42; stroke-dasharray: none; stroke-dashoffset: 0; transition: opacity .4s var(--ease); }
+  .junction { fill: var(--surface); stroke: var(--trace); stroke-width: 1.5; }
+  .junction.lit { fill: var(--accent); stroke: var(--accent); }
+  @keyframes flow { from { stroke-dashoffset: var(--o0); opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+  .flowing { animation: flow .62s linear forwards; animation-delay: var(--d, 0ms); }
+
+  /* contact shadow for floating node groups */
+  .contact { position: absolute; left: 50%; bottom: -16px; width: 78%; height: 26px; transform: translateX(-50%);
+    background: radial-gradient(closest-side, oklch(0.3 0.02 60 / 0.16), transparent 72%); filter: blur(3px); pointer-events: none; }
+
+  /* ---- node card (the app shell card, flat + hairline) ---- */
+  .node { background: var(--surface); border: 1px solid var(--hairline); border-radius: 11px; padding: 12px 13px;
+    position: absolute; transition: border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s; }
+  .node.lit { border-color: color-mix(in srgb, var(--accent) 55%, var(--hairline)); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .node .nlabel { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-faint); }
+  .node .ntitle { font-family: var(--font-serif); font-size: 15px; line-height: 1.15; margin-top: 3px; }
+  .node .nmeta { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 7px; }
+  .tap { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono); font-size: 9.5px;
+    text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent-strong);
+    border: 1px solid var(--accent-soft); background: var(--accent-soft); border-radius: 5px; padding: 2px 6px; margin-top: 8px; }
+
+  /* line bars used inside mini doc sheets */
+  .lines { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .ln { height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 12%, transparent);
+    clip-path: inset(0 100% 0 0); transition: clip-path .5s var(--ease); transition-delay: var(--i, 0ms); }
+  .filled .ln { clip-path: inset(0 0 0 0); }
+  .ln.accent { background: var(--accent); }
+
+  /* ---- HERO ---- */
+  .hero { padding: 64px 0 56px; }
+  .hero .wrap { display: grid; grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr); gap: 40px; align-items: center; }
+  .hero h1 { font-size: clamp(2.5rem, 4.4vw, 3.7rem); line-height: 1.04; margin-top: 18px; }
+  .hero .deck { margin-top: 20px; max-width: 29rem; font-size: 16.5px; line-height: 1.6; color: var(--ink-soft); }
+  .hero .cta { display: flex; gap: 12px; margin-top: 28px; }
+
+  .stage { position: relative; width: 600px; max-width: 100%; height: 482px; margin-left: auto; }
+  .stage svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
+  .stage .node, .stage .sheetgroup, .stage .pipe, .stage .fork { z-index: 2; }
+  .fork { position: absolute; width: 13px; height: 13px; }
+  .fork .jdot { width: 13px; height: 13px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--trace); transition: background .3s, border-color .3s; }
+  .fork.lit .jdot { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+
+  /* mini document sheets in hero */
+  .sheetgroup { position: absolute; }
+  .sheet { position: absolute; background: var(--surface); border: 1px solid var(--hairline); border-radius: 6px;
+    box-shadow: 0 14px 30px -22px oklch(0.3 0.02 60 / 0.5); padding: 13px 13px 15px; }
+  .sheet .shead { display: flex; align-items: center; justify-content: space-between; }
+  .sheet .stype { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint); }
+  .sheet .sname { font-family: var(--font-serif); font-size: 14px; margin-top: 6px; }
+  .sheet .sctx { font-family: var(--font-mono); font-size: 9px; color: var(--ink-faint); margin-top: 2px; }
+
+  /* mini pipeline node in hero */
+  .pipe { position: absolute; background: var(--surface); border: 1px solid var(--hairline); border-radius: 11px; overflow: hidden; }
+  .pipe .ptop { display: flex; align-items: center; justify-content: space-between; padding: 8px 11px; border-bottom: 1px solid var(--hairline-soft); }
+  .pipe .ptop .pname { font-size: 11.5px; font-weight: 600; color: var(--ink-soft); }
+  .pipe .ptop .pcount { font-family: var(--font-mono); font-size: 10px; color: var(--ink-faint); }
+  .pipe .pcards { padding: 9px 10px; display: flex; flex-direction: column; gap: 7px; }
+  .pcard { border: 1px solid var(--hairline); border-radius: 8px; padding: 8px 9px; background: var(--surface);
+    opacity: 0; transform: translateY(8px); transition: opacity .4s var(--ease), transform .4s var(--ease); }
+  .dropped .pcard { opacity: 1; transform: none; }
+  .pcard .prole { font-size: 12px; font-weight: 500; }
+  .pcard .pco { font-size: 10.5px; color: var(--ink-faint); }
+  .pcard .ptick { display: flex; align-items: center; gap: 6px; margin-top: 7px; font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-faint); }
+  .fdot { width: 6px; height: 6px; border-radius: 50%; }
+  .fdot.f { background: var(--fresh); } .fdot.c { background: var(--cool); } .fdot.x { background: var(--cold); }
+
+  /* ---- generic section ---- */
+  section { padding: 96px 0; position: relative; }
+  .sec-head { max-width: 36rem; }
+  .sec-head h2 { font-size: clamp(1.9rem, 3vw, 2.55rem); line-height: 1.08; margin-top: 14px; }
+  .sec-head p { color: var(--ink-soft); font-size: 16px; margin-top: 15px; }
+
+  /* ---- CAPTURE (extension) ---- */
+  .capture .wrap { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 56px; align-items: center; }
+  .popup { position: relative; width: 360px; max-width: 100%; border: 1px solid var(--hairline); border-radius: 12px;
+    background: var(--surface); box-shadow: 0 24px 60px -36px oklch(0.3 0.02 60 / 0.5); overflow: hidden; }
+  .popup::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-soft), transparent); }
+  .pop-bar { display: flex; align-items: center; gap: 9px; padding: 10px 13px; border-bottom: 1px solid var(--hairline-soft); background: var(--surface-2); }
+  .pop-bar .dots { display: flex; gap: 6px; } .pop-bar .dots span { width: 9px; height: 9px; border-radius: 50%; background: oklch(0.87 0.004 75); }
+  .pop-bar .ptitle { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+  .pop-body { padding: 14px; }
+  .field { margin-bottom: 11px; }
+  .field .k { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint); }
+  .field .v { font-size: 14px; font-weight: 500; margin-top: 3px; min-height: 18px; }
+  .pop-foot { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; border-top: 1px solid var(--hairline-soft); }
+  .saved { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--fresh); font-weight: 500; }
+  .pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .pill { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); border: 1px solid var(--hairline); border-radius: 20px; padding: 5px 12px; }
+
+  /* ---- DOCUMENTS (real type-set sheets) ---- */
+  .docs { position: relative; }
+  .docs .wrap { display: grid; grid-template-columns: 0.92fr 1.08fr; gap: 56px; align-items: center; }
+  .docstage { position: relative; height: 470px; }
+  .paper { position: absolute; background: var(--surface); border: 1px solid var(--hairline);
+    box-shadow: 0 30px 70px -40px oklch(0.3 0.02 60 / 0.55); border-radius: 3px; }
+  .resume { width: 340px; height: 440px; left: 70px; top: 8px; transform: rotate(-1.6deg); padding: 26px 26px; z-index: 2; }
+  .cover { width: 320px; height: 410px; left: 6px; top: 36px; transform: rotate(2.4deg); padding: 24px 24px; z-index: 1; }
+  .paper .ctx { font-family: var(--font-mono); font-size: 9.5px; color: var(--accent-strong); border: 1px solid var(--accent-soft);
+    background: var(--accent-soft); border-radius: 5px; padding: 3px 7px; display: inline-block; }
+  .paper .cand { font-family: var(--font-serif); font-size: 22px; margin-top: 13px; }
+  .paper .contact { font-family: var(--font-mono); font-size: 9.5px; color: var(--ink-faint); margin-top: 5px; }
+  .paper .seph { font-family: var(--font-mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-soft); margin: 16px 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--hairline-soft); }
+  .paper .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .paper .role { font-size: 11.5px; font-weight: 600; } .paper .when { font-family: var(--font-mono); font-size: 9px; color: var(--ink-faint); }
+  .paper .biz { font-size: 10.5px; color: var(--ink-faint); margin-bottom: 6px; }
+  .docline { height: 5px; border-radius: 3px; background: color-mix(in srgb, var(--ink) 11%, transparent); margin: 5px 0;
+    clip-path: inset(0 100% 0 0); transition: clip-path .55s var(--ease); transition-delay: var(--i, 0ms); }
+  .filled .docline { clip-path: inset(0 0 0 0); }
+  .refine { display: flex; align-items: center; gap: 8px; margin: 9px 0 3px; }
+  .refine s { color: var(--ink-faint); text-decoration-color: var(--vermilion); font-size: 11px; }
+  .refine .new { color: var(--accent-strong); font-size: 11px; font-weight: 500; }
+  .refine .tag { font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--ink-faint); border: 1px solid var(--hairline); border-radius: 4px; padding: 1px 5px; margin-left: auto; }
+  .cover .ctext { font-size: 11px; line-height: 1.7; color: var(--ink-soft); margin-top: 12px; }
+  .cover .sign { font-family: var(--font-serif); font-size: 16px; margin-top: 14px; }
+  .stamp { position: absolute; right: 16px; bottom: 26px; width: 92px; height: 92px; z-index: 3;
+    transform: rotate(-13deg) scale(0.7); opacity: 0; transition: transform .5s cubic-bezier(0.34,1.56,0.64,1), opacity .35s; }
+  .stamped .stamp { transform: rotate(-13deg) scale(1); opacity: 0.9; }
+  .corner-fold { position: absolute; right: 0; bottom: 0; width: 0; height: 0; border-style: solid;
+    border-width: 0 0 22px 22px; border-color: transparent transparent var(--surface-2) transparent;
+    filter: drop-shadow(-1px -1px 1px oklch(0.3 0.02 60 / 0.12)); }
+  .refine-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
+  .rchip { font-family: var(--font-mono); font-size: 11px; color: var(--ink-soft); border: 1px solid var(--hairline); border-radius: 7px; padding: 6px 11px; }
+
+  /* ---- PIPELINE dark band ---- */
+  .band-dark { background: var(--ink-bg); color: var(--on-ink); border-top: 1px solid var(--ink-hairline); border-bottom: 1px solid var(--ink-hairline); }
+  .band-dark .wrap { display: grid; grid-template-columns: 0.82fr 1.18fr; gap: 56px; align-items: center; }
+  .band-dark h2 { font-size: clamp(1.9rem, 3vw, 2.5rem); line-height: 1.08; margin-top: 15px; }
+  .band-dark .deck { color: var(--on-ink-soft); font-size: 16px; margin-top: 16px; max-width: 24rem; }
+  .board-wrap { position: relative; }
+  .board { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--ink-hairline); border-radius: 13px; overflow: hidden; background: var(--ink-bg-2); }
+  .col { padding: 15px 13px 20px; border-right: 1px solid var(--ink-hairline); }
+  .col:last-child { border-right: none; }
+  .col-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .col-head .name { font-size: 12px; font-weight: 600; color: var(--on-ink-soft); }
+  .col-head .count { font-family: var(--font-mono); font-size: 10px; color: var(--on-ink-soft); opacity: 0.7; }
+  .dcard { background: oklch(1 0 0 / 0.03); border: 1px solid var(--ink-hairline); border-radius: 9px; padding: 10px 11px; margin-bottom: 9px; }
+  .dcard .role { font-size: 12.5px; font-weight: 500; color: var(--on-ink); }
+  .dcard .co { font-size: 11px; color: var(--on-ink-soft); }
+  .dcard .meta { display: flex; align-items: center; gap: 7px; margin-top: 9px; font-family: var(--font-mono); font-size: 10px; color: var(--on-ink-soft); }
+  .dcard[data-stale] { border-left: 2px solid var(--vermilion); }
+  .dcard[data-stale] .nudge { margin-top: 10px; display: inline-flex; gap: 7px; align-items: center; font-size: 11px;
+    color: color-mix(in srgb, var(--cold) 70%, white); border: 1px solid var(--ink-hairline); border-radius: 7px; padding: 6px 9px; }
+  .stale-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--cold); }
+  .band-dark[data-shown] .dcard[data-stale] .stale-dot { animation: pulse 2.2s var(--ease) infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cold) 55%, transparent); } 50% { box-shadow: 0 0 0 5px transparent; } }
+  .incoming { position: absolute; left: -1px; top: -34px; width: 100%; height: 40px; pointer-events: none; overflow: visible; }
+
+  /* ---- CAPABILITIES (wiring legend) ---- */
+  .caps-wrap { position: relative; padding-left: 30px; margin-top: 40px; }
+  .rail { position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1.5px; background: var(--trace); transform-origin: top; transform: scaleY(0); transition: transform 1s var(--ease); }
+  [data-shown] .rail { transform: scaleY(1); }
+  .caps { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
+  .cap { display: grid; grid-template-columns: 150px 1fr; gap: 18px; padding: 22px 0; border-top: 1px solid var(--hairline); position: relative; }
+  .cap::before { content: ""; position: absolute; left: -30px; top: 26px; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--surface); border: 1.5px solid var(--trace); transition: background .25s, border-color .25s; }
+  .cap:hover::before { background: var(--accent); border-color: var(--accent); }
+  .cap .t { font-size: 14.5px; font-weight: 600; }
+  .cap .term { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint); margin-top: 3px; }
+  .cap .d { font-size: 14px; color: var(--ink-soft); }
+  @media (max-width: 760px) { .caps { grid-template-columns: 1fr; column-gap: 0; } .cap { grid-template-columns: 1fr; gap: 6px; } }
+
+  /* ---- CLOSING ---- */
+  .closing { text-align: center; padding: 120px 0 124px; position: relative; }
+  .closing .converge { position: absolute; left: 50%; top: 0; transform: translateX(-50%); width: 1180px; max-width: 100%; height: 150px; pointer-events: none; overflow: visible; }
+  .closing h2 { font-size: clamp(2.1rem, 3.6vw, 3rem); line-height: 1.06; max-width: 17ch; margin: 0 auto; position: relative; }
+  .closing .cta { margin-top: 28px; display: flex; justify-content: center; gap: 12px; }
+
+  /* ---- footer ---- */
+  footer { border-top: 1px solid var(--hairline); padding: 56px 0 44px; position: relative; }
+  footer .wrap { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 32px; }
+  footer .col h4 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-faint); font-weight: 600; margin: 0 0 14px; font-family: var(--font-mono); }
+  footer .col a { display: block; font-size: 14px; color: var(--ink-soft); padding: 5px 0; }
+  footer .col a:hover { color: var(--ink); }
+  footer .blurb { font-size: 14px; color: var(--ink-soft); max-width: 22rem; margin: 14px 0 0; }
+  footer .copy { grid-column: 1 / -1; border-top: 1px solid var(--hairline-soft); margin-top: 24px; padding-top: 22px; font-size: 12.5px; color: var(--ink-faint); }
+  @media (max-width: 760px) { footer .wrap { grid-template-columns: 1fr 1fr; } }
+
+  /* ---- motion utilities ---- */
+  .intro { opacity: 0; transform: translateY(16px); animation: rise .7s var(--ease) forwards; animation-delay: var(--d, 0ms); }
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  .reveal { opacity: 0; transform: translateY(22px); transition: opacity .7s var(--ease), transform .7s var(--ease); transition-delay: var(--rd, 0ms); }
+  .reveal[data-shown] { opacity: 1; transform: none; }
+
+  @media (max-width: 1080px) { .stage { transform: scale(0.82); transform-origin: top right; } }
+  @media (max-width: 940px) {
+    .hero .wrap, .capture .wrap, .docs .wrap, .band-dark .wrap { grid-template-columns: 1fr; gap: 40px; }
+    .stage { transform: none; margin: 0 auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .intro, .reveal { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; }
+    .ln, .docline { transition: none !important; clip-path: inset(0 0 0 0) !important; }
+    .pcard, .stamp { transition: none !important; }
+    .rail { transition: none !important; transform: scaleY(1) !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="bg-baseline"></div>
+  <div class="bg-noise"></div>
+
+  <div class="shell">
+    <!-- NAV -->
+    <nav class="bar">
+      <div class="wrap">
+        <a class="brand" href="#">
+          <svg class="seed-trace" viewBox="0 0 90 2" preserveAspectRatio="none"><line x1="0" y1="1" x2="90" y2="1" class="trace-faint"/></svg>
+          <span class="mark">J</span> JobVault
+        </a>
+        <div class="navlinks">
+          <a href="#how">How it connects</a>
+          <a href="#documents">Documents</a>
+          <a href="#extension">Extension</a>
+        </div>
+        <div class="navright">
+          <a class="login" href="#">Log in</a>
+          <a class="btn btn-primary" href="#">Start free</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- HERO -->
+    <header class="hero" id="how">
+      <div class="wrap">
+        <div class="hero-copy">
+          <span class="eyebrow intro" style="--d:0ms">One connected system</span>
+          <h1 class="intro" style="--d:80ms">One search.<br><em>Wired end to end.</em></h1>
+          <p class="deck intro" style="--d:180ms">A persona and a job become a tailored resume and cover letter, tracked in one pipeline and watched so nothing goes cold.</p>
+          <div class="cta intro" style="--d:280ms">
+            <a class="btn btn-primary" href="#">Start free
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </a>
+            <a class="btn btn-ghost" href="#documents">See the documents</a>
+          </div>
+        </div>
+
+        <!-- THE LIVE SIGNAL CHAIN (all code-built) -->
+        <div class="stage intro" id="chain" style="--d:360ms">
+          <svg class="wires" id="wires" preserveAspectRatio="none"></svg>
+
+          <div class="node" id="n-persona" style="left:0; top:40px; width:182px">
+            <div class="nlabel">Persona</div>
+            <div class="ntitle">Senior PM</div>
+            <div class="nmeta">skills · salary · experience</div>
+            <div class="nmeta" style="color:var(--accent-strong)">3 / 5 used</div>
+          </div>
+
+          <div class="node" id="n-job" style="left:0; top:262px; width:182px">
+            <div class="nlabel">Job</div>
+            <div class="ntitle">Senior PM</div>
+            <div class="nmeta">Ramp · San Francisco</div>
+            <span class="tap">via extension</span>
+          </div>
+
+          <div class="fork" id="n-fork" style="left:268px; top:208px"><div class="jdot"></div></div>
+
+          <div class="sheetgroup" id="n-docs" style="left:332px; top:8px; width:250px; height:240px">
+            <div class="sheet cover" style="left:0; top:18px; width:160px; height:200px; transform:rotate(3deg)">
+              <div class="stype">Cover letter</div>
+              <div class="lines">
+                <div class="ln" style="--i:60ms; width:92%"></div>
+                <div class="ln" style="--i:120ms; width:86%"></div>
+                <div class="ln" style="--i:180ms; width:94%"></div>
+                <div class="ln" style="--i:240ms; width:70%"></div>
+                <div class="ln" style="--i:300ms; width:88%"></div>
+              </div>
+            </div>
+            <div class="sheet resume" style="left:74px; top:0; width:172px; height:222px; transform:rotate(-1.6deg)">
+              <div class="shead"><span class="stype">Résumé</span></div>
+              <div class="sname">Maya Okafor</div>
+              <div class="sctx">tailored to Ramp · Senior PM</div>
+              <div class="lines">
+                <div class="ln" style="--i:80ms; width:96%"></div>
+                <div class="ln" style="--i:150ms; width:88%"></div>
+                <div class="ln accent" style="--i:220ms; width:64%"></div>
+                <div class="ln" style="--i:290ms; width:92%"></div>
+                <div class="ln" style="--i:360ms; width:78%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipe" id="n-pipe" style="left:356px; top:300px; width:236px">
+            <div class="ptop"><span class="pname">Applied</span><span class="pcount">+1</span></div>
+            <div class="pcards">
+              <div class="pcard" style="transition-delay:0ms">
+                <div class="prole">Senior PM</div><div class="pco">Ramp</div>
+                <div class="ptick"><span class="fdot f"></span> tracked just now</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CAPTURE (extension) -->
+    <section class="capture" id="extension">
+      <div class="wrap">
+        <div class="cap-visual reveal">
+          <div class="popup">
+            <div class="pop-bar"><span class="dots"><span></span><span></span><span></span></span><span class="ptitle">jobvault · capture</span></div>
+            <div class="pop-body">
+              <div class="field"><div class="k">Title</div><div class="v">Senior Product Manager</div></div>
+              <div class="field"><div class="k">Company</div><div class="v">Ramp</div></div>
+              <div class="field"><div class="k">Location</div><div class="v">San Francisco, CA · Hybrid</div></div>
+            </div>
+            <div class="pop-foot">
+              <span class="saved">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                Saved to Wishlist
+              </span>
+              <span style="font-family:var(--font-mono);font-size:10px;color:var(--ink-faint)">no duplicate</span>
+            </div>
+          </div>
+          <div class="pills">
+            <span class="pill">LinkedIn</span><span class="pill">Indeed</span><span class="pill">Naukri</span><span class="pill">Greenhouse</span><span class="pill">+ any site</span>
+          </div>
+        </div>
+        <div class="sec-head reveal" style="--rd:80ms">
+          <span class="eyebrow">The entry point</span>
+          <h2>Save any posting in <em>one click</em>.</h2>
+          <p>The Chrome extension reads the posting straight off the page, no copy-paste, and drops it into your pipeline. It skips duplicates and leaves a note on the timeline.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DOCUMENTS -->
+    <section class="docs" id="documents">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow">The signature output</span>
+          <h2>Drafts that read like <em>you wrote them</em>.</h2>
+          <p>One persona and one job produce a tailored resume and cover letter, generated to fit the role. Refine the tone, keep a reusable library, and export to PDF.</p>
+          <div class="refine-controls">
+            <span class="rchip">Humanize</span><span class="rchip">Shorten</span><span class="rchip">Make longer</span><span class="rchip">Fix grammar</span>
+          </div>
+        </div>
+        <div class="docstage reveal" style="--rd:60ms">
+          <div class="paper cover">
+            <div class="ctx">tailored to: Senior PM · Ramp</div>
+            <div class="ctext">Dear Hiring Team,<br><br>Over the last six years I have shipped payments and spend products used by finance teams at scale, the exact problem space Ramp is built around.</div>
+            <div class="ctext" style="margin-top:8px">I would bring that same focus on speed and clarity to your roadmap.</div>
+            <div class="sign">Maya Okafor</div>
+          </div>
+          <div class="paper resume">
+            <div class="ctx">tailored to: Senior PM · Ramp</div>
+            <div class="cand">Maya Okafor</div>
+            <div class="contact">maya.okafor@hey.com · San Francisco · /in/mayaokafor</div>
+            <div class="seph">Experience</div>
+            <div class="row"><span class="role">Senior Product Manager</span><span class="when">2021 — now</span></div>
+            <div class="biz">Brico · payments platform</div>
+            <div class="docline" style="--i:80ms"></div>
+            <div class="refine">
+              <s>Worked on the billing system and helped the team.</s>
+            </div>
+            <div class="refine">
+              <span class="new">Cut invoice errors 31% by rebuilding the billing engine.</span>
+              <span class="tag">humanize</span>
+            </div>
+            <div class="docline" style="--i:220ms"></div>
+            <div class="seph">Skills</div>
+            <div class="docline" style="--i:300ms; width:90%"></div>
+            <div class="docline" style="--i:360ms; width:72%"></div>
+            <div class="corner-fold" title="Export PDF"></div>
+            <svg class="stamp" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="var(--vermilion)" stroke-width="2.5"/>
+              <circle cx="50" cy="50" r="37" fill="none" stroke="var(--vermilion)" stroke-width="1"/>
+              <text x="50" y="46" text-anchor="middle" font-family="Geist Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.5" fill="var(--vermilion)">TAILO</text>
+              <text x="50" y="63" text-anchor="middle" font-family="Geist Mono, monospace" font-size="15" font-weight="500" letter-spacing="1.5" fill="var(--vermilion)">RED</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PIPELINE + GHOST METER (single dark band) -->
+    <section class="band-dark" id="pipeline">
+      <div class="wrap reveal">
+        <div class="pipe-copy">
+          <span class="eyebrow">The destination, watched</span>
+          <h2>Nothing slips, <em>nothing goes cold</em>.</h2>
+          <p class="deck">Every application lands in the pipeline carrying a freshness tick. Green while it is fresh, amber as it cools, red when it has gone quiet too long, with a nudge to follow up.</p>
+        </div>
+        <div class="board-wrap">
+          <svg class="incoming" id="incoming" preserveAspectRatio="none"></svg>
+          <div class="board">
+            <div class="col">
+              <div class="col-head"><span class="name">Applied</span><span class="count">6</span></div>
+              <div class="dcard" data-stale>
+                <div class="role">Product Designer</div><div class="co">Ramp</div>
+                <div class="meta"><span class="stale-dot"></span> quiet 14 days</div>
+                <div class="nudge">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+                  Send a follow-up
+                </div>
+              </div>
+              <div class="dcard"><div class="role">Frontend Engineer</div><div class="co">Loops</div><div class="meta"><span class="fdot c"></span> quiet 5 days</div></div>
+            </div>
+            <div class="col">
+              <div class="col-head"><span class="name">Interviewing</span><span class="count">3</span></div>
+              <div class="dcard"><div class="role">Product Engineer</div><div class="co">Figment</div><div class="meta"><span class="fdot f"></span> final round Thu</div></div>
+              <div class="dcard"><div class="role">UX Engineer</div><div class="co">Aerial</div><div class="meta"><span class="fdot f"></span> recruiter call done</div></div>
+            </div>
+            <div class="col">
+              <div class="col-head"><span class="name">Offer</span><span class="count">1</span></div>
+              <div class="dcard"><div class="role">Frontend Engineer</div><div class="co">Northwind</div><div class="meta"><span class="fdot f"></span> reviewing terms</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CAPABILITIES (wiring legend) -->
+    <section id="features">
+      <div class="wrap">
+        <div class="sec-head reveal">
+          <span class="eyebrow">The whole system</span>
+          <h2>Every part on the <em>same wire</em>.</h2>
+        </div>
+        <div class="caps-wrap reveal" style="--rd:90ms">
+          <div class="rail"></div>
+          <div class="caps">
+            <div class="cap"><div><div class="t">Pipeline</div><div class="term">track</div></div><div class="d">Drag applications through Wishlist, Applied, Interviewing, and Offer.</div></div>
+            <div class="cap"><div><div class="t">Personas</div><div class="term">profile</div></div><div class="d">Up to five role profiles, matched to the jobs you apply for.</div></div>
+            <div class="cap"><div><div class="t">Résumés</div><div class="term">generate</div></div><div class="d">Tailored to each job and persona, with a library and PDF export.</div></div>
+            <div class="cap"><div><div class="t">Cover letters</div><div class="term">generate</div></div><div class="d">Human-sounding drafts you can refine, reuse, and export.</div></div>
+            <div class="cap"><div><div class="t">Timeline &amp; reminders</div><div class="term">watch</div></div><div class="d">Every step logged, with follow-ups and ghost alerts in real time.</div></div>
+            <div class="cap"><div><div class="t">Extension</div><div class="term">capture</div></div><div class="d">Save a posting from anywhere in one click, no copy-paste.</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLOSING -->
+    <section class="closing">
+      <svg class="converge" id="converge" preserveAspectRatio="none"></svg>
+      <div class="wrap reveal">
+        <h2 class="serif">Start the search that <em>stays warm</em>.</h2>
+        <div class="cta">
+          <a class="btn btn-primary" href="#">Start free
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="#">Add to Chrome</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+      <div class="wrap">
+        <div class="col">
+          <a class="brand" href="#"><span class="mark">J</span> JobVault</a>
+          <p class="blurb">One connected home for your job search. From the first saved posting to the offer, nothing goes cold.</p>
+        </div>
+        <div class="col"><h4>Product</h4><a href="#">Pipeline</a><a href="#">Documents</a><a href="#">Personas</a><a href="#">Extension</a></div>
+        <div class="col"><h4>Company</h4><a href="#">About</a><a href="#">Contact</a><a href="#">FAQ</a></div>
+        <div class="col"><h4>Legal</h4><a href="#">Privacy</a><a href="#">Terms</a></div>
+        <div class="copy">© 2026 JobVault. Built for people in the middle of a job search.</div>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ---------- orthogonal rounded path between two points ---------- */
+    function orth(a, b, r) {
+      r = r || 12;
+      if (Math.abs(a.y - b.y) < 3) return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
+      const midX = (a.x + b.x) / 2;
+      const sy = b.y > a.y ? 1 : -1;
+      const sx = b.x > a.x ? 1 : -1;
+      return `M ${a.x} ${a.y} L ${midX - r * sx} ${a.y} Q ${midX} ${a.y} ${midX} ${a.y + r * sy} `
+           + `L ${midX} ${b.y - r * sy} Q ${midX} ${b.y} ${midX + r * sx} ${b.y} L ${b.x} ${b.y}`;
+    }
+    function anchor(stage, el, side) {
+      const s = stage.getBoundingClientRect(), e = el.getBoundingClientRect();
+      const x = e.left - s.left, y = e.top - s.top, w = e.width, h = e.height;
+      switch (side) {
+        case 'r': return { x: x + w, y: y + h / 2 };
+        case 'l': return { x: x, y: y + h / 2 };
+        case 't': return { x: x + w / 2, y: y };
+        case 'b': return { x: x + w / 2, y: y + h };
+        default:  return { x: x + w / 2, y: y + h / 2 };
+      }
+    }
+    function ns(name) { return document.createElementNS('http://www.w3.org/2000/svg', name); }
+
+    /* ---------- HERO signal chain ---------- */
+    const stage = document.getElementById('chain');
+    const wires = document.getElementById('wires');
+    const seg = [];
+
+    function buildChain() {
+      const sr = stage.getBoundingClientRect();
+      wires.setAttribute('viewBox', `0 0 ${sr.width} ${sr.height}`);
+      wires.innerHTML = '';
+      seg.length = 0;
+      const conns = [
+        ['n-persona', 'r', 'n-fork', 'l'],
+        ['n-job', 'r', 'n-fork', 'l'],
+        ['n-fork', 'r', 'n-docs', 'l'],
+        ['n-docs', 'b', 'n-pipe', 't'],
+      ];
+      conns.forEach(([fa, fs, ta, ts]) => {
+        const a = anchor(stage, document.getElementById(fa), fs);
+        const b = anchor(stage, document.getElementById(ta), ts);
+        const d = orth(a, b, 12);
+        const base = ns('path'); base.setAttribute('d', d); base.setAttribute('class', 'trace');
+        const live = ns('path'); live.setAttribute('d', d); live.setAttribute('class', 'trace-live');
+        wires.appendChild(base); wires.appendChild(live);
+        seg.push(live);
+      });
+    }
+    function runChain() {
+      if (reduce) {
+        stage.classList.add('energized');
+        ['n-persona','n-job'].forEach(id => document.getElementById(id).classList.add('lit'));
+        document.getElementById('n-fork').classList.add('lit');
+        document.querySelectorAll('#n-docs .sheet').forEach(s => s.classList.add('filled'));
+        document.getElementById('n-pipe').classList.add('dropped');
+        return;
+      }
+      const delays = [200, 200, 760, 1380];
+      seg.forEach((p, i) => {
+        const len = p.getTotalLength();
+        p.style.setProperty('--o0', (len + 16) + 'px');
+        p.style.animationDelay = delays[i] + 'ms';
+        // restart animation
+        p.classList.remove('flowing'); void p.offsetWidth; p.classList.add('flowing');
+      });
+      setTimeout(() => { document.getElementById('n-persona').classList.add('lit'); document.getElementById('n-job').classList.add('lit'); }, 260);
+      setTimeout(() => document.getElementById('n-fork').classList.add('lit'), 780);
+      setTimeout(() => document.querySelectorAll('#n-docs .sheet').forEach(s => s.classList.add('filled')), 1180);
+      setTimeout(() => document.getElementById('n-pipe').classList.add('dropped'), 1860);
+      setTimeout(() => stage.classList.add('energized'), 2150);
+    }
+
+    let chainRan = false;
+    function initChain() {
+      buildChain();
+      if (!chainRan) { chainRan = true; runChain(); }
+    }
+    window.addEventListener('load', initChain);
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => { buildChain(); if (chainRan) stage.classList.add('energized'); });
+      ro.observe(stage);
+    }
+
+    /* ---------- incoming trace into the pipeline (dark band) ---------- */
+    function drawIncoming() {
+      const svg = document.getElementById('incoming');
+      const r = svg.getBoundingClientRect();
+      svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
+      const d = `M 20 0 L 20 ${r.height - 14} Q 20 ${r.height} 34 ${r.height}`;
+      svg.innerHTML = '';
+      const base = ns('path'); base.setAttribute('d', d); base.setAttribute('class', 'trace'); base.setAttribute('stroke', 'var(--trace-ink)');
+      const live = ns('path'); live.setAttribute('d', d); live.setAttribute('class', 'trace-live');
+      svg.appendChild(base); svg.appendChild(live);
+      return live;
+    }
+    /* ---------- converging traces above final CTA ---------- */
+    function drawConverge() {
+      const svg = document.getElementById('converge');
+      const r = svg.getBoundingClientRect();
+      const cx = r.width / 2, by = r.height;
+      svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
+      svg.innerHTML = '';
+      [[40, 0], [r.width * 0.28, 0], [r.width * 0.72, 0], [r.width - 40, 0]].forEach(([x]) => {
+        const d = `M ${x} 0 Q ${x} ${by * 0.6} ${cx} ${by}`;
+        const base = ns('path'); base.setAttribute('d', d); base.setAttribute('class', 'trace-faint');
+        const live = ns('path'); live.setAttribute('d', d); live.setAttribute('class', 'trace-live');
+        svg.appendChild(base); svg.appendChild(live);
+      });
+      const dot = ns('circle'); dot.setAttribute('cx', cx); dot.setAttribute('cy', by); dot.setAttribute('r', '5'); dot.setAttribute('class', 'junction lit');
+      svg.appendChild(dot);
+      return svg.querySelectorAll('.trace-live');
+    }
+
+    /* ---------- reveal on scroll ---------- */
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el = e.target;
+        el.setAttribute('data-shown', '');
+        // section-specific energize
+        if (el.closest('.docs')) el.querySelectorAll('.paper').forEach(p => { p.classList.add('filled'); });
+        if (el.querySelector && el.querySelector('.stamp')) {}
+        io.unobserve(el);
+      });
+    }, { threshold: 0.2 });
+    document.querySelectorAll('.reveal, .band-dark').forEach(el => io.observe(el));
+
+    // documents: fill lines + stamp when in view
+    const docstage = document.querySelector('.docstage');
+    if (docstage) {
+      const dio = new IntersectionObserver((ents) => {
+        ents.forEach(en => {
+          if (!en.isIntersecting) return;
+          en.target.querySelectorAll('.paper').forEach(p => p.classList.add('filled'));
+          const resume = en.target.querySelector('.resume');
+          if (reduce) { resume.classList.add('stamped'); }
+          else setTimeout(() => resume.classList.add('stamped'), 1600);
+          dio.unobserve(en.target);
+        });
+      }, { threshold: 0.3 });
+      dio.observe(docstage);
+    }
+
+    // pipeline incoming + converge: draw when visible
+    const band = document.getElementById('pipeline');
+    if (band) {
+      const bio = new IntersectionObserver((ents) => {
+        ents.forEach(en => {
+          if (!en.isIntersecting) return;
+          const live = drawIncoming();
+          if (!reduce && live) { const len = live.getTotalLength(); live.style.setProperty('--o0', (len+16)+'px'); live.classList.add('flowing'); }
+          setTimeout(() => band.classList.add('energized'), reduce ? 0 : 700);
+          bio.unobserve(en.target);
+        });
+      }, { threshold: 0.3 });
+      bio.observe(band);
+    }
+    const closing = document.querySelector('.closing');
+    if (closing) {
+      const cio = new IntersectionObserver((ents) => {
+        ents.forEach(en => {
+          if (!en.isIntersecting) return;
+          const lives = drawConverge();
+          if (!reduce) lives.forEach((p, i) => { const len = p.getTotalLength(); p.style.setProperty('--o0', (len+16)+'px'); p.style.animationDelay = (i*70)+'ms'; p.classList.add('flowing'); });
+          setTimeout(() => closing.classList.add('energized'), reduce ? 0 : 600);
+          cio.unobserve(en.target);
+        });
+      }, { threshold: 0.3 });
+      cio.observe(closing);
+    }
+    window.addEventListener('resize', () => { if (closing && closing.hasAttribute('data-shown')) drawConverge(); });
+  </script>
+</body>
+</html>

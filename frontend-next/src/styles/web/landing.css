@@ -1,0 +1,2814 @@
+/* =========================================================================
+   JobVault landing — "The Circuit of One Search" (Trace Network)
+   Ported verbatim from docs/mocks/landing-prototype.html <style> block.
+   The :root token block lives in styles/web/theme.css; the html/body resets
+   are owned by globals.css (Tailwind preflight + the body base styles).
+   ========================================================================= */
+
+html {
+  scroll-behavior: smooth;
+  /* Single vertical-rhythm knob for section padding (landing-scope only, so it
+     lives here — not theme.css). Closing keeps a larger top pad on purpose. */
+  --sec-pad: 96px;
+}
+
+/* ---- backdrop: warm drafting field (NO grid) ---- */
+.bg-baseline,
+.bg-noise {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.bg-baseline {
+  /* Faint drafting-paper tooth, NOT section dividers: fainter ink + wider
+     spacing so the rules never read as borders, and a tighter radial fade so
+     they die out well before the content-heavy center. */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--ink) 2.5%, transparent) 0 1px,
+    transparent 1px 160px
+  );
+  -webkit-mask-image: radial-gradient(150% 100% at 50% 0%, #000 22%, transparent 72%);
+  mask-image: radial-gradient(150% 100% at 50% 0%, #000 22%, transparent 72%);
+}
+.bg-noise {
+  /* Warm plaster/paper texture: a real tileable 512px asset (seamless via
+     wrapped noise lattices) multiplied onto the warm canvas. Visibility comes
+     from the asset's ~19-level mottling, not the opacity dial. It sits at
+     z-index 0 behind `.shell` (z-index 1), so opaque dark sections paint over
+     it and stay untouched by the multiply. */
+  opacity: 0.9;
+  mix-blend-mode: multiply;
+  background-image: url("/textures/paper.png");
+  background-repeat: repeat;
+  background-size: 512px 512px;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+}
+.wrap {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* ---- typography ---- */
+.serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-soft);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.eyebrow::before {
+  content: '';
+  width: 14px;
+  height: 1.5px;
+  background: var(--accent);
+  display: inline-block;
+}
+h1,
+h2 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+h1 em,
+h2 em {
+  font-style: italic;
+  font-weight: 500;
+  color: var(--accent-strong);
+}
+.band-dark h2 em {
+  color: color-mix(in srgb, var(--accent) 60%, white);
+}
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+  padding: 11px 18px;
+  border-radius: 9px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    transform 0.15s var(--ease),
+    background 0.2s,
+    border-color 0.2s;
+  white-space: nowrap;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn-primary:hover {
+  background: var(--accent-strong);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--hairline);
+}
+.btn-ghost:hover {
+  border-color: var(--ink-faint);
+}
+.btn-on-ink {
+  background: var(--on-ink);
+  color: var(--ink-bg);
+}
+/* Secondary CTA on an ink surface: on-ink outline (mirrors .btn-ghost for dark). */
+.btn-outline-ink {
+  background: transparent;
+  color: var(--on-ink);
+  border-color: var(--ink-hairline);
+}
+.btn-outline-ink:hover {
+  border-color: var(--on-ink-soft);
+  background: color-mix(in srgb, var(--on-ink) 6%, transparent);
+}
+.btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- brand chip (shared by nav + footer) ---- */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.brand-mark {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.brand-glyph {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---- nav: floating pill, detached from the top edge ---- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding-top: 16px;
+  /* Let the transparent strip above the pill pass clicks through to content. */
+  pointer-events: none;
+}
+.nav-pill {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  /* space-between so brand sits left and actions sit right once .nav-links
+     (which carries margin-left:auto on desktop) is hidden on mobile. */
+  justify-content: space-between;
+  gap: 20px;
+  height: 60px;
+  padding: 0 12px 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 6px 24px -18px oklch(0.3 0.02 60 / 0.55);
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-left: auto;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+.nav-links a {
+  transition: color 0.15s var(--ease);
+}
+.nav-links a:hover {
+  color: var(--ink);
+}
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.nav-cta {
+  border-radius: 999px;
+  padding: 9px 18px;
+}
+
+/* Mobile disclosure — native <details>, hidden until <=720px. */
+.nav-menu {
+  display: none;
+  position: relative;
+}
+.nav-menu-toggle {
+  list-style: none;
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.nav-menu-toggle::-webkit-details-marker {
+  display: none;
+}
+.nav-menu-toggle:hover {
+  background: var(--surface-2);
+}
+.nav-menu-bars,
+.nav-menu-bars::before,
+.nav-menu-bars::after {
+  width: 18px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+.nav-menu-bars {
+  position: relative;
+  display: block;
+}
+.nav-menu-bars::before,
+.nav-menu-bars::after {
+  content: '';
+  position: absolute;
+  left: 0;
+}
+.nav-menu-bars::before {
+  top: -5px;
+}
+.nav-menu-bars::after {
+  top: 5px;
+}
+.nav-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 184px;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  box-shadow: 0 12px 32px -20px oklch(0.3 0.02 60 / 0.55);
+}
+.nav-menu-panel a {
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14.5px;
+  color: var(--ink-soft);
+}
+.nav-menu-panel a:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* Keyboard focus ring on every interactive public-surface anchor/summary. */
+.nav a:focus-visible,
+.nav summary:focus-visible,
+.site-footer a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  html {
+    /* Tighter vertical rhythm on mobile — 96px reads as dead space on a phone. */
+    --sec-pad: 60px;
+  }
+  .nav-links {
+    display: none;
+  }
+  .nav-menu {
+    display: block;
+  }
+}
+
+/* =========================================================================
+   HERO + VAULT COLLAGE
+   Split layout: copy stack (left) + a composed collage of five faithful mini
+   product surfaces (right). Radius system used across the mini surfaces:
+   14px popup / 12px cards / 8-9px inner cards + buttons / ~4px paper sheets;
+   badge + pill = 999px. Geometry (position/rotate/scale/z) lives on the
+   per-surface `.vc-*` classes; only the load-stagger `--d` is set inline.
+   ========================================================================= */
+.hero {
+  min-height: calc(100dvh - 76px); /* 76px ~ the sticky pill nav footprint */
+  display: flex;
+  align-items: center;
+  padding: 40px 0;
+  /* Own stacking context so the atmosphere `::before` (z-index:-1) seats behind
+     the copy + collage but above the page canvas. */
+  position: relative;
+  isolation: isolate;
+}
+/* ---- HERO ATMOSPHERE ----
+   Three heavily-diffused washes give the empty hero gentle depth (squint test:
+   soft light, not shapes). One large muted-indigo glow tucked behind the
+   right-side collage, then two warm washes a few % darker than the canvas placed
+   on a diagonal like soft window light. Pure `::before` (no markup), static, and
+   below all content — text contrast is untouched (AA holds). */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: -12% -6% -8%; /* bleed past the hero box so the glows stay edgeless */
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      70% 66% at 74% 42%,
+      color-mix(in srgb, var(--accent) 18%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      84% 74% at 12% 8%,
+      color-mix(in srgb, var(--ink) 8%, transparent),
+      transparent 72%
+    ),
+    radial-gradient(
+      80% 70% at 72% 100%,
+      color-mix(in srgb, var(--ink) 9%, transparent),
+      transparent 74%
+    );
+}
+.hero .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  gap: 40px;
+  align-items: center;
+}
+.hero h1 {
+  /* sized so "Applications go quiet." holds one line in the ~500px copy column.
+     No text-wrap:balance here: with the explicit <br> it re-breaks the long
+     first line to match the short second one. Min lowered to 2rem so it keeps
+     shrinking below ~1000px (narrow tablet columns) instead of clamping at 40px
+     and wrapping; desktop (4vw > 40px) is unchanged. */
+  font-size: clamp(2rem, 4vw, 3.3rem);
+  /* italic accent line needs descender clearance: >=1.1 leading + a little
+     bottom padding so the "whole search." tails never clip. */
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.hero h1 em {
+  display: inline-block;
+  padding-bottom: 0.06em;
+  /* the italic line reads a touch tighter/optically-larger than the roman line */
+  letter-spacing: -0.026em;
+}
+.hero .deck {
+  margin-top: 20px;
+  max-width: 29rem;
+  font-size: 16.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.hero .cta {
+  display: flex;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+/* ---- collage container (desktop: absolutely-composed) ---- */
+.vault-collage {
+  position: relative;
+  width: 640px;
+  height: 520px;
+  max-width: 100%;
+  justify-self: end;
+  /* Own stacking context so the per-surface z-indices (2–5) stay contained here
+     instead of leaking to the hero level — otherwise the phone (z-index:5) would
+     paint above the tablet-band right-edge fade overlay (.hero::after, z-index:2)
+     and the crop fade would do nothing. */
+  isolation: isolate;
+}
+.vc-item {
+  position: absolute;
+  opacity: 0;
+  animation: vc-rise 0.72s var(--ease) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes vc-rise {
+  from {
+    opacity: 0;
+    translate: 0 22px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+/* Graded depth back -> front: letter, résumé, board, phone, popup. The letter
+   sits bottom-left under the popup so its greeting + body lines stay readable;
+   the board sits left of the phone so its chip + card titles never clip
+   mid-word (a truncated word reads as a bug, not depth) — only its right edge
+   tucks under the phone. Rotations held between -5deg and 4deg. */
+.vc-letter {
+  left: 100px;
+  top: 293px;
+  z-index: 2;
+  rotate: -5deg;
+}
+.vc-resume {
+  left: 241px;
+  top: -22px;
+  z-index: 3;
+  rotate: 3deg;
+}
+.vc-board {
+  left: 263px;
+  top: 227px;
+  z-index: 4;
+  rotate: 11deg;
+}
+.vc-phone {
+  /* wider phone (240px): right edge lands on the 640px collage container
+     (400 + 240 = 640). */
+  left: 400px;
+  top: 30px;
+  z-index: 5;
+  rotate: 4deg;
+}
+.vc-popup {
+  left: 0;
+  top: 40px;
+  z-index: 6;
+  rotate: -4deg;
+}
+
+/* ---- drag affordance (per-card elastic grab, spring-back in JS) ---- */
+.vc-drag {
+  cursor: grab;
+  /* own compositor layer: drag moves transform every frame; without this the
+     shadowed card DOM can repaint per frame and stutter. */
+  will-change: transform;
+}
+.vc-drag:active {
+  cursor: grabbing;
+}
+
+/* ---- floating stat badges ---- */
+.vc-badge {
+  position: absolute;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px -14px oklch(0.3 0.02 60 / 0.42);
+  opacity: 0;
+  /* rise once, then bob forever; the bob is delayed until after the entrance
+     so the badge only starts floating once it has settled. */
+  animation-name: vc-rise, vc-bob;
+  animation-duration: 0.6s, var(--bob, 7s);
+  animation-timing-function: var(--ease), ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: forwards, none;
+  animation-delay: var(--d, 0ms), calc(var(--d, 0ms) + 0.6s);
+}
+@keyframes vc-bob {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -6px;
+  }
+}
+.vc-badge-a {
+  left: 382px;
+  top: -14px;
+}
+.vc-badge-b {
+  left: 118px;
+  top: 406px;
+}
+.vc-badge-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+.vc-dot-fresh {
+  background: var(--fresh);
+}
+.vc-dot-cold {
+  background: var(--cold);
+}
+
+/* ---- shared mini-surface bits ---- */
+.mini-bar {
+  height: 4px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--ink) 11%, transparent);
+  margin-bottom: 5px;
+}
+.mini-w95 {
+  width: 95%;
+}
+.mini-w88 {
+  width: 88%;
+}
+.mini-w80 {
+  width: 80%;
+}
+.mini-w70 {
+  width: 70%;
+}
+.mini-w60 {
+  width: 60%;
+}
+
+/* ---- mini: board column ---- */
+.mini-board {
+  width: 236px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 12px 11px;
+  box-shadow: 0 18px 40px -28px oklch(0.3 0.02 60 / 0.4);
+}
+.mini-board-head {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.mini-chip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  padding: 2px 7px;
+}
+.mini-board-count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin-left: auto;
+}
+.mini-jcard {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 9px 10px;
+}
+.mini-jcard + .mini-jcard {
+  margin-top: 8px;
+}
+.mini-jtitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mini-jmeta {
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+.mini-ghost {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+}
+.mini-ghost svg {
+  width: 12px;
+  height: 12px;
+}
+.mini-ghost-fresh {
+  color: var(--fresh);
+}
+.mini-ghost-stale {
+  color: var(--cool);
+}
+
+/* ---- mini: extension popup ---- */
+.mini-popup {
+  width: 266px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 18px 40px -28px oklch(0.3 0.02 60 / 0.45);
+}
+.mini-popup-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.mini-popup-mark {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.mini-popup-mark svg {
+  width: 12px;
+  height: 12px;
+}
+.mini-popup-brand {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mini-popup-gear {
+  width: 15px;
+  height: 15px;
+  margin-left: auto;
+  color: var(--ink-faint);
+}
+.mini-popup-body {
+  padding: 13px 13px 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mini-popup-src {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mini-popup-srclabel {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.mini-popup-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.mini-popup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mini-popup-k {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.mini-popup-v {
+  font-size: 12px;
+  color: var(--ink);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--surface-2);
+  padding: 6px 8px;
+}
+.mini-popup-btn {
+  margin-top: 2px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-accent);
+  background: var(--accent);
+  border-radius: 9px;
+  padding: 8px;
+}
+
+/* Full-size popup (capture section): the same markup at the real 360px / 14px
+   spec — h-10 fields, p-5 body, larger wordmark. */
+.mini-popup--full {
+  width: 360px;
+  max-width: 100%;
+  border-radius: 14px;
+  box-shadow: 0 20px 46px -32px oklch(0.3 0.02 60 / 0.4);
+}
+.mini-popup--full .mini-popup-bar {
+  gap: 9px;
+  padding: 13px 18px;
+}
+.mini-popup--full .mini-popup-brand {
+  font-size: 16px;
+}
+.mini-popup--full .mini-popup-gear {
+  width: 17px;
+  height: 17px;
+}
+.mini-popup--full .mini-popup-body {
+  padding: 20px;
+  gap: 16px;
+}
+.mini-popup--full .mini-popup-srclabel {
+  font-size: 11px;
+}
+.mini-popup--full .mini-popup-pill {
+  font-size: 11px;
+  padding: 3px 11px;
+}
+.mini-popup--full .mini-popup-field {
+  gap: 6px;
+}
+.mini-popup--full .mini-popup-k {
+  font-size: 11px;
+}
+.mini-popup--full .mini-popup-v {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  font-size: 13.5px;
+  border-radius: 10px;
+  padding: 0 12px;
+}
+.mini-popup--full .mini-popup-btn {
+  margin-top: 4px;
+  font-size: 13.5px;
+  border-radius: 10px;
+  padding: 11px;
+}
+
+/* Success view: centered green check, serif confirmation, saved job, actions. */
+.mini-popup-success {
+  padding: 32px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.mini-popup-check {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--fresh) 16%, transparent);
+  color: var(--fresh);
+}
+.mini-popup-check svg {
+  width: 24px;
+  height: 24px;
+}
+.mini-popup-done {
+  margin-top: 16px;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mini-popup-sub {
+  margin-top: 6px;
+  font-size: 13px;
+}
+.mini-popup-sub-title {
+  color: var(--ink);
+  font-weight: 500;
+}
+.mini-popup-sub-co {
+  color: var(--ink-soft);
+}
+.mini-popup-actions {
+  margin-top: 22px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mini-popup-btn--ghost {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+}
+
+/* ---- mini: résumé sheet ---- */
+.mini-resume {
+  width: 216px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 24px 50px -34px oklch(0.3 0.02 60 / 0.5);
+}
+.mini-resume-name {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--ink);
+}
+.mini-resume-contact {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-align: center;
+  color: var(--ink-faint);
+  margin-top: 4px;
+}
+.mini-resume-sec {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  border-bottom: 1.5px solid var(--accent);
+  padding-bottom: 3px;
+  margin: 14px 0 8px;
+}
+.mini-resume-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 7px;
+}
+.mini-resume-co {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.mini-resume-date {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--ink-faint);
+}
+
+/* ---- résumé sheet: full (documents section) ----
+   Reads as a real single-column ATS résumé: wider paper, letter-like type, a
+   role line + • bullets, a one-line Skills row, and the tailoring theater (the
+   refine swap + the stamp), positioned relative for the absolute stamp. */
+.mini-resume--full {
+  position: relative;
+  width: 340px;
+  border-radius: 4px;
+  padding: 30px 30px 34px;
+}
+.mini-resume--full .mini-resume-name {
+  font-size: 22px;
+}
+.mini-resume--full .mini-resume-contact {
+  font-size: 10px;
+  margin-top: 6px;
+}
+.mini-resume--full .mini-resume-sec {
+  font-size: 11px;
+  margin: 18px 0 9px;
+}
+.mini-resume--full .mini-resume-co {
+  font-size: 13px;
+}
+.mini-resume--full .mini-resume-date {
+  font-size: 10px;
+}
+.mini-resume--full .mini-bar {
+  height: 5px;
+  margin-bottom: 6px;
+}
+.mini-resume-role {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin: 2px 0 8px;
+}
+.mini-resume-bullet {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.mini-resume-bullet .mini-bar {
+  flex: 1;
+  margin-bottom: 0;
+}
+.mini-resume-dot {
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 1;
+  flex: none;
+}
+.mini-resume-skills {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.mini-resume-skills .mini-bar {
+  flex: 1;
+  margin-bottom: 0;
+}
+.mini-resume-skilllabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  flex: none;
+}
+
+/* The refine beat: one bullet's weak line is struck and swapped for the sharper
+   one. Old + new occupy the same grid cell and crossfade. Base = old shown; the
+   swap plays once when a `[data-shown]` ancestor (the stage) reveals. */
+.mini-refine-swap {
+  display: inline-grid;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.mini-refine-old,
+.mini-refine-new {
+  grid-area: 1 / 1;
+}
+.mini-refine-old {
+  position: relative;
+  color: var(--ink-faint);
+}
+.mini-refine-old::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 1.5px;
+  background: var(--vermilion);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease);
+}
+.mini-refine-new {
+  color: var(--accent-strong);
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+}
+[data-shown] .mini-refine-old::after {
+  transform: scaleX(1);
+  transition-delay: 1.2s;
+}
+[data-shown] .mini-refine-old {
+  opacity: 0;
+  transition: opacity 0.4s var(--ease) 1.75s;
+}
+[data-shown] .mini-refine-new {
+  opacity: 1;
+  transition-delay: 1.75s;
+}
+
+/* ---- mini: cover letter sheet ---- */
+.mini-letter {
+  width: 196px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 24px 50px -34px oklch(0.3 0.02 60 / 0.5);
+}
+.mini-letter-from {
+  font-size: 9px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.mini-letter-greet {
+  font-size: 11px;
+  color: var(--ink);
+  margin: 14px 0 10px;
+}
+.mini-letter-para {
+  margin-bottom: 10px;
+}
+.mini-letter-sign {
+  font-size: 11px;
+  color: var(--ink);
+  margin-top: 6px;
+}
+.mini-letter-name {
+  font-family: var(--font-serif);
+  font-size: 13px;
+  color: var(--ink);
+  margin-top: 3px;
+}
+
+/* ---- cover letter sheet: full (documents section) ----
+   Reads as a real business letter: wider paper, letter-like type, and a real
+   opening sentence before the grey bars stand in for the rest. */
+.mini-letter--full {
+  width: 300px;
+  border-radius: 4px;
+  padding: 32px 30px 34px;
+}
+.mini-letter--full .mini-letter-from {
+  font-size: 11px;
+}
+.mini-letter--full .mini-letter-greet {
+  font-size: 13px;
+  margin: 20px 0 14px;
+}
+.mini-letter--full .mini-letter-para {
+  margin-bottom: 14px;
+}
+.mini-letter--full .mini-bar {
+  height: 5px;
+  margin-bottom: 6px;
+}
+.mini-letter-lead {
+  font-size: 11.5px;
+  line-height: 1.65;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.mini-letter--full .mini-letter-sign {
+  font-size: 13px;
+  margin-top: 10px;
+}
+.mini-letter--full .mini-letter-name {
+  font-size: 15px;
+}
+
+/* ---- mini: phone frame (mobile teaser) ----
+   Modern phone: thin dark bezel, pill dynamic island, a status bar, and a mini
+   JobVault jobs list on the warm app canvas. The 28px outer radius is the only
+   place that breaks the 12-14px card / 8px input radius system (a phone shell). */
+.mini-phone {
+  position: relative;
+  width: 240px;
+  height: 441px;
+  border-radius: 28px;
+  background: var(--ink-bg);
+  padding: 5px;
+  box-shadow: 0 26px 55px -34px oklch(0.3 0.02 60 / 0.55);
+}
+.mini-phone-island {
+  position: absolute;
+  z-index: 2;
+  top: 13px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 58px;
+  height: 15px;
+  border-radius: 999px;
+  background: oklch(0.14 0.01 60);
+}
+.mini-phone-screen {
+  height: 100%;
+  border-radius: 23px;
+  background: var(--bg);
+  padding: 9px 11px 10px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.mini-phone-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 2px;
+  height: 20px;
+}
+.mini-phone-time {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.mini-phone-signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-soft);
+}
+.mini-phone-signal svg {
+  width: 11px;
+  height: 11px;
+}
+.mini-phone-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 3px 12px;
+}
+.mini-phone-mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: grid;
+  place-items: center;
+}
+.mini-phone-mark svg {
+  width: 11px;
+  height: 11px;
+}
+.mini-phone-brand {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mini-phone-label {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  padding: 0 3px 7px;
+}
+.mini-phone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mini-phone-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  padding: 10px 11px;
+}
+.mini-phone-card-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mini-phone-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-phone-card-meta {
+  font-size: 10px;
+  color: var(--ink-faint);
+}
+.mini-phone-days {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+}
+.mini-phone-days svg {
+  width: 11px;
+  height: 11px;
+}
+.mini-phone-days--fresh {
+  color: var(--fresh);
+}
+.mini-phone-days--stale {
+  color: var(--cool);
+}
+.mini-phone-tabs {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 10px 7px;
+  border-top: 1px solid var(--hairline-soft);
+  color: var(--ink-faint);
+}
+.mini-phone-tabs svg {
+  width: 12px;
+  height: 12px;
+}
+.mini-phone-tabs .mini-phone-tab--active {
+  color: var(--accent);
+}
+.mini-phone-home {
+  margin: 0 auto;
+  width: 96px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 26%, transparent);
+}
+.mini-phone-tag {
+  position: absolute;
+  left: 50%;
+  bottom: -26px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+
+/* ---- collage: across the whole two-column range (769–1200) the collage rides
+   near full size (zoom 0.92) and bleeds past the right viewport edge on purpose,
+   with a right-edge fade mask dissolving the outermost surface into the canvas
+   so the crop reads as intended, not a hard chop. Above 1200 it sits fully
+   contained at 1.0 (no mask). Below 769 the split stacks (see the block below). */
+@media (min-width: 769px) and (max-width: 1200px) {
+  /* Deliberate crop: keep the collage near full size (zoom 0.92) so the mini
+     surfaces stay legible, and let it bleed off the right viewport edge on
+     purpose. A light `zoom` keeps the cut shallow. */
+  .vault-collage {
+    zoom: 0.92;
+  }
+  /* A right-edge fade dissolves the outermost surface (the phone) into the
+     canvas so the bleed reads as "the app continues beyond the frame", not a
+     hard chop. This is an OVERLAY strip at the viewport edge — NOT a mask on the
+     collage: `mask-clip: border-box` would hard-clip the surfaces that overflow
+     the collage box on the top/left too (the résumé/popup), chopping them. The
+     overlay only touches the right edge and leaves the rest untouched. Fades to
+     the rendered canvas colour (the `.hero::before` atmosphere tints `--bg`, so
+     a raw `--bg` here would leave a bright seam). */
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 190px;
+    background: linear-gradient(to right, transparent, oklch(0.945 0.005 75));
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+/* ---- collage: below 769 the split stacks. The FULL desktop composition is
+   kept (all five surfaces + badges); the whole 640×520 stage is zoomed to fit
+   the column — `zoom` reflows the box, so no overflow or dead space. ---- */
+
+@media (max-width: 768px) {
+  .hero {
+    min-height: 0;
+    display: block;
+    /* nav is sticky (in-flow), so it already reserves its own space above —
+       only a small breathing gap is needed here, not room for the nav. */
+    padding: 32px 0 56px;
+    padding-bottom: 16px;
+  }
+  /* Tighter page gutters on phones (desktop is 28px) so content — headline
+     especially — uses the width instead of sitting in a narrow center strip. */
+  .wrap {
+    padding: 0 18px;
+  }
+  /* Collapse the two-column split: copy full-width, collage centered below.
+     (`.hero { display:block }` alone leaves the inner .wrap grid two-column.) */
+  .hero .wrap {
+    display: block;
+  }
+  /* Headline on phones. Two knobs: MIN (floor — how big it stays on the
+     smallest screens; at this size "Applications go quiet." wraps to two lines
+     below ~390px) and MAX (ceiling on big phones/portrait tablets). The middle
+     term tracks the column so mid-size phones fill the width. */
+  .hero h1 {
+    font-size: clamp(2rem, calc(8.6vw - 3px), 3.4rem);
+  }
+  .hero .deck {
+    max-width: none;
+  }
+  .hero .cta {
+    flex-wrap: wrap;
+  }
+  .vault-collage {
+    zoom: 0.75;
+    margin: 40px auto 0;
+  }
+}
+/* Smaller phones: step the stage down so the 640px composition clears the
+   gutters as the column narrows. */
+@media (max-width: 640px) {
+  .vault-collage {
+    zoom: 0.55;
+  }
+}
+@media (max-width: 400px) {
+  .vault-collage {
+    zoom: 0.42;
+  }
+}
+
+.fdot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.fdot.f {
+  background: var(--fresh);
+}
+.fdot.c {
+  background: var(--cool);
+}
+.fdot.x {
+  background: var(--cold);
+}
+
+/* ---- HOW-IT-WORKS STRIP (the hero's baseboard) ----
+   A slim band, NOT a full section: three verb terminals (Capture / Generate /
+   Track) in three equal columns. Each leads with a round numbered dot-chip
+   (mono "01"/"02"/"03") and an accent lucide icon over the mono uppercase term
+   and a short muted line. A hairline connector runs behind the chips linking
+   the three (Floria pattern), stopping at the outer chips. Columns fade in on
+   reveal, staggered by `--i`. <=640px the terminals stack and the connector
+   becomes one continuous vertical hairline through the chip centers, drawn on
+   scroll. */
+.steps-strip {
+  padding: 40px 0 56px;
+  position: relative;
+}
+.steps {
+  --chip: 40px;
+  --chip-pt: 8px;
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding-top: var(--chip-pt);
+}
+/* Horizontal connector: passes through the chip row, ending under the two
+   outer chips (their opaque surface masks the line, so it reads as linking). */
+.steps::before {
+  content: '';
+  position: absolute;
+  top: calc(var(--chip-pt) + var(--chip) / 2);
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 1px;
+  background: var(--hairline);
+  z-index: 0;
+}
+.step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 28px;
+}
+.step-chip {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: var(--chip);
+  height: var(--chip);
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.step-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.step-icon {
+  display: inline-flex;
+  color: var(--accent);
+}
+.step-term {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.step-line {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 24ch;
+  margin-top: 8px;
+}
+/* Phones: terminals stack; the horizontal connector becomes one continuous
+   vertical hairline through the chip centers (chip x = padding 0 + chip/2 =
+   20px), spanning first→last chip center (each 12px step-pad + 20px chip-half =
+   32px inset). The chips' opaque surface masks it, so it reads as linking them.
+   A per-chip fixed-height dropper can't span a gap that grows with the line's
+   text height — this can. */
+@media (max-width: 640px) {
+  .steps-strip {
+    /* Breathing room below the hero on phones (desktop wants it flush). */
+    padding-top: 64px;
+  }
+  .steps {
+    grid-template-columns: 1fr;
+    padding-top: 0;
+  }
+  .steps::before {
+    top: 32px;
+    bottom: 32px;
+    left: 20px;
+    right: auto;
+    width: 1px;
+    height: auto;
+  }
+  .step {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    gap: 16px;
+    padding: 12px 0;
+  }
+  .step-chip {
+    flex-shrink: 0;
+  }
+  .step-head {
+    justify-content: flex-start;
+    margin-top: 0;
+  }
+  .step-line {
+    max-width: none;
+  }
+}
+/* Scroll-driven draw: the connector grows top→bottom as the strip scrolls
+   through the viewport. Native scroll timeline, no JS; browsers without it (and
+   reduced-motion, below) just get the full static line. */
+@supports (animation-timeline: view()) {
+  @media (max-width: 640px) {
+    .steps::before {
+      transform: scaleY(0);
+      transform-origin: top center;
+      animation: steps-line-draw linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 48%;
+    }
+  }
+}
+@keyframes steps-line-draw {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+/* ---- generic section ---- */
+section {
+  padding: var(--sec-pad) 0;
+  position: relative;
+}
+.sec-head {
+  max-width: 36rem;
+}
+.sec-head h2 {
+  font-size: clamp(1.9rem, 3vw, 2.55rem);
+  line-height: 1.08;
+  margin-top: 14px;
+}
+.sec-head p {
+  color: var(--ink-soft);
+  font-size: 16px;
+  margin-top: 15px;
+}
+
+/* ---- SECTION VISUAL GLOW ----
+   A much smaller, fainter cousin of the hero indigo glow, seated behind a
+   section's product visual (capture popup, documents fan) so the surfaces lift
+   off the flat canvas. Shared class on the visual wrapper; pure `::before`,
+   static, below content. */
+.viz-glow {
+  position: relative;
+  isolation: isolate;
+}
+.viz-glow::before {
+  content: '';
+  position: absolute;
+  inset: -14%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    54% 54% at 50% 46%,
+    color-mix(in srgb, var(--accent) 12%, transparent),
+    transparent 70%
+  );
+}
+
+/* ---- CAPTURE (extension) ---- */
+.capture .wrap {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: 56px;
+  align-items: center;
+}
+/* Card-stack popup: capture + success in one frame. Capture is the flow layer
+   (a 360px card holding the stage height, top-left); success is a second 360px
+   card that drops in on top, offset 24px down-right, so the capture card peeks
+   behind it (dimmed + scaled, like a physical card placed on top of another).
+   The stage reserves the 24px offset room (border-box padding) so the beat
+   plays with no layout shift. Success is the resting / reduced-motion / no-JS
+   state. */
+.ext-stage {
+  position: relative;
+  width: 384px; /* 360px card + 24px down-right offset */
+  max-width: 100%;
+  padding: 0 24px 24px 0;
+}
+/* Resting stacked state (also the SSR / no-JS / reduced-motion render): success
+   on top offset down-right, capture receded behind (slightly scaled, full
+   opacity). `CaptureDeck` overrides these transforms imperatively with motion
+   once hydrated (entrance slide-in + drag-to-swap); the transforms below match
+   its FRONT/BACK slots so the hand-off is seamless. Capture stays in flow to
+   hold the stage height; success is absolute at the same origin, shifted by
+   transform. */
+.ext-layer--capture {
+  position: relative;
+  transform: scale(0.95);
+  z-index: 1;
+}
+.ext-layer--success {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(24px, 24px);
+  opacity: 1;
+  z-index: 2;
+}
+/* Depth: both cards cast a real shadow; the top card's is heavier. Shadow
+   lives on the inner popup (motion owns the layer's transform/opacity) and
+   transitions on its own as `ext-layer--top` moves between cards on swap. */
+.ext-layer .mini-popup {
+  box-shadow: 0 22px 46px -22px oklch(0.3 0.02 60 / 0.5);
+  transition: box-shadow 0.35s ease;
+}
+.ext-layer--top .mini-popup {
+  box-shadow: 0 30px 60px -24px oklch(0.3 0.02 60 / 0.58);
+}
+/* The top card is a grab surface; only it receives the drag (pointer events
+   never start on the empty stage around the cards). */
+.ext-card-grab {
+  cursor: grab;
+}
+.ext-card-grab:active {
+  cursor: grabbing;
+}
+.ext-hint {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+/* Source pills tucked under the popup; forced to one line at >=720px. */
+.ext-pills {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.ext-pill {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  padding: 4px 10px;
+  white-space: nowrap;
+}
+@media (min-width: 640px) {
+  .ext-pills {
+    flex-wrap: nowrap;
+  }
+}
+/* The entrance drop + drag-to-swap now live in `CaptureDeck` (motion), not CSS
+   keyframes; the resting styles above are the SSR / no-JS / reduced-motion
+   state. */
+
+/* ---- PERSONAS (one persona -> every tailored draft) ----
+   Head + deck stacked on top, then a two-column composition: a faithful persona
+   card (left, mirrors the real PersonaCard) and an evenly spaced doc list
+   (right), connected by whitespace only. The list is centered as a block
+   against the card (align-items: center). */
+#personas .sec-head {
+  margin-bottom: 42px;
+}
+.persona-stage {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 56px;
+  align-items: center;
+}
+/* persona card — real UI: rounded-lg (8px) hairline, p-4, white surface */
+.pcard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow:
+    0 1px 2px oklch(0.3 0.02 60 / 0.08),
+    0 14px 34px -22px oklch(0.3 0.02 60 / 0.5);
+}
+.pcard-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pcard-name {
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.pcard-count {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--ink-faint);
+}
+.pcard-num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.pcard-actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pcard-ibtn {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--ink-faint);
+}
+.pcard-ibtn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+.pcard-summary {
+  margin-top: 12px;
+  min-height: 2.5rem;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+.pcard-btn {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+/* generated-doc list — even vertical rhythm: identical row padding, hairline
+   between rows only (never a top+bottom cage). */
+.doc-list {
+  display: flex;
+  flex-direction: column;
+}
+.doc-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+}
+.doc-row + .doc-row {
+  border-top: 1px solid var(--hairline-soft);
+}
+.doc-title {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  line-height: 1.2;
+}
+.doc-ctx {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+  margin-top: 5px;
+}
+.doc-date {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--ink-faint);
+}
+
+/* ---- DOCUMENTS (real type-set sheets) ---- */
+/* Stacked showcase: centered head + refine chips, the two fanned sheets, then
+   the exports row beneath. The sheets are wide, so a stacked composition reads
+   better than a side-by-side split. */
+.docs {
+  position: relative;
+}
+.docs .wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.docs .sec-head {
+  max-width: 40rem;
+  text-align: center;
+}
+.docs .refine-controls {
+  justify-content: center;
+}
+/* The two sheets fanned like paper on a desk: cover letter behind-left, the
+   résumé on top-right. Sheets are absolutely positioned (their heights are
+   content-driven) so the stage carries an explicit height. */
+.docstage {
+  position: relative;
+  width: 560px;
+  max-width: 100%;
+  height: 448px;
+  margin: 6px auto 0;
+}
+.doc-fan {
+  position: absolute;
+  top: 0;
+  /* Entrance: each sheet slides in straight from its own lower corner (letter
+     from bottom-left, résumé from bottom-right) with a slight overshoot, gated
+     on the stage's `[data-shown]`. Uses `translate` so it never fights the
+     resting rotate (transform) or the inner drag layer's per-frame transform.
+     `--fx` flips the direction per sheet; `--fan-dist` shrinks on mobile. */
+  --fan-dist: 72px;
+  opacity: 0;
+  translate: calc(var(--fx, -1) * var(--fan-dist)) 40px;
+  transition:
+    opacity 0.6s var(--ease),
+    translate 0.7s cubic-bezier(0.3, 1.25, 0.45, 1);
+}
+.doc-fan-letter {
+  --fx: -1;
+  left: 8px;
+  top: 34px;
+  transform: rotate(-3deg);
+  z-index: 1;
+}
+.doc-fan-resume {
+  --fx: 1;
+  left: 220px;
+  top: 0;
+  transform: rotate(2deg);
+  z-index: 2;
+  /* The top sheet lands a beat after the letter. */
+  transition-delay: 120ms;
+}
+.docstage[data-shown] .doc-fan {
+  opacity: 1;
+  translate: none;
+}
+/* Rectangular rubber stamp on the résumé — reads "TAILORED" cleanly on one line.
+   It presses in with an overshoot ~2s after the stage reveals; gated on the
+   stage's `[data-shown]`, so it plays once (no JS state). */
+.stamp {
+  position: absolute;
+  right: 20px;
+  bottom: 22px;
+  width: 128px;
+  height: 50px;
+  z-index: 3;
+  transform: rotate(-8deg) scale(0.7);
+  opacity: 0;
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.35s;
+}
+[data-shown] .stamp {
+  transform: rotate(-8deg) scale(1);
+  opacity: 0.92;
+  transition-delay: 2.05s;
+}
+/* The stamp label must use the brand mono. next/font never registers the human
+   name "Geist Mono" (only the obfuscated family reachable via the CSS var), so
+   the token has to reach the SVG <text> through CSS, not a font-family attr. */
+.stamp text {
+  font-family: var(--font-mono);
+}
+/* Ink-bleed underlay: a soft, faint halo of the same impression. */
+.stamp-bleed {
+  filter: blur(1px);
+  opacity: 0.12;
+}
+.refine-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+.rchip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 7px;
+  padding: 6px 11px;
+  transition:
+    color 0.35s var(--ease),
+    border-color 0.35s var(--ease),
+    background 0.35s var(--ease);
+}
+/* The refine beat lights the "Humanize" chip as the sheets reveal — gated on
+   the stage's `[data-shown]`, in sync with the résumé's line swap. */
+[data-shown] .rchip-humanize {
+  color: var(--accent-strong);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transition-delay: 1.2s;
+}
+
+/* Export affordances — the same pill recipe, stated quietly beneath the sheets. */
+.exports {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 30px;
+}
+.exports .export-cap {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-right: 2px;
+}
+.export-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+  border: 1px solid var(--hairline);
+  border-radius: 20px;
+  padding: 5px 12px;
+}
+.export-chip svg {
+  width: 12px;
+  height: 12px;
+  color: var(--ink-faint);
+}
+
+/* ---- PIPELINE dark band ---- */
+/* The page's one theme flip. No hard border: gradient seams (Floria device) melt
+   the warm page canvas into the ink over ~150px at each edge, so the inversion
+   has no visible dividing line. `overflow: hidden` also clips the ghost wordmark. */
+/* The Track section: a warm-canvas wrapper whose only job is to give the inset
+   dark panel side gutters (so the warm base shows around it) at any width. */
+.pipeline {
+  padding-left: 24px;
+  padding-right: 24px;
+}
+/* The inset rounded dark panel (Floria pattern) — floats on the canvas, crisp
+   edges, no seams. Slightly wider than the content --maxw so the inner .wrap
+   keeps its 1180px alignment while the panel breathes. The vertical ink gradient
+   keeps the surface from reading dead-flat; .band-dark::before adds one subtle
+   indigo glow. Entrance scale/radius come from motion inline styles (transform
+   only) — no opacity, so no-JS renders it fully visible. */
+.band-dark {
+  position: relative;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(52px, 6vw, 84px) 0;
+  border-radius: 40px;
+  background: linear-gradient(to bottom, var(--ink-bg), var(--ink-bg-2));
+  color: var(--on-ink);
+  overflow: hidden;
+  transition: border-radius 0.7s var(--ease);
+}
+/* Radius eases to its settled value once the panel reveals (CSS, so it stays
+   breakpoint-aware and works without the motion scale). */
+.band-dark[data-shown] {
+  border-radius: 28px;
+}
+/* Inner atmosphere: one large, faint indigo glow seated upper-right. */
+.band-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    58% 52% at 84% 12%,
+    color-mix(in srgb, var(--accent) 7%, transparent),
+    transparent 72%
+  );
+}
+/* Giant clipped wordmark, ~3.5% of the on-ink color: texture sitting on the
+   panel's bottom edge, cropped by the rounded corners (panel overflow:hidden). */
+.band-ghost {
+  position: absolute;
+  left: 50%;
+  bottom: -0.14em;
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: 0;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(4.5rem, 16vw, 15rem);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--on-ink) 3.5%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+/* Phones: tighter gutters and a smaller settled radius. */
+@media (max-width: 640px) {
+  .pipeline {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .band-dark {
+    border-radius: 24px;
+  }
+  .band-dark[data-shown] {
+    border-radius: 20px;
+  }
+}
+.band-dark .wrap {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 56px;
+  align-items: center;
+}
+.band-dark h2 {
+  font-size: clamp(1.9rem, 3vw, 2.5rem);
+  line-height: 1.08;
+}
+.band-dark .deck {
+  color: var(--on-ink-soft);
+  font-size: 16px;
+  margin-top: 16px;
+  max-width: 24rem;
+}
+.board-wrap {
+  position: relative;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--ink-hairline);
+  border-radius: 13px;
+  overflow: hidden;
+  background: var(--ink-bg-2);
+}
+.col {
+  padding: 15px 13px 20px;
+  border-right: 1px solid var(--ink-hairline);
+}
+.col:last-child {
+  border-right: none;
+}
+/* On phones the three equal columns crush to ~75px and clip card text; stack
+   them so each row stays readable, swapping the column rules for row rules. */
+@media (max-width: 640px) {
+  .board {
+    grid-template-columns: 1fr;
+  }
+  .col {
+    border-right: none;
+    border-bottom: 1px solid var(--ink-hairline);
+  }
+  .col:last-child {
+    border-bottom: none;
+  }
+  /* Stacked, 10 cards is a long scroll; the story lands in one card per stage.
+     Keep the first card in each column (Applied's is the ghosted money-shot). */
+  .col .dcard:last-child {
+    display: none;
+  }
+}
+.col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.col-head .name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-ink-soft);
+}
+.col-head .count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--on-ink-soft);
+  opacity: 0.7;
+}
+.dcard {
+  background: oklch(1 0 0 / 0.03);
+  border: 1px solid var(--ink-hairline);
+  border-radius: 9px;
+  padding: 10px 11px;
+  margin-bottom: 9px;
+}
+.dcard .role {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--on-ink);
+}
+.dcard .co {
+  font-size: 11px;
+  color: var(--on-ink-soft);
+}
+/* Card freshness row: the real GhostMeter — a lucide icon (clock/timer/ghost)
+   plus a mono day-count, colored by level to match the legend dots. */
+.dcard .meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.gm-icon {
+  width: 14px;
+  height: 14px;
+}
+.gm-active {
+  color: var(--fresh);
+}
+.gm-stale {
+  color: var(--cool);
+}
+.gm-ghosted {
+  color: var(--cold);
+}
+.dcard[data-ghosted] {
+  border-left: 2px solid var(--cold);
+}
+.dcard[data-ghosted] .nudge {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--cold) 70%, white);
+  border: 1px solid var(--ink-hairline);
+  border-radius: 7px;
+  padding: 6px 9px;
+}
+.nudge-icon {
+  width: 13px;
+  height: 13px;
+}
+/* The ghost tick pulses once its band reveals, drawing the eye to the one card
+   that needs a nudge; rests static under reduced motion / no JS. */
+.band-dark[data-shown] .dcard[data-ghosted] .gm-icon {
+  animation: ghost-pulse 2.2s var(--ease) infinite;
+}
+@keyframes ghost-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--cold) 55%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+/* Freshness legend: leads the board, decoding the ticks on each card. */
+.fresh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--on-ink-soft);
+}
+.legend-item .lg-range {
+  opacity: 0.6;
+}
+/* Timeline / reminders strip: one wire beneath the board carrying a job's life
+   from capture to follow-up. The draw is scroll-scrubbed: the component lands
+   scroll progress on the strip as `--wl-p` (0 = strip + caption just entered
+   the viewport bottom, 1 = strip at the vertical middle). The wire's scaleX
+   tracks it directly; each dot scales in over a short clamp() ramp ending
+   exactly when the wire tip (at fraction `--wl-t`, events evenly spaced via
+   space-between) reaches it. `--wl-p` defaults to 1, so reduced motion (no
+   inline var) rests drawn. The ghost-alert dot pulses once the band reveals;
+   the follow-up dot resolves green. */
+.watchline {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+.wl-rail {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.wl-rail::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  right: 5px;
+  top: 4px;
+  height: 1.5px;
+  background: var(--trace-ink);
+  transform: scaleX(var(--wl-p, 1));
+  transform-origin: left center;
+}
+.wl-event {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 11px;
+  text-align: center;
+}
+.wl-event:nth-child(1) {
+  --wl-t: 0;
+}
+.wl-event:nth-child(2) {
+  --wl-t: 0.25;
+}
+.wl-event:nth-child(3) {
+  --wl-t: 0.5;
+}
+.wl-event:nth-child(4) {
+  --wl-t: 0.75;
+}
+.wl-event:nth-child(5) {
+  --wl-t: 1;
+}
+.wl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--on-ink-soft);
+  border: 2px solid var(--ink-bg);
+  box-sizing: content-box;
+  /* Grows over the last 8% of wire travel before the tip arrives at --wl-t. */
+  transform: scale(clamp(0, (var(--wl-p, 1) - var(--wl-t, 0) + 0.08) * 12.5, 1));
+}
+.wl-dot.lit {
+  background: var(--accent);
+}
+.wl-dot.ghost {
+  background: var(--cold);
+}
+.wl-dot.resolved {
+  background: var(--fresh);
+}
+.band-dark[data-shown] .wl-dot.ghost {
+  animation: pulse 2.2s var(--ease) infinite;
+}
+.wl-label {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--on-ink);
+}
+.wl-date {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--on-ink-soft);
+  opacity: 0.8;
+}
+.wl-caption {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--on-ink-soft);
+}
+/* Phones: the wire turns vertical, the rail becomes a left border and events
+   stack as a list so nothing scrolls sideways. */
+@media (max-width: 640px) {
+  .wl-rail {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+  .wl-rail::before {
+    /* Dot is 9px + 2px border (content-box) = 13px wide, center at 6.5px;
+       center the 1.5px wire on it: 6.5 - 0.75. */
+    left: 5.75px;
+    right: auto;
+    top: 12px;
+    bottom: 12px;
+    height: auto;
+    width: 1.5px;
+    transform: scaleY(var(--wl-p, 1));
+    transform-origin: center top;
+  }
+  .wl-event {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    padding: 8px 0;
+  }
+  .wl-date {
+    margin-left: auto;
+  }
+}
+/* ---- KINETIC INTERSTITIAL (serif punctuation between the dark band & FAQ) ----
+   One full-width display line on a breathing-room slab. Each word is a `.reveal`
+   child (inline-block so the fade-rise transform applies to inline text) that
+   settles staggered by its `--i` index; "accounted for." is the italic accent
+   phrase. Reduced-motion / no-JS fall back through the shared `.reveal` rules. */
+.interstitial {
+  padding: 200px 0;
+  text-align: center;
+}
+.interstitial-line {
+  margin: 0 auto;
+  max-width: 15ch;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.06;
+  font-size: clamp(3.5rem, 7.5vw, 7rem);
+  color: var(--ink);
+}
+.iword {
+  display: inline-block;
+  /* inline-block trims the trailing space inside each word span, so restore the
+     inter-word gap explicitly (a bare margin, harmless on the centered last word). */
+  margin-right: 0.26em;
+}
+.interstitial em {
+  font-style: italic;
+  color: var(--accent);
+}
+/* Scroll-scrubbed accent flip: the line carries `--ip` (0 = just entered, 1 =
+   settled) and each accent letter a `--lt` start threshold. The in-flow italic
+   glyph is transparent (holds the settled layout only). `--flip` is a near-step
+   (0→1 in ~0.005 of progress) so at any frame exactly ONE of the two glyph
+   layers is painted — ::before the resting non-italic letter, ::after the
+   italic one — never a blend (no double-image mid-flip). A separate, delayed
+   `--op` ramp then brightens the now-italic letter from faint to full, so the
+   flip lands first and the color deepens a beat later. `--ip` defaults to 1, so
+   reduced motion (component skips the inline var) rests on the italic line. */
+.ilit {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+  --flip: clamp(0, (var(--ip, 1) - var(--lt, 0)) * 200, 1);
+  --op: clamp(0, (var(--ip, 1) - var(--lt, 0) - 0.12) * 6, 1);
+}
+.ilit::before,
+.ilit::after {
+  content: attr(data-ch);
+  position: absolute;
+  inset: 0;
+  color: var(--accent);
+}
+.ilit::before {
+  font-style: normal;
+  opacity: calc(0.35 * (1 - var(--flip)));
+}
+.ilit::after {
+  opacity: calc(var(--flip) * (0.35 + 0.65 * var(--op)));
+}
+
+/* ---- FAQ (native accordion, no Radix on the public surface) ----
+   Hairline-separated <details> rows: serif question, sans answer clamped to a
+   comfortable measure. The default disclosure triangle is removed and replaced
+   by a custom plus marker that rotates to an x and lights accent on open. */
+.faq {
+  max-width: 65ch;
+  margin-top: 40px;
+}
+.faq-item {
+  border-top: 1px solid var(--hairline);
+  /* lets block-size transition to/from `auto` for the open/close slide */
+  interpolate-size: allow-keywords;
+}
+/* smooth open/close of the native disclosure; browsers without
+   ::details-content / interpolate-size just toggle instantly as before */
+.faq-item::details-content {
+  block-size: 0;
+  overflow: clip;
+  opacity: 0;
+  transition:
+    block-size 0.3s var(--ease),
+    opacity 0.25s var(--ease),
+    content-visibility 0.3s allow-discrete;
+}
+.faq-item[open]::details-content {
+  block-size: auto;
+  opacity: 1;
+}
+/* only items 2-4 carry a rule (border-top), so the first has no cap above it */
+.faq-item:first-child {
+  border-top: none;
+}
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 2px;
+  cursor: pointer;
+  list-style: none;
+}
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+.faq-item summary:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
+.faq-q {
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+/* lucide Plus icon that rotates to an x + lights accent on open. */
+.faq-icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--ink-faint);
+  transition:
+    transform 0.3s var(--ease),
+    color 0.25s var(--ease);
+}
+.faq-item[open] .faq-icon {
+  transform: rotate(45deg);
+  color: var(--accent);
+}
+.faq-a {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+  padding: 0 2px 22px 30px;
+}
+
+/* ---- DARK FINALE: closing CTA + footer share one ink surface ----
+   The page's last block is one dark full-bleed finale (warm canvas above → crisp
+   straight ink edge here). The closing CTA and the footer use the SAME ink token
+   and the footer carries no top border, so they read as one continuous block with
+   no visible seam; the giant wordmark band (owned by the footer) sits between the
+   CTA and the columns. The footer is self-contained, so it also stands alone under
+   a sub-page's warm content. */
+.closing {
+  text-align: center;
+  padding: clamp(96px, 12vw, 148px) 0 clamp(52px, 7vw, 80px);
+  background: var(--ink-bg);
+  color: var(--on-ink);
+  position: relative;
+}
+.closing h2 {
+  font-size: clamp(2.1rem, 3.6vw, 3rem);
+  line-height: 1.06;
+  max-width: 17ch;
+  margin: 0 auto;
+}
+/* Accent phrase lightened so the indigo reads on ink (mirrors .band-dark h2 em). */
+.closing h2 em {
+  color: color-mix(in srgb, var(--accent) 60%, white);
+}
+.closing-deck {
+  font-size: 16px;
+  line-height: 1.55;
+  color: var(--on-ink-soft);
+  max-width: 48ch;
+  margin: 18px auto 0;
+}
+.closing .cta {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ---- footer (dark ink, giant ghost wordmark band on top) ---- */
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink-bg);
+  color: var(--on-ink);
+  padding: 0 0 40px;
+}
+/* Brand lockup text is ink-dark by default (nav); recolor it for the ink footer. */
+.site-footer .brand {
+  color: var(--on-ink);
+}
+/* Wordmark band: one huge single-line "JOBVAULT" at ~4% on-ink, nearly the
+   container width, cropped only at the block's side padding. Owns its own band so
+   it separates the CTA from the columns. Horizontal drift comes from the motion
+   inline transform (client leaf); no opacity gating, so no-JS renders it fine. */
+.footer-wordmark {
+  position: relative;
+  overflow: hidden;
+  height: clamp(160px, 20vw, 250px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: clamp(28px, 4vw, 48px);
+}
+.footer-wordmark-text {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(4rem, 18vw, 17rem);
+  line-height: 0.8;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--on-ink) 4%, transparent);
+  user-select: none;
+  will-change: transform;
+}
+.footer-inner {
+  position: relative;
+  z-index: 1;
+}
+.footer-cols {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: 40px;
+}
+.footer-strap {
+  font-family: var(--font-serif);
+  font-size: 16px;
+  color: var(--on-ink-soft);
+  max-width: 24ch;
+  margin: 16px 0 0;
+}
+.footer-note {
+  font-size: 13px;
+  color: var(--on-ink-soft);
+  opacity: 0.75;
+  margin: 10px 0 0;
+}
+.footer-col h4 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  color: var(--on-ink-soft);
+  margin: 0 0 14px;
+}
+.footer-col a {
+  display: block;
+  font-size: 14px;
+  color: var(--on-ink-soft);
+  padding: 5px 0;
+  transition: color 0.15s var(--ease);
+}
+.footer-col a:hover {
+  color: var(--on-ink);
+}
+.footer-colophon {
+  margin-top: 56px;
+  padding-top: 22px;
+  border-top: 1px solid var(--ink-hairline);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--on-ink-soft);
+}
+@media (max-width: 768px) {
+  .footer-cols {
+    grid-template-columns: 1fr 1fr;
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}
+/* Phones: the CTA stack goes vertical and the wordmark band shrinks. */
+@media (max-width: 640px) {
+  .closing .cta {
+    flex-direction: column;
+    align-items: center;
+  }
+  .footer-wordmark {
+    height: 90px;
+    margin-bottom: 26px;
+  }
+}
+
+/* The landing sections' positioned column. */
+.landing {
+  position: relative;
+}
+
+/* ---- motion utilities ---- */
+.intro {
+  opacity: 0;
+  transform: translateY(16px);
+  animation: rise 0.7s var(--ease) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes rise {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* The ONE landing reveal choreography (hero excepted — it has its own load-in):
+   fade + small rise, played once when a section enters the viewport. `useReveal`
+   stamps `data-shown` on the observed wrapper; each reveal — a child under that
+   wrapper, or a self-observing element carrying its own `data-shown` — settles to
+   the final state, staggered by its `--i` index. No per-section systems. */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.55s var(--ease),
+    transform 0.55s var(--ease);
+  transition-delay: calc(var(--i, 0) * 80ms);
+}
+[data-shown] .reveal,
+.reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 768px) {
+  .capture .wrap,
+  .band-dark .wrap {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  /* Single column: head (copy) on top, the card deck below (desktop keeps the
+     deck-left / head-right split). */
+  .capture .sec-head {
+    order: -1;
+  }
+}
+/* The capture deck is a fixed-px composition (360px card + 24px offset = 384px
+   stage); below ~440px it outgrows the gutter and pushes the page wider than the
+   viewport (clipping the cards and the heading). `zoom` reflows the box to fit —
+   same trick as the hero collage. */
+@media (max-width: 440px) {
+  .ext-stage {
+    zoom: 0.86;
+  }
+}
+@media (max-width: 380px) {
+  .ext-stage {
+    zoom: 0.74;
+  }
+}
+
+/* Personas: below 768px (md) stack the card above the full-width doc list. */
+@media (max-width: 768px) {
+  .persona-stage {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}
+
+/* ---- MOBILE DOCUMENTS: compact peek stack ----
+   The full sheets fan and overlap past ~640px. Below that a plain vertical stack
+   reads as two repeated cards, so collapse them into one paper-pair object: the
+   résumé on top (stamp stays visible) with the cover letter peeking from behind-
+   left + below — each keeps its own resting tilt. Fixed-px stage so the résumé in
+   normal flow drives the height and the letter (absolute) just peeks; `zoom`
+   guards the smallest viewports like the capture deck. */
+@media (max-width: 640px) {
+  .docstage {
+    position: relative;
+    display: block;
+    width: 322px;
+    max-width: 100%;
+    height: auto;
+    margin: 6px auto 0;
+  }
+  /* Smaller entrance slide: at this width the desktop ±72px offset would bleed
+     past the page edge. */
+  .doc-fan {
+    --fan-dist: 28px;
+  }
+  .doc-fan-resume {
+    position: relative; /* in normal flow → drives the stage height */
+    left: auto;
+    top: auto;
+    margin-left: 22px; /* sit right, leaving the left gutter for the peek */
+    z-index: 2;
+    transform: rotate(3deg);
+  }
+  .doc-fan-letter {
+    position: absolute;
+    left: 0;
+    /* The letter is shorter than the résumé, so it must start far enough down
+       for its bottom-left corner to clear the résumé's bottom edge and peek. */
+    top: 72px;
+    z-index: 1;
+    transform: rotate(-6deg);
+  }
+  .mini-resume--full,
+  .mini-letter--full {
+    width: 300px;
+    max-width: none;
+  }
+}
+@media (max-width: 360px) {
+  .docstage {
+    zoom: 0.9;
+  }
+}
+
+/* No-JS fallback: the reveal sections ship at opacity:0 and are unhidden by the
+   client IntersectionObserver. If scripting is disabled the observer never
+   fires, so force the settled visible state (reduced-motion is already handled
+   below with its own forced final state). */
+@media (scripting: none) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  /* The document sheets' side-slide entrance gates on `[data-shown]`, which
+     never lands without JS: rest on the settled fanned state. */
+  .doc-fan {
+    opacity: 1;
+    translate: none;
+  }
+  /* The radius eases on `[data-shown]`, which never lands without JS: rest on the
+     settled panel radius so it never sticks at the 40px entrance value. */
+  .band-dark {
+    border-radius: 28px;
+  }
+  /* The watchline draw scrubs on an inline `--wl-p` var the SSR HTML ships as
+     0; without JS it never advances, so rest on the drawn state. */
+  .wl-rail::before,
+  .wl-dot {
+    transform: none;
+  }
+  /* Same for the interstitial's inline `--ip`: rest on the settled italic. */
+  .ilit::before {
+    opacity: 0;
+  }
+  .ilit::after {
+    opacity: 1;
+  }
+  /* The capture deck's resting stacked state is its CSS base, so scripting:none
+     already shows both cards (success on top, capture receded) — no override. */
+  /* The résumé's refine swap, stamp, and lit chip all gate on `[data-shown]`,
+     which never lands without JS. Force their final refined + stamped state so
+     the sheet reads as tailored. (The hero collage runs on pure-CSS animations,
+     so it needs no fallback here.) */
+  .mini-refine-old {
+    opacity: 0;
+  }
+  .mini-refine-old::after {
+    transform: scaleX(1);
+  }
+  .mini-refine-new {
+    opacity: 1;
+  }
+  .stamp {
+    transform: rotate(-8deg) scale(1);
+    opacity: 0.92;
+  }
+  .rchip-humanize {
+    color: var(--accent-strong);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .intro,
+  .reveal {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* Steps connector: rest on the full drawn line, no scroll-draw. */
+  .steps::before {
+    animation: none !important;
+    transform: none !important;
+  }
+  /* Hero collage: settle every surface + badge into the final state, no rise or
+     bob (rotate/scale are static tilt, so they stay). */
+  .vc-item,
+  .vc-badge {
+    animation: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
+  /* Capture deck: `CaptureDeck` skips its entrance under reduced motion and
+     rests on the CSS stacked state (drag-to-swap stays instant), so no override
+     is needed here. */
+  /* The FAQ marker toggles its rotate/color with no transition. */
+  .faq-icon {
+    transition: none !important;
+  }
+  /* Documents: rest on the final refined + stamped state, no swap or press,
+     and the sheets sit fanned with no slide-in entrance. */
+  .doc-fan {
+    transition: none !important;
+    opacity: 1 !important;
+    translate: none !important;
+  }
+  .mini-refine-old {
+    transition: none !important;
+    opacity: 0 !important;
+  }
+  .mini-refine-old::after {
+    transition: none !important;
+    transform: scaleX(1) !important;
+  }
+  .mini-refine-new {
+    transition: none !important;
+    opacity: 1 !important;
+  }
+  .rchip-humanize {
+    transition: none !important;
+    color: var(--accent-strong) !important;
+    border-color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+  }
+  .stamp {
+    transition: none !important;
+    transform: rotate(-8deg) scale(1) !important;
+    opacity: 0.92 !important;
+  }
+  /* The ghosted card's tick + the watchline ghost dot pulse infinitely once the
+     band reveals; stop them and let them rest static under reduced motion. */
+  .dcard[data-ghosted] .gm-icon,
+  .wl-dot.ghost {
+    animation: none !important;
+  }
+  /* Watchline scrub rests drawn (the component skips the inline `--wl-p` var
+     under reduced motion; force the final transform regardless). */
+  .wl-rail::before,
+  .wl-dot {
+    transform: none !important;
+  }
+  /* Interstitial letter flip rests settled italic likewise. */
+  .ilit::before {
+    opacity: 0 !important;
+  }
+  .ilit::after {
+    opacity: 1 !important;
+  }
+  /* Panel rests on its settled radius, no ease. */
+  .band-dark {
+    border-radius: 28px !important;
+    transition: none !important;
+  }
+}
