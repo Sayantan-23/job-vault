@@ -6,11 +6,22 @@
    warm editorial tokens from theme.css. Breakpoint mirrors landing's 768px.
    ========================================================================= */
 
+/* ---- short pages (contact, cookies) end above the fold, which would leave a
+   warm strip under the dark footer. Flex the shell column so .subpage grows
+   and the footer always reaches the viewport bottom. Layout-neutral for the
+   landing (plain stacked blocks). ---- */
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ---- page frame: clears the floating nav pill up top, breathes before the
    dark footer below. .wrap inside owns the content width. ---- */
 .subpage {
   padding: 84px 0 112px;
   position: relative;
+  flex: 1;
 }
 
 /* ---- header block: eyebrow → serif h1 (em-italic accent) → optional lede ---- */
