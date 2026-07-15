@@ -30,7 +30,7 @@
   line-height: 1.25;
   letter-spacing: -0.015em;
   color: var(--ink);
-  max-width: 22ch;
+  max-width: 26ch;
   margin-top: 14px;
 }
 .about-deck em {
