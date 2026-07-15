@@ -30,13 +30,15 @@ describe('AppShell', () => {
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull()
     // Settings is not a top-level nav link; it lives in the account menu.
     expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
-    expect(screen.getByRole('button', { name: /open account menu/i })).toBeInTheDocument()
+    // Two account menus mount (desktop rail + mobile header); CSS hides one per
+    // viewport, but both are in the DOM under jsdom.
+    expect(screen.getAllByRole('button', { name: /open account menu/i }).length).toBeGreaterThan(0)
   })
 
   it('mounts the notification bell in the canvas header (not the nav list)', () => {
     renderWithProviders(<AppShell>content</AppShell>)
-    const bell = screen.getByRole('button', { name: /notifications/i })
-    expect(bell).toBeInTheDocument()
+    // Rail-canvas floating bell + mobile-header bell both mount under jsdom.
+    expect(screen.getAllByRole('button', { name: /notifications/i }).length).toBeGreaterThan(0)
     // It's a header utility, not one of the rail's page-nav links.
     expect(screen.queryByRole('link', { name: /notifications/i })).toBeNull()
   })
