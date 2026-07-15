@@ -14,10 +14,13 @@ export function LegalDoc({ children }: { children: ReactNode }) {
 export function LegalSection({
   n,
   title,
+  inShort,
   children,
 }: {
   n: string
   title: ReactNode
+  /** Optional one-sentence plain-language summary, shown above the prose. */
+  inShort?: string
   children: ReactNode
 }) {
   return (
@@ -27,6 +30,12 @@ export function LegalSection({
       </span>
       <div className="legal-section-body">
         <h2>{title}</h2>
+        {inShort ? (
+          <p className="legal-inshort">
+            <span className="legal-inshort-label">In short</span>
+            {inShort}
+          </p>
+        ) : null}
         <div className="legal-prose">{children}</div>
       </div>
     </section>

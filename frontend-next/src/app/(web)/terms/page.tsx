@@ -17,17 +17,17 @@ export default function TermsPage() {
       <div className="wrap">
         <SubpageHeader
           eyebrow="Legal"
-          title={
-            <>
-              The deal, <em>in plain terms.</em>
-            </>
-          }
-          lede="What you can expect from JobVault, and what we ask in return — no hereinafters."
+          title="Terms of Service"
+          lede="What you can expect from JobVault, and what we ask in return."
           meta="Last updated · July 15, 2026"
         />
 
         <LegalDoc>
-          <LegalSection n="01" title="The service">
+          <LegalSection
+            n="01"
+            title="The service"
+            inShort="Track jobs, write personas, draft résumés and cover letters — free, rate-limited."
+          >
             <p>
               JobVault helps you track job applications, write personas, draft AI-assisted résumés
               and cover letters, and capture postings with a browser extension.
@@ -50,7 +50,11 @@ export default function TermsPage() {
             </p>
           </LegalSection>
 
-          <LegalSection n="04" title="AI output">
+          <LegalSection
+            n="04"
+            title="AI output"
+            inShort="Drafts are a starting point — review before you send."
+          >
             <p>
               Drafts are generated from your content and the job posting. Review them before you use
               them — you are responsible for what you send to employers, and we don’t guarantee the
@@ -58,7 +62,11 @@ export default function TermsPage() {
             </p>
           </LegalSection>
 
-          <LegalSection n="05" title="Acceptable use">
+          <LegalSection
+            n="05"
+            title="Acceptable use"
+            inShort="Don’t break it, resell it, or use it unlawfully."
+          >
             <p>
               Don’t abuse the service: no attempts to break, overload, or scrape it, no reselling
               access, and nothing unlawful.
@@ -76,7 +84,11 @@ export default function TermsPage() {
             </p>
           </LegalSection>
 
-          <LegalSection n="07" title="Liability">
+          <LegalSection
+            n="07"
+            title="Liability"
+            inShort="It’s free and as-is; we’re not liable for indirect losses."
+          >
             <p>
               To the extent the law allows, we’re not liable for indirect damages — such as a lost
               job opportunity. The service is free and provided as-is.

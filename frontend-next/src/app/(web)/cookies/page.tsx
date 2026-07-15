@@ -17,11 +17,7 @@ export default function CookiesPage() {
       <div className="wrap">
         <SubpageHeader
           eyebrow="Legal"
-          title={
-            <>
-              Three cookies, <em>no more.</em>
-            </>
-          }
+          title="Cookie Policy"
           lede="We use cookies to keep you signed in and to remember one interface preference. That’s the whole list."
           meta="Last updated · July 15, 2026"
         />

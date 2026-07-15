@@ -38,6 +38,27 @@
   color: var(--ink);
 }
 
+/* ---- "in short": a quiet plain-language summary above the prose. Mono micro-
+   label + slightly-emphasized sentence, set off by a thin accent rule — no box,
+   no fill. Used only on the denser sections. ---- */
+.legal-inshort {
+  margin-top: 16px;
+  padding-left: 14px;
+  border-left: 1.5px solid var(--accent);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.legal-inshort-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
 /* ---- prose: readable body copy, muted ink, generous line-height ---- */
 .legal-prose {
   margin-top: 16px;

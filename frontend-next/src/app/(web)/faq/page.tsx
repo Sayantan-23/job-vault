@@ -114,11 +114,7 @@ export default function FaqPage() {
       <div className="wrap">
         <SubpageHeader
           eyebrow="FAQ"
-          title={
-            <>
-              Questions, <em>answered straight.</em>
-            </>
-          }
+          title="Frequently asked questions."
           lede="No hype and no fine print — here is how JobVault works, edges included."
         />
 
