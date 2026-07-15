@@ -93,8 +93,12 @@ async function request<T>(
   if (res.status === 401 && !isRetry && isRefreshable(path)) {
     const refreshed = await refreshSession()
     if (refreshed) return request<T>(method, path, body, init, true, unwrap)
-    // The refresh token is gone/invalid — the session is unrecoverable.
-    if (typeof window !== 'undefined') window.location.assign('/login')
+    // The refresh token is gone/invalid — the session is unrecoverable. Carry
+    // the current URL in ?next= so login can return the user here afterwards.
+    if (typeof window !== 'undefined') {
+      const next = window.location.pathname + window.location.search
+      window.location.assign(`/login?next=${encodeURIComponent(next)}`)
+    }
   }
 
   const isJson = res.headers.get('content-type')?.includes('application/json') ?? false

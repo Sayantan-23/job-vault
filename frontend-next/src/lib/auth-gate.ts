@@ -14,3 +14,14 @@ export function isSessionReachable(cookies: {
 }): boolean {
   return Boolean(cookies.accessToken || cookies.refreshToken)
 }
+
+/**
+ * Validate a `?next=` redirect target from the URL. Only same-site absolute
+ * paths pass: must start with a single `/` (rejects `//evil.com` and `/\evil`
+ * protocol-relative tricks, full URLs, and anything relative). Returns null
+ * when invalid so callers fall back to their default destination.
+ */
+export function safeNextPath(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  return /^\/(?![/\\])/.test(raw) ? raw : null
+}

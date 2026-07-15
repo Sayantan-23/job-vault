@@ -2,9 +2,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-const state = vi.hoisted(() => ({ mutate: vi.fn(), isPending: false, error: null as Error | null }))
+const state = vi.hoisted(() => ({
+  mutate: vi.fn(),
+  isPending: false,
+  error: null as Error | null,
+  search: '',
+}))
 vi.mock('@/hooks/use-auth', () => ({
   useRegister: () => ({ mutate: state.mutate, isPending: state.isPending, error: state.error }),
+}))
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(state.search),
 }))
 
 import { RegisterForm } from './register-form'
@@ -13,6 +21,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   state.isPending = false
   state.error = null
+  state.search = ''
 })
 
 // "Password" and "Confirm password" both contain "password", so use exact labels.
@@ -55,5 +64,14 @@ describe('RegisterForm', () => {
     state.error = new Error('Email already registered')
     render(<RegisterForm />)
     expect(screen.getByRole('alert')).toHaveTextContent('Email already registered')
+  })
+
+  it('carries a valid ?next= over to the sign-in link', () => {
+    state.search = 'next=/app/personas'
+    render(<RegisterForm />)
+    expect(screen.getByRole('link', { name: /sign in/i })).toHaveAttribute(
+      'href',
+      '/login?next=%2Fapp%2Fpersonas',
+    )
   })
 })

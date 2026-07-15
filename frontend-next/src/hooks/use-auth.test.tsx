@@ -32,6 +32,26 @@ describe('useLogin', () => {
     expect(api.post).toHaveBeenCalledWith('/api/auth/login', { email: 'a@b.c', password: 'longenough' })
     expect(push).toHaveBeenCalledWith('/app/jobs')
   })
+
+  it('routes to a valid ?next= destination instead of the default', async () => {
+    window.history.replaceState(null, '', '/login?next=%2Fapp%2Fjobs%3Fjob%3D42')
+    api.post.mockResolvedValue({ id: 'u1', email: 'a@b.c', name: 'Ada' })
+    const { result } = renderHook(() => useLogin(), { wrapper })
+    result.current.mutate({ email: 'a@b.c', password: 'longenough' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(push).toHaveBeenCalledWith('/app/jobs?job=42')
+    window.history.replaceState(null, '', '/')
+  })
+
+  it('ignores an unsafe ?next= and routes to the jobs workspace', async () => {
+    window.history.replaceState(null, '', '/login?next=' + encodeURIComponent('//evil.com'))
+    api.post.mockResolvedValue({ id: 'u1', email: 'a@b.c', name: 'Ada' })
+    const { result } = renderHook(() => useLogin(), { wrapper })
+    result.current.mutate({ email: 'a@b.c', password: 'longenough' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(push).toHaveBeenCalledWith('/app/jobs')
+    window.history.replaceState(null, '', '/')
+  })
 })
 
 describe('useRegister', () => {
@@ -46,6 +66,16 @@ describe('useRegister', () => {
       password: 'longenough',
     })
     expect(push).toHaveBeenCalledWith('/app/jobs')
+  })
+
+  it('routes to a valid ?next= destination instead of the default', async () => {
+    window.history.replaceState(null, '', '/register?next=%2Fapp%2Fpersonas')
+    api.post.mockResolvedValue({ id: 'u1', email: 'a@b.co', name: 'Ada' })
+    const { result } = renderHook(() => useRegister(), { wrapper })
+    result.current.mutate({ name: 'Ada', email: 'a@b.co', password: 'longenough' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(push).toHaveBeenCalledWith('/app/personas')
+    window.history.replaceState(null, '', '/')
   })
 })
 
