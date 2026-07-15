@@ -1,0 +1,235 @@
+/* =========================================================================
+   JobVault /about — v2: a maker's letter re-set at the standard page width
+   with the landing's visual grammar. No centered narrow column, no self-owned
+   closer (the global dark ClosingSection + footer close every page). Runs edge
+   to edge inside .wrap: a two-column header (statement + a typeset letter
+   artifact), the letter itself set against a mono memo-rail, an interstitial
+   pull-quote, and a 2×2 principles grid. Reuses the landing tokens/voice
+   (theme.css). Breakpoint mirrors landing's 768px.
+   ========================================================================= */
+
+/* ---- 1. HEADER ROW — "About" + statement deck left, fanned sheets right
+   (stack @768). The h1 is the literal page name (SEO); the statement line sits
+   under it as a serif deck. ---- */
+.about-head .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 430px;
+  gap: 56px;
+  align-items: center;
+}
+.about-head-copy h1 {
+  font-size: clamp(2.8rem, 5vw, 3.8rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  margin-top: 22px;
+}
+.about-deck {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  max-width: 26ch;
+  margin-top: 14px;
+}
+.about-deck em {
+  /* italic accent line needs descender clearance so tails never clip */
+  display: inline-block;
+  padding-bottom: 0.06em;
+  color: var(--accent-strong);
+}
+
+/* the fanned sheet pair (landing documents grammar): résumé in flow (drives
+   the height, tilted right, on top), cover letter absolute behind it, peeking
+   from the lower-left with a counter-tilt. Both minis own their float-shadow. */
+.about-head-art {
+  position: relative;
+  justify-self: end;
+}
+.about-fan-resume {
+  position: relative;
+  margin-left: 90px;
+  transform: rotate(2.5deg);
+  z-index: 2;
+}
+.about-fan-letter {
+  position: absolute;
+  left: 0;
+  top: 56px;
+  transform: rotate(-5deg);
+  z-index: 1;
+}
+
+/* ---- 2. THE LETTER — mono memo-rail (left) + prose (right), stack @768 ---- */
+.about-letter {
+  margin-top: 84px;
+}
+.about-letter .wrap {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 38rem);
+  gap: 64px;
+  align-items: start;
+}
+
+/* left rail: a typeset memo head — hairline-topped mono rows */
+.letter-meta {
+  position: sticky;
+  top: 96px;
+}
+.letter-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hairline);
+}
+.letter-meta-k {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+.letter-meta-v {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* right: the letter prose — body sans at reading size, roomy leading */
+.maker-letter p {
+  font-family: var(--font-sans);
+  font-size: 17.5px;
+  line-height: 1.75;
+  color: var(--ink);
+}
+.maker-letter p + p {
+  margin-top: 18px;
+}
+/* Emphasis is carried by italics only — no accent colour in the body (that stays
+   reserved for headings + the pull-quote), so the em reads as a quiet stress. */
+.maker-letter em {
+  font-style: italic;
+}
+/* signature: an em-dash + mono micro-label, faint */
+.maker-sign {
+  margin-top: 40px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+
+/* ---- 3. INTERSTITIAL PULL-QUOTE — full-width statement, big serif, centered.
+   Mirrors the landing interstitial's register at a calmer scale. Keeps the
+   generic `section { padding: var(--sec-pad) 0 }`, plus extra breath. ---- */
+.about-interstitial {
+  text-align: center;
+  padding-top: calc(var(--sec-pad) + 24px);
+  padding-bottom: calc(var(--sec-pad) + 24px);
+}
+.about-interstitial-line {
+  margin: 0 auto;
+  max-width: 20ch;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.about-interstitial-line em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+/* ---- 4. PRINCIPLES — eyebrow + serif head, then a 2×2 hairline grid ---- */
+.about-principles .sec-head {
+  margin-bottom: 12px;
+}
+.about-principles .sec-head h2 {
+  font-size: clamp(1.9rem, 3vw, 2.55rem);
+  line-height: 1.08;
+  margin-top: 14px;
+}
+.principle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 56px;
+}
+.principle {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: baseline;
+  padding: 26px 0;
+  border-top: 1px solid var(--hairline);
+}
+.principle-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+.principle-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 1.2rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.principle-text {
+  margin-top: 8px;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+@media (max-width: 768px) {
+  /* header stacks: copy first, the artifact tucked small + centered below */
+  .about-head .wrap {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .about-head-copy h1 {
+    font-size: clamp(2.2rem, 10vw, 3rem);
+  }
+  /* fan tucks under the copy, centered; landing.css already narrows the
+     mini--full sheets to 300px inside this breakpoint, so 32px of peek keeps
+     the pair inside a 390px viewport. */
+  .about-head-art {
+    justify-self: center;
+  }
+  .about-fan-resume {
+    margin-left: 32px;
+    transform: rotate(3deg);
+  }
+  .about-fan-letter {
+    top: 64px;
+    transform: rotate(-6deg);
+  }
+
+  /* letter stacks: memo-rail on top (not sticky), prose below */
+  .about-letter {
+    margin-top: 56px;
+  }
+  .about-letter .wrap {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .letter-meta {
+    position: static;
+  }
+  .maker-letter p {
+    font-size: 17px;
+  }
+
+  /* principles collapse to a single column */
+  .principle-grid {
+    grid-template-columns: 1fr;
+  }
+}

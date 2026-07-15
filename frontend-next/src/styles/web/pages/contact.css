@@ -1,0 +1,117 @@
+/* =========================================================================
+   JobVault public /contact — "oversized email hero"
+   A near-empty page made intentional by scale: a centered vertical stack
+   whose whole point is one huge, clickable mailto set in Geist Mono. Builds
+   on the shared sub-page frame (subpages.css) + landing tokens (theme.css).
+   Breakpoint mirrors landing's 768px.
+   ========================================================================= */
+
+/* Center the stack vertically in the grown .subpage (flex:1 from subpages.css);
+   .wrap keeps horizontal centering + content width. */
+.contact-page {
+  display: flex;
+  align-items: center;
+}
+
+.contact-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 22px;
+}
+
+/* centered kicker: reuse .eyebrow's mono/tracking, drop its accent dash */
+.contact-kicker {
+  display: inline-flex;
+  gap: 0;
+}
+.contact-kicker::before {
+  content: none;
+}
+
+.contact-statement {
+  font-size: clamp(1.9rem, 3.4vw, 2.9rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 20ch;
+}
+.contact-statement em {
+  display: inline-block;
+  padding-bottom: 0.06em;
+}
+
+/* ---- THE HERO: one oversized mailto in Geist Mono ----
+   The clamp is sized so 19 mono chars stay on one line down to ~320px.
+   ponytail: assumes Geist Mono ~0.6em advance; tune the 6.8vw / 3.2rem knobs
+   if it wraps or overshoots at a real 390px viewport. */
+.contact-email {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: clamp(1.35rem, 6.8vw, 3.2rem);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 0.15s var(--ease);
+}
+.contact-email:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: 1px;
+}
+.contact-email:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+  border-radius: 6px;
+}
+
+.contact-micro {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+}
+
+/* ---- hairline-separated secondary row: small inline links, mid-dot split ---- */
+.contact-secondary {
+  margin-top: 20px;
+  padding-top: 22px;
+  border-top: 1px solid var(--hairline);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+.contact-secondary a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.15s var(--ease);
+}
+.contact-secondary a:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.contact-secondary a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.contact-dot {
+  color: var(--ink-faint);
+  user-select: none;
+}
+
+@media (max-width: 768px) {
+  .contact-stack {
+    gap: 18px;
+  }
+  .contact-secondary {
+    margin-top: 12px;
+  }
+}

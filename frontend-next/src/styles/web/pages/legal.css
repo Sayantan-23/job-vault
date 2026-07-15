@@ -1,0 +1,124 @@
+/* =========================================================================
+   JobVault public legal pages — shared page-specific styles
+   Privacy, Terms, and Cookies all render as typeset "filed documents": a
+   numbered stack of hairline-separated sections (mono section number in a left
+   gutter + serif heading + readable prose). Builds on the shared sub-page frame
+   (subpages.css) + landing tokens (theme.css). Breakpoint mirrors landing's 768px.
+   ========================================================================= */
+
+/* ---- document: one hairline-bounded column of numbered sections ---- */
+.legal-doc {
+  margin-top: 52px;
+  border-top: 1px solid var(--hairline);
+}
+
+/* ---- section: mono number in a fixed left gutter, heading + prose in the body
+   column. Rows share a bottom hairline so the whole doc reads as a filed sheet. */
+.legal-section {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 42rem);
+  gap: 0 40px;
+  padding: 44px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.legal-num {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  /* nudge the number down onto the serif heading's cap line */
+  padding-top: 6px;
+}
+.legal-section-body h2 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(1.4rem, 2.4vw, 1.7rem);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+/* ---- "in short": a quiet plain-language summary above the prose. Mono micro-
+   label + slightly-emphasized sentence, set off by a thin accent rule — no box,
+   no fill. Used only on the denser sections. ---- */
+.legal-inshort {
+  margin-top: 16px;
+  padding-left: 14px;
+  border-left: 1.5px solid var(--accent);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink);
+}
+.legal-inshort-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+
+/* ---- prose: readable body copy, muted ink, generous line-height ---- */
+.legal-prose {
+  margin-top: 16px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink-soft);
+}
+.legal-prose > * + * {
+  margin-top: 14px;
+}
+.legal-prose a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.legal-prose a:hover {
+  color: var(--accent);
+}
+/* cookie names, cookie lifetimes, and other literals in Geist Mono */
+.legal-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  color: var(--ink);
+}
+
+/* ---- list: hairline-quiet, no bullets sticking into the gutter ---- */
+.legal-list {
+  list-style: none;
+  margin-top: 16px;
+}
+.legal-list li {
+  padding-left: 20px;
+  position: relative;
+}
+.legal-list li + li {
+  margin-top: 12px;
+}
+/* dash marker in the accent current — reads as a filed line item, not a bullet */
+.legal-list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 8px;
+  height: 1.5px;
+  background: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .legal-doc {
+    margin-top: 36px;
+  }
+  /* stack the mono number above the heading on phones */
+  .legal-section {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 32px 0;
+  }
+  .legal-num {
+    padding-top: 0;
+  }
+}

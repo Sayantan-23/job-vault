@@ -42,9 +42,9 @@ export function ClosingSection() {
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </Link>
-          <a className="btn btn-outline-ink" href="#extension">
+          <Link className="btn btn-outline-ink" href="/#extension">
             Add to Chrome
-          </a>
+          </Link>
         </div>
       </div>
     </section>

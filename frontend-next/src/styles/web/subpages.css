@@ -1,0 +1,84 @@
+/* =========================================================================
+   JobVault public sub-pages — shared foundation
+   Generic scaffolding every /(web) sub-page (FAQ, privacy, terms, …) reuses:
+   the page frame + editorial header block. Page-specific styles live in their
+   own per-page files. Uses .wrap (landing.css) for the content column and the
+   warm editorial tokens from theme.css. Breakpoint mirrors landing's 768px.
+   ========================================================================= */
+
+/* ---- short pages (contact, cookies) end above the fold, which would leave a
+   warm strip under the dark footer. Flex the shell column so .subpage grows
+   and the footer always reaches the viewport bottom. Layout-neutral for the
+   landing (plain stacked blocks). ---- */
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- page frame: clears the floating nav pill up top, breathes before the
+   dark footer below. .wrap inside owns the content width. ---- */
+.subpage {
+  padding: 84px 0 112px;
+  position: relative;
+  flex: 1;
+}
+
+/* ---- header block: eyebrow → serif h1 (em-italic accent) → optional lede ---- */
+.subpage-head {
+  max-width: 46rem;
+}
+.subpage-head h1 {
+  font-size: clamp(2.4rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  margin-top: 16px;
+}
+.subpage-head h1 em {
+  display: inline-block;
+  padding-bottom: 0.06em;
+}
+.subpage-lede {
+  max-width: 38rem;
+  margin-top: 16px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+/* small Geist Mono meta line ("Last updated · July 15, 2026") */
+.subpage-meta {
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+
+/* mono group label for stacked sections (FAQ topic groups, etc.) — carries the
+   .eyebrow accent-dash look but sits as a block-level section divider with room
+   above. `display: flex` overrides .eyebrow's inline-flex so it owns its row. */
+.faq-group-label {
+  display: flex;
+  margin-top: 56px;
+  margin-bottom: 8px;
+}
+.faq-group-label:first-of-type {
+  margin-top: 44px;
+}
+/* the label owns its list — pull the shared .faq (margin-top: 40px) up close. */
+.faq-group-label + .faq {
+  margin-top: 12px;
+}
+
+/* hairline rule utility */
+.subpage-rule {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .subpage {
+    padding: 56px 0 80px;
+  }
+}
