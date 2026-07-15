@@ -30,6 +30,19 @@
 - [x] **v3.1 owner-feedback round (2026-07-06, commits `44e1362..583556e`)**: `motion` (framer-motion v12) adopted for scroll-linked effects; tactile background (paper-grain bump + hero atmosphere washes + shared `.viz-glow` indigo glows); hero collage rebalanced (266px popup, modern 200x412 phone with dynamic island, status bar, 4-row list + tab bar); how-it-works strip gains numbered chips + lucide icons + connector hairline (Floria pattern); capture beat reworked to a **card stack** (success card lands atop the still-visible capture card); dark Track band rebuilt as an **inset rounded panel** (28px radius, fog seams deleted, inner indigo glow, wordmark seated on the panel's bottom edge, motion scale-in entrance); interstitial scaled to statement size (`clamp(3.5rem,7.5vw,7rem)`); FAQ pluses now lucide `Plus` rotating 45 degrees; **closing CTA + footer merged into a dark finale** with the giant JOBVAULT wordmark band sitting between CTA and link columns (scroll drift via motion). Gates green (typecheck, lint, 539 tests, production Docker build).
 - [x] **v3.2 second feedback round (2026-07-07, commits `f45983d..86b16d5`)**: hero headline swapped to "Applications go quiet. *Yours won't*."; background atmosphere bumped one notch (glow 18%, washes 8/9%, grain 0.055); collage restored to the original v3 composition (owner preferred it) while keeping the new card designs, phone widened to 214x441; capture section became an **interactive drag-to-flip deck** (`capture-deck.tsx`, motion drag + spring swap, 120px offset / 500 velocity threshold, "drag to flip" hint, CSS keyframe beat deleted, no-JS renders the stacked state). Gates green incl. production Docker build.
 
+- [x] **Merged to master 2026-07-15** (merge `ea152f1`, `--no-ff`).
+
+## Public Sub-Pages (on `public-pages` worktree branch off master, 2026-07-15)
+
+> The 5 ComingSoon stubs replaced + the missing `/cookies` route added (footer linked it → 404). Built by opus subagents (foundation+FAQ → about ∥ contact ∥ legal×3), Fable reviewing. All server components, zero client JS, no backend changes.
+
+- [x] Foundation: `subpages.css` (`.subpage` frame, header block, mono meta, group label, hairline rule; flex `.shell` so the dark footer reaches the viewport bottom on short pages) + `SubpageHeader` (eyebrow / serif title with `<em>` accent / lede / meta) (`95a93a1`, footer fix `172928f`)
+- [x] `/faq` — 16 Q&As in 5 mono-labeled groups (Product & pricing, AI & your data, Documents & export, Extension, Account), landing's `.faq-item` accordion reused, native `<details>`
+- [x] `/about` — editorial story: problem prose → 01–05 system flow rows → 3 principle rows → what's-next + CTA (`75f2a58`; fixed inherited `section` padding)
+- [x] `/contact` — frontend-only mailto channels (General / Bugs / Privacy & data → `support@jobvault.app` ⚠️ placeholder address, confirm before going live) + FAQ note (`1453e70`)
+- [x] `/privacy` `/terms` `/cookies` — shared `LegalDoc`/`LegalSection` "filed document" layout (mono numbers, serif h2, hairlines); plain-language policies drawn from the real data model (bcrypt, Gemini transfer, 3 cookies incl. verified `sidebar`, no analytics/storage/payments); "Last updated · July 15, 2026" (`15a6b6e`)
+- [x] Gates: typecheck, lint, 539 tests, production build (all 6 routes static). Browser pass at 1440/390 incl. FAQ open state (playwright).
+
 ### v1 + v2 history (superseded by v3)
 
 - [x] v1: full landing in `(web)/` — warm theme, `landing.css`, WebNav/WebFooter, 6 sections + trace/reveal helpers (commit `ef4f567`)
