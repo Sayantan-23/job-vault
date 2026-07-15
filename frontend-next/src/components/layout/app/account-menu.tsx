@@ -24,7 +24,13 @@ function Identity({ name, email }: { name: string; email: string }) {
   )
 }
 
-export function AccountMenu() {
+export function AccountMenu({
+  compact = false,
+  side = 'top',
+}: {
+  compact?: boolean
+  side?: 'top' | 'bottom'
+} = {}) {
   const { data: user } = useCurrentUser()
   const logout = useLogout()
   const name = user?.name?.trim() || 'Account'
@@ -36,19 +42,30 @@ export function AccountMenu() {
         <button
           type="button"
           aria-label="Open account menu"
-          className="jv-account-trigger flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-accent"
+          className={
+            compact
+              ? 'flex w-auto items-center rounded-full p-1 transition-colors hover:bg-accent'
+              : 'jv-account-trigger flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors hover:bg-accent'
+          }
         >
           <MonogramAvatar name={name} />
-          <span className="jv-rail-label min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground">
-            {name}
-          </span>
-          <ChevronsUpDown className="jv-rail-label size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          {compact ? null : (
+            <>
+              <span className="jv-rail-label min-w-0 flex-1 truncate text-left text-sm font-medium text-foreground">
+                {name}
+              </span>
+              <ChevronsUpDown
+                className="jv-rail-label size-4 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </>
+          )}
         </button>
       </AnchoredPopoverTrigger>
 
       {/* Fixed width — the trigger shrinks to just the avatar when the rail is
           collapsed, so binding to --radix-popover-trigger-width crushed the menu. */}
-      <AnchoredPopoverContent side="top" align="start" sideOffset={8} className="w-56">
+      <AnchoredPopoverContent side={side} align="start" sideOffset={8} className="w-56">
         <div className="flex items-center gap-2.5 px-2.5 py-2">
           <MonogramAvatar name={name} />
           <Identity name={name} email={email} />
