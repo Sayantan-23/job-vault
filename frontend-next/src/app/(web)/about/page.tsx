@@ -1,13 +1,17 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 
+import { AboutHeader } from '@/components/web/about/about-header'
+import { AboutInterstitial } from '@/components/web/about/about-interstitial'
+import { LetterMeta } from '@/components/web/about/letter-meta'
 import { MakerLetter } from '@/components/web/about/maker-letter'
 import { Principles } from '@/components/web/about/principles'
 
-// Server component, zero client JS. A centered narrative column: a maker's letter
-// first, numbered principles second. This page skips SubpageHeader (which is
-// left-aligned) and owns its own centered header. Page-specific styles imported
-// here; the shared .subpage frame comes from subpages.css via the layout.
+// The letter, re-set at the standard page width with the landing's visual
+// grammar: a two-column header (statement + a typeset letter artifact), the
+// letter itself against a mono memo-rail, an interstitial pull-quote, and a 2×2
+// principles grid. No self-owned closer — the (web) shell renders the global
+// dark ClosingSection + footer after every page. Page-specific styles here; the
+// shared .subpage frame comes from subpages.css via the layout.
 import '@/styles/web/pages/about.css'
 
 export const metadata: Metadata = {
@@ -19,34 +23,18 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <main className="subpage">
-      <div className="wrap">
-        <div className="about-col">
-          <header className="about-head">
-            <span className="eyebrow about-eyebrow">A note from the maker</span>
-            <h1>
-              Built by one person who got tired of <em>the silence.</em>
-            </h1>
-          </header>
+      <AboutHeader />
 
+      <div className="about-letter">
+        <div className="wrap">
+          <LetterMeta />
           <MakerLetter />
-
-          <Principles />
-
-          <section className="about-closer">
-            <p className="about-closer-line">
-              A mobile app for iOS and Android is on the way.
-            </p>
-            <div className="about-cta">
-              <Link className="btn btn-primary" href="/register">
-                Start free
-              </Link>
-              <Link className="about-cta-link" href="/faq">
-                Read the FAQ
-              </Link>
-            </div>
-          </section>
         </div>
       </div>
+
+      <AboutInterstitial />
+
+      <Principles />
     </main>
   )
 }

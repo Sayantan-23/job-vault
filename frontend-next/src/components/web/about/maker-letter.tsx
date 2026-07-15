@@ -1,9 +1,8 @@
-import { PullQuote } from './pull-quote'
-
-// The letter: a first-person note from the maker. Centered column, but the prose
-// itself is left-aligned (ragged-right) for readability — the COLUMN is what's
-// centered on the page. One pull-quote sits mid-letter as the emotional pivot; a
-// mono signature closes it. Styled by styles/web/pages/about.css.
+// The letter prose: a first-person note from the maker, set left-aligned at a
+// ~38rem measure against the mono memo-rail (LetterMeta). The pull-quote now
+// lives between the letter and the principles as a full-width interstitial, so
+// it is no longer inside the flow here. A mono signature closes it. Server-safe.
+// Styled by styles/web/pages/about.css.
 export function MakerLetter() {
   return (
     <div className="maker-letter">
@@ -17,11 +16,6 @@ export function MakerLetter() {
         spreadsheet I updated when I remembered, documents renamed and scattered across folders. The
         search itself became the hard part, and the silence hid inside the mess.
       </p>
-
-      <PullQuote>
-        You find out an application died by <em>forgetting it existed.</em>
-      </PullQuote>
-
       <p>
         So here is the pitch, honestly. JobVault keeps the whole search in one place: capture a
         posting in a click, keep personas for the roles you actually want, draft résumés and cover
@@ -38,8 +32,9 @@ export function MakerLetter() {
         generation runs on an hourly rate limit — that&rsquo;s the only ceiling.
       </p>
       <p>
-        It&rsquo;s built by one person, for the search I wish I&rsquo;d had. If it helps you land
-        somewhere good, that&rsquo;s the whole point.
+        It&rsquo;s built by one person, for the search I wish I&rsquo;d had — with a mobile app for
+        iOS and Android on the way. If it helps you land somewhere good, that&rsquo;s the whole
+        point.
       </p>
 
       <div className="maker-sign">— the maker of JobVault</div>

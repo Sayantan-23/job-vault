@@ -1,57 +1,80 @@
 /* =========================================================================
-   JobVault /about — a maker's letter + numbered principles
-   A single centered narrative column (~36rem / ~66ch): the letter first,
-   principles second. Reuses the landing tokens/voice (theme.css) — warm paper,
-   hairlines, serif display with <em> accents, Geist Mono micro-labels, the
-   muted-indigo accent used sparingly. No boxes, no shadows, no photos.
-   Breakpoint mirrors landing's 768px.
+   JobVault /about — v2: a maker's letter re-set at the standard page width
+   with the landing's visual grammar. No centered narrow column, no self-owned
+   closer (the global dark ClosingSection + footer close every page). Runs edge
+   to edge inside .wrap: a two-column header (statement + a typeset letter
+   artifact), the letter itself set against a mono memo-rail, an interstitial
+   pull-quote, and a 2×2 principles grid. Reuses the landing tokens/voice
+   (theme.css). Breakpoint mirrors landing's 768px.
    ========================================================================= */
 
-/* ---- the centered narrative column. The COLUMN is centered on the page; the
-   letter prose inside stays left-aligned (long centered text is unreadable). ---- */
-.about-col {
-  max-width: 36rem;
-  margin: 0 auto;
+/* ---- 1. HEADER ROW — statement left, letter artifact right (stack @768) ---- */
+.about-head .wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 64px;
+  align-items: center;
 }
-
-/* ---- centered eyebrow: symmetric dash–text–dash. Extends landing's .eyebrow
-   (mono label + left ::before dash) with a mirrored ::after dash and centering. ---- */
-.about-eyebrow {
-  display: flex;
-  justify-content: center;
-}
-.about-eyebrow::after {
-  content: '';
-  width: 14px;
-  height: 1.5px;
-  background: var(--accent);
-  display: inline-block;
-}
-
-/* ---- header: centered statement headline (a marketing line, not a title) ---- */
-.about-head {
-  text-align: center;
-  margin-bottom: 60px;
-}
-.about-head h1 {
-  font-size: clamp(2.6rem, 5vw, 3.6rem);
+.about-head-copy h1 {
+  font-size: clamp(2.5rem, 4.4vw, 3.4rem);
   line-height: 1.06;
   letter-spacing: -0.025em;
   margin-top: 22px;
 }
-.about-head h1 em {
+.about-head-copy h1 em {
   /* italic accent line needs descender clearance so tails never clip */
   display: inline-block;
   padding-bottom: 0.06em;
 }
+/* the typeset letter beside the maker's letter — one soft float, slight tilt */
+.about-head-art {
+  justify-self: end;
+  rotate: -2.2deg;
+}
 
-/* ---- the letter: body sans at reading size, roomy leading, firm ink ---- */
+/* ---- 2. THE LETTER — mono memo-rail (left) + prose (right), stack @768 ---- */
+.about-letter {
+  margin-top: 84px;
+}
+.about-letter .wrap {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 38rem);
+  gap: 64px;
+  align-items: start;
+}
+
+/* left rail: a typeset memo head — hairline-topped mono rows */
+.letter-meta {
+  position: sticky;
+  top: 96px;
+}
+.letter-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 0;
+  border-top: 1px solid var(--hairline);
+}
+.letter-meta-k {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+}
+.letter-meta-v {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* right: the letter prose — body sans at reading size, roomy leading */
 .maker-letter p {
   font-family: var(--font-sans);
-  font-size: 18px;
+  font-size: 17.5px;
   line-height: 1.75;
   color: var(--ink);
-  text-align: left;
 }
 .maker-letter p + p {
   margin-top: 18px;
@@ -61,28 +84,9 @@
 .maker-letter em {
   font-style: italic;
 }
-
-/* ---- the one pull-quote: a large serif line lifted out of the flow, centered,
-   framed by whitespace only (kept quiet — no rules). ---- */
-.pull-quote {
-  margin: 64px 0;
-  text-align: center;
-  font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: clamp(1.55rem, 3.4vw, 2rem);
-  line-height: 1.28;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-.pull-quote em {
-  font-style: italic;
-  color: var(--accent-strong);
-}
-
-/* ---- signature: an em-dash + mono micro-label, centered, faint ---- */
+/* signature: an em-dash + mono micro-label, faint */
 .maker-sign {
-  margin-top: 44px;
-  text-align: center;
+  margin-top: 40px;
   font-family: var(--font-mono);
   font-size: 12px;
   text-transform: uppercase;
@@ -90,23 +94,49 @@
   color: var(--ink-faint);
 }
 
-/* ---- principles: a big breath, centered eyebrow, then numbered rows.
-   Reset landing.css's generic `section { padding: var(--sec-pad) 0 }`. ---- */
-.about-principles {
-  margin-top: 92px;
-  padding: 0;
+/* ---- 3. INTERSTITIAL PULL-QUOTE — full-width statement, big serif, centered.
+   Mirrors the landing interstitial's register at a calmer scale. Keeps the
+   generic `section { padding: var(--sec-pad) 0 }`, plus extra breath. ---- */
+.about-interstitial {
+  text-align: center;
+  padding-top: calc(var(--sec-pad) + 24px);
+  padding-bottom: calc(var(--sec-pad) + 24px);
 }
-.about-principles > .about-eyebrow {
-  margin-bottom: 34px;
+.about-interstitial-line {
+  margin: 0 auto;
+  max-width: 20ch;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.about-interstitial-line em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+/* ---- 4. PRINCIPLES — eyebrow + serif head, then a 2×2 hairline grid ---- */
+.about-principles .sec-head {
+  margin-bottom: 12px;
+}
+.about-principles .sec-head h2 {
+  font-size: clamp(1.9rem, 3vw, 2.55rem);
+  line-height: 1.08;
+  margin-top: 14px;
+}
+.principle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 56px;
 }
 .principle {
   display: grid;
-  grid-template-columns: 2.75rem 1fr;
-  gap: 20px;
-  padding: 24px 0;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
   align-items: baseline;
-}
-.principle + .principle {
+  padding: 26px 0;
   border-top: 1px solid var(--hairline);
 }
 .principle-num {
@@ -117,74 +147,50 @@
   font-variant-numeric: tabular-nums;
 }
 .principle-title {
+  font-family: var(--font-serif);
+  font-weight: 500;
   font-size: 1.2rem;
   line-height: 1.2;
   color: var(--ink);
 }
 .principle-text {
-  margin-top: 7px;
-  font-size: 16px;
+  margin-top: 8px;
+  font-size: 15.5px;
   line-height: 1.6;
   color: var(--ink-soft);
 }
 
-/* ---- quiet closer: one serif line + a centered CTA row ---- */
-.about-closer {
-  margin-top: 92px;
-  padding: 0;
-  text-align: center;
-}
-.about-closer-line {
-  font-family: var(--font-serif);
-  font-weight: 500;
-  font-size: clamp(1.2rem, 2.4vw, 1.4rem);
-  line-height: 1.3;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.about-cta {
-  margin-top: 28px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-.about-cta-link {
-  font-size: 14.5px;
-  color: var(--ink-soft);
-  transition: color 0.15s var(--ease);
-}
-.about-cta-link:hover {
-  color: var(--ink);
-}
-
 @media (max-width: 768px) {
-  .about-head {
-    margin-bottom: 44px;
+  /* header stacks: copy first, the artifact tucked small + centered below */
+  .about-head .wrap {
+    grid-template-columns: 1fr;
+    gap: 36px;
   }
-  .about-head h1 {
+  .about-head-copy h1 {
     font-size: clamp(2rem, 9vw, 2.9rem);
+  }
+  .about-head-art {
+    justify-self: center;
+    rotate: -2deg;
+  }
+
+  /* letter stacks: memo-rail on top (not sticky), prose below */
+  .about-letter {
+    margin-top: 56px;
+  }
+  .about-letter .wrap {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  .letter-meta {
+    position: static;
   }
   .maker-letter p {
     font-size: 17px;
   }
-  .pull-quote {
-    margin: 48px 0;
-    font-size: clamp(1.35rem, 6.4vw, 1.75rem);
-  }
-  .maker-sign {
-    margin-top: 36px;
-  }
-  .about-principles {
-    margin-top: 68px;
-  }
-  /* Number stays beside the title (short gutter reads fine on phones). */
-  .principle {
-    grid-template-columns: 2rem 1fr;
-    gap: 14px;
-  }
-  .about-closer {
-    margin-top: 68px;
+
+  /* principles collapse to a single column */
+  .principle-grid {
+    grid-template-columns: 1fr;
   }
 }
