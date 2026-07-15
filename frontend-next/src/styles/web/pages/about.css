@@ -8,28 +8,57 @@
    (theme.css). Breakpoint mirrors landing's 768px.
    ========================================================================= */
 
-/* ---- 1. HEADER ROW — statement left, letter artifact right (stack @768) ---- */
+/* ---- 1. HEADER ROW — "About" + statement deck left, fanned sheets right
+   (stack @768). The h1 is the literal page name (SEO); the statement line sits
+   under it as a serif deck. ---- */
 .about-head .wrap {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 64px;
+  grid-template-columns: minmax(0, 1fr) 430px;
+  gap: 56px;
   align-items: center;
 }
 .about-head-copy h1 {
-  font-size: clamp(2.5rem, 4.4vw, 3.4rem);
-  line-height: 1.06;
+  font-size: clamp(2.8rem, 5vw, 3.8rem);
+  line-height: 1.02;
   letter-spacing: -0.025em;
   margin-top: 22px;
 }
-.about-head-copy h1 em {
+.about-deck {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: clamp(1.25rem, 2vw, 1.55rem);
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+  max-width: 22ch;
+  margin-top: 14px;
+}
+.about-deck em {
   /* italic accent line needs descender clearance so tails never clip */
   display: inline-block;
   padding-bottom: 0.06em;
+  color: var(--accent-strong);
 }
-/* the typeset letter beside the maker's letter — one soft float, slight tilt */
+
+/* the fanned sheet pair (landing documents grammar): résumé in flow (drives
+   the height, tilted right, on top), cover letter absolute behind it, peeking
+   from the lower-left with a counter-tilt. Both minis own their float-shadow. */
 .about-head-art {
+  position: relative;
   justify-self: end;
-  rotate: -2.2deg;
+}
+.about-fan-resume {
+  position: relative;
+  margin-left: 90px;
+  transform: rotate(2.5deg);
+  z-index: 2;
+}
+.about-fan-letter {
+  position: absolute;
+  left: 0;
+  top: 56px;
+  transform: rotate(-5deg);
+  z-index: 1;
 }
 
 /* ---- 2. THE LETTER — mono memo-rail (left) + prose (right), stack @768 ---- */
@@ -167,11 +196,21 @@
     gap: 36px;
   }
   .about-head-copy h1 {
-    font-size: clamp(2rem, 9vw, 2.9rem);
+    font-size: clamp(2.2rem, 10vw, 3rem);
   }
+  /* fan tucks under the copy, centered; landing.css already narrows the
+     mini--full sheets to 300px inside this breakpoint, so 32px of peek keeps
+     the pair inside a 390px viewport. */
   .about-head-art {
     justify-self: center;
-    rotate: -2deg;
+  }
+  .about-fan-resume {
+    margin-left: 32px;
+    transform: rotate(3deg);
+  }
+  .about-fan-letter {
+    top: 64px;
+    transform: rotate(-6deg);
   }
 
   /* letter stacks: memo-rail on top (not sticky), prose below */
