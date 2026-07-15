@@ -1,0 +1,92 @@
+/* =========================================================================
+   JobVault public /contact — page-specific styles
+   Builds on the shared sub-page frame (subpages.css) + landing tokens
+   (theme.css). A small, quiet page: three hairline-separated channel rows
+   (mono label + line + mailto action) and a closing note under a rule.
+   Breakpoint mirrors landing's 768px.
+   ========================================================================= */
+
+/* ---- channel list: rows share a top hairline; the label sits in a fixed mono
+   column on desktop and stacks above the body on phones ---- */
+.contact-channels {
+  margin-top: 52px;
+  border-top: 1px solid var(--hairline);
+}
+.contact-channel {
+  display: grid;
+  grid-template-columns: 168px 1fr;
+  gap: 20px 40px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--hairline);
+}
+.contact-channel-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ink-faint);
+  padding-top: 3px;
+}
+.contact-channel-body {
+  max-width: 34rem;
+}
+.contact-channel-desc {
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* mailto action: email in Geist Mono, accent, with a small out-arrow */
+.contact-channel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--accent-strong);
+  transition: color 0.15s var(--ease);
+}
+.contact-channel-link:hover {
+  color: var(--accent);
+}
+.contact-channel-email {
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+}
+.contact-channel-arrow {
+  width: 14px;
+  height: 14px;
+}
+.contact-channel-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---- closing note under a hairline ---- */
+.contact-note {
+  margin-top: 40px;
+  max-width: 34rem;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.contact-note a {
+  color: var(--accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.contact-note a:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .contact-channel {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 22px 0;
+  }
+  .contact-channel-label {
+    padding-top: 0;
+  }
+}
