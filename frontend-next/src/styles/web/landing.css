@@ -1293,6 +1293,7 @@ h2 em {
     /* nav is sticky (in-flow), so it already reserves its own space above —
        only a small breathing gap is needed here, not room for the nav. */
     padding: 32px 0 56px;
+    padding-bottom: 16px;
   }
   /* Tighter page gutters on phones (desktop is 28px) so content — headline
      especially — uses the width instead of sitting in a narrow center strip. */
@@ -1356,8 +1357,9 @@ h2 em {
    (mono "01"/"02"/"03") and an accent lucide icon over the mono uppercase term
    and a short muted line. A hairline connector runs behind the chips linking
    the three (Floria pattern), stopping at the outer chips. Columns fade in on
-   reveal, staggered by `--i`. <=720px the terminals stack; the connector turns
-   into a short vertical hairline dropping from each chip to the next. */
+   reveal, staggered by `--i`. <=640px the terminals stack and the connector
+   becomes one continuous vertical hairline through the chip centers, drawn on
+   scroll. */
 .steps-strip {
   padding: 40px 0 56px;
   position: relative;
@@ -1430,15 +1432,28 @@ h2 em {
   max-width: 24ch;
   margin-top: 8px;
 }
-/* Phones: terminals stack; the horizontal connector is replaced by a short
-   vertical hairline dropping from each chip to the next. */
+/* Phones: terminals stack; the horizontal connector becomes one continuous
+   vertical hairline through the chip centers (chip x = padding 0 + chip/2 =
+   20px), spanning first→last chip center (each 12px step-pad + 20px chip-half =
+   32px inset). The chips' opaque surface masks it, so it reads as linking them.
+   A per-chip fixed-height dropper can't span a gap that grows with the line's
+   text height — this can. */
 @media (max-width: 640px) {
+  .steps-strip {
+    /* Breathing room below the hero on phones (desktop wants it flush). */
+    padding-top: 64px;
+  }
   .steps {
     grid-template-columns: 1fr;
     padding-top: 0;
   }
   .steps::before {
-    display: none;
+    top: 32px;
+    bottom: 32px;
+    left: 20px;
+    right: auto;
+    width: 1px;
+    height: auto;
   }
   .step {
     flex-direction: row;
@@ -1446,16 +1461,6 @@ h2 em {
     text-align: left;
     gap: 16px;
     padding: 12px 0;
-  }
-  .step:not(:last-child) .step-chip::after {
-    content: '';
-    position: absolute;
-    top: calc(100% + 1px);
-    left: 50%;
-    transform: translateX(-50%);
-    width: 1px;
-    height: 22px;
-    background: var(--hairline);
   }
   .step-chip {
     flex-shrink: 0;
@@ -1466,6 +1471,25 @@ h2 em {
   }
   .step-line {
     max-width: none;
+  }
+}
+/* Scroll-driven draw: the connector grows top→bottom as the strip scrolls
+   through the viewport. Native scroll timeline, no JS; browsers without it (and
+   reduced-motion, below) just get the full static line. */
+@supports (animation-timeline: view()) {
+  @media (max-width: 640px) {
+    .steps::before {
+      transform: scaleY(0);
+      transform-origin: top center;
+      animation: steps-line-draw linear both;
+      animation-timeline: view();
+      animation-range: cover 0% cover 48%;
+    }
+  }
+}
+@keyframes steps-line-draw {
+  to {
+    transform: scaleY(1);
   }
 }
 
@@ -2711,6 +2735,11 @@ section {
     animation: none !important;
     transition: none !important;
     opacity: 1 !important;
+    transform: none !important;
+  }
+  /* Steps connector: rest on the full drawn line, no scroll-draw. */
+  .steps::before {
+    animation: none !important;
     transform: none !important;
   }
   /* Hero collage: settle every surface + badge into the final state, no rise or
