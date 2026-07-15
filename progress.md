@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-07-07
+> **Last Updated**: 2026-07-15
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -44,6 +44,17 @@
 - [x] Gates: typecheck, lint, 539 tests, production build (all 6 routes static). Browser pass at 1440/390 incl. FAQ open state (playwright).
 - [x] **Owner-feedback round (2026-07-15, commits `3659dd2..0fb707d` + about):** web-research pass first (Stripe/Linear/Vercel/PostHog/37signals/Basecamp/iA legal+about+contact surveys, 2 opus agents). Legal/FAQ: **literal document titles** ("Privacy Policy"/"Terms of Service"/"Cookie Policy"/"Frequently asked questions."), left-align kept (survey: nobody centers legal), **"In short" mono summaries** on dense sections, privacy gains the missing standard sections (third-party services, data retention, your rights, children, intl transfers folded into security, contact closer — 11 total); governing-law omitted (no jurisdiction chosen). Contact: rebuilt as **centered oversized-email hero** (mono clamp headline mailto + micro reply-time line + secondary mailto row). About: rebuilt as **centered maker's letter + 4 numbered principles** (Basecamp × Linear Method; serif pull-quote mid-letter, mono signature, statement headline "Built by one person who got tired of the silence."). Gates + 1440/390 browser pass green.
 - [x] **Round 2 (2026-07-15, `9f628dd` + `f76b41d`):** the landing's **dark closing finale (ClosingSection + footer) moved into WebShell** — every public page now ends with the CTA band + ghost-wordmark footer (owner's call; "Add to Chrome" repointed `/#extension`, landing page no longer renders its own closing). **About v2** at full `.wrap` width in the landing grammar: two-col header with the reused **mini letter-sheet artifact** (rotated, contact-shadow), letter set against a sticky **mono memo rail** (FROM/RE/DATE), pull-quote promoted to a **full-width interstitial statement**, principles as a **2×2 hairline grid**, page-owned closer deleted (global finale covers it). Gates + 1440/390 pass green.
+
+## Mobile App Nav (on `worktree-mobile-app-nav`, **merged to master 2026-07-15**, merge `5e72dd7`, `--no-ff`)
+
+> First step of the /app responsive sweep. Below `lg` (1024px) the 240px rail rendered at every viewport (~60% of a phone). Built by an opus coder subagent, Fable reviewing; verified in-browser (playwright) at 390/768/1440, light + dark. Frontend-only.
+
+- [x] Rail hidden below `lg`; sticky mobile header (morphing hamburger → X in a soft accent circle, shared `BrandMark` + wordmark, `NotificationBell`, compact avatar-only `AccountMenu` opening downward)
+- [x] Google-Keep-style speed-dial nav: 5 icon-disc + label-pill items cascading one-by-one (`--animate-jv-fab-item`, 40ms/item stagger, reduced-motion safe), active disc flat indigo (`border-transparent`)
+- [x] Modal-style scrim (`bg-black/40` + blur, reused Sheet/Dialog treatment) dims the whole page *and* header — only the toggle stays above it; closes on outside tap, Escape (refocuses toggle), and route change
+- [x] `AccountMenu` gains `compact` + `side` props; `NAV` exported from `sidebar-nav`; desktop ≥1024px pixel-unchanged
+- [x] Gates: typecheck, lint, 545 tests (6 new), production build
+- [ ] Remaining responsive areas (next): JobDrawer/sheets, board columns, résumé + cover-letter workspaces at narrow widths
 
 ### v1 + v2 history (superseded by v3)
 
