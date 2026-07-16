@@ -56,4 +56,20 @@ describe('JobList', () => {
     render(<JobList jobs={[]} loading={false} isFiltered={false} onReset={vi.fn()} />)
     expect(screen.getByText(/no jobs yet/i)).toBeInTheDocument()
   })
+
+  it('shows the outreach badge only for jobs with contacts', () => {
+    render(
+      <JobList
+        jobs={[
+          makeJob({ id: 'a', outreachCount: 3, outreachReplies: 1 }),
+          makeJob({ id: 'b' }),
+        ]}
+        loading={false}
+        isFiltered={false}
+        onReset={vi.fn()}
+      />,
+    )
+    expect(screen.getAllByTestId('outreach-badge')).toHaveLength(1)
+    expect(screen.getByText('· 1 replied')).toBeInTheDocument()
+  })
 })

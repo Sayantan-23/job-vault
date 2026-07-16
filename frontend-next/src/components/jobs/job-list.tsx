@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { StatusChip } from '@/components/kanban/status-chip'
 import { GhostMeter } from '@/components/kanban/ghost-meter'
+import { OutreachBadge } from './outreach-badge'
 import { shortDate } from '@/lib/relative-time'
 import { ghostLevel } from '@/lib/ghost'
 import type { Job } from '@/types/job'
@@ -72,6 +73,7 @@ function JobRow({ job, href }: { job: Job; href: string }) {
           </span>
         </span>
         <span className="flex items-center justify-end gap-4">
+          <OutreachBadge variant="list" count={job.outreachCount ?? 0} replies={job.outreachReplies ?? 0} />
           <StatusChip status={job.status} />
           <GhostMeter days={job.ghostDays} />
           <span className="min-w-[46px] text-right font-mono text-xs tabular-nums text-muted-foreground">

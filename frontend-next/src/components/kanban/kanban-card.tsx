@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GhostMeter } from '@/components/kanban/ghost-meter'
+import { OutreachBadge } from '@/components/jobs/outreach-badge'
 import { cn } from '@/lib/utils'
 import type { KanbanCard as Card } from '@/types/dashboard'
 
@@ -53,8 +54,9 @@ export function KanbanCard({ card }: { card: Card }) {
         <span>{card.company}</span>
         {card.location ? <span>{` · ${card.location}`}</span> : null}
       </p>
-      <div className="mt-2">
+      <div className="mt-2 flex items-center justify-between gap-2">
         <GhostMeter days={card.ghostDays} />
+        <OutreachBadge variant="card" count={card.outreachCount ?? 0} replies={card.outreachReplies ?? 0} />
       </div>
     </button>
   )

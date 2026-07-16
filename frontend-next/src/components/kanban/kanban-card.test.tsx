@@ -52,4 +52,15 @@ describe('KanbanCard', () => {
     fireEvent.pointerUp(cardButton, { clientX: 40, clientY: 0 })
     expect(push).not.toHaveBeenCalled()
   })
+
+  it('shows the outreach badge when the card has contacts', () => {
+    renderCard({ ...CARD, outreachCount: 2, outreachReplies: 1 })
+    const badge = screen.getByTestId('outreach-badge')
+    expect(badge).toHaveAttribute('title', '2 contacted · 1 replied')
+  })
+
+  it('renders no badge at zero contacts', () => {
+    renderCard(CARD)
+    expect(screen.queryByTestId('outreach-badge')).not.toBeInTheDocument()
+  })
 })
