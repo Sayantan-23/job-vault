@@ -15,6 +15,8 @@ interface SegmentedControlProps<T extends string> {
   options: ReadonlyArray<SegmentedOption<T>>
   className?: string
   'aria-label'?: string
+  /** Hide text labels below the sm breakpoint (icons must be provided). */
+  collapseLabels?: boolean
 }
 
 export function SegmentedControl<T extends string>({
@@ -23,6 +25,7 @@ export function SegmentedControl<T extends string>({
   options,
   className,
   'aria-label': ariaLabel,
+  collapseLabels = false,
 }: SegmentedControlProps<T>) {
   return (
     <div
@@ -41,6 +44,7 @@ export function SegmentedControl<T extends string>({
             key={option.value}
             type="button"
             aria-pressed={active}
+            aria-label={option.label}
             onClick={() => onValueChange(option.value)}
             className={cn(
               'inline-flex h-full items-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors',
@@ -50,7 +54,7 @@ export function SegmentedControl<T extends string>({
             )}
           >
             {Icon ? <Icon className="size-4" aria-hidden="true" /> : null}
-            {option.label}
+            <span className={collapseLabels ? 'hidden sm:inline' : undefined}>{option.label}</span>
           </button>
         )
       })}

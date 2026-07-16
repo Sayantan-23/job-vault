@@ -64,7 +64,10 @@ export function SearchInput({
   return (
     // type="text" (not "search") so the browser doesn't add its own native clear
     // button alongside ours; role="searchbox" keeps the search a11y semantics.
-    <div className="relative min-w-[8rem] flex-1">
+    // basis-full puts the search on its own full-width line below sm; from sm up
+    // it collapses to basis-0 + grow so it absorbs all space the fixed-width
+    // siblings (select / toggle / add) leave over.
+    <div className="relative min-w-[8rem] grow basis-full sm:basis-0">
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
       <Input
         ref={ref}
@@ -74,7 +77,7 @@ export function SearchInput({
         placeholder={placeholder}
         value={local}
         onChange={(e) => handleInput(e.target.value)}
-        className="pl-9 pr-9"
+        className="h-10 pl-9 pr-9"
       />
       {local ? (
         <button

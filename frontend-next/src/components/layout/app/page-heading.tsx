@@ -42,7 +42,9 @@ export function PageHeading({
           </h1>
           {description ? <div className="text-sm text-muted-foreground">{description}</div> : null}
         </div>
-        {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+        {/* grow + justify-end: fixed-width actions keep hugging the right, while a
+            flexible action (the jobs search) can absorb the leftover row width */}
+        {actions ? <div className="flex grow flex-wrap items-center justify-end gap-2">{actions}</div> : null}
       </div>
     </header>
   )

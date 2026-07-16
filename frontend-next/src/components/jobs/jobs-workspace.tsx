@@ -77,10 +77,10 @@ export function JobsWorkspace({
       {/* primary page actions; the flex-1 search above pushes them to the right. hairline divides them from the filters */}
       <div className="flex shrink-0 items-center gap-2">
         <div className="hidden h-6 w-px bg-border lg:block" aria-hidden="true" />
-        <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" />
-        <Button type="button" onClick={() => setAddOpen(true)}>
+        <SegmentedControl value={view} onValueChange={setView} options={VIEW_OPTIONS} aria-label="Switch view" collapseLabels />
+        <Button type="button" onClick={() => setAddOpen(true)} aria-label="Add job">
           <Plus className="size-4" aria-hidden="true" />
-          Add job
+          <span className="hidden sm:inline">Add job</span>
         </Button>
       </div>
     </>
