@@ -3,12 +3,17 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('./dashboard.repository.js', () => ({
   dashboardRepository: { findForUser: vi.fn() },
 }))
+vi.mock('@/modules/contacts/contacts.repository.js', () => ({
+  contactsRepository: { countsForJobs: vi.fn() },
+}))
 
 import { dashboardRepository } from './dashboard.repository.js'
+import { contactsRepository } from '@/modules/contacts/contacts.repository.js'
 import { dashboardService } from './dashboard.service.js'
 import type { JobRow } from '@/db/schema/jobs.js'
 
 const repo = vi.mocked(dashboardRepository)
+const contacts = vi.mocked(contactsRepository)
 const day = 86_400_000
 
 function fakeRow(over: Partial<JobRow> = {}): JobRow {
@@ -33,9 +38,26 @@ function fakeRow(over: Partial<JobRow> = {}): JobRow {
   }
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  contacts.countsForJobs.mockResolvedValue(new Map())
+})
 
 describe('dashboardService.getKanban', () => {
+  it('attaches outreach counts to cards, defaulting to zero', async () => {
+    repo.findForUser.mockResolvedValue([
+      fakeRow({ id: 'j1', status: 'APPLIED', kanbanOrder: 1 }),
+      fakeRow({ id: 'j2', status: 'WISHLIST', kanbanOrder: 2 }),
+    ])
+    contacts.countsForJobs.mockResolvedValue(
+      new Map([['j1', { outreachCount: 2, outreachReplies: 2 }]]),
+    )
+    const board = await dashboardService.getKanban('u1', {})
+    const cards = board.columns.flatMap((c) => c.jobs)
+    expect(cards.find((c) => c.id === 'j1')).toMatchObject({ outreachCount: 2, outreachReplies: 2 })
+    expect(cards.filter((c) => c.id !== 'j1').every((c) => c.outreachCount === 0)).toBe(true)
+  })
+
   it('returns all 6 columns in fixed order, even when empty', async () => {
     repo.findForUser.mockResolvedValue([])
     const board = await dashboardService.getKanban('u1', {})

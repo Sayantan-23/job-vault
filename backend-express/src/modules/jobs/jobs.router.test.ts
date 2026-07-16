@@ -18,6 +18,9 @@ vi.mock('./scraper.js', () => ({ scrapeUrl: vi.fn() }))
 vi.mock('@/modules/timeline/timeline.service.js', () => ({
   timelineService: { addAutoEntry: vi.fn() },
 }))
+vi.mock('@/modules/contacts/contacts.repository.js', () => ({
+  contactsRepository: { countsForJobs: vi.fn().mockResolvedValue(new Map()) },
+}))
 
 import { jobsRepository } from './jobs.repository.js'
 import { scrapeUrl } from './scraper.js'

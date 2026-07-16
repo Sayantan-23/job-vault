@@ -25,16 +25,24 @@ vi.mock('./scraper.js', () => ({ scrapeUrl: vi.fn() }))
 vi.mock('@/modules/timeline/timeline.service.js', () => ({
   timelineService: { addAutoEntry: vi.fn() },
 }))
+vi.mock('@/modules/contacts/contacts.repository.js', () => ({
+  contactsRepository: { countsForJobs: vi.fn() },
+}))
 
 import { jobsRepository } from './jobs.repository.js'
 import { scrapeUrl } from './scraper.js'
 import { timelineService } from '@/modules/timeline/timeline.service.js'
+import { contactsRepository } from '@/modules/contacts/contacts.repository.js'
 import { jobsService } from './jobs.service.js'
 import type { JobRow } from '@/db/schema/jobs.js'
+import type { JobQueryInput } from './jobs.schema.js'
 
 const repo = vi.mocked(jobsRepository)
 const scrape = vi.mocked(scrapeUrl)
 const timeline = vi.mocked(timelineService)
+const contacts = vi.mocked(contactsRepository)
+
+const baseQuery: JobQueryInput = { page: 1, limit: 20, sortBy: 'createdAt', sortOrder: 'desc' }
 
 function fakeJob(over: Record<string, unknown> = {}): JobRow {
   return {
@@ -57,7 +65,25 @@ function fakeJob(over: Record<string, unknown> = {}): JobRow {
   }
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  contacts.countsForJobs.mockResolvedValue(new Map())
+})
+
+describe('jobsService.list', () => {
+  it('merges outreach counts into rows, defaulting to zero', async () => {
+    const rowA = fakeJob({ id: 'a' })
+    const rowB = fakeJob({ id: 'b' })
+    repo.findAll.mockResolvedValue({ rows: [rowA, rowB], total: 2 })
+    contacts.countsForJobs.mockResolvedValue(
+      new Map([['a', { outreachCount: 3, outreachReplies: 1 }]]),
+    )
+    const result = await jobsService.list('u1', baseQuery)
+    expect(contacts.countsForJobs).toHaveBeenCalledWith('u1', ['a', 'b'])
+    expect(result.rows[0]).toMatchObject({ id: 'a', outreachCount: 3, outreachReplies: 1 })
+    expect(result.rows[1]).toMatchObject({ id: 'b', outreachCount: 0, outreachReplies: 0 })
+  })
+})
 
 describe('jobsService.create', () => {
   it('defaults status to WISHLIST and assigns the next kanbanOrder', async () => {

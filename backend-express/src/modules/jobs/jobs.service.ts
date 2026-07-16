@@ -4,8 +4,11 @@ import { jobsRepository } from './jobs.repository.js'
 import { timelineService } from '@/modules/timeline/timeline.service.js'
 import { scrapeUrl, type ScrapeResult } from './scraper.js'
 import { createScrapeFallback } from './scrape-fallback.js'
+import { contactsRepository, type OutreachCounts } from '@/modules/contacts/contacts.repository.js'
 import type { JobRow, NewJobRow } from '@/db/schema/jobs.js'
 import type { CreateJobInput, UpdateJobInput, MoveJobInput, JobQueryInput } from './jobs.schema.js'
+
+const ZERO_OUTREACH: OutreachCounts = { outreachCount: 0, outreachReplies: 0 }
 
 // The auto-event is a follow-on write after the job mutation has already
 // committed. The job mutation is the source of truth, so a timeline write
@@ -61,9 +64,13 @@ async function create(userId: string, input: CreateJobInput, options?: CreateJob
 async function list(
   userId: string,
   query: JobQueryInput,
-): Promise<{ rows: JobRow[]; total: number; page: number; limit: number }> {
+): Promise<{ rows: Array<JobRow & OutreachCounts>; total: number; page: number; limit: number }> {
   const { rows, total } = await jobsRepository.findAll(userId, query)
-  return { rows, total, page: query.page, limit: query.limit }
+  // One grouped query powers the outreach badges — merged here so the
+  // repository's paginated query stays untouched.
+  const counts = await contactsRepository.countsForJobs(userId, rows.map((r) => r.id))
+  const withCounts = rows.map((row) => ({ ...row, ...(counts.get(row.id) ?? ZERO_OUTREACH) }))
+  return { rows: withCounts, total, page: query.page, limit: query.limit }
 }
 
 async function get(userId: string, id: string): Promise<JobRow> {

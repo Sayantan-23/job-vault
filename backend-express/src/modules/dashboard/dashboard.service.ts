@@ -1,6 +1,7 @@
 import { JOB_STATUSES, type JobStatus, type JobRow } from '@/db/schema/jobs.js'
 import { dashboardRepository } from './dashboard.repository.js'
 import { deriveGhostDays, passesGhostFilter } from './dashboard.ghost.js'
+import { contactsRepository, type OutreachCounts } from '@/modules/contacts/contacts.repository.js'
 import type {
   DashboardQueryInput,
   KanbanBoardResponse,
@@ -9,7 +10,9 @@ import type {
   DashboardStats,
 } from './dashboard.schema.js'
 
-function toCard(row: JobRow, ghostDays: number): KanbanCard {
+const ZERO_OUTREACH: OutreachCounts = { outreachCount: 0, outreachReplies: 0 }
+
+function toCard(row: JobRow, ghostDays: number, outreach: OutreachCounts = ZERO_OUTREACH): KanbanCard {
   return {
     id: row.id,
     title: row.title,
@@ -20,6 +23,8 @@ function toCard(row: JobRow, ghostDays: number): KanbanCard {
     kanbanOrder: row.kanbanOrder,
     lastActivityAt: row.lastActivityAt,
     createdAt: row.createdAt,
+    outreachCount: outreach.outreachCount,
+    outreachReplies: outreach.outreachReplies,
   }
 }
 
@@ -52,9 +57,10 @@ async function getKanban(userId: string, query: DashboardQueryInput): Promise<Ka
   if (query.status !== undefined) filters.status = query.status
 
   const rows = await dashboardRepository.findForUser(userId, filters)
+  const counts = await contactsRepository.countsForJobs(userId, rows.map((r) => r.id))
   const now = Date.now()
   const cards = rows
-    .map((row) => toCard(row, deriveGhostDays(row, now)))
+    .map((row) => toCard(row, deriveGhostDays(row, now), counts.get(row.id) ?? ZERO_OUTREACH))
     .filter((card) => passesGhostFilter(card.ghostDays, query.ghostFilter))
 
   return { columns: buildColumns(cards), stats: calculateStats(cards) }
