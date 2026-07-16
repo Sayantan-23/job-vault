@@ -115,3 +115,25 @@ The Redis adapter turns each emit into a Redis pub/sub message all instances sub
 - **Real logo icons** — `icons/*.png` are solid-indigo placeholders from `scripts/make-icons.mjs`.
 
 > ~~Generic client-side extraction~~ and ~~the stale-tab caveat~~ are **done** (2026-06-22): capture injects the content script on demand into the active tab on every popup open, so it works on any site with no pre-declared match and no reload-after-install.
+
+## Referral outreach (Slice 9, 2026-07-16)
+
+> Shipped on `slice-9-outreach`: per-job `job_contacts` (who you reached out to for a referral, their reply `status`, editable `reached_out_at`, `notes`) + AUTO timeline events + list/board outreach badges. These are the consciously-deferred follow-ups.
+
+### Outreach follow-up nudge sweep
+**What:** A "no reply in 7 days" notification — surface contacts still at `status = NO_RESPONSE` whose `reached_out_at` is older than 7 days, so the user is reminded to chase the referral.
+**Why:** The ghost meter nudges on *employer* silence; this is the equivalent nudge for *referrer* silence. Without it, a stalled outreach is only visible if the user opens the job.
+**Needs:** A daily (or `*/…`) sweep on the existing `node-cron` scheduler, following the **ghost-sweep pattern** — `job_contacts.status` + `reached_out_at` are already query-ready; emit a notification (reuse `REMINDER`/`GENERAL` or add a type), idempotent so a still-unanswered contact isn't re-notified every run.
+**Trigger:** when outreach that goes quiet should reach the user without opening the job — the most user-valuable outreach follow-up.
+
+### Referral email / message generation
+**What:** Generate a referral outreach email/message with AI, alongside the existing résumé / cover-letter generation.
+**Why:** Writing the "would you be open to referring me?" note is the same drudgery cover-letter generation already removes; the contact and its job give the AI everything it needs to tailor it.
+**Needs:** A new prompt builder + generator (mirror `buildCoverLetterPrompt`), metered against the shared hourly AI budget, and a generated-message row that references a **`contact_id`** (the way `cover_letters.job_id` references a job). Editor/PDF/copy can reuse the cover-letter markdown machinery.
+**Trigger:** after the core outreach loop is in daily use and drafting the messages by hand is the friction.
+
+### "Referrer ghosted you" jobs filter
+**What:** A jobs-toolbar filter for jobs that have outreach still at `NO_RESPONSE` past the nudge threshold — the outreach analogue of the existing ghost/activity filter.
+**Why:** Lets the user pull up exactly the applications where a referral ask is hanging, to batch-follow-up.
+**Needs:** A server-side filter param on `GET /api/jobs` derived from the `contactsRepository.countsForJobs` join (or a stalled-outreach count), plus a toolbar control — small addition once the nudge sweep defines the threshold.
+**Trigger:** alongside/after the nudge sweep, if a dedicated view (not just per-job badges) is wanted.

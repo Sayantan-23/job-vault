@@ -400,6 +400,28 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 
 ---
 
+## Migration Slice 9 — Referral Outreach Tracking (DONE 2026-07-16)
+
+> Branch `slice-9-outreach` (**not yet merged to master** — awaiting user merge). Spec: `docs/superpowers/specs/2026-07-16-referral-outreach-tracking-design.md` · Plan: `docs/superpowers/plans/2026-07-16-slice-9-referral-outreach.md`. Track *who* you reached out to for a referral on each job, log their reply status, and surface outreach activity on the jobs list + board — **without** touching the ghost meter (that stays an employer-silence signal only).
+
+### Backend (`backend-express`)
+- [x] **`job_contacts` table** (migration `0012`) — free-text `contact` varchar(500), optional `channel` enum (EMAIL/LINKEDIN/OTHER), `status` enum (NO_RESPONSE default → HEARD_BACK/REFERRED/DECLINED), editable `reached_out_at`, `notes`; `userId`+`jobId` FKs cascade. The enums' const arrays are the **single source of truth** for both the Drizzle `pgEnum` and the Zod schema.
+- [x] **`contacts` module** (router→controller→service→repository→Zod + co-located tests) mirroring reminders' **dual-router** pattern: `GET/POST /api/jobs/:jobId/contacts` (per-job) + `PATCH/DELETE /api/contacts/:id` (by id, user-scoped).
+- [x] **AUTO timeline events** via `timelineService.addAutoEntry` — "Reached out to X" (+ "Via email"/"Via LinkedIn"), "Heard back from X", "X referred you", "X declined to refer"; **no event on delete or on reverting to NO_RESPONSE**; failures logged + swallowed (never roll back the contact write). Job `ghostDays`/`lastActivityAt` **deliberately untouched** (the ghost meter stays employer-signal only).
+- [x] **List/board counts** — `GET /api/jobs` rows and `GET /api/dashboard/kanban` cards gain `outreachCount`/`outreachReplies` (replies = `status != NO_RESPONSE`) via one grouped `contactsRepository.countsForJobs` query merged at the service layer.
+
+### Frontend (`frontend-next`)
+- [x] `types/contact.ts` + `contactsKey` + `use-contacts.ts` hooks (mutations invalidate contacts + jobs + kanban + timeline keys).
+- [x] JobDrawer **Outreach section** (`components/jobs/outreach/`): add form (Person / Channel / Notes) + item rows (compact status `Select`, inline edit, confirm-gated delete via `useConfirm`).
+- [x] Shared **`OutreachBadge`** — jobs-list rows (`✉ N · M replied`, hidden below `sm`) and kanban cards (icon + count, accent tint when any replied, tooltip).
+
+### Verification
+- [x] Backend `typecheck`+`lint`+**636 tests**; frontend `typecheck`+`lint`+**572 tests** + production build — all green.
+- [x] Live-smoked in-browser (create outreach → status change → timeline events → list + board badges) at desktop 1440 + mobile 390.
+- [ ] Manual browser pass + **merge to master** — pending user. Deferred outreach follow-ups (nudge sweep, referral-message generation, "referrer ghosted" jobs filter) recorded in `docs/deferred-tasks.md`.
+
+---
+
 ## Dependency Diagram
 
 ```
