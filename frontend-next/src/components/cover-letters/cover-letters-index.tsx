@@ -93,9 +93,9 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
           title="Cover letters"
           description="For tracked jobs or pasted descriptions"
           actions={
-            <Button type="button" size="sm" onClick={openSheet}>
+            <Button type="button" size="sm" onClick={openSheet} aria-label="New cover letter">
               <Plus className="size-4" aria-hidden="true" />
-              New cover letter
+              <span className="hidden sm:inline">New cover letter</span>
             </Button>
           }
         />
