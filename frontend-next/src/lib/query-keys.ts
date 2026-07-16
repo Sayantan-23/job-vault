@@ -11,6 +11,7 @@ export const timelineKey = (jobId: string) => ['timeline', jobId] as const
 export const globalTimelineKey = (page: number) => ['timeline', 'global', page] as const
 export const NOTIFICATIONS_KEY = ['notifications'] as const
 export const remindersKey = (jobId: string) => ['reminders', jobId] as const
+export const contactsKey = (jobId: string) => ['contacts', jobId] as const
 
 // Filtered list cache key. Nested under ['jobs', ...] so existing
 // invalidateQueries({ queryKey: JOBS_KEY }) (prefix match) still refreshes it.

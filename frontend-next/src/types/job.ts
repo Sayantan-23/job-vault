@@ -16,6 +16,10 @@ export interface Job {
   lastActivityAt: string | null
   ghostDays: number
   notes: string | null
+  // Outreach badge aggregates — present on GET /api/jobs list rows only
+  // (the /:id detail response omits them).
+  outreachCount?: number
+  outreachReplies?: number
 }
 
 export type ScrapeStatus = 'ok' | 'partial' | 'empty'

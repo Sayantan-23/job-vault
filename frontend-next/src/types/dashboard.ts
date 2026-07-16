@@ -10,6 +10,8 @@ export interface KanbanCard {
   kanbanOrder: number
   lastActivityAt: string | null
   createdAt: string
+  outreachCount?: number
+  outreachReplies?: number
 }
 
 export interface KanbanColumn {
