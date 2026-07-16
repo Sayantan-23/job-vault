@@ -41,9 +41,9 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
             </>
           }
           actions={
-            <Button type="button" disabled={!canCreate} onClick={() => setCreateOpen(true)}>
+            <Button type="button" disabled={!canCreate} onClick={() => setCreateOpen(true)} aria-label="New persona">
               <Plus className="size-4" aria-hidden="true" />
-              New persona
+              <span className="hidden sm:inline">New persona</span>
             </Button>
           }
         />
@@ -52,7 +52,13 @@ export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfi
               import mode — both messages must be able to show at once. */}
           {!status.enabled && (
             <p role="status" className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-              AI features are not configured. Set <span className="font-mono">GEMINI_API_KEY</span> to import résumés.
+              {process.env.NODE_ENV === 'development' ? (
+                <>
+                  AI features are not configured. Set <span className="font-mono">GEMINI_API_KEY</span> to import résumés.
+                </>
+              ) : (
+                <>AI features are currently unavailable — résumé import is disabled.</>
+              )}
             </p>
           )}
           {atCap && (

@@ -56,7 +56,7 @@ describe('PersonasWorkspace', () => {
       <PersonasWorkspace initialPersonas={[]} initialStatus={{ enabled: false, maxPersonas: 5 }} initialProfile={PROFILE} />,
       { wrapper },
     )
-    expect(screen.getByRole('status')).toHaveTextContent(/import résumés/i)
+    expect(screen.getByRole('status')).toHaveTextContent(/résumé import is disabled/i)
     expect(screen.getByRole('button', { name: /new persona/i })).toBeEnabled()
   })
 
@@ -67,7 +67,7 @@ describe('PersonasWorkspace', () => {
       { wrapper },
     )
     const statuses = screen.getAllByRole('status')
-    expect(statuses.some((s) => /import résumés/i.test(s.textContent ?? ''))).toBe(true)
+    expect(statuses.some((s) => /résumé import is disabled/i.test(s.textContent ?? ''))).toBe(true)
     expect(statuses.some((s) => /maximum of 5 personas/i.test(s.textContent ?? ''))).toBe(true)
     expect(screen.getByRole('button', { name: /new persona/i })).toBeDisabled()
   })
