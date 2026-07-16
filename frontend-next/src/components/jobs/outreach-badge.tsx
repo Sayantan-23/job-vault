@@ -15,10 +15,11 @@ export function OutreachBadge({
   if (count <= 0) return null
 
   if (variant === 'list') {
+    // Jobs-list row is width-crushed below sm; the badge yields to title/company there.
     return (
       <span
         data-testid="outreach-badge"
-        className="flex items-center gap-1 font-mono text-xs tabular-nums text-muted-foreground"
+        className="hidden sm:flex items-center gap-1 font-mono text-xs tabular-nums text-muted-foreground"
       >
         <Mail className="size-3.5" aria-hidden="true" />
         <span>{count}</span>
