@@ -7,6 +7,7 @@ import { JobDetails } from './job-details'
 import { JobSnapshot } from './job-snapshot'
 import { TimelineSection } from './timeline/timeline-section'
 import { RemindersSection } from './reminders/reminders-section'
+import { OutreachSection } from './outreach/outreach-section'
 import { ResumeLauncher } from './resume/resume-launcher'
 import { CoverLetterLauncher } from './cover-letter/cover-letter-launcher'
 
@@ -42,6 +43,9 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
               </div>
               <div className="border-t border-border pt-5">
                 <RemindersSection jobId={job.id} />
+              </div>
+              <div className="border-t border-border pt-5">
+                <OutreachSection jobId={job.id} />
               </div>
               <div className="border-t border-border pt-5">
                 <ResumeLauncher jobId={job.id} />
