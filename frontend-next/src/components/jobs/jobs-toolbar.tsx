@@ -22,16 +22,20 @@ export function JobsToolbar({
   return (
     <>
       <SearchInput value={filters.search} onChange={onSearch} />
-      <Select
-        aria-label="Filter by activity"
-        value={filters.ghost}
-        onChange={(e) => onGhost(e.target.value as GhostFilter)}
-        className="h-10 w-40 shrink-0"
-      >
-        {GHOST_OPTIONS.map((o) => (
-          <option key={o.value} value={o.value}>{o.label}</option>
-        ))}
-      </Select>
+      {/* below sm the select is flexible (basis-0 + grow) so it always shares one
+          line with the toggle/add button, however narrow; from sm up it holds w-40 */}
+      <div className="min-w-0 grow basis-0 sm:grow-0 sm:basis-auto sm:shrink-0">
+        <Select
+          aria-label="Filter by activity"
+          value={filters.ghost}
+          onChange={(e) => onGhost(e.target.value as GhostFilter)}
+          className="h-10 w-full sm:w-40"
+        >
+          {GHOST_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </Select>
+      </div>
       {showReset ? (
         <Button type="button" variant="ghost" size="sm" onClick={onReset} className="shrink-0">
           Clear all
