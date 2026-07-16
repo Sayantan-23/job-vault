@@ -62,7 +62,6 @@ describe('contactsService.create', () => {
   it('creates under the owned job and emits a "Reached out" auto-event', async () => {
     jobs.findById.mockResolvedValue(fakeJob())
     repo.create.mockResolvedValue(fakeContact({ channel: 'EMAIL' }))
-    timeline.addAutoEntry.mockResolvedValue({} as never)
     const created = await contactsService.create('u1', 'j1', { contact: 'Priya — priya@acme.com', channel: 'EMAIL' })
     expect(created.id).toBe('c1')
     expect(timeline.addAutoEntry).toHaveBeenCalledWith({
@@ -74,7 +73,6 @@ describe('contactsService.create', () => {
   it('omits the description when no channel is set', async () => {
     jobs.findById.mockResolvedValue(fakeJob())
     repo.create.mockResolvedValue(fakeContact())
-    timeline.addAutoEntry.mockResolvedValue({} as never)
     await contactsService.create('u1', 'j1', { contact: 'Priya — priya@acme.com' })
     expect(timeline.addAutoEntry).toHaveBeenCalledWith({
       userId: 'u1', jobId: 'j1', title: 'Reached out to Priya — priya@acme.com',
@@ -101,7 +99,6 @@ describe('contactsService.update', () => {
   ] as const)('emits an auto-event when status changes to %s', async (status, title) => {
     repo.findById.mockResolvedValue(fakeContact())
     repo.update.mockResolvedValue(fakeContact({ status }))
-    timeline.addAutoEntry.mockResolvedValue({} as never)
     await contactsService.update('u1', 'c1', { status })
     expect(timeline.addAutoEntry).toHaveBeenCalledWith({ userId: 'u1', jobId: 'j1', title })
   })

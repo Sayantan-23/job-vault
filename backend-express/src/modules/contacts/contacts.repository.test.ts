@@ -28,9 +28,10 @@ beforeAll(async () => {
       { userId, title: 'Role B', company: 'Bcme', status: 'APPLIED', kanbanOrder: 2, lastActivityAt: new Date() },
     ])
     .returning()
-  if (jobRows.length !== 2) throw new Error('failed to seed jobs')
-  jobId = jobRows[0]!.id
-  otherJobId = jobRows[1]!.id
+  const [jobA, jobB] = jobRows
+  if (!jobA || !jobB) throw new Error('failed to seed jobs')
+  jobId = jobA.id
+  otherJobId = jobB.id
 })
 
 afterAll(async () => {
