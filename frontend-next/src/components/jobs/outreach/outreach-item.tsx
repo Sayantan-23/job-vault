@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button'
 import { Select } from '@/components/ui/select'
 import { useConfirm } from '@/hooks/use-confirm'
 import { shortDate } from '@/lib/relative-time'
-import { OutreachStatusChip } from './outreach-status-chip'
 import { CONTACT_STATUSES, type JobContact, type ContactStatus } from '@/types/contact'
 
 const STATUS_LABELS: Record<ContactStatus, string> = {
@@ -42,7 +41,7 @@ export function OutreachItem({
   }
 
   return (
-    <div data-testid="outreach-item" className="space-y-2 rounded-lg border border-border px-3 py-2">
+    <div data-testid="outreach-item" className="rounded-lg border border-border px-3 py-2">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-0.5">
           <p className="truncate text-sm leading-snug">{contact.contact}</p>
@@ -52,7 +51,18 @@ export function OutreachItem({
           {contact.notes ? <p className="text-xs text-muted-foreground">{contact.notes}</p> : null}
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <OutreachStatusChip status={contact.status} />
+          <Select
+            aria-label={`Status for ${contact.contact}`}
+            className="h-8 w-auto text-xs"
+            value={contact.status}
+            onChange={(e) => onStatusChange(contact, e.target.value as ContactStatus)}
+          >
+            {CONTACT_STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABELS[s]}
+              </option>
+            ))}
+          </Select>
           <Button type="button" variant="ghost" size="icon" aria-label="Edit contact" onClick={() => onEdit(contact)}>
             <Pencil className="size-4" aria-hidden="true" />
           </Button>
@@ -61,18 +71,6 @@ export function OutreachItem({
           </Button>
         </div>
       </div>
-      <Select
-        aria-label={`Status for ${contact.contact}`}
-        className="h-8 text-xs"
-        value={contact.status}
-        onChange={(e) => onStatusChange(contact, e.target.value as ContactStatus)}
-      >
-        {CONTACT_STATUSES.map((s) => (
-          <option key={s} value={s}>
-            {STATUS_LABELS[s]}
-          </option>
-        ))}
-      </Select>
       {confirmDialog}
     </div>
   )

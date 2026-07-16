@@ -10,7 +10,7 @@ vi.mock('@/lib/api-client', () => ({
 
 import { apiClient } from '@/lib/api-client'
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from './use-contacts'
-import { contactsKey, JOBS_KEY, DASHBOARD_KANBAN_KEY } from '@/lib/query-keys'
+import { contactsKey, JOBS_KEY, DASHBOARD_KANBAN_KEY, timelineKey } from '@/lib/query-keys'
 
 const api = vi.mocked(apiClient)
 
@@ -50,6 +50,7 @@ describe('useCreateContact', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: contactsKey('j1') })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: JOBS_KEY })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_KANBAN_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: timelineKey('j1') })
   })
 })
 
@@ -64,6 +65,7 @@ describe('useUpdateContact', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: contactsKey('j1') })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: JOBS_KEY })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: DASHBOARD_KANBAN_KEY })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: timelineKey('j1') })
   })
 })
 

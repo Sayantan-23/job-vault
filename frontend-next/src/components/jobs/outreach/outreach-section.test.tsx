@@ -38,8 +38,7 @@ describe('OutreachSection', () => {
     api.get.mockResolvedValue([CONTACT])
     render(<OutreachSection jobId="j1" />, { wrapper })
     expect(await screen.findByText('Priya — priya@acme.com')).toBeInTheDocument()
-    // Status label appears in both the chip and the row <select> option, so scope to the chip.
-    expect(screen.getByTestId('outreach-status-chip')).toHaveTextContent('No response')
+    expect(screen.getByLabelText(/Status for Priya/i)).toHaveValue('NO_RESPONSE')
   })
 
   it('creates a contact from the form', async () => {
