@@ -89,7 +89,7 @@ export function OutreachForm({
           {initial ? 'Save' : 'Add contact'}
         </Button>
         {onCancel ? (
-          <Button type="button" size="sm" variant="ghost" onClick={onCancel}>
+          <Button type="button" size="sm" variant="softDestructive" onClick={onCancel}>
             Cancel
           </Button>
         ) : null}

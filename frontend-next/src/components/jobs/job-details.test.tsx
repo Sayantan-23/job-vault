@@ -11,7 +11,7 @@ vi.mock('@/lib/api-client', () => ({
 }))
 
 import { apiClient } from '@/lib/api-client'
-import { JobDetails } from './job-details'
+import { JobDetails, JobDrawerHeader, JobDrawerFooter } from './job-details'
 
 const api = vi.mocked(apiClient)
 
@@ -28,25 +28,29 @@ const JOB: Job = {
 
 beforeEach(() => vi.clearAllMocks())
 
-describe('JobDetails', () => {
-  it('renders the job title, company, and status', () => {
-    render(<JobDetails job={JOB} onDeleted={vi.fn()} />, { wrapper })
+describe('JobDrawerHeader', () => {
+  it('renders the job title and company', () => {
+    render(<JobDrawerHeader job={JOB} onClose={vi.fn()} />, { wrapper })
     expect(screen.getByRole('heading', { name: 'SWE' })).toBeInTheDocument()
     expect(screen.getByText('Acme')).toBeInTheDocument()
   })
+})
 
+describe('JobDetails', () => {
   it('patches the status when changed', async () => {
     api.patch.mockResolvedValue({ ...JOB, status: 'OFFER' })
-    render(<JobDetails job={JOB} onDeleted={vi.fn()} />, { wrapper })
+    render(<JobDetails job={JOB} />, { wrapper })
     await userEvent.selectOptions(screen.getByLabelText(/status/i), 'OFFER')
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/api/jobs/j1', { status: 'OFFER' }))
   })
+})
 
+describe('JobDrawerFooter', () => {
   it('requires confirmation before deleting', async () => {
     api.delete.mockResolvedValue({ message: 'Job deleted successfully' })
     const onDeleted = vi.fn()
-    render(<JobDetails job={JOB} onDeleted={onDeleted} />, { wrapper })
-    await userEvent.click(screen.getByRole('button', { name: /^delete$/i }))
+    render(<JobDrawerFooter job={JOB} onDeleted={onDeleted} />, { wrapper })
+    await userEvent.click(screen.getByRole('button', { name: /delete job/i }))
     // Confirm in the dialog (its own "Delete" button, scoped to the dialog).
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByText(/delete job\?/i)).toBeInTheDocument()

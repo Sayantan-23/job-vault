@@ -3,7 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { useJob } from '@/hooks/use-jobs'
-import { JobDetails } from './job-details'
+import { JobDetails, JobDrawerHeader, JobDrawerFooter } from './job-details'
 import { JobSnapshot } from './job-snapshot'
 import { TimelineSection } from './timeline/timeline-section'
 import { RemindersSection } from './reminders/reminders-section'
@@ -27,25 +27,23 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
 
   return (
     <Sheet open={open} onOpenChange={(o) => (o ? undefined : close())}>
-      <SheetContent hideClose>
+      <SheetContent hideClose className="p-0">
         <SheetTitle className="sr-only">Job details</SheetTitle>
-        <div className="space-y-6 p-6">
-          {isLoading || !job ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
-          ) : (
-            <>
-              <JobDetails job={job} onDeleted={close} onClose={close} />
+        {isLoading || !job ? (
+          <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          <>
+            <JobDrawerHeader job={job} onClose={close} />
+            <div className="flex-1 space-y-6 p-6">
+              <JobDetails job={job} />
+              <div className="border-t border-border pt-5">
+                <OutreachSection jobId={job.id} />
+              </div>
               <div className="border-t border-border pt-5">
                 <JobSnapshot markdown={job.snapshotMarkdown} sourceUrl={job.sourceUrl} />
               </div>
               <div className="border-t border-border pt-5">
-                <TimelineSection jobId={job.id} />
-              </div>
-              <div className="border-t border-border pt-5">
                 <RemindersSection jobId={job.id} />
-              </div>
-              <div className="border-t border-border pt-5">
-                <OutreachSection jobId={job.id} />
               </div>
               <div className="border-t border-border pt-5">
                 <ResumeLauncher jobId={job.id} />
@@ -53,9 +51,13 @@ export function JobDrawer({ jobId }: { jobId: string | null }) {
               <div className="border-t border-border pt-5">
                 <CoverLetterLauncher jobId={job.id} />
               </div>
-            </>
-          )}
-        </div>
+              <div className="border-t border-border pt-5">
+                <TimelineSection jobId={job.id} />
+              </div>
+            </div>
+            <JobDrawerFooter job={job} onDeleted={close} />
+          </>
+        )}
       </SheetContent>
     </Sheet>
   )

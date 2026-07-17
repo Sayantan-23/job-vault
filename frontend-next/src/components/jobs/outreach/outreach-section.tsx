@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact } from '@/hooks/use-contacts'
 import { OutreachItem } from './outreach-item'
 import { OutreachForm } from './outreach-form'
@@ -13,6 +15,7 @@ export function OutreachSection({ jobId }: { jobId: string }) {
   const update = useUpdateContact(jobId)
   const remove = useDeleteContact(jobId)
   const [editing, setEditing] = useState<JobContact | null>(null)
+  const [adding, setAdding] = useState(false)
 
   function handleStatusChange(contact: JobContact, status: ContactStatus) {
     if (status !== contact.status) update.mutate({ id: contact.id, patch: { status } })
@@ -30,7 +33,7 @@ export function OutreachSection({ jobId }: { jobId: string }) {
   return (
     <section className="space-y-4">
       <h3 className="text-sm font-semibold">Outreach</h3>
-      {contacts.length === 0 ? (
+      {contacts.length === 0 && !adding ? (
         <p className="text-sm text-muted-foreground">
           No outreach yet. Track who you&apos;ve contacted for a referral.
         </p>
@@ -57,7 +60,18 @@ export function OutreachSection({ jobId }: { jobId: string }) {
           )}
         </div>
       )}
-      {editing ? null : <OutreachForm onSubmit={(values) => create.mutate(values)} isPending={create.isPending} />}
+      {adding ? (
+        <OutreachForm
+          onSubmit={(values) => create.mutate(values, { onSuccess: () => setAdding(false) })}
+          onCancel={() => setAdding(false)}
+          isPending={create.isPending}
+        />
+      ) : editing ? null : (
+        <Button type="button" variant="softPrimary" size="sm" onClick={() => setAdding(true)}>
+          <Plus className="size-4" aria-hidden="true" />
+          Add contact
+        </Button>
+      )}
     </section>
   )
 }
