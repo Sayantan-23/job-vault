@@ -66,7 +66,7 @@ export function OutreachItem({
           <Button type="button" variant="ghost" size="icon" aria-label="Edit contact" onClick={() => onEdit(contact)}>
             <Pencil className="size-4" aria-hidden="true" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" aria-label="Delete contact" onClick={onDeleteClick}>
+          <Button type="button" variant="softDestructive" size="icon" aria-label="Delete contact" onClick={onDeleteClick}>
             <Trash2 className="size-4" aria-hidden="true" />
           </Button>
         </div>

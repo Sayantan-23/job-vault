@@ -46,6 +46,8 @@ describe('OutreachSection', () => {
     api.post.mockResolvedValue(CONTACT)
     const user = userEvent.setup()
     render(<OutreachSection jobId="j1" />, { wrapper })
+    // Form is collapsed behind an Add button; open it first.
+    await user.click(await screen.findByRole('button', { name: /Add contact/i }))
     await user.type(await screen.findByLabelText(/Person/i), 'Priya — priya@acme.com')
     await user.selectOptions(screen.getByLabelText(/Channel/i), 'EMAIL')
     await user.click(screen.getByRole('button', { name: /Add contact/i }))

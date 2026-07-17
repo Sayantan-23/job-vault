@@ -19,18 +19,39 @@ function isJobStatus(value: string): value is JobStatus {
   return (JOB_STATUSES as readonly string[]).includes(value)
 }
 
-export function JobDetails({
-  job,
-  onDeleted,
-  onClose,
-}: {
-  job: Job
-  onDeleted: () => void
-  onClose?: () => void
-}) {
-  const update = useUpdateJob(job.id)
+// Sticky drawer header: identity (title + status badge + ghost days) grouped on
+// the left, close on the right, in one row. Lives as a direct child of the
+// drawer's scroll container so it stays pinned across ALL content (a nested
+// sticky only sticks within its own short section and un-pins once scrolled past).
+export function JobDrawerHeader({ job, onClose }: { job: Job; onClose: () => void }) {
+  return (
+    <header className="sticky top-0 z-20 flex items-start justify-between gap-3 border-b border-border bg-card px-6 py-4">
+      <div className="min-w-0 space-y-0.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="text-lg font-semibold leading-tight">{job.title}</h2>
+          <StatusChip status={job.status} />
+          <GhostMeter days={job.ghostDays} />
+        </div>
+        <p className="text-sm text-muted-foreground">{job.company}</p>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        onClick={onClose}
+        aria-label="Close"
+        className="-mr-1 size-8 shrink-0 text-muted-foreground"
+      >
+        <X className="size-4" />
+      </Button>
+    </header>
+  )
+}
+
+// Sticky drawer footer: the one destructive action, pinned to the bottom of the
+// scroll area so it's always reachable without scrolling to the end.
+export function JobDrawerFooter({ job, onDeleted }: { job: Job; onDeleted: () => void }) {
   const remove = useDeleteJob()
-  const [notes, setNotes] = useState(job.notes ?? '')
   const { confirm, confirmDialog } = useConfirm()
 
   const onDelete = async () => {
@@ -47,34 +68,21 @@ export function JobDetails({
   }
 
   return (
-    <div className="space-y-5">
-      {/* Sticky drawer header: identity (title + status badge + ghost days) grouped
-          on the left, close on the right, aligned in one row. -mx-6/-mt-6 negate the
-          drawer body's p-6 so the bar is full-bleed and stays pinned to the top of
-          the scroll area on long content (snapshot/timeline/reminders). */}
-      <header className="sticky top-0 z-10 -mx-6 -mt-6 flex items-start justify-between gap-3 border-b border-border bg-card px-6 py-4">
-        <div className="min-w-0 space-y-0.5">
-          <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-lg font-semibold leading-tight">{job.title}</h2>
-            <StatusChip status={job.status} />
-            <GhostMeter days={job.ghostDays} />
-          </div>
-          <p className="text-sm text-muted-foreground">{job.company}</p>
-        </div>
-        {onClose ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            aria-label="Close"
-            className="-mr-1 size-8 shrink-0 text-muted-foreground"
-          >
-            <X className="size-4" />
-          </Button>
-        ) : null}
-      </header>
+    <footer className="sticky bottom-0 z-20 mt-auto flex justify-end border-t border-border bg-card px-6 py-3">
+      <Button type="button" variant="destructive" size="sm" disabled={remove.isPending} onClick={onDelete}>
+        Delete job
+      </Button>
+      {confirmDialog}
+    </footer>
+  )
+}
 
+export function JobDetails({ job }: { job: Job }) {
+  const update = useUpdateJob(job.id)
+  const [notes, setNotes] = useState(job.notes ?? '')
+
+  return (
+    <div className="space-y-5">
       {job.location || job.salaryRange ? (
         <div className="space-y-0.5">
           {job.location ? <p className="text-sm text-muted-foreground">{job.location}</p> : null}
@@ -112,13 +120,6 @@ export function JobDetails({
           Save notes
         </Button>
       </div>
-
-      <div className="border-t border-border pt-4">
-        <Button type="button" variant="destructive" size="sm" disabled={remove.isPending} onClick={onDelete}>
-          Delete
-        </Button>
-      </div>
-      {confirmDialog}
     </div>
   )
 }
