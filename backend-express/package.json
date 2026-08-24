@@ -20,6 +20,7 @@
     "db:generate": "tsx ./node_modules/drizzle-kit/bin.cjs generate",
     "db:migrate": "tsx ./node_modules/drizzle-kit/bin.cjs migrate",
     "db:backfill-personas": "tsx src/scripts/backfill-personas.ts",
+    "db:seed": "tsx src/scripts/seed-demo.ts",
     "db:studio": "tsx ./node_modules/drizzle-kit/bin.cjs studio"
   },
   "dependencies": {
