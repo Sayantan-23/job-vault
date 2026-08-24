@@ -6,7 +6,7 @@ import '@/styles/web/pages/contact.css'
 export const metadata: Metadata = {
   title: 'Contact',
   description:
-    'Get in touch with JobVault. Email a real person — general questions, bugs, or your data. No form, no ticket queue.',
+    'Email JobVault about anything: general questions, bugs, or your data. No contact form, no ticket queue.',
 }
 
 // Server component, zero client JS. The whole page is one oversized mailto:

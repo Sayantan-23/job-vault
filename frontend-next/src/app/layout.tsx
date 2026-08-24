@@ -11,7 +11,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 const newsreader = Newsreader({ subsets: ['latin'], variable: '--font-newsreader' })
 
 export const metadata: Metadata = {
-  title: { default: 'JobVault', template: '%s — JobVault' },
+  title: { default: 'JobVault', template: '%s | JobVault' },
   description: 'Ghost-proof job application tracker.',
   metadataBase: new URL('http://localhost:8080'),
 }

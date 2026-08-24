@@ -6,9 +6,9 @@ import { LegalDoc, LegalSection } from '@/components/web/legal/legal-doc'
 import '@/styles/web/pages/legal.css'
 
 export const metadata: Metadata = {
-  title: 'Cookies',
+  title: 'Cookie Policy',
   description:
-    'The three cookies JobVault sets — two to keep you signed in, one to remember your sidebar — and nothing else.',
+    'JobVault sets three cookies: two to keep you signed in and one to remember your sidebar. Nothing else.',
 }
 
 export default function CookiesPage() {
