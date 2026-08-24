@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import type { CoverLetter } from '@/types/cover-letter'
+import type { AiStatus } from '@/types/persona'
+import { AI_STATUS_KEY, coverLetterKey } from '@/lib/query-keys'
 
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
@@ -27,9 +29,17 @@ const LETTER: CoverLetter = {
 const AI_ON = { enabled: true, maxPersonas: 5 }
 const AI_OFF = { enabled: false, maxPersonas: 5 }
 
-function wrapper({ children }: { children: ReactNode }) {
-  const c = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  return <QueryClientProvider client={c}>{children}</QueryClientProvider>
+// Stands in for the server prefetch: the route hydrates the letter (and the AI
+// status) before this renders, which is why it can paint synchronously.
+function seeded(status: AiStatus) {
+  const c = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 30_000 }, mutations: { retry: false } },
+  })
+  c.setQueryData(coverLetterKey(LETTER.id), LETTER)
+  c.setQueryData(AI_STATUS_KEY, status)
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={c}>{children}</QueryClientProvider>
+  }
 }
 
 beforeEach(() => {
@@ -39,7 +49,7 @@ beforeEach(() => {
 
 describe('CoverLetterEditorView', () => {
   it('renders the letter title and body, with AI refine enabled when AI is on', () => {
-    render(<CoverLetterEditorView initialLetter={LETTER} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLetterEditorView id="cl1" />, { wrapper: seeded(AI_ON) })
     expect(screen.getByRole('heading', { name: 'Acme — cover letter' })).toBeInTheDocument()
     const editor = screen.getByTestId('editor')
     expect(editor).toHaveTextContent('Dear Acme team,')
@@ -47,20 +57,20 @@ describe('CoverLetterEditorView', () => {
   })
 
   it('omits the coverLetterId (AI refine) when AI is disabled', () => {
-    render(<CoverLetterEditorView initialLetter={LETTER} aiStatus={AI_OFF} />, { wrapper })
+    render(<CoverLetterEditorView id="cl1" />, { wrapper: seeded(AI_OFF) })
     expect(screen.getByTestId('editor')).toHaveAttribute('data-id', '')
   })
 
   it('saves the edited body via PATCH', async () => {
     api.patch.mockResolvedValue(LETTER)
-    render(<CoverLetterEditorView initialLetter={LETTER} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLetterEditorView id="cl1" />, { wrapper: seeded(AI_ON) })
     await userEvent.click(screen.getByRole('button', { name: 'Save edits' }))
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith('/api/cover-letters/cl1', { bodyMarkdown: 'Dear Acme team,' }))
   })
 
   it('deletes and routes back to the index', async () => {
     api.delete.mockResolvedValue(undefined)
-    render(<CoverLetterEditorView initialLetter={LETTER} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLetterEditorView id="cl1" />, { wrapper: seeded(AI_ON) })
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
     // Confirm in the dialog (its own "Delete" button, scoped to the dialog).
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
@@ -69,7 +79,7 @@ describe('CoverLetterEditorView', () => {
   })
 
   it('links back to the cover-letters index', () => {
-    render(<CoverLetterEditorView initialLetter={LETTER} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLetterEditorView id="cl1" />, { wrapper: seeded(AI_ON) })
     expect(screen.getByRole('link', { name: /cover letters/i })).toHaveAttribute('href', '/app/cover-letters')
   })
 })

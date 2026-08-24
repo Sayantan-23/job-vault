@@ -3,7 +3,6 @@
 import { useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
-import type { Persona, AiStatus } from '@/types/persona'
 import type { CoverLetter } from '@/types/cover-letter'
 import { Button } from '@/components/ui/button'
 import { PageHeading } from '@/components/layout/app/page-heading'
@@ -17,14 +16,6 @@ import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 import { useConfirm } from '@/hooks/use-confirm'
 import { NewCoverLetterSheet } from './new-cover-letter-sheet'
 
-interface Props {
-  // SSR-fetched; undefined means the server fetch failed and the client hooks
-  // should fetch on mount (a [] fallback would pin a false-empty library).
-  initialPersonas?: Persona[] | undefined
-  initialLetters?: CoverLetter[] | undefined
-  aiStatus: AiStatus | undefined
-}
-
 // Adhoc letters carry their job context on the row; tracked ones join the jobs
 // query client-side (the same list the picker fetches).
 function letterContext(letter: CoverLetter, jobsById: Map<string, JobOption>): string {
@@ -33,7 +24,7 @@ function letterContext(letter: CoverLetter, jobsById: Map<string, JobOption>): s
   return job ? `${job.company} · ${job.title}` : '—'
 }
 
-export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }: Props) {
+export function CoverLettersIndex() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { confirm, confirmDialog } = useConfirm()
@@ -43,9 +34,9 @@ export function CoverLettersIndex({ initialPersonas, initialLetters, aiStatus }:
   const presetJobId = searchParams.get('job') ?? undefined
   const openSheet = () => router.push('/app/cover-letters?new=1')
   const closeSheet = () => router.push('/app/cover-letters')
-  const { data: status } = useAiStatus(aiStatus)
-  const { data: personas = [] } = usePersonas(initialPersonas)
-  const { data: letters = [] } = useAllCoverLetters(initialLetters)
+  const { data: status } = useAiStatus()
+  const { data: personas = [] } = usePersonas()
+  const { data: letters = [] } = useAllCoverLetters()
   const { data: jobs = [] } = useJobOptions()
   const generate = useGenerateCoverLetter()
   const del = useDeleteCoverLetter()

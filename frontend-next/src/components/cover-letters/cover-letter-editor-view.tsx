@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { CoverLetter } from '@/types/cover-letter'
-import type { AiStatus } from '@/types/persona'
 import { Button } from '@/components/ui/button'
 import { PageHeading } from '@/components/layout/app/page-heading'
 import { AppPage } from '@/components/layout/app/app-page'
+import { CoverLetterEditorSkeleton } from '@/components/layout/app/route-skeletons'
 import { useAiStatus } from '@/hooks/use-ai-status'
 import { useCoverLetter, useUpdateCoverLetter, useDeleteCoverLetter } from '@/hooks/use-cover-letters'
 import { useConfirm } from '@/hooks/use-confirm'
@@ -16,13 +16,22 @@ import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 // The dedicated single-letter editor surface (its own route) — full width, no
 // list competing for scroll. AI refine + Edit/Preview + Copy/Download all live
 // inside CoverLetterEditor; Save/Delete sit in the header.
-export function CoverLetterEditorView({ initialLetter, aiStatus }: { initialLetter: CoverLetter; aiStatus: AiStatus | undefined }) {
+export function CoverLetterEditorView({ id }: { id: string }) {
+  const { data: letter } = useCoverLetter(id)
+  // The letter is prefetched on the server and hydrated before first paint, so
+  // this only shows when that read failed and the client is retrying. Splitting
+  // the loaded editor into its own component keeps the body draft seeded from
+  // the letter on mount — no effect syncing state that the user is editing.
+  if (!letter) return <CoverLetterEditorSkeleton />
+  return <LoadedEditor letter={letter} />
+}
+
+function LoadedEditor({ letter }: { letter: CoverLetter }) {
   const router = useRouter()
-  const { data: letter = initialLetter } = useCoverLetter(initialLetter.id, initialLetter)
-  const { data: status } = useAiStatus(aiStatus)
+  const { data: status } = useAiStatus()
   const save = useUpdateCoverLetter(letter.id)
   const del = useDeleteCoverLetter()
-  const [body, setBody] = useState(initialLetter.bodyMarkdown)
+  const [body, setBody] = useState(letter.bodyMarkdown)
   const { confirm, confirmDialog } = useConfirm()
 
   const aiEnabled = status?.enabled ?? false

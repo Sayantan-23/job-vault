@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, Plus } from 'lucide-react'
 import { useJobs } from '@/hooks/use-jobs'
 import { useKanban, useStats } from '@/hooks/use-dashboard'
 import { useJobFilters } from '@/hooks/use-job-filters'
+import { replaceUrl } from '@/lib/url-state'
+import { EMPTY_BOARD, EMPTY_JOBS_PAGE, EMPTY_STATS } from '@/lib/dashboard-defaults'
 import { Button } from '@/components/ui/button'
 import { SegmentedControl } from '@/components/ui/segmented-control'
 import { KanbanBoard } from '@/components/kanban/kanban-board'
@@ -17,9 +19,6 @@ import { JobList } from './job-list'
 import { JobsPagination } from './jobs-pagination'
 import { AddJobModal } from './add-job-modal'
 import { JobDrawer } from './job-drawer'
-import type { Paginated } from '@/types/filters'
-import type { Job } from '@/types/job'
-import type { KanbanBoard as Board, DashboardStats } from '@/types/dashboard'
 
 type View = 'board' | 'list'
 
@@ -32,16 +31,7 @@ function isView(value: string | null): value is View {
   return value === 'board' || value === 'list'
 }
 
-export function JobsWorkspace({
-  initialJobs,
-  initialBoard,
-  initialStats,
-}: {
-  initialJobs: Paginated<Job>
-  initialBoard: Board
-  initialStats: DashboardStats
-}) {
-  const router = useRouter()
+export function JobsWorkspace() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const view: View = isView(searchParams.get('view')) ? (searchParams.get('view') as View) : 'list'
@@ -53,11 +43,11 @@ export function JobsWorkspace({
   } = useJobFilters()
   const boardFilters = { search: filters.search, ghost: filters.ghost }
 
-  const listQuery = useJobs(filters, initialJobs)
-  const page = listQuery.data ?? initialJobs
-  const boardQuery = useKanban(boardFilters, initialBoard, view === 'board')
-  const board = boardQuery.data ?? initialBoard
-  const { data: stats = initialStats } = useStats(initialStats)
+  const listQuery = useJobs(filters)
+  const page = listQuery.data ?? EMPTY_JOBS_PAGE
+  const boardQuery = useKanban(boardFilters, view === 'board')
+  const board = boardQuery.data ?? EMPTY_BOARD
+  const { data: stats = EMPTY_STATS } = useStats()
 
   const [addOpen, setAddOpen] = useState(false)
 
@@ -66,7 +56,9 @@ export function JobsWorkspace({
     if (next === 'list') params.delete('view')
     else params.set('view', next)
     const qs = params.toString()
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    // Client-side only: the view is presentation state and React Query owns the
+    // board, so re-running the page on the server would buy nothing.
+    replaceUrl(qs ? `${pathname}?${qs}` : pathname)
   }
 
   const showReset = isListFiltered || filters.sortBy !== 'createdAt' || filters.sortOrder !== 'desc' || filters.page > 1
@@ -107,7 +99,7 @@ export function JobsWorkspace({
             />
           </div>
           <div className="min-h-0 jv-content-col w-full flex-1 px-6 pb-6 sm:px-8 lg:px-10">
-            <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} />
+            <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} loading={boardQuery.isLoading} />
           </div>
         </div>
       ) : (

@@ -2,14 +2,13 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { AI_STATUS_KEY } from '@/lib/query-keys'
+import { aiStatusQuery } from '@/lib/queries'
 import type { AiStatus } from '@/types/persona'
 
-export function useAiStatus(initialData?: AiStatus) {
+export function useAiStatus() {
   return useQuery({
-    queryKey: AI_STATUS_KEY,
-    queryFn: () => apiClient.get<AiStatus>('/api/ai/status'),
+    queryKey: aiStatusQuery.key,
+    queryFn: () => apiClient.get<AiStatus>(aiStatusQuery.path),
     staleTime: 5 * 60 * 1000,
-    ...(initialData ? { initialData } : {}),
   })
 }

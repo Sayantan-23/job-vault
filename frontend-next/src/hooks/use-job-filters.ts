@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { parseFilters, isBoardFiltered as computeBoardFiltered, isListFiltered as computeListFiltered } from '@/lib/filters'
+import { replaceUrl } from '@/lib/url-state'
 import type { GhostFilter, JobFilters, SortField } from '@/types/filters'
 import type { JobStatus } from '@/lib/job-status'
 
@@ -27,7 +28,6 @@ export interface UseJobFilters {
 const FILTER_KEYS = ['search', 'status', 'ghost', 'sort', 'dir', 'page', 'from', 'to'] as const
 
 export function useJobFilters(): UseJobFilters {
-  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const filters = parseFilters(searchParams)
@@ -38,9 +38,12 @@ export function useJobFilters(): UseJobFilters {
       mutate(p)
       if (resetPage) p.delete('page')
       const qs = p.toString()
-      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+      // Client-side only. The list/board behind these params is React Query's,
+      // so re-running the page on the server would refetch everything and then
+      // discard it. See lib/url-state.ts.
+      replaceUrl(qs ? `${pathname}?${qs}` : pathname)
     },
-    [router, pathname, searchParams],
+    [pathname, searchParams],
   )
 
   const setSearch = useCallback(

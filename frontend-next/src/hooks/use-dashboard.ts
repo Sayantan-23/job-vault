@@ -2,35 +2,28 @@
 
 import { useMutation, useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY, JOBS_KEY, kanbanKey } from '@/lib/query-keys'
-import { buildBoardQuery } from '@/lib/filters'
+import { DASHBOARD_KANBAN_KEY, DASHBOARD_STATS_KEY, JOBS_KEY } from '@/lib/query-keys'
+import { kanbanQuery, statsQuery } from '@/lib/queries'
 import type { KanbanBoard, DashboardStats } from '@/types/dashboard'
 import type { GhostFilter } from '@/types/filters'
 import type { JobStatus } from '@/lib/job-status'
 
-export function useKanban(
-  filters: { search: string; ghost: GhostFilter },
-  initialData?: KanbanBoard,
-  enabled = true,
-) {
+export function useKanban(filters: { search: string; ghost: GhostFilter }, enabled = true) {
+  const q = kanbanQuery(filters)
   return useQuery({
-    queryKey: kanbanKey(filters),
-    queryFn: () => apiClient.get<KanbanBoard>(`/api/dashboard/kanban${buildBoardQuery(filters)}`),
+    queryKey: q.key,
+    queryFn: () => apiClient.get<KanbanBoard>(q.path),
     // Only the Board view needs this query; gating it off on the List view avoids
     // a wasted /api/dashboard/kanban fetch on every list-view mount.
     enabled,
     placeholderData: keepPreviousData,
-    refetchOnMount: 'always',
-    ...(initialData ? { initialData } : {}),
   })
 }
 
-export function useStats(initialData?: DashboardStats) {
+export function useStats() {
   return useQuery({
-    queryKey: DASHBOARD_STATS_KEY,
-    queryFn: () => apiClient.get<DashboardStats>('/api/dashboard/stats'),
-    refetchOnMount: 'always',
-    ...(initialData ? { initialData } : {}),
+    queryKey: statsQuery.key,
+    queryFn: () => apiClient.get<DashboardStats>(statsQuery.path),
   })
 }
 

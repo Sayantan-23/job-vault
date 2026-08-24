@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { COVER_LETTERS_KEY, coverLetterKey, coverLettersByJobKey } from '@/lib/query-keys'
+import { COVER_LETTERS_KEY } from '@/lib/query-keys'
+import { coverLetterQuery, coverLettersByJobQuery, coverLettersQuery } from '@/lib/queries'
 import type { CoverLetter, AdhocJob, RefineAction } from '@/types/cover-letter'
 
 export interface GenerateBody {
@@ -13,34 +14,31 @@ export interface GenerateBody {
 }
 
 export function useCoverLetters(jobId: string) {
+  const q = coverLettersByJobQuery(jobId)
   return useQuery({
-    queryKey: coverLettersByJobKey(jobId),
-    queryFn: () => apiClient.get<CoverLetter[]>(`/api/cover-letters?jobId=${jobId}`),
+    queryKey: q.key,
+    queryFn: () => apiClient.get<CoverLetter[]>(q.path),
     enabled: Boolean(jobId),
+    // No SSR seed for the JobDrawer's per-job list — refetch whenever the drawer
+    // opens so a letter edited on its own route shows up straight away.
     refetchOnMount: 'always',
   })
 }
 
-export function useAllCoverLetters(initialData?: CoverLetter[]) {
+export function useAllCoverLetters() {
   return useQuery({
-    queryKey: COVER_LETTERS_KEY,
-    queryFn: () => apiClient.get<CoverLetter[]>('/api/cover-letters'),
-    // SSR-hydrated; treat as fresh on mount so we don't clobber it with an
-    // immediate refetch. Mutations (generate/update/delete) still invalidate.
-    staleTime: 30_000,
-    ...(initialData ? { initialData } : {}),
+    queryKey: coverLettersQuery.key,
+    queryFn: () => apiClient.get<CoverLetter[]>(coverLettersQuery.path),
   })
 }
 
-// Single letter for the dedicated editor route. SSR-hydrated via initialData;
-// refetches on mount so an edit made elsewhere shows the latest.
-export function useCoverLetter(id: string, initialData?: CoverLetter) {
+// Single letter for the dedicated editor route (SSR-prefetched and hydrated).
+export function useCoverLetter(id: string) {
+  const q = coverLetterQuery(id)
   return useQuery({
-    queryKey: coverLetterKey(id),
-    queryFn: () => apiClient.get<CoverLetter>(`/api/cover-letters/${id}`),
+    queryKey: q.key,
+    queryFn: () => apiClient.get<CoverLetter>(q.path),
     enabled: Boolean(id),
-    refetchOnMount: 'always',
-    ...(initialData ? { initialData } : {}),
   })
 }
 

@@ -7,7 +7,7 @@ import { KanbanCard } from './kanban-card'
 import { cn } from '@/lib/utils'
 import type { KanbanColumn as Column } from '@/types/dashboard'
 
-export function KanbanColumn({ column }: { column: Column }) {
+export function KanbanColumn({ column, loading = false }: { column: Column; loading?: boolean }) {
   const { setNodeRef, isOver } = useDroppable({ id: column.status })
   const meta = STATUS_META[column.status]
 
@@ -30,7 +30,7 @@ export function KanbanColumn({ column }: { column: Column }) {
           ))}
         </SortableContext>
         {column.jobs.length === 0 ? (
-          <p className="px-1 py-6 text-center text-xs text-muted-foreground">No jobs</p>
+          <p className="px-1 py-6 text-center text-xs text-muted-foreground">{loading ? 'Loading…' : 'No jobs'}</p>
         ) : null}
       </div>
     </div>
