@@ -34,23 +34,26 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      CORS_ORIGINS: http://localhost:8080
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-jobvault}
       JWT_SECRET: ${JWT_SECRET:-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa}
-      JWT_ACCESS_EXPIRY: 15m
-      JWT_REFRESH_EXPIRY: 7d
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       ENABLE_SCHEDULER: ${ENABLE_SCHEDULER:-true}
       ENABLE_REALTIME: ${ENABLE_REALTIME:-true}
       # AI (Gemini) — powers résumés, cover letters, and scraper AI normalization.
       # Set GEMINI_API_KEY in the root .env to enable; empty leaves AI features off.
-      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      # No `:-` default on purpose: an unset key makes compose warn out loud.
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.5-flash}
       GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-2.5-flash-lite}
       # URL scraper render fallback (JS-rendered / bot-protected boards). Jina
       # Reader works with no key; JINA_API_KEY raises rate limits.
       SCRAPER_RENDER_ENABLED: ${SCRAPER_RENDER_ENABLED:-true}
-      JINA_API_KEY: ${JINA_API_KEY:-}
+      JINA_API_KEY: ${JINA_API_KEY}
+      SEED_EMAIL: ${SEED_EMAIL:-demo@jobvault.app}
+      SEED_PASSWORD: ${SEED_PASSWORD:-demo1234}
       CHOKIDAR_USEPOLLING: "true"
     depends_on:
       postgres:

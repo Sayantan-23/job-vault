@@ -33,21 +33,53 @@ JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: th
 
 ## Running the stack (Docker)
 
-Host ports `5432`/`3000`/`3001` are taken on this machine, so a **gitignored root `.env`** remaps them:
-`DB_PORT_EXTERNAL=5433`, `BACKEND_PORT=3100`, `FRONTEND_PORT=8080` (`JWT_SECRET` is a 32-char dev value). Recreate `.env` from these if it is missing.
+Everything goes through the root **`Makefile`** — run `make` for the full list.
 
 ```bash
-docker compose up -d --build                              # postgres + backend-express + frontend-next
-docker compose up -d --build --force-recreate --renew-anon-volumes   # use this after adding npm deps
-docker compose logs -f backend-express                    # watch logs
+make setup      # once: writes .env from the committed .env.example
+make up         # build + start postgres, backend-express, frontend-next
+make doctor     # "why isn't X working?" — env keys, containers, API + AI status
+make seed       # fill the DB with demo data (demo@jobvault.app / demo1234)
+make logs s=backend-express
+make rebuild    # after adding npm deps (--force-recreate --renew-anon-volumes)
+make gates      # typecheck + lint + both test suites + production web build
 ```
 
-- App: **http://localhost:8080** · API (direct): **http://localhost:3100/api/health**
+### Environment: the root `.env` is the single source of truth
+
+Compose reads `${VAR}` interpolation **only** from the `.env` next to
+`docker-compose.yml` — never from `backend-express/` or `frontend-next/`. So all
+values live in the root `.env` (gitignored), documented key-by-key in the
+committed **`.env.example`**.
+
+- **Never add a second `.env` next to an app.** `dotenv` and Next both refuse to
+  overwrite a variable already in `process.env`, so the compose-supplied value
+  always wins and the app-local file is silently ignored. A valid
+  `GEMINI_API_KEY` once sat in `backend-express/.env` while the API reported AI
+  as disabled — that is the failure mode.
+- The backend loads the root file via `src/config/load-dotenv.ts` (resolved from
+  the module's own path, so it works under tsx, vitest, drizzle-kit and `dist/`).
+  Inside the container the path does not exist and compose supplies everything.
+- Secrets are written `${GEMINI_API_KEY}` in compose with **no `:-` default**, so
+  an unset key makes compose warn out loud instead of silently disabling AI.
+  `make doctor` also reports keys present in `.env.example` but missing from `.env`.
+- The one exception: Next can only auto-load env files from its own directory, so
+  a **host-run** `npm run dev` in `frontend-next/` needs `.env.local` (copy
+  `frontend-next/.env.example`). It holds no secrets. Under Docker it is unused.
+- Host ports `5432`/`3000`/`3001` are taken on this machine, hence
+  `DB_PORT_EXTERNAL=5433`, `BACKEND_PORT=3100`, `FRONTEND_PORT=8080`. Keep
+  `DATABASE_URL`'s port in sync with `DB_PORT_EXTERNAL` (host runs use it).
+
+- App: **http://localhost:8080** · API (direct): **http://localhost:3100/api/health** (`make urls`)
 - Backend runs `db:migrate && dev` on startup (auto-applies Drizzle migrations).
 - The browser calls `/api/*` **same-origin**; Next proxies it to `BACKEND_INTERNAL_URL` (the in-network backend). Don't put a Docker hostname in a `NEXT_PUBLIC_*` var.
-- Both services bind-mount their source and hot-reload. `.next` and `node_modules` are anonymous volumes (hence `--renew-anon-volumes` after dep changes).
+- Both services bind-mount their source and hot-reload. `.next` and `node_modules` are anonymous volumes (hence `make rebuild` after dep changes).
 
 ### Per-app commands
+
+`make test-backend` / `make test-web` / `make typecheck` / `make lint` run these
+inside the containers (where `node_modules` actually lives). Directly:
+
 ```bash
 # backend-express/
 npm run typecheck && npm run lint && npm run test         # Vitest (+ real Postgres for repository tests)
@@ -56,7 +88,7 @@ npm run db:generate && npm run db:migrate                 # Drizzle Kit
 # frontend-next/
 npm run typecheck && npm run lint && npm run test && npm run build   # Vitest + RTL; Next build
 ```
-> Note: the running dev container writes a root-owned `.next` into the host mount, so a host `rm -rf .next` may hit permission errors — verify production builds via `docker build --target production ./frontend-next` instead.
+> Note: the running dev container writes a root-owned `.next` into the host mount, so a host `rm -rf .next` may hit permission errors — verify production builds via `make build-web` (`docker build --target production ./frontend-next`) instead.
 
 ## Backend architecture (`backend-express/`)
 

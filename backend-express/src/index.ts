@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import '@/config/load-dotenv.js'
 import http from 'node:http'
 import { createApp } from './app.js'
 import { getEnv } from './config/env.js'

@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import '@/config/load-dotenv.js'
 import { pathToFileURL } from 'node:url'
 import { eq } from 'drizzle-orm'
 import { getDb, closeDb } from '@/db/client.js'
