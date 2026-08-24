@@ -6,9 +6,9 @@ import { LegalDoc, LegalSection } from '@/components/web/legal/legal-doc'
 import '@/styles/web/pages/legal.css'
 
 export const metadata: Metadata = {
-  title: 'Privacy',
+  title: 'Privacy Policy',
   description:
-    'What JobVault collects, what it deliberately does not, and how your data is stored, processed, and controlled — in plain language.',
+    'What JobVault collects, what it does not, and how your data is stored, processed, and deleted. Written in plain language.',
 }
 
 export default function PrivacyPage() {

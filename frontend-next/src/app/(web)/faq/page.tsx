@@ -6,7 +6,7 @@ import { SubpageHeader } from '@/components/web/subpage-header'
 export const metadata: Metadata = {
   title: 'FAQ',
   description:
-    'Straight answers on how JobVault works — pricing, the AI, your documents, the Chrome extension, and your account.',
+    'Common questions about JobVault: pricing, the AI, your documents, the Chrome extension, and your account.',
 }
 
 // Server component, zero client JS: native <details>/<summary> accordions styled

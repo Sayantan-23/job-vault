@@ -6,9 +6,9 @@ import { LegalDoc, LegalSection } from '@/components/web/legal/legal-doc'
 import '@/styles/web/pages/legal.css'
 
 export const metadata: Metadata = {
-  title: 'Terms',
+  title: 'Terms of Service',
   description:
-    'The plain-language terms for using JobVault — your account, your content, AI output, acceptable use, and the limits on our liability.',
+    'The terms for using JobVault: your account, your content, AI output, acceptable use, and the limits on our liability.',
 }
 
 export default function TermsPage() {

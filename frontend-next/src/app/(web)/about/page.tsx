@@ -17,7 +17,7 @@ import '@/styles/web/pages/about.css'
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'A note from the maker: why JobVault exists. Most applications end in silence — no rejection, no reply. One place to run the whole search, and a ghost-proofing meter so nothing goes quiet unnoticed.',
+    'Why I built JobVault. Most applications end in silence, so I wanted one place to run the whole search and flag anything that has gone quiet.',
 }
 
 export default function AboutPage() {

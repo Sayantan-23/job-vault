@@ -9,10 +9,10 @@ import { Interstitial } from '@/components/web/landing/interstitial'
 import { FaqSection } from '@/components/web/landing/faq-section'
 
 export const metadata: Metadata = {
-  // Absolute, so the root layout's "%s — JobVault" template doesn't double it.
+  // Absolute, so the root layout's "%s | JobVault" template doesn't double it.
   title: { absolute: 'JobVault' },
   description:
-    'JobVault wires your whole job search into one system: capture postings in one click, generate tailored resumes and cover letters per role, track every application in one pipeline, and get a nudge before anything goes cold.',
+    'Save job postings in one click, write tailored resumes and cover letters, and track every application in one place so none of them go quiet on you.',
 }
 
 // Server component. Sections render in real product order (Capture → Personas →
