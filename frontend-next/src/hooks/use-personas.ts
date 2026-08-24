@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import { PERSONAS_KEY } from '@/lib/query-keys'
+import { personasQuery } from '@/lib/queries'
 import type { Persona, ParsedResume } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 
@@ -12,14 +13,10 @@ interface CreatePersonaBody {
   rawInput?: string | null
 }
 
-export function usePersonas(initialData?: Persona[]) {
+export function usePersonas() {
   return useQuery({
-    queryKey: PERSONAS_KEY,
-    queryFn: () => apiClient.get<Persona[]>('/api/personas'),
-    // SSR-hydrated; treat as fresh on mount so we don't clobber it with an
-    // immediate refetch. Mutations (create/delete) still invalidate and refetch.
-    staleTime: 30_000,
-    ...(initialData ? { initialData } : {}),
+    queryKey: personasQuery.key,
+    queryFn: () => apiClient.get<Persona[]>(personasQuery.path),
   })
 }
 

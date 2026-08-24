@@ -2,21 +2,18 @@
 
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { globalTimelineKey } from '@/lib/query-keys'
+import { globalTimelineQuery, TIMELINE_PAGE_SIZE } from '@/lib/queries'
 import type { GlobalTimelineEvent } from '@/types/timeline'
-import type { Paginated } from '@/types/filters'
 
-export const TIMELINE_PAGE_SIZE = 50
+export { TIMELINE_PAGE_SIZE }
 
-// The user-scoped global feed. `initialData` (from the server page) hydrates the
-// first paint; paging keeps the previous page visible while the next loads.
-export function useGlobalTimeline(page: number, initialData?: Paginated<GlobalTimelineEvent> | undefined) {
+// The user-scoped global feed. Page 1 is SSR-prefetched and hydrated; paging
+// keeps the previous page visible while the next loads.
+export function useGlobalTimeline(page: number) {
+  const q = globalTimelineQuery(page)
   return useQuery({
-    queryKey: globalTimelineKey(page),
-    queryFn: () =>
-      apiClient.getPage<GlobalTimelineEvent>(`/api/timeline?page=${page}&limit=${TIMELINE_PAGE_SIZE}`),
+    queryKey: q.key,
+    queryFn: () => apiClient.getPage<GlobalTimelineEvent>(q.path),
     placeholderData: keepPreviousData,
-    refetchOnMount: 'always',
-    ...(initialData && page === 1 ? { initialData } : {}),
   })
 }

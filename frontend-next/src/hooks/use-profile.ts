@@ -4,14 +4,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
 import { PROFILE_KEY } from '@/lib/query-keys'
+import { profileQuery } from '@/lib/queries'
 import type { ProfileContent } from '@/types/profile'
 
-export function useProfile(initialData?: ProfileContent) {
+export function useProfile() {
   return useQuery({
-    queryKey: PROFILE_KEY,
-    queryFn: () => apiClient.get<ProfileContent>('/api/profile'),
-    staleTime: 30_000,
-    ...(initialData ? { initialData } : {}),
+    queryKey: profileQuery.key,
+    queryFn: () => apiClient.get<ProfileContent>(profileQuery.path),
   })
 }
 

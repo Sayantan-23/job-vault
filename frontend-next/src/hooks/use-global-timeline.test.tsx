@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, dehydrate, hydrate } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
+import { globalTimelineKey } from '@/lib/query-keys'
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: { getPage: vi.fn() },
@@ -40,9 +41,19 @@ describe('useGlobalTimeline', () => {
     expect(api.getPage).toHaveBeenCalledWith(`/api/timeline?page=2&limit=${TIMELINE_PAGE_SIZE}`)
   })
 
-  it('uses server-provided initialData for page 1 (no flash of empty)', () => {
-    const { result } = renderHook(() => useGlobalTimeline(1, seedPage('seed')), { wrapper })
-    // initialData is present synchronously on first render
+  it('uses the server-hydrated page 1 (no flash of empty)', () => {
+    const server = new QueryClient()
+    server.setQueryData(globalTimelineKey(1), seedPage('seed'))
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } })
+    hydrate(client, dehydrate(server))
+
+    const { result } = renderHook(() => useGlobalTimeline(1), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    })
+    // Present synchronously on first render — no fetch, no empty frame.
     expect(result.current.data?.data?.[0]?.id).toBe('seed')
+    expect(api.getPage).not.toHaveBeenCalled()
   })
 })

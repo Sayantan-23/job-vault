@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, dehydrate, hydrate } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 
 vi.mock('@/lib/api-client', () => ({ apiClient: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() }, ApiError: class extends Error {} }))
@@ -36,14 +36,23 @@ describe('use-cover-letters', () => {
     expect(api.get).toHaveBeenCalledWith('/api/cover-letters')
     expect(result.current.data).toHaveLength(2)
   })
-  it('serves SSR initialData without an immediate refetch', async () => {
+  it('serves server-hydrated letters without an immediate refetch', () => {
     const letter: CoverLetter = {
       id: 'cl1', createdAt: '2026-06-12T00:00:00Z', updatedAt: '2026-06-12T00:00:00Z',
       userId: 'u1', jobId: null, adhocJob: { title: 'Staff Eng', company: 'Acme' },
       personaId: 'p1', title: 'Acme — cover letter', instructions: null, bodyMarkdown: 'Dear team,',
     }
-    const { result } = renderHook(() => useAllCoverLetters([letter]), { wrapper })
-    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    // What the server page ships: a dehydrated snapshot, hydrated on arrival.
+    const server = new QueryClient()
+    server.setQueryData(COVER_LETTERS_KEY, [letter])
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } })
+    hydrate(client, dehydrate(server))
+
+    const { result } = renderHook(() => useAllCoverLetters(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    })
     expect(result.current.data).toEqual([letter])
     expect(api.get).not.toHaveBeenCalled()
   })

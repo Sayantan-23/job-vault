@@ -6,12 +6,15 @@ import type { ReactNode } from 'react'
 import type { Paginated } from '@/types/filters'
 import type { GlobalTimelineEvent } from '@/types/timeline'
 
-const { replace } = vi.hoisted(() => ({ replace: vi.fn() }))
+const { replaceUrl } = vi.hoisted(() => ({ replaceUrl: vi.fn() }))
 const { searchParams } = vi.hoisted(() => ({ searchParams: { value: new URLSearchParams('') } }))
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace }),
+  useRouter: () => ({ replace: vi.fn() }),
   useSearchParams: () => searchParams.value,
 }))
+// Paging updates the URL through history.replaceState — React Query fetches the
+// page, so the server component must not re-run.
+vi.mock('@/lib/url-state', () => ({ replaceUrl }))
 
 vi.mock('@/lib/api-client', () => ({
   apiClient: { getPage: vi.fn() },
@@ -48,7 +51,7 @@ describe('TimelineFeed', () => {
   it('renders an event with a link to its job', async () => {
     const initial = page([event({ title: 'Job added to vault', jobCompany: 'Acme', jobTitle: 'SWE' })])
     api.getPage.mockResolvedValue(initial)
-    render(<TimelineFeed initialData={initial} />, { wrapper })
+    render(<TimelineFeed />, { wrapper })
 
     expect(await screen.findByText('Job added to vault')).toBeInTheDocument()
     const link = screen.getByRole('link', { name: 'Acme — SWE' })
@@ -58,17 +61,17 @@ describe('TimelineFeed', () => {
   it('shows the empty state when there is no activity', async () => {
     const empty = page([])
     api.getPage.mockResolvedValue(empty)
-    render(<TimelineFeed initialData={empty} />, { wrapper })
+    render(<TimelineFeed />, { wrapper })
     expect(await screen.findByText(/no activity yet/i)).toBeInTheDocument()
   })
 
   it('pages forward by updating the page query param', async () => {
     const initial = page([event()], { total: 80, totalPages: 2 })
     api.getPage.mockResolvedValue(initial)
-    render(<TimelineFeed initialData={initial} />, { wrapper })
+    render(<TimelineFeed />, { wrapper })
 
     await screen.findByText('Status changed to Applied')
     await userEvent.click(screen.getByRole('button', { name: /next/i }))
-    expect(replace).toHaveBeenCalledWith('/app/timeline?page=2', { scroll: false })
+    expect(replaceUrl).toHaveBeenCalledWith('/app/timeline?page=2')
   })
 })

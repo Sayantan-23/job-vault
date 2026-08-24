@@ -2,7 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api-client'
-import { RESUMES_KEY, resumesByJobKey } from '@/lib/query-keys'
+import { RESUMES_KEY } from '@/lib/query-keys'
+import { resumesQuery } from '@/lib/queries'
 import type { GeneratedResume, ResumeContent } from '@/types/resume'
 
 interface GenerateBody {
@@ -11,12 +12,11 @@ interface GenerateBody {
   instructions?: string
 }
 
-export function useResumes(jobId?: string, initialData?: GeneratedResume[]) {
+export function useResumes(jobId?: string) {
+  const q = resumesQuery(jobId)
   return useQuery({
-    queryKey: jobId ? resumesByJobKey(jobId) : RESUMES_KEY,
-    queryFn: () => apiClient.get<GeneratedResume[]>(`/api/resumes${jobId ? `?jobId=${jobId}` : ''}`),
-    refetchOnMount: 'always',
-    ...(initialData ? { initialData } : {}),
+    queryKey: q.key,
+    queryFn: () => apiClient.get<GeneratedResume[]>(q.path),
   })
 }
 

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { Persona } from '@/types/persona'
 import type { GeneratedResume, ResumeContent } from '@/types/resume'
 import { useGenerateResume, useUpdateResume, useResumes, useDeleteResume } from '@/hooks/use-resumes'
 import { useJobOptions, type JobOption } from '@/hooks/use-job-options'
@@ -21,16 +20,11 @@ import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 import { NoPersonasHint } from '@/components/documents/no-personas-hint'
 
 interface Props {
-  // SSR-fetched; undefined means the server fetch failed and the client
-  // hooks should fetch on mount instead (a [] fallback would be installed
-  // as fresh initialData and pin a false-empty state).
-  initialPersonas?: Persona[] | undefined
   initialPersonaId: string
   initialJobId?: string
   // Deep-link a specific résumé open (?resume=<id>) — selected once it appears
   // in the library; opening from a JobDrawer launcher row.
   initialResumeId?: string
-  initialResumes?: GeneratedResume[] | undefined
 }
 
 // Tracked generations join their job client-side (the same list the picker
@@ -40,8 +34,8 @@ function resumeContext(r: GeneratedResume, jobsById: Map<string, JobOption>): st
   return job ? `${job.company} · ${job.title}` : 'General'
 }
 
-export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobId, initialResumeId, initialResumes }: Props) {
-  const { data: personas = [] } = usePersonas(initialPersonas)
+export function ResumeWorkspace({ initialPersonaId, initialJobId, initialResumeId }: Props) {
+  const { data: personas = [] } = usePersonas()
   const [personaId, setPersonaId] = useState(initialPersonaId || personas[0]?.id || '')
   const [jobId, setJobId] = useState(initialJobId ?? '')
   const [resume, setResume] = useState<GeneratedResume | null>(null)
@@ -50,7 +44,7 @@ export function ResumeWorkspace({ initialPersonas, initialPersonaId, initialJobI
   const save = useUpdateResume(resume?.id ?? '')
   const del = useDeleteResume()
   const { data: jobs = [] } = useJobOptions()
-  const { data: allResumes = [] } = useResumes(undefined, initialResumes)
+  const { data: allResumes = [] } = useResumes()
   const { ref: editorRef, reveal: revealEditor } = useRevealBelowLg<HTMLDivElement>()
   const { confirm, confirmDialog } = useConfirm()
 

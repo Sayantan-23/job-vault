@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { PageHeading } from '@/components/layout/app/page-heading'
 import { AppPage } from '@/components/layout/app/app-page'
 import { TimelineRow } from '@/components/timeline/timeline-row'
@@ -10,8 +10,8 @@ import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 import { TimelineSkeletonBody } from '@/components/layout/app/route-skeletons'
 import { useGlobalTimeline } from '@/hooks/use-global-timeline'
 import { dayGroupLabel, dayKey } from '@/lib/relative-time'
+import { replaceUrl } from '@/lib/url-state'
 import type { GlobalTimelineEvent } from '@/types/timeline'
-import type { Paginated } from '@/types/filters'
 
 interface DayGroup {
   key: string
@@ -49,18 +49,18 @@ function EmptyState() {
   )
 }
 
-export function TimelineFeed({ initialData }: { initialData?: Paginated<GlobalTimelineEvent> | undefined }) {
-  const router = useRouter()
+export function TimelineFeed() {
   const params = useSearchParams()
   const page = Math.max(1, Number(params.get('page')) || 1)
-  const { data, isLoading, isError, error } = useGlobalTimeline(page, initialData)
+  const { data, isLoading, isError, error } = useGlobalTimeline(page)
 
   const setPage = (next: number) => {
     const sp = new URLSearchParams(params.toString())
     if (next <= 1) sp.delete('page')
     else sp.set('page', String(next))
     const qs = sp.toString()
-    router.replace(qs ? `/app/timeline?${qs}` : '/app/timeline', { scroll: false })
+    // Client-side only — React Query fetches the page; see lib/url-state.ts.
+    replaceUrl(qs ? `/app/timeline?${qs}` : '/app/timeline')
   }
 
   const events = data?.data ?? []

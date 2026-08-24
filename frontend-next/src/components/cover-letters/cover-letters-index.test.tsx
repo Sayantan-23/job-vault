@@ -3,9 +3,10 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import type { Persona } from '@/types/persona'
+import type { Persona, AiStatus } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 import type { CoverLetter } from '@/types/cover-letter'
+import { AI_STATUS_KEY, COVER_LETTERS_KEY, PERSONAS_KEY } from '@/lib/query-keys'
 
 // The New sheet is URL-driven (?new=1 / ?job=), so navigation is mocked with a
 // mutable params holder a test can set before render.
@@ -36,9 +37,24 @@ const ADHOC: CoverLetter = {
 const LETTERS = [ADHOC, TRACKED]
 const JOBS = [{ id: 'j1', title: 'SWE', company: 'Acme' }]
 
-function wrapper({ children }: { children: ReactNode }) {
-  const c = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  return <QueryClientProvider client={c}>{children}</QueryClientProvider>
+// Stands in for the server prefetch the page hydrates before this renders.
+// Anything left unseeded is fetched by the hook, exactly as it would be after a
+// failed server read. staleTime mirrors production so seeded data isn't
+// immediately refetched.
+function seeded({
+  personas,
+  letters,
+  status = AI_ON,
+}: { personas?: Persona[]; letters?: CoverLetter[]; status?: AiStatus } = {}) {
+  const c = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 30_000 }, mutations: { retry: false } },
+  })
+  c.setQueryData(AI_STATUS_KEY, status)
+  if (personas) c.setQueryData(PERSONAS_KEY, personas)
+  if (letters) c.setQueryData(COVER_LETTERS_KEY, letters)
+  return function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={c}>{children}</QueryClientProvider>
+  }
 }
 
 function mockGets(letters: CoverLetter[], personas: Persona[] = PERSONAS) {
@@ -58,7 +74,7 @@ beforeEach(() => {
 describe('CoverLettersIndex', () => {
   it('lists tracked and adhoc letters with job context + persona names, and no generator on the page', async () => {
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     expect(screen.getByText('Initech — cover letter')).toBeInTheDocument()
     expect(screen.getByText('Initech · Staff Eng')).toBeInTheDocument()
     expect(await screen.findByText('Acme · SWE')).toBeInTheDocument()
@@ -69,14 +85,14 @@ describe('CoverLettersIndex', () => {
 
   it('navigates to the editor route when a row is selected', async () => {
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     await userEvent.click(screen.getByText('Acme — cover letter'))
     expect(nav.push).toHaveBeenCalledWith('/app/cover-letters/cl1')
   })
 
   it('opens the New sheet by routing to ?new=1', async () => {
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     await userEvent.click(screen.getByRole('button', { name: /new cover letter/i }))
     expect(nav.push).toHaveBeenCalledWith('/app/cover-letters?new=1')
   })
@@ -84,14 +100,14 @@ describe('CoverLettersIndex', () => {
   it('renders the generator when the URL carries ?new=1', async () => {
     nav.params = new URLSearchParams('new=1')
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     expect(await screen.findByRole('button', { name: 'Generate cover letter' })).toBeInTheDocument()
   })
 
   it('pre-selects the tracked job from ?job= when the sheet is opened', async () => {
     nav.params = new URLSearchParams('new=1&job=j1')
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     await screen.findByRole('option', { name: 'SWE — Acme' })
     expect(screen.getByLabelText('Job')).toHaveValue('j1')
   })
@@ -101,7 +117,7 @@ describe('CoverLettersIndex', () => {
     const NEW: CoverLetter = { ...TRACKED, id: 'cl3', bodyMarkdown: 'Fresh draft' }
     mockGets(LETTERS)
     api.post.mockResolvedValue(NEW)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
 
     await screen.findByRole('option', { name: 'SWE — Acme' })
     await userEvent.selectOptions(screen.getByLabelText('Job'), 'j1')
@@ -114,7 +130,7 @@ describe('CoverLettersIndex', () => {
   it('routes back to the bare path when the sheet is dismissed', async () => {
     nav.params = new URLSearchParams('new=1')
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     await screen.findByRole('button', { name: 'Generate cover letter' })
     await userEvent.keyboard('{Escape}')
     expect(nav.push).toHaveBeenCalledWith('/app/cover-letters')
@@ -123,7 +139,7 @@ describe('CoverLettersIndex', () => {
   it('deletes a letter from its row', async () => {
     mockGets(LETTERS)
     api.delete.mockResolvedValue(undefined)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS }) })
     await userEvent.click(screen.getByRole('button', { name: 'Delete Acme — cover letter' }))
     // A confirmation dialog gates the delete.
     await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
@@ -133,7 +149,7 @@ describe('CoverLettersIndex', () => {
   it('shows the AI-off hint inside the New sheet but still lists the library', async () => {
     nav.params = new URLSearchParams('new=1')
     mockGets(LETTERS)
-    render(<CoverLettersIndex initialPersonas={PERSONAS} initialLetters={LETTERS} aiStatus={AI_OFF} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: PERSONAS, letters: LETTERS, status: AI_OFF }) })
     expect(screen.getByText('Acme — cover letter')).toBeInTheDocument()
     expect(screen.getByText(/not configured/i)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Generate cover letter' })).not.toBeInTheDocument()
@@ -142,13 +158,13 @@ describe('CoverLettersIndex', () => {
   it('shows a create-persona hint in the sheet when there are no personas', async () => {
     nav.params = new URLSearchParams('new=1')
     mockGets(LETTERS, [])
-    render(<CoverLettersIndex initialPersonas={[]} initialLetters={LETTERS} aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded({ personas: [], letters: LETTERS }) })
     expect(screen.getByRole('link', { name: /create a persona/i })).toHaveAttribute('href', '/app/personas')
   })
 
-  it('uses generator-aware empty copy and heals from failed SSR (undefined initial data)', async () => {
+  it('uses generator-aware empty copy and heals when the server prefetch failed', async () => {
     mockGets([])
-    render(<CoverLettersIndex aiStatus={AI_ON} />, { wrapper })
+    render(<CoverLettersIndex />, { wrapper: seeded() })
     expect(await screen.findByText('No cover letters yet — create your first one.')).toBeInTheDocument()
   })
 })

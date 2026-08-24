@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 
-const { replace, searchParams } = vi.hoisted(() => ({
-  replace: vi.fn(),
+const { replaceUrl, searchParams } = vi.hoisted(() => ({
+  replaceUrl: vi.fn(),
   searchParams: new URLSearchParams(),
 }))
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ replace, push: vi.fn(), prefetch: vi.fn() }),
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn(), prefetch: vi.fn() }),
   usePathname: () => '/app/jobs',
   useSearchParams: () => searchParams,
 }))
+// Filters update the URL through history.replaceState, not the router — the
+// data behind them is React Query's, so the server page must not re-run.
+vi.mock('@/lib/url-state', () => ({ replaceUrl }))
 
 import { useJobFilters } from './use-job-filters'
 
@@ -19,7 +22,7 @@ beforeEach(() => {
 })
 
 function lastUrl(): string {
-  const calls = replace.mock.calls
+  const calls = replaceUrl.mock.calls
   return String(calls[calls.length - 1]?.[0] ?? '')
 }
 
@@ -31,11 +34,11 @@ describe('useJobFilters', () => {
     expect(result.current.isListFiltered).toBe(false)
   })
 
-  it('setSearch writes search and emits scroll:false', () => {
+  it('setSearch writes search through history, not the router', () => {
     const { result } = renderHook(() => useJobFilters())
     act(() => result.current.setSearch('rust'))
     expect(lastUrl()).toBe('/app/jobs?search=rust')
-    expect(replace).toHaveBeenLastCalledWith('/app/jobs?search=rust', { scroll: false })
+    expect(replaceUrl).toHaveBeenLastCalledWith('/app/jobs?search=rust')
   })
 
   it('setSearch with blank clears the param', () => {
@@ -132,7 +135,7 @@ describe('useJobFilters', () => {
     searchParams.set('page', '3'); searchParams.set('view', 'board')
     const { result } = renderHook(() => useJobFilters())
     act(() => result.current.applyFilters({ status: 'APPLIED', from: '2022-01-01', to: '2022-12-31' }))
-    expect(replace).toHaveBeenCalledTimes(1) // one URL update, not one per facet
+    expect(replaceUrl).toHaveBeenCalledTimes(1) // one URL update, not one per facet
     const u = new URL(lastUrl(), 'http://x')
     expect(u.searchParams.get('status')).toBe('APPLIED')
     expect(u.searchParams.get('from')).toBe('2022-01-01')

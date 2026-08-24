@@ -28,10 +28,14 @@ export function KanbanBoard({
   board,
   filters,
   isFiltered,
+  loading = false,
 }: {
   board: Board
   filters: { search: string; ghost: GhostFilter }
   isFiltered: boolean
+  /** First load of this board: columns render empty, so say "Loading…" rather
+   * than asserting "No jobs". */
+  loading?: boolean
 }) {
   const qc = useQueryClient()
   const move = useMoveJob()
@@ -111,7 +115,7 @@ export function KanbanBoard({
       {isFiltered ? <ReorderPausedHint /> : null}
       <div className="flex h-full gap-3 overflow-x-auto pb-4">
         {board.columns.map((column) => (
-          <KanbanColumn key={column.status} column={column} />
+          <KanbanColumn key={column.status} column={column} loading={loading} />
         ))}
       </div>
       <DragOverlay>

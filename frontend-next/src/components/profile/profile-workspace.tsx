@@ -7,16 +7,17 @@ import { PageHeading } from '@/components/layout/app/page-heading'
 import { AppPage } from '@/components/layout/app/app-page'
 import { ProfileEditor } from './profile-editor'
 import { useProfile, useUpdateProfile } from '@/hooks/use-profile'
-import { validateProfileContent } from '@/lib/profile'
+import { emptyProfileContent, validateProfileContent } from '@/lib/profile'
 import type { ProfileContent } from '@/types/profile'
 
-// `initialProfile` is fetched on the server (page.tsx) and used to hydrate both
-// the query cache and the draft, so the form renders populated on first paint
-// (no client-fetch flash).
-export function ProfileWorkspace({ initialProfile }: { initialProfile: ProfileContent }) {
-  const { data } = useProfile(initialProfile)
+// The profile is prefetched on the server (page.tsx) and hydrated into the
+// cache before this renders, so the draft starts populated on first paint. The
+// effect below covers the other case — a failed/slow server read, where the
+// data arrives from the client fetch instead.
+export function ProfileWorkspace() {
+  const { data } = useProfile()
   const update = useUpdateProfile()
-  const [draft, setDraft] = useState<ProfileContent>(initialProfile)
+  const [draft, setDraft] = useState<ProfileContent>(() => data ?? emptyProfileContent())
   const [errors, setErrors] = useState<string[]>([])
 
   useEffect(() => {

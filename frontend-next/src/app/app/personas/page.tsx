@@ -1,42 +1,33 @@
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
-import { apiServer } from '@/lib/api-server'
 import { PersonasWorkspace } from '@/components/personas/personas-workspace'
 import { PersonasSkeleton } from '@/components/layout/app/route-skeletons'
+import { Hydrate, prefetch, serverQueryClient } from '@/lib/query-hydration'
+import { aiStatusQuery, personasQuery, profileQuery } from '@/lib/queries'
 import type { Persona, AiStatus } from '@/types/persona'
 import type { ProfileContent } from '@/types/profile'
 
 export const metadata: Metadata = { title: 'Personas' }
 
-const EMPTY_PROFILE: ProfileContent = {
-  basics: { name: '', email: '', phone: '', location: '', links: [] },
-  summary: '',
-  experience: [],
-  projects: [],
-  skills: [],
-  education: [],
-}
-
-const EMPTY_STATUS: AiStatus = { enabled: false, maxPersonas: 5 }
-
 export default async function PersonasPage() {
-  // Fetched in parallel — independent reads, so one round-trip instead of three.
-  // The master profile feeds the persona pickers and the build-from-profile seed.
-  const [initialPersonas, initialStatus, initialProfile] = await Promise.all([
-    apiServer.get<Persona[]>('/api/personas').catch((): Persona[] => []),
-    apiServer.get<AiStatus>('/api/ai/status').catch(() => EMPTY_STATUS),
-    apiServer.get<ProfileContent>('/api/profile').catch(() => EMPTY_PROFILE),
+  // Prefetched in parallel — independent reads, so one round-trip instead of
+  // three. The master profile feeds the persona pickers and the build-from-
+  // profile seed. A failed read is left out of the payload and refetched on the
+  // client, rather than pinning an empty fallback into the cache.
+  const qc = serverQueryClient()
+  await Promise.all([
+    prefetch<Persona[]>(qc, personasQuery),
+    prefetch<AiStatus>(qc, aiStatusQuery),
+    prefetch<ProfileContent>(qc, profileQuery),
   ])
 
   // Skeleton (not null) fallback: on client navigation this boundary suspends
   // while the workspace mounts, so a null fallback flashed the content blank.
   return (
-    <Suspense fallback={<PersonasSkeleton />}>
-      <PersonasWorkspace
-        initialPersonas={initialPersonas}
-        initialStatus={initialStatus}
-        initialProfile={initialProfile}
-      />
-    </Suspense>
+    <Hydrate client={qc}>
+      <Suspense fallback={<PersonasSkeleton />}>
+        <PersonasWorkspace />
+      </Suspense>
+    </Hydrate>
   )
 }

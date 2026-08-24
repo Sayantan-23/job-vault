@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { Persona, AiStatus } from '@/types/persona'
-import type { ProfileContent } from '@/types/profile'
+import { emptyProfileContent } from '@/lib/profile'
 import { Button } from '@/components/ui/button'
 import { PageHeading } from '@/components/layout/app/page-heading'
 import { AppPage } from '@/components/layout/app/app-page'
@@ -14,18 +14,20 @@ import { PersonaList } from './persona-list'
 import { CreatePersonaSheet } from './create-persona-sheet'
 import { EditPersonaSheet } from './edit-persona-sheet'
 
-interface Props {
-  initialPersonas: Persona[]
-  initialStatus: AiStatus
-  initialProfile: ProfileContent
-}
+// Shown only in the gap before the (SSR-prefetched, hydrated) status lands —
+// or if that read failed. AI off + the default cap is the safe assumption.
+const STATUS_FALLBACK: AiStatus = { enabled: false, maxPersonas: 5 }
 
-export function PersonasWorkspace({ initialPersonas, initialStatus, initialProfile }: Props) {
+export function PersonasWorkspace() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editing, setEditing] = useState<Persona | null>(null)
-  const { data: personas = initialPersonas } = usePersonas(initialPersonas)
-  const { data: status = initialStatus } = useAiStatus(initialStatus)
-  const { data: profile = initialProfile } = useProfile(initialProfile)
+  const { data: personas = [] } = usePersonas()
+  const { data: status = STATUS_FALLBACK } = useAiStatus()
+  const { data: profileData } = useProfile()
+  // The sheets always need a shape to read from; a blank profile is the honest
+  // stand-in while the real one is in flight. Memoised so they don't see a new
+  // object identity on every render.
+  const profile = useMemo(() => profileData ?? emptyProfileContent(), [profileData])
   const atCap = personas.length >= status.maxPersonas
   // Manual creation never needs AI — only the résumé-import mode does.
   const canCreate = !atCap
