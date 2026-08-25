@@ -1012,7 +1012,8 @@ vi.mock('./answers.service.js', () => ({
 
 import { answersService } from './answers.service.js'
 import { answersRouter } from './answers.router.js'
-import { errorMiddleware } from '@/middleware/error.middleware.js'
+import type { QuestionAnswerRow } from '@/db/schema/question-answers.js'
+import { errorHandler } from '@/middleware/error.middleware.js'
 
 const service = vi.mocked(answersService)
 
@@ -1020,11 +1021,24 @@ function app() {
   const a = express()
   a.use(express.json())
   a.use('/api/answers', answersRouter)
-  a.use(errorMiddleware)
+  a.use(errorHandler)
   return a
 }
 
 const UUID = '11111111-1111-4111-8111-111111111111'
+
+// A real typed row, not `{ id: 'a1' } as never` — the repo's
+// @typescript-eslint/consistent-type-assertions rule rejects the assertion.
+const row: QuestionAnswerRow = {
+  id: 'a1',
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  userId: 'user-1',
+  question: 'Why?',
+  answerShort: 'Because.',
+  answerLong: null,
+  lastUsedAt: null,
+}
 
 beforeEach(() => vi.resetAllMocks())
 
@@ -1037,7 +1051,7 @@ describe('answers router', () => {
   })
 
   it('POST / creates and returns 201', async () => {
-    service.create.mockResolvedValue({ id: 'a1' } as never)
+    service.create.mockResolvedValue(row)
     const res = await request(app()).post('/api/answers').send({ question: 'Why?', answerShort: 'Because.' })
     expect(res.status).toBe(201)
     expect(service.create).toHaveBeenCalledWith('user-1', expect.objectContaining({ question: 'Why?' }))
@@ -1050,7 +1064,7 @@ describe('answers router', () => {
   })
 
   it('PATCH /:id updates', async () => {
-    service.update.mockResolvedValue({ id: 'a1' } as never)
+    service.update.mockResolvedValue(row)
     const res = await request(app()).patch('/api/answers/a1').send({ answerLong: 'Longer.' })
     expect(res.status).toBe(200)
     expect(service.update).toHaveBeenCalledWith('user-1', 'a1', { answerLong: 'Longer.' })
