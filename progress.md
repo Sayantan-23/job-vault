@@ -8,6 +8,12 @@
 
 > **2026-07-05 — Legacy folders removed**: the original `backend/` (NestJS) and `frontend/` (Nuxt) reference stacks were deleted now that the Express/Next rebuild is self-sufficient. Original behavior/contracts remain readable via git history. Active code lives only in `backend-express/` + `frontend-next/` (+ `extension/`).
 
+> **Open work lives in `.blink/`, not here** (moved 2026-08-25). This file is the
+> **changelog**: what shipped, slice by slice, with commits. The backlog that used
+> to be scattered through it — plus `docs/deferred-tasks.md` and
+> `docs/polish-and-tech-debt.md` — is now one task file per item in
+> `.blink/tasks/`, each re-verified against the code on 2026-08-25.
+
 ---
 
 ## Public Landing Redesign — v3 "The Vault Collage" (on `landing-page-redesign`, 2026-07-05)
@@ -54,7 +60,7 @@
 - [x] Modal-style scrim (`bg-black/40` + blur, reused Sheet/Dialog treatment) dims the whole page *and* header — only the toggle stays above it; closes on outside tap, Escape (refocuses toggle), and route change
 - [x] `AccountMenu` gains `compact` + `side` props; `NAV` exported from `sidebar-nav`; desktop ≥1024px pixel-unchanged
 - [x] Gates: typecheck, lint, 545 tests (6 new), production build
-- [ ] Remaining responsive areas (next): JobDrawer/sheets, board columns, résumé + cover-letter workspaces at narrow widths
+- **Deferred →** remaining responsive areas (JobDrawer/sheets, board columns, résumé + cover-letter workspaces at narrow widths) — tracked as `t-0025` in `.blink/tasks/`.
 
 ### v1 + v2 history (superseded by v3)
 
@@ -99,7 +105,7 @@
 - [x] **Adversarially reviewed** (4-lens + verification): 6 fixes applied — authorize-page silent refresh, dropped `salaryRange`, over-broad LinkedIn company selector, connect-cancel UX, array `jobLocation`, removed unused `scripting` permission.
 - [x] **Decisions:** no cookie weakening (runtime uses `X-API-Key`, only same-origin mint uses the cookie); security via `state` nonce + redirect allowlist + fragment-only token + interactive consent; popup-only; LinkedIn/Indeed client + generic→backend-scrape.
 - [x] **Live-smoked + merged.** Post-implementation fixes during the user's browser pass: connect URL → web-app origin `:8080` (was wrongly the backend); **on-demand live-DOM extraction on _any_ site** (Naukri/Greenhouse/… via `chrome.scripting` + `activeTab`, dropping the declared content_scripts and the reload-after-install caveat); descriptions converted to clean **Markdown** (ported the backend's Turndown + sanitizer) with **decorative-bold stripping** for Naukri's over-`<strong>`'d markup. Final gates: 600 backend + 522 web + 29 extension tests. Now 600/522/29 (1151) green.
-- [ ] **Deferred follow-ups** (`docs/deferred-tasks.md`): pin the extension `key` → `PINNED_EXTENSION_IDS`, real logo icons, per-site extractors (Naukri/Glassdoor company), Web Store packaging. **Next migration backlog:** public-pages redesign, Google OAuth, email reminders.
+- **Deferred follow-ups →** now tracked in `.blink/tasks/`: pin the extension `key` (`t-0012`), real logo icons (`t-0013`), per-site extractors (`t-0014`), on-page overlay (`t-0015`), Web Store packaging (`t-0016`). Public-pages redesign has since shipped (merged 2026-07-15); Google OAuth is `t-0020`, email reminders `t-0001`.
 
 ## Migration Phase 0a — Backend Express Scaffolding (NEW)
 
@@ -145,7 +151,7 @@
 - [x] Frontend: typecheck + lint + test (27) + build — all green
 - [x] Backend: typecheck + lint + test (27) — all green
 - [x] Adversarial multi-lens review run; semantic-color violation found and fixed, tests hardened
-- [ ] Manual browser smoke (`/app/dashboard` light/dark, `/about` placeholder) — pending
+- [x] Merged to master. Manual browser smoke (`/app/dashboard` light/dark, `/about` placeholder) never recorded — folded into the QA sweep `t-0026`.
 - [x] Slice 2 (Jobs): `drizzle.config.ts` schema path generalized to the `src/db/schema/index.ts` barrel
 
 ## Migration Slice 1 — Authentication (email/password) (NEW)
@@ -205,8 +211,8 @@
 - [x] Frontend: typecheck + lint + test (73) + Docker production build — all green
 - [x] Adversarial six-lens review (security/contract/strict-TS/scraper/test-faithfulness/design); coverage gaps closed, status cast hardened
 - [x] Live end-to-end smoke on the Docker stack (via `:8080` proxy): register→201, create→201, list→`{data,meta}`, scrape `example.com`→ScrapeResult (preview-only, no persist)
-- [ ] **Deferred — timeline auto-entries:** the NestJS `JobService` wrote a timeline event on create/status-change; that integration lands with **Slice 4** (Timeline + Reminders + Notifications), so Slice 2 jobs create/move without timeline side-effects.
-- [ ] Manual browser pass (Add-Job modal tabs, drawer deep-link + Back, dark mode) — recommended before merge
+- [x] **Resolved:** the timeline auto-entries deferred here landed with Slice 4 — job create/status-change write timeline events today.
+- [x] Merged to master. Manual browser pass (Add-Job modal tabs, drawer deep-link + Back, dark mode) never recorded — folded into `t-0026`.
 
 ## Migration Slice 3 — Dashboard & Kanban (NEW)
 
@@ -231,8 +237,8 @@
 - [x] Frontend: typecheck + lint + test (105) + Docker production build — all green
 - [x] Adversarial six-lens review (security/contract/strict-TS/ghost-derivation/dnd-optimistic/test-faithfulness); search capped + StatCard & drag-vs-tap tests added
 - [x] Live end-to-end smoke on the Docker stack: kanban groups the 6 columns with **derived ghost-days**; `/stats` global; a `/move` (APPLIED→OFFER) persists into the board
-- [ ] **Note — ghost-days derived live; move events don't write timeline entries yet** (timeline auto-events land in Slice 4)
-- [ ] Manual browser pass (drag-and-drop, card → dashboard drawer, dark mode) — recommended before merge
+- [x] **Resolved:** ghost-days are still derived live, and move events *do* write timeline entries since Slice 4.
+- [x] Merged to master. Manual browser pass (drag-and-drop, card → drawer, dark mode) never recorded — folded into `t-0026`.
 
 ### Slice 3.5 — Jobs Workspace + Overview Dashboard (2026-06-03)
 - `/app/jobs` is now the unified workspace with a **Board ⇄ List** toggle (default List, `?view=board|list`, shareable; preserves `?job=`).
@@ -241,7 +247,7 @@
 - `useStats` hook added; job create/update/delete + move now invalidate the stats key; kanban card preserves `?view` when opening the drawer. **No backend changes.** (Spec §9 → "Slice 3.5 resolutions".)
 - [x] Frontend: typecheck + lint + test (116) + Docker production build — all green; backend typecheck — green.
 - [x] Adversarial six-lens review (behavior-parity/strict-TS/dead-code/test-quality/conventions/data-flow); coverage gaps closed (view→List clean-URL, job-mutation cache invalidations, useStats initialData isolation).
-- [ ] Manual browser pass (toggle Board⇄List, `?view=` survives refresh, open-from-board returns to board, stats reflect adds) — recommended before merge.
+- [x] Merged to master. Manual browser pass (Board⇄List toggle, `?view=` survives refresh, stats) never recorded — folded into `t-0026`.
 
 ## Migration Slice 4 — Timeline + Reminders + Notifications + Real-time (NEW) (2026-06-04)
 
@@ -265,8 +271,8 @@
 - [x] **Real-time verified end-to-end**: a socket.io client through the Next proxy received the cron-pushed REMINDER notification the instant the in-process `*/5` cron fired.
 
 **Gates (all green):** backend `typecheck`+`lint`+**248 tests**; frontend `typecheck`+`lint`+**164 tests**+**production Docker build**. Per-chunk implementer→ground-truth-gate→adversarial-review loop; final whole-slice review APPROVE. No `git push`, no "Claude" in commit messages.
-- [ ] Deferred — full backlog + rationale in [`docs/deferred-tasks.md`](docs/deferred-tasks.md): **email reminders (likely next)**, recurring reminders, soft-delete/`completedAt`, `STATUS_CHANGE`/`GENERAL` notifications, `/unread-count` endpoint, retention/auto-archive, global activity feed (`/app/timeline`), production WS-upgrade proxy, socket.io Redis adapter (multi-instance tripwire), web/mobile push. (Real-time works in dev on the long-polling fallback.)
-- [ ] Manual browser pass + **merge to master** (user merges).
+- **Deferred backlog →** moved to `.blink/tasks/` (2026-08-25): email delivery `t-0001`, recurring reminders `t-0002`, soft-delete/`completedAt` `t-0003`, `STATUS_CHANGE`/`GENERAL` `t-0004`, `/unread-count` `t-0005`, retention `t-0006`, WS-upgrade proxy `t-0007`, Redis adapter `t-0008`, push `t-0009`. The global activity feed shipped 2026-06-17.
+- [x] Merged to master. Manual browser pass never recorded — folded into `t-0026`.
 
 ## Migration Slice 5 — Filters + Search + List View (NEW) (2026-06-04)
 
@@ -284,8 +290,8 @@
 ### Verification
 - [x] Frontend: typecheck + lint + **216 tests** + **production Docker build** — all green.
 - [x] Adversarial 5-lens review (strict-TS/cache-keys · URL-sync/data-flow · hybrid-drag · test-faithfulness · design/a11y/conventions); fixes applied: search-input debounce loop, responsive table columns, unresolved-drop snapshot restore, dynamic sort aria-label, list-view board-fetch gating, +getPage-refresh / setSort-toggle / active-arrow / skeleton tests.
-- [ ] **Known testing boundary:** dnd-kit drag is not exercised at the component level (jsdom can't resolve drop targets); the drop decision is covered exhaustively by `resolveDrop` unit tests + the live smoke. The Ghost column shows the `GhostMeter` ("Nd") rather than a separate relative-activity label (accepted simplification).
-- [ ] Manual browser pass (search/sort/paginate/reset, deep-link SSR, board hybrid drag while filtered, toggle preserves filters) + **merge to master** (user merges).
+- **Note — known testing boundary:** dnd-kit drag is not exercised at the component level (jsdom can't resolve drop targets); the drop decision is covered exhaustively by `resolveDrop` unit tests + the live smoke. The Ghost column shows the `GhostMeter` ("Nd") rather than a separate relative-activity label (accepted simplification).
+- [x] Merged to master. Manual browser pass (search/sort/paginate/reset, deep-link SSR, hybrid drag while filtered) never recorded — folded into `t-0026`.
 
 ### Slice 5 follow-up — List column filters (Notion-style) (2026-06-04)
 > **Spec**: `docs/superpowers/specs/2026-06-04-list-column-filters-redesign-design.md` · **Plan**: `docs/superpowers/plans/2026-06-04-list-column-filters-redesign.md`. Orchestrated via the `Workflow` tool (sequential TDD batches → ground-truth gate → 5-lens adversarial review → review-fix pass).
@@ -293,7 +299,7 @@
 - Backend (additive, no migration): `createdFrom`/`createdTo` on `GET /api/jobs` (schema + repo SQL, UTC day boundaries, end-of-day-inclusive `createdTo`).
 - `isFiltered` split into `isBoardFiltered` (search+ghost) and `isListFiltered` (all list filters) — also fixes the earlier nit where a status-only filter paused board reordering. `SortControl` + `SORT_OPTIONS` removed. `jobsListKey` extended with the date params so the Added filter refetches; SSR `FILTER_PARAMS` includes `from`/`to`.
 - [x] Backend typecheck+lint+tests; frontend typecheck+lint+**231 tests** + Docker prod build — all green. Adversarial 5-lens review; blockers (date in cache key, exactOptional build break) + major (SSR date params) + cleanups fixed.
-- [ ] **Known minor:** the Status/Date funnel menus don't auto-close on select (Escape/outside-click closes them); easy follow-up to wire `AnchoredPopoverClose`. Manual browser pass + **merge to master** (user merges).
+- [x] **Resolved 2026-08-25:** the Status/Date funnel menus *do* auto-close on apply and clear (`jobs-filter-menu.tsx:66,74`). Merged to master; the manual pass is folded into `t-0026`.
 
 ## Migration Slice 6 — File Storage + AI / Gemini (**re-scoped**) (2026-06-05)
 
@@ -311,7 +317,7 @@
 - [x] Frontend: `@react-pdf/renderer` (ESM → `transpilePackages` in `next.config.ts`); **`ResumeDocument`** (react-pdf, mirrors the `.tex`, `splitBold` bold runs, project URLs); extended **`ResumeContentEditor`** to projects/skills/education; `useResumes` hooks; live **PDF preview** (`PDFViewer`, dynamic ssr:false) + structured editor + **Copy LaTeX · Open in Overleaf · Download PDF** (`PDFDownloadLink`); `/app/resumes` workspace reached from a persona's **Generate résumé** link.
 - [x] **Gates green:** backend `typecheck`+`lint`+**317 tests**; frontend `typecheck`+`lint`+**259 tests**+**production Docker build** (build fix: transpile the ESM-only react-pdf). Adversarial 5-lens review (3 blockers + 4 majors fixed: LaTeX URL/email escaping, escapeLatex double-escape, rate-limit-after-ownership, react-pdf project URL + `'use client'`; security scoping rated clean).
 - [x] **Live smoke (Docker, real key):** persona→résumé→`.tex` end-to-end on Gemini (validated on `gemini-2.5-flash-lite` when `gemini-3.5-flash` was transiently overloaded; the path is model-agnostic). `GEMINI_MODEL` restored to `gemini-3.5-flash`.
-- [ ] **Known boundaries:** react-pdf renders to PDF not the DOM, so `ResumeDocument`/preview/download are covered by `splitBold` units + element-build smoke + the live manual smoke (no `pdf()` in CI); job-tailored résumé reachable via `?job=` until the **JobDrawer tab wires in 6c**.
+- **Note — known boundaries:** react-pdf renders to PDF not the DOM, so `ResumeDocument`/preview/download are covered by `splitBold` units + element-build smoke + the live manual smoke (no `pdf()` in CI). The job-tailored résumé caveat is **resolved** — the JobDrawer launcher wired in with 6c.
 
 **Slice 6c — Cover letters + JobDrawer wiring (DONE)**
 > **Plan**: `docs/superpowers/plans/2026-06-06-slice-6c-cover-letters-jobdrawer.md`. Orchestrated via the `Workflow` tool: sequential per-task TDD → solo gates → 5-lens adversarial review → review-fix → live smoke.
@@ -322,7 +328,7 @@
 
 ### ✅ Slice 6 complete (6a + 6b + 6c) — branch `slice-6-ai-resume-cover-letter`
 Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + client-side react-pdf preview/PDF, persona-only or job-tailored) → per-job **cover letters** (Markdown + PDF), all on **Gemini 3.5 Flash**, **zero file storage** (text/JSON in Postgres; PDFs render client-side), shared DB-derived hourly rate limit, env-gated. Migrations `0004`–`0006`. **Merged to master 2026-06-06** (+ persona/résumé UI polish: card grid + edit sheet, full-width-controls/sticky-preview résumé workspace, job-picker on the résumé form, PDF name/contact gap fix). Local master is ahead of `origin/master` — user pushes.
-- [ ] **Next:** user manual browser pass + **merge to master**. Then the remaining migration backlog: Chrome extension (Slice 8), public-pages redesign, Google OAuth, email reminders (`docs/deferred-tasks.md`).
+- [x] Merged to master. Remaining backlog moved to `.blink/tasks/` — Chrome extension shipped (Slice 8), public pages shipped, Google OAuth `t-0020`, email delivery `t-0001`.
 - [x] **Follow-up (user-requested 2026-06-06): Personas + User Master-Profile redesign — brainstormed + approved.** See **Slice 7** below (design spec + 7a/7b plans). Brief `docs/superpowers/specs/2026-06-06-personas-profile-redesign-brief.md` superseded by the design spec `…-personas-profile-redesign-design.md`.
 
 ---
@@ -374,7 +380,7 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] Wired into **every entity delete**: cover letter (list row + editor header), résumé (list row), persona (card), reminder (item), job (drawer — **migrated off its inline 2-step confirm**). Each message names the target; the job one warns about cascading timeline/reminders/cover letters.
 - [x] **Micro removals stay instant** (bullets, links, chips, experience/project/skill/education rows, persona pickers) — unchanged.
 - [x] Adversarial review (3 lenses): 1 confirmed minor (list-row delete didn't block a second in-flight mutation — fixed with an `if (del.isPending) return` guard), 5 rejected/refuted (hook lifecycle sound, micro-removals verified untouched). Gates: frontend `typecheck`+`lint`+**472 tests** (new `useConfirm` test; 7 delete tests updated to click through the dialog) + production build.
-- [ ] **Next: Slice 8 — Chrome extension.** Then the backlog: public-pages redesign, Google OAuth, email reminders (`docs/deferred-tasks.md`). Deferred: résumé page still has the old centered/stacked layout (mirror the route-split/side-rail there if wanted); tone/length presets; job-URL scrape into the paste form; side-by-side rewrite compare if the route widens.
+- [x] Merged to master. Slice 8 and the public pages have since shipped; the polish items listed here are `t-0021`–`t-0024` in `.blink/tasks/` (note: the "old centered/stacked résumé layout" claim was already wrong — see `t-0021`).
 
 ## Timeline + Settings pages (DONE 2026-06-17)
 
@@ -384,7 +390,7 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] **Theme system** (frontend-only, no `next-themes`) — unlocks the previously-unreachable dark mode (the `.dark` wiring was stubbed since Slice 0/1). Cookie-backed (`theme=light|dark|system`), no-FOUC inline `ThemeScript` (first child of `<body>`; `<html suppressHydrationWarning>`), `ThemeProvider` + `useTheme` toggling `.dark` on `<html>` with OS-follow in `system`. Theme tests (class + cookie + system change).
 - [x] **`/app/settings` page** — Appearance (Light/Dark/System `SegmentedControl`), Account (read-only name/email + "Edit profile →" + Sign out), Notifications (in-app on; email noted as upcoming). `SettingsSection` wrapper; workspace test.
 - [x] Gates: backend `typecheck`+`lint`+**492 tests**; frontend `typecheck`+`lint`+**490 tests**+production build (via `docker build --target production`, host `.next` is root-owned).
-- [ ] Manual browser pass (dark-mode flip across app, timeline paging + row→drawer, settings) + merge to master — pending user.
+- [x] Merged to master. Manual browser pass (dark-mode flip, timeline paging + row→drawer, settings) never recorded — folded into `t-0026`.
 
 ---
 
@@ -396,7 +402,7 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] **Security (4-lens adversarial review, 19 confirmed findings fixed)** — SSRF hardened: `ipaddr.js` classifier (kills the hex-mapped-IPv6 `::ffff:a9fe:a9fe` bypass), redirect re-validation per hop, **connect-time IP pinning** via an undici dispatcher (closes DNS rebinding), render path guarded too, response body-size cap (5 MB) + snapshot length clamp (100 KB). Scrape AI extraction is **rate-limited + metered** against the hourly AI budget (threaded `userId`); prompt-injection guardrail; 90s overall scrape deadline.
 - [x] **Config** — `docker-compose.yml` now passes `GEMINI_*` + `JINA_API_KEY` + `SCRAPER_RENDER_ENABLED` to the backend container (they were never wired, so AI features couldn't run as deployed). Set `GEMINI_API_KEY` in the root `.env` for the clean AI path; render-only works keyless. **NB: the `GEMINI_MODEL=gemini-3.5-flash` in `backend-express/.env` appears invalid — use e.g. `gemini-2.5-flash-lite`; this affects all AI features, not just scraping.**
 - [x] Gates: backend `typecheck`+`lint`+**549 tests**; frontend `typecheck`+`lint`+**493 tests**+production build. Live-smoked the exact failing Naukri URL → `title: Quality Analyst`, `company: Teleperformance Global Services`, `status: ok`, `source: ai`, clean image-free snapshot.
-- [ ] Manual browser pass (paste a Naukri/LinkedIn URL through the modal) + merge to master — pending user. Deferred lows recorded in `docs/deferred-tasks.md`.
+- [x] Merged to master. Manual browser pass (paste a Naukri/LinkedIn URL through the modal) never recorded — folded into `t-0026`. Deferred lows are `t-0010`/`t-0011`.
 
 ---
 
@@ -418,9 +424,17 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 ### Verification
 - [x] Backend `typecheck`+`lint`+**636 tests**; frontend `typecheck`+`lint`+**572 tests** + production build — all green.
 - [x] Live-smoked in-browser (create outreach → status change → timeline events → list + board badges) at desktop 1440 + mobile 390.
-- [ ] Manual browser pass + **merge to master** — pending user. Deferred outreach follow-ups (nudge sweep, referral-message generation, "referrer ghosted" jobs filter) recorded in `docs/deferred-tasks.md`.
+- [x] **Merged to master 2026-07-16** (merge `2947a15`). Manual browser pass folded into `t-0026`; the outreach follow-ups are `t-0017` (nudge sweep), `t-0018` (referral message generation), `t-0019` (referrer-ghosted filter).
 
 ---
+
+> ## ⚠️ Everything below is the original NestJS + Nuxt plan (superseded)
+>
+> The sections from here to the end are the pre-migration checklist. The stacks
+> they describe (`backend/` NestJS, `frontend/` Nuxt) were **deleted 2026-07-05**;
+> their `[T]` / `[ ]` boxes refer to files that no longer exist. Kept as history —
+> the shipped equivalents are the Migration Slice sections above. Nothing here was
+> converted into a tracker task, deliberately.
 
 ## Dependency Diagram
 

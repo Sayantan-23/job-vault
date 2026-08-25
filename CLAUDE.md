@@ -122,3 +122,21 @@ Slice order (per the spec): Foundation → Auth → **Jobs** → Dashboard/Kanba
 
 - **backend-express:** `NODE_ENV`, `PORT`, `CORS_ORIGINS`, `DATABASE_URL`, `JWT_SECRET`, `JWT_ACCESS_EXPIRY`, `JWT_REFRESH_EXPIRY`, `LOG_LEVEL`; later `GOOGLE_*`, `CLOUDINARY_*`, `GEMINI_API_KEY` (optional, validated by Zod at startup).
 - **frontend-next:** `BACKEND_INTERNAL_URL` (server-side proxy target), `NEXT_PUBLIC_API_BASE` (legacy fallback).
+
+<!-- blink:begin v0.5.2 -->
+## Project tracking (Blink) — not optional
+
+job-vault keeps its plan in `.blink/`, one file per entity. The file
+is the record and it is written **before** the work, never after it. Write to
+`.blink/` when you plan, start, finish, block or drop work, and when a
+real technical choice gets made.
+
+- Tasks run `backlog` → `planned` → `in_progress` → `done`; exits: `dropped`,
+  `blocked` (needs `blocked_by`), `paused` (needs `paused_reason`). Never delete a file.
+- A task is created at `backlog` while it is still being planned, not when work
+  on it starts. A real choice becomes a file in `.blink/decisions/`.
+- Run `blink validate` after every write; `0` means clean.
+
+Full contract: the `/blink:tracking` skill; fields:
+`.blink/SCHEMA.md`. Read both before your first write.
+<!-- blink:end -->
