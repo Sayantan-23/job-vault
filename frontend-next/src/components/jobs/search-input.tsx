@@ -8,10 +8,12 @@ export function SearchInput({
   value,
   onChange,
   placeholder = 'Search jobs…',
+  ariaLabel = 'Search jobs',
 }: {
   value: string
   onChange: (value: string) => void
   placeholder?: string
+  ariaLabel?: string
 }) {
   const [local, setLocal] = useState(value)
   const ref = useRef<HTMLInputElement>(null)
@@ -73,7 +75,7 @@ export function SearchInput({
         ref={ref}
         type="text"
         role="searchbox"
-        aria-label="Search jobs"
+        aria-label={ariaLabel}
         placeholder={placeholder}
         value={local}
         onChange={(e) => handleInput(e.target.value)}

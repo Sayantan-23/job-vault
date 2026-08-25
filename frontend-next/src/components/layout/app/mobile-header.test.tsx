@@ -48,7 +48,7 @@ describe('MobileHeader', () => {
     expect(screen.queryByRole('navigation', { name: 'Main navigation' })).toBeNull()
   })
 
-  it('opens all five nav links with the correct labels and hrefs', async () => {
+  it('opens all six nav links with the correct labels and hrefs', async () => {
     renderHeader()
     await userEvent.click(toggle())
     expect(toggle()).toHaveAttribute('aria-expanded', 'true')
@@ -59,6 +59,7 @@ describe('MobileHeader', () => {
       'Personas',
       'Résumés',
       'Cover letters',
+      'Answers',
       'Timeline',
     ])
     expect(screen.getByRole('link', { name: 'Résumés' })).toHaveAttribute('href', '/app/resumes')

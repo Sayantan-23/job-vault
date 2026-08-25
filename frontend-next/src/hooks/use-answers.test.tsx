@@ -9,9 +9,11 @@ vi.mock('@/lib/api-client', () => ({
 }))
 
 function wrapperFor(qc: QueryClient) {
-  return ({ children }: { children: ReactNode }) => (
+  const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   )
+  Wrapper.displayName = 'QueryWrapper'
+  return Wrapper
 }
 
 describe('useMarkAnswerUsed', () => {
