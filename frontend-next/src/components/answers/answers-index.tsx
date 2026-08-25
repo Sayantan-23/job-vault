@@ -85,17 +85,23 @@ export function AnswersIndex() {
         title="Answers"
         description="Reusable answers to the questions application forms keep asking."
         actions={
-          <Button type="button" onClick={openNew}>
-            <Plus className="size-4" aria-hidden="true" />
-            New answer
-          </Button>
+          <>
+            <SearchInput
+              value={filter}
+              onChange={setFilter}
+              placeholder="Search answers…"
+              ariaLabel="Search answers"
+              className="basis-0"
+            />
+            <Button type="button" onClick={openNew} aria-label="New answer">
+              <Plus className="size-4" aria-hidden="true" />
+              <span className="hidden sm:inline">New answer</span>
+            </Button>
+          </>
         }
       />
       {personas !== undefined && personas.length === 0 ? <NoPersonasHint noun="answer" /> : null}
       {remove.error ? <MutationErrorAlert error={remove.error} /> : null}
-      <div className="mb-4 max-w-sm">
-        <SearchInput value={filter} onChange={setFilter} placeholder="Search answers…" ariaLabel="Search answers" />
-      </div>
       <AnswerList answers={rows} onSelect={open} onDelete={onDelete} onCopied={(id) => markUsed.mutate(id)} />
       <AnswerDrawer
         answer={(answers ?? []).find((a) => a.id === selectedId) ?? null}

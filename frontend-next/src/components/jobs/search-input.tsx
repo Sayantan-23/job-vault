@@ -3,17 +3,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { Search, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
 
 export function SearchInput({
   value,
   onChange,
   placeholder = 'Search jobs…',
   ariaLabel = 'Search jobs',
+  className,
 }: {
   value: string
   onChange: (value: string) => void
   placeholder?: string
   ariaLabel?: string
+  className?: string
 }) {
   const [local, setLocal] = useState(value)
   const ref = useRef<HTMLInputElement>(null)
@@ -68,8 +71,10 @@ export function SearchInput({
     // button alongside ours; role="searchbox" keeps the search a11y semantics.
     // basis-full puts the search on its own full-width line below sm; from sm up
     // it collapses to basis-0 + grow so it absorbs all space the fixed-width
-    // siblings (select / toggle / add) leave over.
-    <div className="relative min-w-[8rem] grow basis-full sm:basis-0">
+    // siblings (select / toggle / add) leave over. A caller can pass className to
+    // opt out of that below-sm line (twMerge lets `basis-0` beat `basis-full`) —
+    // the answers header keeps the search inline with its action button at every width.
+    <div className={cn('relative min-w-[8rem] grow basis-full sm:basis-0', className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
       <Input
         ref={ref}
