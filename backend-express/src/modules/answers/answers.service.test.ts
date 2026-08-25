@@ -11,9 +11,25 @@ vi.mock('./answers.repository.js', () => ({
     remove: vi.fn(),
   },
 }))
+vi.mock('@/modules/personas/personas.repository.js', () => ({ personasRepository: { findById: vi.fn() } }))
+vi.mock('@/modules/jobs/jobs.repository.js', () => ({ jobsRepository: { findById: vi.fn() } }))
+vi.mock('@/modules/ai/gemini.service.js', () => ({
+  geminiService: { isAiEnabled: vi.fn(() => true), generateStructured: vi.fn() },
+}))
+vi.mock('@/modules/ai/ai.rate-limit.js', () => ({ assertWithinRateLimit: vi.fn() }))
+vi.mock('@/modules/ai/ai-usage.repository.js', () => ({ aiUsageRepository: { recordUsageEvent: vi.fn() } }))
+vi.mock('@/modules/ai/ai.prompts.js', () => ({
+  buildAnswerPrompt: vi.fn(() => 'PROMPT'),
+  AnswerDraftSchema: { parse: vi.fn() },
+}))
 
 import { answersRepository } from './answers.repository.js'
 import { answersService } from './answers.service.js'
+import { personasRepository } from '@/modules/personas/personas.repository.js'
+import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
+import { geminiService } from '@/modules/ai/gemini.service.js'
+import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
+import { aiUsageRepository } from '@/modules/ai/ai-usage.repository.js'
 
 const repo = vi.mocked(answersRepository)
 const USER = 'user-1'
@@ -84,5 +100,69 @@ describe('answersService.remove', () => {
   it('throws NOT_FOUND when nothing was deleted', async () => {
     repo.remove.mockResolvedValue(false)
     await expect(answersService.remove(USER, ID)).rejects.toBeInstanceOf(AppError)
+  })
+})
+
+const personas = vi.mocked(personasRepository)
+const jobs = vi.mocked(jobsRepository)
+const gemini = vi.mocked(geminiService)
+const usage = vi.mocked(aiUsageRepository)
+
+const PERSONA_ID = 'persona-1'
+const persona = {
+  id: PERSONA_ID,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  userId: USER,
+  name: 'Backend',
+  rawInput: null,
+  data: { basics: { name: 'Ada', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] },
+}
+
+describe('answersService.generate', () => {
+  beforeEach(() => {
+    gemini.isAiEnabled.mockReturnValue(true)
+    gemini.generateStructured.mockResolvedValue({ short: 'S', long: 'L' })
+  })
+
+  it('returns both variants without persisting anything', async () => {
+    personas.findById.mockResolvedValue(persona)
+    const draft = await answersService.generate(USER, { question: 'Why?', personaId: PERSONA_ID })
+    expect(draft).toEqual({ short: 'S', long: 'L' })
+    expect(repo.create).not.toHaveBeenCalled()
+  })
+
+  it('refuses when AI is not configured', async () => {
+    gemini.isAiEnabled.mockReturnValue(false)
+    await expect(answersService.generate(USER, { question: 'Why?', personaId: PERSONA_ID })).rejects.toBeInstanceOf(AppError)
+  })
+
+  it('does not spend the rate limit when the persona is not the user\u2019s', async () => {
+    personas.findById.mockResolvedValue(null)
+    await expect(answersService.generate(USER, { question: 'Why?', personaId: PERSONA_ID })).rejects.toBeInstanceOf(AppError)
+    expect(assertWithinRateLimit).not.toHaveBeenCalled()
+  })
+
+  it('does not spend the rate limit when the job is not the user\u2019s', async () => {
+    personas.findById.mockResolvedValue(persona)
+    jobs.findById.mockResolvedValue(null)
+    await expect(
+      answersService.generate(USER, { question: 'Why?', personaId: PERSONA_ID, jobId: 'job-1' }),
+    ).rejects.toBeInstanceOf(AppError)
+    expect(assertWithinRateLimit).not.toHaveBeenCalled()
+  })
+
+  it('records exactly one usage event, after a successful generation', async () => {
+    personas.findById.mockResolvedValue(persona)
+    await answersService.generate(USER, { question: 'Why?', personaId: PERSONA_ID })
+    expect(usage.recordUsageEvent).toHaveBeenCalledTimes(1)
+    expect(usage.recordUsageEvent).toHaveBeenCalledWith(USER, 'answer_generate')
+  })
+
+  it('records no usage event when the model call fails', async () => {
+    personas.findById.mockResolvedValue(persona)
+    gemini.generateStructured.mockRejectedValue(new AppError('INTERNAL_ERROR', 'boom'))
+    await expect(answersService.generate(USER, { question: 'Why?', personaId: PERSONA_ID })).rejects.toBeInstanceOf(AppError)
+    expect(usage.recordUsageEvent).not.toHaveBeenCalled()
   })
 })

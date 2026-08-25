@@ -1,7 +1,13 @@
 import { AppError } from '@/shared/errors.js'
 import { answersRepository } from './answers.repository.js'
+import { geminiService } from '@/modules/ai/gemini.service.js'
+import { assertWithinRateLimit } from '@/modules/ai/ai.rate-limit.js'
+import { aiUsageRepository } from '@/modules/ai/ai-usage.repository.js'
+import { buildAnswerPrompt, AnswerDraftSchema, type AnswerDraft } from '@/modules/ai/ai.prompts.js'
+import { personasRepository } from '@/modules/personas/personas.repository.js'
+import { jobsRepository } from '@/modules/jobs/jobs.repository.js'
 import type { QuestionAnswerRow } from '@/db/schema/question-answers.js'
-import type { CreateAnswerInput, UpdateAnswerInput } from './answers.schema.js'
+import type { CreateAnswerInput, UpdateAnswerInput, GenerateAnswerInput } from './answers.schema.js'
 
 // An empty string from a patch means "clear this variant"; the column is
 // nullable, so it is stored as NULL rather than ''.
@@ -66,4 +72,33 @@ async function remove(userId: string, id: string): Promise<{ id: string }> {
   return { id }
 }
 
-export const answersService = { create, list, update, markUsed, remove }
+// Returns a CANDIDATE — nothing is written to question_answers. The user edits
+// the draft and saves it through create(), the same stage-then-commit flow as
+// cover-letter refine.
+async function generate(userId: string, input: GenerateAnswerInput): Promise<AnswerDraft> {
+  if (!geminiService.isAiEnabled()) throw new AppError('SERVICE_UNAVAILABLE', 'AI features are not configured')
+
+  const persona = await personasRepository.findById(userId, input.personaId)
+  if (!persona) throw new AppError('NOT_FOUND', 'Persona not found')
+
+  let job: { title: string; company: string; snapshot: string | null } | undefined
+  if (input.jobId) {
+    const found = await jobsRepository.findById(userId, input.jobId)
+    if (!found) throw new AppError('NOT_FOUND', 'Job not found')
+    job = { title: found.title, company: found.company, snapshot: found.snapshotMarkdown }
+  }
+
+  // Spend the shared hourly budget only after ownership is confirmed, so a bad
+  // id can never cost the user a slot.
+  await assertWithinRateLimit(userId)
+
+  const draft = await geminiService.generateStructured(
+    buildAnswerPrompt(persona.data, input.question, job, input.instructions),
+    AnswerDraftSchema,
+  )
+  // Record the usage only after a successful generation.
+  await aiUsageRepository.recordUsageEvent(userId, 'answer_generate')
+  return draft
+}
+
+export const answersService = { create, list, update, markUsed, remove, generate }
