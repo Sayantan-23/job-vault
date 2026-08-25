@@ -191,8 +191,15 @@ the same array, so it needs no change.
 **Components** (`src/components/answers/`). Every styled element is its own
 component — no inline styled markup:
 
-- `AnswerList` — the shared `DocumentList` from `components/documents/`, same as
-  cover letters and the résumé library.
+- `AnswerList` + `AnswerListRow` — **dedicated, not the shared `DocumentList`.**
+  `DocumentRow` is a fixed four-field shape (`title`, `context`, `personaName`,
+  `createdAt`) with no slot for interactive children; an answer row carries no
+  context or persona and needs two copy chips *inside* it. Bending the shared
+  type into a `ReactNode`-slot component would put the cover-letter and résumé
+  libraries at risk to save a `<ul className="divide-y divide-hairline">`. The
+  answer row copies `DocumentListRow`'s conventions instead — `div role="button"`
+  because it hosts nested buttons, the `event.target !== event.currentTarget`
+  keydown guard, and `stopPropagation` on every in-row button.
 - `AnswerListRow` — question as the row title; `AnswerCopyChip` per present
   variant showing its character count; relative last-used on the right.
 - `AnswerCopyChip` — `S` / `L` chip that copies and fires `useMarkAnswerUsed`.
