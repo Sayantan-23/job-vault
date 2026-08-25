@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { buildStructurePrompt, buildResumePrompt, buildCoverLetterPrompt, buildRefineCoverLetterPrompt } from './ai.prompts.js'
+import {
+  buildStructurePrompt,
+  buildResumePrompt,
+  buildCoverLetterPrompt,
+  buildRefineCoverLetterPrompt,
+  buildAnswerPrompt,
+  AnswerDraftSchema,
+} from './ai.prompts.js'
 import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 const BG: ProfileContent = { basics: { name: 'A', links: [] }, summary: 's', experience: [], projects: [], skills: [], education: [] }
@@ -103,5 +110,53 @@ describe('buildRefineCoverLetterPrompt', () => {
   it('omits the ADDITIONAL INSTRUCTIONS block for a preset without instructions', () => {
     const p = buildRefineCoverLetterPrompt(BODY, 'shorten')
     expect(p).not.toContain('ADDITIONAL INSTRUCTIONS:')
+  })
+})
+
+describe('buildAnswerPrompt', () => {
+  const background = {
+    basics: { name: 'Ada', links: [] },
+    summary: 'Backend engineer',
+    experience: [],
+    projects: [],
+    skills: [],
+    education: [],
+  }
+
+  it('includes the question, the background and both character budgets', () => {
+    const prompt = buildAnswerPrompt(background, 'Why are you leaving your current role?')
+    expect(prompt).toContain('Why are you leaving your current role?')
+    expect(prompt).toContain('Backend engineer')
+    expect(prompt).toContain('500')
+    expect(prompt).toContain('2000')
+  })
+
+  it('asks for plain prose, not markdown — the destination is a bare textarea', () => {
+    expect(buildAnswerPrompt(background, 'Why?')).toMatch(/plain prose/i)
+  })
+
+  it('omits the job section when no job is given', () => {
+    expect(buildAnswerPrompt(background, 'Why?')).not.toContain('TARGET JOB')
+  })
+
+  it('includes the job section when a job is given', () => {
+    const prompt = buildAnswerPrompt(background, 'Why?', { title: 'Staff Engineer', company: 'Acme', snapshot: 'We build things' })
+    expect(prompt).toContain('TARGET JOB')
+    expect(prompt).toContain('Acme')
+    expect(prompt).toContain('We build things')
+  })
+
+  it('includes extra instructions when given', () => {
+    expect(buildAnswerPrompt(background, 'Why?', undefined, 'Be blunt')).toContain('Be blunt')
+  })
+})
+
+describe('AnswerDraftSchema', () => {
+  it('accepts both variants', () => {
+    expect(AnswerDraftSchema.parse({ short: 'a', long: 'b' })).toEqual({ short: 'a', long: 'b' })
+  })
+
+  it('rejects a response missing a variant', () => {
+    expect(() => AnswerDraftSchema.parse({ short: 'a' })).toThrow()
   })
 })
