@@ -67,7 +67,11 @@ describe('PersonasWorkspace', () => {
       <PersonasWorkspace />,
       { wrapper: seeded([], { enabled: false, maxPersonas: 5 }) },
     )
-    expect(screen.getByRole('status')).toHaveTextContent(/résumé import is disabled/i)
+    // Both branches of the AI-off hint (dev names GEMINI_API_KEY, production is
+    // generic) point at résumé import; assert the shared meaning, not one branch's
+    // copy — vitest runs as NODE_ENV=development, so only the dev branch renders.
+    expect(screen.getByRole('status')).toHaveTextContent(/AI features/i)
+    expect(screen.getByRole('status')).toHaveTextContent(/résumé/i)
     expect(screen.getByRole('button', { name: /new persona/i })).toBeEnabled()
   })
 
@@ -78,7 +82,7 @@ describe('PersonasWorkspace', () => {
       { wrapper: seeded(five, { enabled: false, maxPersonas: 5 }) },
     )
     const statuses = screen.getAllByRole('status')
-    expect(statuses.some((s) => /résumé import is disabled/i.test(s.textContent ?? ''))).toBe(true)
+    expect(statuses.some((s) => /AI features/i.test(s.textContent ?? ''))).toBe(true)
     expect(statuses.some((s) => /maximum of 5 personas/i.test(s.textContent ?? ''))).toBe(true)
     expect(screen.getByRole('button', { name: /new persona/i })).toBeDisabled()
   })

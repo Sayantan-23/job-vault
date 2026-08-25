@@ -14,6 +14,10 @@ interface Props {
   // (Copy↔Copied); with it (e.g. "Copy <document>") each row's control is also
   // distinguishable to AT when several rows share the same visible label.
   ariaLabel?: string
+  // Fired only after the clipboard write RESOLVES. Side effects that record a
+  // copy (e.g. stamping last_used_at) belong here, not in getText — a rejected
+  // write must not look like a copy that happened.
+  onCopied?: () => void
   className?: string
 }
 
@@ -21,7 +25,7 @@ interface Props {
 // bare <button> (not the Button primitive) so the caller's className fully owns
 // the look — the JobDrawer launcher rows pass a compact action style that must
 // match the sibling download <a>.
-export function CopyButton({ getText, label = 'Copy', copiedLabel = 'Copied', ariaLabel, className }: Props) {
+export function CopyButton({ getText, label = 'Copy', copiedLabel = 'Copied', ariaLabel, onCopied, className }: Props) {
   const [copied, setCopied] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -31,6 +35,7 @@ export function CopyButton({ getText, label = 'Copy', copiedLabel = 'Copied', ar
     try {
       await navigator.clipboard.writeText(await getText())
       setCopied(true)
+      onCopied?.()
       clearTimeout(timer.current)
       timer.current = setTimeout(() => setCopied(false), 2000)
     } catch {

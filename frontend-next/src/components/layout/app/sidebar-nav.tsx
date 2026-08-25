@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Briefcase, Users, FileText, Mail, Clock } from 'lucide-react'
+import { Briefcase, Users, FileText, Mail, MessageSquareQuote, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // Dashboard is gone (the jobs workspace is the home now). Profile + Settings live
@@ -13,6 +13,7 @@ export const NAV = [
   { href: '/app/personas', label: 'Personas', icon: Users },
   { href: '/app/resumes', label: 'Résumés', icon: FileText },
   { href: '/app/cover-letters', label: 'Cover letters', icon: Mail },
+  { href: '/app/answers', label: 'Answers', icon: MessageSquareQuote },
   { href: '/app/timeline', label: 'Timeline', icon: Clock },
 ] as const
 

@@ -1,5 +1,6 @@
 import {
   AI_STATUS_KEY,
+  ANSWERS_KEY,
   COVER_LETTERS_KEY,
   DASHBOARD_STATS_KEY,
   PERSONAS_KEY,
@@ -55,6 +56,8 @@ export const resumesQuery = (jobId?: string): QueryDesc =>
     : { key: RESUMES_KEY, path: '/api/resumes' }
 
 export const coverLettersQuery: QueryDesc = { key: COVER_LETTERS_KEY, path: '/api/cover-letters' }
+
+export const answersQuery: QueryDesc = { key: ANSWERS_KEY, path: '/api/answers' }
 
 export const coverLettersByJobQuery = (jobId: string): QueryDesc => ({
   key: coverLettersByJobKey(jobId),

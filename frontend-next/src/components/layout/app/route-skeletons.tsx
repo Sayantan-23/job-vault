@@ -71,6 +71,21 @@ export function CoverLettersSkeleton() {
   )
 }
 
+export function AnswersSkeleton() {
+  // Mirrors the answers workspace: the search field over `divide-y`-style rows,
+  // each row taller than a document row because it carries the copy chips.
+  return (
+    <PageSkeleton hasActions>
+      <div className="space-y-4">
+        <Skeleton className="h-11 max-w-sm" />
+        <div className="space-y-2">
+          <SkeletonRows count={6} className="h-12" />
+        </div>
+      </div>
+    </PageSkeleton>
+  )
+}
+
 export function CoverLetterEditorSkeleton() {
   return (
     <PageSkeleton hasActions hasDescription={false} back>

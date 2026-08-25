@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-07-15
+> **Last Updated**: 2026-08-25
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -426,6 +426,30 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] Live-smoked in-browser (create outreach → status change → timeline events → list + board badges) at desktop 1440 + mobile 390.
 - [x] **Merged to master 2026-07-16** (merge `2947a15`). Manual browser pass folded into `t-0026`; the outreach follow-ups are `t-0017` (nudge sweep), `t-0018` (referral message generation), `t-0019` (referrer-ghosted filter).
 
+
+## Saved Answers Library (on `slice-answers-library`, 2026-08-25)
+
+> Spec: `docs/superpowers/specs/2026-08-25-saved-answers-library-design.md` · Plan: `docs/superpowers/plans/2026-08-25-saved-answers-library.md` · Tracker: `.blink/tasks/t-0c5xex`. Store reusable answers to the open-ended questions application forms keep asking ("why are you leaving your current role?", "describe your responsibilities") in **two length variants**, with an AI draft path and one-click copy. **Form facts are deliberately cut** (notice period, CTC, years of experience, work authorization): storage only pays when composing costs more than retrieving, those values are memorized, browser autofill already covers the rest, and they earn their keep only in a product that *submits* forms — which this is not.
+
+### Backend (`backend-express`)
+- [x] **`question_answers` table** (migration `0013`) — `question` varchar(500), nullable `answer_short` / `answer_long`, `last_used_at`; `user_id` FK cascades, indexed. **No `job_id`** and no tags — answers are reusable by definition.
+- [x] **`answers` module** (router→controller→service→repository→Zod + co-located tests): `GET/POST /api/answers`, `PATCH/DELETE /api/answers/:id`, `POST /api/answers/:id/used`, `POST /api/answers/generate`. `/generate` is declared **before** `/:id` and returns **200, not 201** — it persists nothing.
+- [x] **At-least-one-variant rule** enforced in Zod on create and in the service on update (it merges the stored row with the patch, so blanking the only remaining variant is rejected). No DB CHECK, by spec.
+- [x] **`buildAnswerPrompt` + `AnswerDraftSchema`** — one structured Gemini call returns **both** variants, so they stay consistent and cost one rate-limit slot. Budgets are in **characters** (500 / 2000) because ATS fields cap characters, never words. Both fields are `.min(1)`: `sanitizeModelJson` already drops nulls, so `""` is the one bad value that would otherwise validate and blank the user's text.
+- [x] **Metering** — `assertWithinRateLimit` is spent only *after* persona (and optional job) ownership is confirmed; `ai_usage_events` records `answer_generate` only after a successful generation.
+- [x] `jobId` is accepted end to end (schema, ownership, `TARGET JOB` prompt block, tests) but **no UI sends it yet** — job-specific answers were deferred during brainstorming. Tracked as `t-0c61ek`.
+
+### Frontend (`frontend-next`)
+- [x] `types/answer.ts` + `answersQuery` + `use-answers.ts` (six hooks). `useMarkAnswerUsed` deliberately **does not invalidate** the list — it is sorted by `lastUsedAt`, so invalidating would reorder rows under the user's pointer mid-click.
+- [x] **`/app/answers`** workspace + sidebar entry + route skeleton; `?answer=` / `?new` slideover, client-side search over question and both variants.
+- [x] **Dedicated `AnswerList` / `AnswerListRow`** — the shared `DocumentList` could **not** be reused: `DocumentRow` is a fixed four-field shape with no slot for interactive children, and an answer row carries no context or persona but needs two copy chips *inside* it. Rows stack below `sm` (`sm:contents`) so the chips stop squeezing the question to a few characters at 390.
+- [x] **`AnswerCopyChip`** — copies and stamps `last_used_at` in one click; the stamp fires **after** a successful clipboard write via a new `onCopied` prop on the shared `CopyButton`.
+- [x] **`AnswerEditor`** with live character counts against each budget, **`GenerateAnswerControls`** (persona + optional instructions), and the **ethics note** in two placements — no page banner, no dismiss state.
+
+### Verification
+- [x] Backend `typecheck`+`lint`+**680 tests**; frontend `typecheck`+`lint`+**609 tests** + production build — all green.
+- [x] Live-smoked against real Gemini (both variants grounded in the persona's actual facts; 473 / 1,300 characters against 500 / 2,000 budgets), copy → `last_used_at` verified in Postgres, `NULLS LAST` ordering confirmed, at 1440 / 1024 / 390.
+- [x] **Adversarially reviewed** — five findings fixed: a cross-record draft leak (the `key` was on `AnswerEditor` while the parent owned the state, so browser Back then opening another row rendered answer A's draft under B), `.min(1)` on the draft schema, the copy stamp firing before the clipboard write, an unsurfaced delete error, and the 390px truncation. Two findings accepted: the unwired `jobId` (`t-0c61ek`) and a TOCTOU on the at-least-one-variant rule that one UI cannot produce.
 ---
 
 > ## ⚠️ Everything below is the original NestJS + Nuxt plan (superseded)

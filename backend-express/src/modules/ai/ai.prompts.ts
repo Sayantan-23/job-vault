@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import type { ProfileContent } from '@/shared/profile-content.schema.js'
 
 // Output shape of résumé GENERATION — stays the legacy ResumeContent (the .tex
@@ -125,4 +126,45 @@ export function buildJobExtractionPrompt(content: string, url: string): string {
     `SOURCE URL: ${url}`,
     `PAGE CONTENT:\n${clipped}`,
   ].join('\n\n')
+}
+
+// The shape the model must return for a saved-answer draft. Both variants come
+// back from ONE call: one Gemini round-trip, one rate-limit slot, and the two
+// variants stay consistent because they were generated together.
+// `.min(1)` is load-bearing: sanitizeModelJson drops null props (so a null
+// variant already fails as "Required"), but an empty string survives it. Without
+// the minimum, `{"short":"","long":"…"}` would validate, spend the rate-limit
+// slot on a half-empty draft and blank the user's existing text on accept. With
+// it, an empty variant falls into generateStructured's retry-with-feedback loop.
+export const AnswerDraftSchema = z.object({
+  short: z.string().min(1),
+  long: z.string().min(1),
+})
+
+export type AnswerDraft = z.infer<typeof AnswerDraftSchema>
+
+// Budgets are in CHARACTERS because ATS fields cap characters, never words.
+const ANSWER_SHORT_MAX_CHARS = 500
+const ANSWER_LONG_MAX_CHARS = 2000
+
+export function buildAnswerPrompt(
+  background: ProfileContent,
+  question: string,
+  job?: { title: string; company: string; snapshot?: string | null },
+  instructions?: string,
+): string {
+  const parts: string[] = [
+    `You are drafting a candidate's answer to a question on a job application form. Write in the first person, specific and truthful — never invent employers, titles, dates, or achievements that are not in the background below. Output plain prose only: no Markdown, no headings, no bullet points, no code fences (the destination is a plain textarea on someone else's form).`,
+    `Return ONLY a JSON object of this exact shape:\n{\n  "short": string,  // at most ${ANSWER_SHORT_MAX_CHARS} characters, for tight fields\n  "long": string    // ${ANSWER_LONG_MAX_CHARS / 2}-${ANSWER_LONG_MAX_CHARS} characters, for essay fields\n}\nBoth must answer the same question — the short one is a compression of the long one, not a different answer.`,
+    `QUESTION:\n${question}`,
+    `CANDIDATE BACKGROUND (authoritative facts):\n${JSON.stringify(background)}`,
+    BACKGROUND_DATES_NOTE,
+  ]
+  if (job) {
+    parts.push(
+      `TARGET JOB (context only — the answer must stay reusable, so do not name this company):\nTitle: ${job.title}\nCompany: ${job.company}${job.snapshot ? `\nDescription:\n${job.snapshot}` : ''}`,
+    )
+  }
+  if (instructions) parts.push(`EXTRA INSTRUCTIONS:\n${instructions}`)
+  return parts.join('\n\n')
 }

@@ -26,7 +26,7 @@ describe('SidebarNav', () => {
   it('lists the workspace destinations in order, without Dashboard', () => {
     renderNav(<SidebarNav />)
     const labels = screen.getAllByRole('link').map((link) => link.textContent)
-    expect(labels).toEqual(['Jobs', 'Personas', 'Résumés', 'Cover letters', 'Timeline'])
+    expect(labels).toEqual(['Jobs', 'Personas', 'Résumés', 'Cover letters', 'Answers', 'Timeline'])
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Résumés' })).toHaveAttribute('href', '/app/resumes')
   })
