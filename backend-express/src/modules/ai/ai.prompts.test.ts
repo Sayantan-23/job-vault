@@ -159,4 +159,8 @@ describe('AnswerDraftSchema', () => {
   it('rejects a response missing a variant', () => {
     expect(() => AnswerDraftSchema.parse({ short: 'a' })).toThrow()
   })
+
+  it('rejects an empty variant so the retry loop catches it', () => {
+    expect(AnswerDraftSchema.safeParse({ short: '', long: 'x' }).success).toBe(false)
+  })
 })

@@ -131,9 +131,14 @@ export function buildJobExtractionPrompt(content: string, url: string): string {
 // The shape the model must return for a saved-answer draft. Both variants come
 // back from ONE call: one Gemini round-trip, one rate-limit slot, and the two
 // variants stay consistent because they were generated together.
+// `.min(1)` is load-bearing: sanitizeModelJson drops null props (so a null
+// variant already fails as "Required"), but an empty string survives it. Without
+// the minimum, `{"short":"","long":"…"}` would validate, spend the rate-limit
+// slot on a half-empty draft and blank the user's existing text on accept. With
+// it, an empty variant falls into generateStructured's retry-with-feedback loop.
 export const AnswerDraftSchema = z.object({
-  short: z.string(),
-  long: z.string(),
+  short: z.string().min(1),
+  long: z.string().min(1),
 })
 
 export type AnswerDraft = z.infer<typeof AnswerDraftSchema>
