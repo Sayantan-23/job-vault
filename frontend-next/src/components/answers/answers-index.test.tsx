@@ -38,10 +38,11 @@ const answers: Answer[] = [
 
 const removeMutate = vi.fn()
 const markUsedMutate = vi.fn()
+let deleteError: Error | null = null
 
 vi.mock('@/hooks/use-answers', () => ({
   useAnswers: () => ({ data: answers }),
-  useDeleteAnswer: () => ({ mutate: removeMutate }),
+  useDeleteAnswer: () => ({ mutate: removeMutate, error: deleteError }),
   useMarkAnswerUsed: () => ({ mutate: markUsedMutate }),
   useCreateAnswer: () => ({ mutate: vi.fn(), reset: vi.fn(), isPending: false, error: null }),
   useUpdateAnswer: () => ({ mutate: vi.fn(), reset: vi.fn(), isPending: false, error: null }),
@@ -53,6 +54,7 @@ vi.mock('@/hooks/use-ai-status', () => ({ useAiStatus: () => ({ data: { enabled:
 beforeEach(() => {
   vi.clearAllMocks()
   searchParams = new URLSearchParams()
+  deleteError = null
 })
 
 describe('AnswersIndex', () => {
@@ -89,6 +91,12 @@ describe('AnswersIndex', () => {
     expect(removeMutate).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: /^delete$/i }))
     expect(removeMutate).toHaveBeenCalledWith('a1')
+  })
+
+  it('surfaces a failed delete instead of leaving the row silently in place', () => {
+    deleteError = new Error('Could not delete this answer')
+    render(<AnswersIndex />)
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not delete this answer')
   })
 
   it('stamps the answer as used when a copy chip is clicked', async () => {

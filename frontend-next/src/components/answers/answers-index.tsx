@@ -8,6 +8,7 @@ import { AppPage } from '@/components/layout/app/app-page'
 import { PageHeading } from '@/components/layout/app/page-heading'
 import { SearchInput } from '@/components/jobs/search-input'
 import { NoPersonasHint } from '@/components/documents/no-personas-hint'
+import { MutationErrorAlert } from '@/components/documents/mutation-error-alert'
 import { useConfirm } from '@/hooks/use-confirm'
 import { useAnswers, useDeleteAnswer, useMarkAnswerUsed } from '@/hooks/use-answers'
 import { usePersonas } from '@/hooks/use-personas'
@@ -91,6 +92,7 @@ export function AnswersIndex() {
         }
       />
       {personas !== undefined && personas.length === 0 ? <NoPersonasHint noun="answer" /> : null}
+      {remove.error ? <MutationErrorAlert error={remove.error} /> : null}
       <div className="mb-4 max-w-sm">
         <SearchInput value={filter} onChange={setFilter} placeholder="Search answers…" ariaLabel="Search answers" />
       </div>
