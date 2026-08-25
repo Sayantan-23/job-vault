@@ -15,14 +15,13 @@ interface Props {
 
 // One length variant's copy control: the visible label is the variant letter
 // plus its CHARACTER count (ATS fields cap characters, never words), and the
-// click both copies and stamps last_used_at through the caller.
+// click both copies and stamps last_used_at through the caller — via CopyButton's
+// onCopied, so a rejected clipboard write never stamps a copy that didn't happen.
 export function AnswerCopyChip({ variant, text, question, onCopied }: Props) {
   return (
     <CopyButton
-      getText={() => {
-        onCopied()
-        return text
-      }}
+      getText={() => text}
+      onCopied={onCopied}
       label={`${LABEL[variant]} ${text.length.toLocaleString()}`}
       copiedLabel="Copied"
       ariaLabel={`Copy the ${variant} answer to “${question}”`}

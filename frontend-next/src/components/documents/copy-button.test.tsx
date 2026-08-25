@@ -23,6 +23,21 @@ describe('CopyButton', () => {
     await waitFor(() => expect(writeText).toHaveBeenCalledWith('tex-source'))
   })
 
+  it('reports a successful copy through onCopied', async () => {
+    const onCopied = vi.fn()
+    render(<CopyButton getText={() => 'x'} onCopied={onCopied} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }))
+    expect(onCopied).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not report a copy when the clipboard write rejects', async () => {
+    writeText.mockRejectedValueOnce(new Error('denied'))
+    const onCopied = vi.fn()
+    render(<CopyButton getText={() => 'x'} onCopied={onCopied} />)
+    await userEvent.click(screen.getByRole('button', { name: 'Copy' }))
+    expect(onCopied).not.toHaveBeenCalled()
+  })
+
   it('swallows a clipboard rejection without flipping the label', async () => {
     writeText.mockRejectedValueOnce(new Error('denied'))
     render(<CopyButton getText={() => 'x'} />)
