@@ -65,7 +65,7 @@ export function AnswerListRow({ answer, onSelect, onDelete, onCopied }: Props) {
             />
           ) : null}
         </div>
-        <span className="ml-auto w-24 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground sm:ml-0">
+        <span className="ml-auto shrink-0 whitespace-nowrap text-right font-mono text-xs tabular-nums text-muted-foreground sm:ml-0 sm:w-24">
           {answer.lastUsedAt ? relativeTime(answer.lastUsedAt) : '—'}
         </span>
         <Button
