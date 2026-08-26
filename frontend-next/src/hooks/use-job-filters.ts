@@ -32,9 +32,16 @@ export function useJobFilters(): UseJobFilters {
   const searchParams = useSearchParams()
   const filters = parseFilters(searchParams)
 
+  // Depend on the serialized query string, not the ReadonlyURLSearchParams
+  // object: a plain string is a dependency the React Compiler can verify (it
+  // cannot prove the params object is unchanged across renders, so it refused
+  // to preserve this memo), and it re-creates `commit` only when the query
+  // actually differs rather than whenever Next hands back a new instance.
+  const currentQuery = searchParams.toString()
+
   const commit = useCallback(
     (mutate: (p: URLSearchParams) => void, resetPage = true) => {
-      const p = new URLSearchParams(searchParams.toString())
+      const p = new URLSearchParams(currentQuery)
       mutate(p)
       if (resetPage) p.delete('page')
       const qs = p.toString()
@@ -43,7 +50,7 @@ export function useJobFilters(): UseJobFilters {
       // discard it. See lib/url-state.ts.
       replaceUrl(qs ? `${pathname}?${qs}` : pathname)
     },
-    [pathname, searchParams],
+    [pathname, currentQuery],
   )
 
   const setSearch = useCallback(
