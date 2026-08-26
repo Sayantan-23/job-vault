@@ -19,14 +19,24 @@ export function useCoverLetterRefine(coverLetterId: string, currentBody: string,
   const [proposalSeq, setProposalSeq] = useState(0)
 
   // Switching to a different letter discards any staged rewrite/undo, else a
-  // candidate for letter A could be kept into letter B's buffer.
-  const { reset } = refine
-  useEffect(() => {
+  // candidate for letter A could be kept into letter B's buffer. Clearing it
+  // during render (React's documented pattern for syncing to changed input)
+  // closes that leak completely: an effect would let the stale candidate commit
+  // for one frame under the new letter's id before it was cleared.
+  const [seenId, setSeenId] = useState(coverLetterId)
+  if (seenId !== coverLetterId) {
+    setSeenId(coverLetterId)
     setCandidate(null)
     setUndoBody(null)
     setLastAction(null)
     setLastInstructions(undefined)
     setProposalSeq(0)
+  }
+
+  // The mutation's own cached result/error is external state, so it is dropped
+  // from an effect rather than during render. `reset` is stable in TanStack v5.
+  const { reset } = refine
+  useEffect(() => {
     reset()
   }, [coverLetterId, reset])
 

@@ -19,6 +19,7 @@ export function SearchInput({
   className?: string
 }) {
   const [local, setLocal] = useState(value)
+  const [lastValue, setLastValue] = useState(value)
   const ref = useRef<HTMLInputElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -32,8 +33,14 @@ export function SearchInput({
   // When the URL value changes from OUTSIDE the field (back/forward, Clear all,
   // resetAll), resync the field and cancel any pending debounced emit — otherwise
   // a still-pending keystroke would re-push the stale term and undo the reset.
-  useEffect(() => {
+  // The resync adjusts state during render (React's documented pattern) so the
+  // field never commits a frame showing the stale term; the timer is a side
+  // effect, so it is cleared from the effect below instead.
+  if (lastValue !== value) {
+    setLastValue(value)
     setLocal(value)
+  }
+  useEffect(() => {
     cancelPending()
   }, [value])
 

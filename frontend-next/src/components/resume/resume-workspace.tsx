@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { GeneratedResume, ResumeContent } from '@/types/resume'
 import { useGenerateResume, useUpdateResume, useResumes, useDeleteResume } from '@/hooks/use-resumes'
 import { useJobOptions, type JobOption } from '@/hooks/use-job-options'
@@ -53,17 +53,20 @@ export function ResumeWorkspace({ initialPersonaId, initialJobId, initialResumeI
 
   // Open the deep-linked résumé (?resume=<id>) once it lands in the library.
   // Tracks the applied id (not a boolean) so navigating to a different ?resume
-  // re-opens, but a manual row click afterwards is never clobbered.
-  const appliedResumeId = useRef<string | null>(null)
+  // re-opens, but a manual row click afterwards is never clobbered. Selecting it
+  // is a state sync, so it happens during render; the scroll is a side effect,
+  // so it waits for the effect below — by which point the editor is mounted.
+  const [appliedResumeId, setAppliedResumeId] = useState<string | null>(null)
+  const pendingResumeId = initialResumeId && appliedResumeId !== initialResumeId ? initialResumeId : undefined
+  const deepLinked = pendingResumeId ? allResumes.find((r) => r.id === pendingResumeId) : undefined
+  if (pendingResumeId && deepLinked) {
+    setAppliedResumeId(pendingResumeId)
+    setResume(deepLinked)
+    setContent(deepLinked.content)
+  }
   useEffect(() => {
-    if (!initialResumeId || appliedResumeId.current === initialResumeId) return
-    const target = allResumes.find((r) => r.id === initialResumeId)
-    if (!target) return
-    appliedResumeId.current = initialResumeId
-    setResume(target)
-    setContent(target.content)
-    revealEditor()
-  }, [initialResumeId, allResumes, revealEditor])
+    if (appliedResumeId) revealEditor()
+  }, [appliedResumeId, revealEditor])
 
   const rows: DocumentRow[] = allResumes.map((r) => ({
     id: r.id,

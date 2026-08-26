@@ -1,7 +1,7 @@
 // frontend-next/src/components/profile/profile-workspace.tsx
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { PageHeading } from '@/components/layout/app/page-heading'
 import { AppPage } from '@/components/layout/app/app-page'
@@ -20,9 +20,15 @@ export function ProfileWorkspace() {
   const [draft, setDraft] = useState<ProfileContent>(() => data ?? emptyProfileContent())
   const [errors, setErrors] = useState<string[]>([])
 
-  useEffect(() => {
-    if (data) setDraft(data)
-  }, [data])
+  // Re-seed the draft whenever a new profile lands from the cache (identity
+  // comparison, matching the effect this replaces). Adjusting state during
+  // render is React's documented pattern for syncing to changed input and
+  // avoids the extra commit an effect would cost.
+  const [seeded, setSeeded] = useState(data)
+  if (data && data !== seeded) {
+    setSeeded(data)
+    setDraft(data)
+  }
 
   const save = () => {
     const found = validateProfileContent(draft)
