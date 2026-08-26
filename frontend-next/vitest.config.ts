@@ -3,7 +3,9 @@ import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
-  plugins: [react()],
+  // next.config.ts enables the React Compiler for what ships; run it here too so
+  // the suite tests compiled render semantics, not the uncompiled originals.
+  plugins: [react({ babel: { plugins: [['babel-plugin-react-compiler', {}]] } })],
   test: {
     environment: 'jsdom',
     globals: false,

@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: the original stack (NestJS + Nuxt 4) is being rebuilt as **Express + Next.js**, feature-by-feature, with a fresh **minimalist-ui** design.
 
-- **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 15). **Build here.**
+- **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 16). **Build here.**
 - **Legacy stacks removed** (2026-07-05): the original `backend/` (NestJS) and `frontend/` (Nuxt) reference folders were deleted. Read the original behavior/contracts via git history (last present at commit `dd9daa1`).
 - **Done** — one line per shipped unit. Full detail (decisions, migration numbers, verification) lives in `progress.md`; keep it that way: **a finished slice adds ONE line here, the narrative goes in `progress.md`.**
   - Slices 0–5 (2026-06-01..04): Foundation · Auth (JWT cookies + silent refresh) · Jobs (CRUD + Cheerio/Turndown scraper, AddJobModal, `?job=` JobDrawer) · Dashboard/Kanban (`@dnd-kit`, optimistic move, live ghost-days) · 3.5 unified Jobs workspace (Board⇄List) · Timeline/Reminders/Notifications (node-cron sweeps + socket.io real-time) · Filters/Search/List (URL-synced `useJobFilters`, ⌘K search, hybrid board drag).
@@ -50,8 +50,8 @@ Recurring defect class: a new page hand-rolls a pattern a sibling already implem
 ## Tech Stack (target)
 
 - **Backend** (`backend-express/`): Express 5, Drizzle ORM, PostgreSQL 16, Pino, Zod, strict TypeScript (NodeNext — imports use `.js`).
-- **Frontend** (`frontend-next/`): Next.js 15 (App Router) + React 19, Tailwind v4 (CSS-first), TanStack Query v5, React Hook Form + Zod. **UI primitives are hand-written in `src/components/ui/` with our tokens (not the shadcn CLI); Radix is used only for overlay *behavior* (`@radix-ui/react-dialog` → dialog/sheet). Any styled element gets its own component — never inline styled markup.**
-- **Auth:** custom JWT in **HTTP-only cookies** (access 15m, refresh 7d, **both `path:/`**) + refresh rotation + **silent refresh** (api-client retries 401→`/api/auth/refresh`→retry, single-flight; `middleware.ts` gates `/app/*` on either cookie). (NestJS used Bearer-in-body; the cookie model is the intentional change.)
+- **Frontend** (`frontend-next/`): Next.js 16 (App Router) + React 19, Tailwind v4 (CSS-first), TanStack Query v5, React Hook Form + Zod. **UI primitives are hand-written in `src/components/ui/` with our tokens (not the shadcn CLI); Radix is used only for overlay *behavior* (`@radix-ui/react-dialog` → dialog/sheet). Any styled element gets its own component — never inline styled markup.**
+- **Auth:** custom JWT in **HTTP-only cookies** (access 15m, refresh 7d, **both `path:/`**) + refresh rotation + **silent refresh** (api-client retries 401→`/api/auth/refresh`→retry, single-flight; `proxy.ts` gates `/app/*` on either cookie). (NestJS used Bearer-in-body; the cookie model is the intentional change.)
 - **Design:** minimalist-ui — warm-stone base, **flat muted-indigo** accent, **Geist** (sans) + **Geist Mono** (numerics signature) + **Instrument Serif** (editorial headings), faint hairline borders, near-zero diffuse shadows, dark-mode first-class. Use the `minimalist-ui` skill.
 - **Deferred (not yet built):** Google OAuth, AI/cover-letters/resume (Gemini), file storage (Cloudinary/pdfkit), public-page redesign, Chrome extension. (Automatic token refresh is now **done**.)
 
