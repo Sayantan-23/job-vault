@@ -43,7 +43,8 @@ The main thread orchestrates and reviews; it does not implement. Delegation is t
 
 Recurring defect class: a new page hand-rolls a pattern a sibling already implements, slightly differently (the answers-page header vs the jobs-page header). Rules:
 
-- Before building any new surface, **read the closest sibling first** (list pages: jobs · answers · cover-letters · resumes · personas; editors; drawers) and match its components, sizes and responsive behavior exactly.
+- **One pattern per concern, app-wide**: one pagination UI, one search placement, one toolbar shape, one empty-state style. No page is the canonical reference — the *existing pattern* is. Before building any new surface, read the sibling that already implements the concern (list pages: jobs · answers · cover-letters · resumes · personas; editors; drawers) and reuse it.
+- Changing a pattern means migrating every page that uses it (with user sign-off) — never introducing a second variant alongside the first.
 - If the pattern exists only as per-page markup (2+ near-copies), **extract the shared component** into `components/ui/` and migrate the siblings — never add another copy.
 - Backend: a new module mirrors the closest existing module (`answers`, `contacts`) — router shape, envelope, error paths, test layout.
 - Any deliberate divergence from a sibling gets flagged to the user before it ships.
