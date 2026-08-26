@@ -14,7 +14,11 @@ const { replaceUrl, searchParams } = vi.hoisted(() => ({
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn(), push: vi.fn(), prefetch: vi.fn() }),
   usePathname: () => '/app/jobs',
-  useSearchParams: () => searchParams,
+  // A fresh instance per call, like Next (which hands back a new
+  // ReadonlyURLSearchParams per navigation). Returning the mutated-in-place
+  // object let React Compiler cache values derived from it — `view` stayed
+  // stale when a test flipped ?view between renders.
+  useSearchParams: () => new URLSearchParams(searchParams),
 }))
 vi.mock('@/lib/url-state', () => ({ replaceUrl }))
 vi.mock('@/lib/api-client', () => ({
@@ -64,13 +68,29 @@ describe('JobsWorkspace', () => {
   it('defaults to the list view', async () => {
     render(<JobsWorkspace />, { wrapper })
     expect(await screen.findByRole('link', { name: /staff engineer/i })).toHaveAttribute('href', '/app/jobs?job=j1')
+    // the board stays mounted behind <Activity mode="hidden">, just not visible
+    expect(screen.getByText('Interviewing')).not.toBeVisible()
+    // ...and mounting it costs nothing: the kanban query stays disabled until shown
+    expect(api.get.mock.calls.some(([url]) => url.startsWith('/api/dashboard/kanban'))).toBe(false)
   })
 
-  it('renders the board view when ?view=board', () => {
+  it('renders the board view when ?view=board', async () => {
     searchParams.set('view', 'board')
     render(<JobsWorkspace />, { wrapper })
-    expect(screen.getByText('Interviewing')).toBeInTheDocument() // a board column header
-    expect(screen.queryByRole('link', { name: /staff engineer/i })).not.toBeInTheDocument()
+    expect(screen.getByText('Interviewing')).toBeVisible() // a board column header
+    expect(await screen.findByRole('link', { name: /staff engineer/i, hidden: true })).not.toBeVisible()
+  })
+
+  it('keeps the hidden view mounted across the toggle', async () => {
+    const { rerender } = render(<JobsWorkspace />, { wrapper })
+    const row = await screen.findByRole('link', { name: /staff engineer/i })
+    searchParams.set('view', 'board')
+    rerender(<JobsWorkspace />)
+    // same DOM node, hidden rather than unmounted — that is what preserves the
+    // list's scroll position (and the board's) across the toggle.
+    expect(row).toBeInTheDocument()
+    expect(row).not.toBeVisible()
+    expect(screen.getByText('Interviewing')).toBeVisible()
   })
 
   it('toggling to Board sets ?view=board in the URL', async () => {

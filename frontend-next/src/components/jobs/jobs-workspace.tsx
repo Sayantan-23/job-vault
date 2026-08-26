@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { Activity, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { LayoutGrid, List, Plus } from 'lucide-react'
 import { useJobs } from '@/hooks/use-jobs'
@@ -80,7 +80,11 @@ export function JobsWorkspace() {
 
   return (
     <>
-      {view === 'board' ? (
+      {/* Both views stay mounted: <Activity> hides the inactive one (display:none,
+          effects torn down) instead of unmounting it, so the board's per-column
+          scroll and the list's scroll position survive the toggle (t-0c7irf).
+          Activity renders no DOM node of its own, so the layout is unchanged. */}
+      <Activity mode={view === 'board' ? 'visible' : 'hidden'}>
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="jv-content-col w-full shrink-0 px-6 pt-10 sm:px-8 lg:px-10">
             <PageHeading
@@ -102,7 +106,9 @@ export function JobsWorkspace() {
             <KanbanBoard board={board} filters={boardFilters} isFiltered={isBoardFiltered} loading={boardQuery.isLoading} />
           </div>
         </div>
-      ) : (
+      </Activity>
+
+      <Activity mode={view === 'board' ? 'hidden' : 'visible'}>
         <div className="jv-content-col w-full px-6 py-10 sm:px-8 lg:px-10">
           <PageHeading
             title="Jobs"
@@ -135,7 +141,7 @@ export function JobsWorkspace() {
           />
           <JobsPagination meta={page.meta} onPage={setPage} />
         </div>
-      )}
+      </Activity>
 
       <AddJobModal open={addOpen} onOpenChange={setAddOpen} />
       <JobDrawer jobId={jobId} />

@@ -1,11 +1,12 @@
 ---
 id: t-0c7irf
 title: "Use React <Activity/> to keep Board⇄List state alive across the toggle"
-status: backlog
+status: done
+owner: coder
 milestone: m-01
 decisions: [d-0c7hxl]
 created: 2026-08-26T08:11:41Z
-updated: 2026-08-26T08:11:41Z
+updated: 2026-08-26T09:20:51Z
 tags: [frontend, ux]
 ---
 
