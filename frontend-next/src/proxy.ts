@@ -3,7 +3,7 @@ import { isSessionReachable, safeNextPath } from '@/lib/auth-gate'
 import { extractCookieValues, mergeCookieHeader } from '@/lib/middleware-cookies'
 
 // Server-side proxy target, same as next.config rewrites + api-server.ts. The
-// browser never uses this; middleware runs inside the Next server process.
+// browser never uses this; the proxy runs inside the Next server process.
 const BACKEND_URL =
   process.env['BACKEND_INTERNAL_URL'] ?? process.env['NEXT_PUBLIC_API_BASE'] ?? 'http://localhost:3000'
 
@@ -27,7 +27,7 @@ function loginRedirect(req: NextRequest): NextResponse {
   return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(next)}`, req.url))
 }
 
-export async function middleware(req: NextRequest): Promise<NextResponse> {
+export async function proxy(req: NextRequest): Promise<NextResponse> {
   const accessToken = req.cookies.get('accessToken')?.value
   const refreshToken = req.cookies.get('refreshToken')?.value
   const reachable = isSessionReachable({ accessToken, refreshToken })
