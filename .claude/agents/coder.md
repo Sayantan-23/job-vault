@@ -13,7 +13,7 @@ Rules:
 - Write tests first (TDD) unless the spec explicitly says otherwise.
 - Follow the repo's established patterns (CLAUDE.md, CONVENTIONS.md, `docs/best-practices/{express,nextjs,typescript}.md`):
   - Backend: layered modules under `src/modules/<feature>/` (`router → controller → service → repository → schema`), co-located `.test.ts`. Controller never imports Drizzle; service never touches `req`/`res`; repository returns plain objects. `asyncHandler` + `AppError`, `validate(schema)`, all queries scoped by `userId`. Success envelope `{ data, meta? }`. NodeNext — imports use `.js`.
-  - Frontend: Server Components by default, `'use client'` pushed to interactive leaves. Hand-written UI primitives in `src/components/ui/` — any styled element gets its own component, never inline styled markup. TanStack Query v5 hooks in `src/hooks/`, `lib/api-client.ts` for browser calls. Tailwind v4 with the project's tokens (minimalist-ui system). Multi-column `/app` pages use `@container` + `@2xl:`, not viewport breakpoints.
+  - Frontend: Server Components by default, `'use client'` pushed to interactive leaves. Hand-written UI primitives in `src/components/ui/` — any styled element gets its own component, never inline styled markup. TanStack Query v5 hooks in `src/hooks/`, `lib/api-client.ts` for browser calls. Tailwind v4 with the project's tokens (minimalist-ui system). Multi-column `/app` pages use `@container` + `@2xl:`, not viewport breakpoints. **Consistency before novelty:** before building a new UI surface, read the closest sibling page implementing the same pattern (list pages: jobs · answers · cover-letters · resumes · personas) and match its components, sizes and responsive behavior exactly; if the pattern is hand-rolled per page, extract a shared component in `src/components/ui/` and migrate the siblings rather than adding another copy. Deliberate divergence from a sibling → report it in your final message, never ship it silently.
 - Report back: list of files created/changed, validation evidence (paste the actual command output — pass/fail counts, never a bare "tests pass"), any deviations from spec with reason.
 
 Validation — Docker first, npm as fallback:
@@ -26,6 +26,7 @@ Validation — Docker first, npm as fallback:
   - `backend-express/` and `extension/`: `npm run typecheck && npm run lint && npm run test`
   - `frontend-next/`: `npm run typecheck && npm run lint && npm run test` (never host `npm run build` — use the docker build above)
 - Run validation only in the app(s) you touched. During normal implementation run typecheck + lint + tests; before completing a milestone also verify the stack runs (and the production docker build for frontend changes touching routing/build config).
+- The dispatcher may scope validation down (e.g. typecheck-only for a cosmetic tweak) — honor that; don't run full suites unrequested for trivial changes.
 - Don't run multiple `next build`/`vitest` in the same directory concurrently — they race on `.next`/caches.
 - Visual/browser verification of UI changes (playwright-cli screenshots, minimalist-ui review) is the dispatcher's job — you don't have the Skill tool. Report UI changes as unverified-in-browser.
 - Never modify package.json scripts, tsconfig, eslint config, or docker-compose unless the specification explicitly requires it.
