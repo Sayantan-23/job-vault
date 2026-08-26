@@ -30,18 +30,18 @@ const FAQS: Array<{ q: string; a: string }> = [
 ]
 
 export function FaqSection() {
-  const head = useReveal<HTMLDivElement>()
-  const list = useReveal<HTMLDivElement>()
+  const { ref: headRef } = useReveal<HTMLDivElement>()
+  const { ref: listRef } = useReveal<HTMLDivElement>()
 
   return (
     <section id="faq">
       <div className="wrap">
-        <div className="sec-head reveal" ref={head.ref}>
+        <div className="sec-head reveal" ref={headRef}>
           <h2>
             Questions, <em>answered straight.</em>
           </h2>
         </div>
-        <div className="faq reveal" ref={list.ref}>
+        <div className="faq reveal" ref={listRef}>
           {FAQS.map((f) => (
             <details key={f.q} className="faq-item">
               <summary>
