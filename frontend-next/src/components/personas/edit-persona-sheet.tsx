@@ -26,17 +26,24 @@ export function EditPersonaSheet({ persona, profile, open, onOpenChange }: Props
   const update = useUpdatePersona(persona?.id ?? '')
 
   // Re-seed the form whenever a different persona is opened for editing.
-  // resetUpdate clears a stale failure banner from a previous persona's
-  // save (the sheet stays mounted across opens); it is referentially stable
-  // in TanStack v5, so listing it as a dep adds no extra effect runs.
+  // Adjusting state during render (React's documented pattern for syncing to
+  // changed input) keeps the draft from ever committing a frame that mixes the
+  // new persona with the previous one's name/data.
+  const [seeded, setSeeded] = useState<Persona | null>(null)
+  if (persona && persona !== seeded) {
+    setSeeded(persona)
+    setName(persona.name)
+    setData(persona.data)
+    setErrors([])
+  }
+
+  // resetUpdate clears a stale failure banner from a previous persona's save
+  // (the sheet stays mounted across opens). It touches the mutation, not this
+  // component's state, so it stays in an effect; it is referentially stable in
+  // TanStack v5, so listing it as a dep adds no extra runs.
   const { reset: resetUpdate } = update
   useEffect(() => {
-    if (persona) {
-      setName(persona.name)
-      setData(persona.data)
-      setErrors([])
-      resetUpdate()
-    }
+    if (persona) resetUpdate()
   }, [persona, resetUpdate])
 
   // Edits exist only in this sheet's draft state — block Escape/outside-click

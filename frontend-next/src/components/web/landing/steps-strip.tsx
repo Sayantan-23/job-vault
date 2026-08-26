@@ -24,12 +24,12 @@ const STEPS: Array<{ term: string; line: string; Icon: IconType }> = [
 ]
 
 export function StepsStrip() {
-  const steps = useReveal<HTMLDivElement>()
+  const { ref: stepsRef } = useReveal<HTMLDivElement>()
 
   return (
     <section className="steps-strip" aria-label="How it works">
       <div className="wrap">
-        <div className="steps" ref={steps.ref}>
+        <div className="steps" ref={stepsRef}>
           {STEPS.map((s, i) => (
             <div key={s.term} className="step reveal" style={cssVars({ '--i': i })}>
               <div className="step-chip">{String(i + 1).padStart(2, '0')}</div>

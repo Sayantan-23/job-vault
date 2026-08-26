@@ -4,6 +4,7 @@ import { Check, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useConfirm } from '@/hooks/use-confirm'
+import { isPast } from '@/lib/relative-time'
 import type { Reminder } from '@/types/reminder'
 
 export function ReminderItem({
@@ -15,7 +16,10 @@ export function ReminderItem({
   onToggleComplete: (reminder: Reminder) => void
   onDelete: (id: string) => void
 }) {
-  const overdue = !reminder.isCompleted && new Date(reminder.remindAt).getTime() < Date.now()
+  // The React Compiler memoizes this keyed on `reminder`, so overdue can stay
+  // stale until the row's identity changes (any reminder mutation refetches the
+  // list). Accepted: the pre-compiler code also only recomputed on re-render.
+  const overdue = !reminder.isCompleted && isPast(reminder.remindAt)
   const due = new Date(reminder.remindAt)
   const { confirm, confirmDialog } = useConfirm()
 

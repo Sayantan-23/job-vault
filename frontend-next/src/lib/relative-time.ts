@@ -14,6 +14,15 @@ export function relativeTime(iso: string, now: Date = new Date()): string {
   return rtf.format(-Math.floor(diff / DAY), 'day')
 }
 
+// True when an ISO timestamp is already behind us — e.g. an overdue reminder.
+// Reading the clock is impure, so it lives here rather than inline in a
+// component body (react-hooks/purity); `now` is injectable so tests stay
+// deterministic. An unparseable timestamp is never past.
+export function isPast(iso: string, now: Date = new Date()): boolean {
+  const t = new Date(iso).getTime()
+  return !Number.isNaN(t) && t < now.getTime()
+}
+
 // Short calendar date, e.g. "May 28". Returns an em dash for empty/invalid input.
 export function shortDate(iso: string): string {
   if (!iso) return '—'

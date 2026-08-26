@@ -13,14 +13,14 @@ import { useReveal } from '@/components/web/landing/use-reveal'
 // in — all CSS, gated on the stage's `[data-shown]`, no timers/state. Under
 // reduced-motion / no-JS everything rests on its final refined + stamped state.
 export function DocumentsSection() {
-  const head = useReveal<HTMLDivElement>()
-  const stage = useReveal<HTMLDivElement>({ threshold: 0.3 })
-  const exports = useReveal<HTMLDivElement>()
+  const { ref: headRef } = useReveal<HTMLDivElement>()
+  const { ref: stageRef } = useReveal<HTMLDivElement>({ threshold: 0.3 })
+  const { ref: exportsRef } = useReveal<HTMLDivElement>()
 
   return (
     <section className="docs" id="documents">
       <div className="wrap">
-        <div className="sec-head reveal" ref={head.ref}>
+        <div className="sec-head reveal" ref={headRef}>
           <h2>
             Drafts that read like <em>you.</em>
           </h2>
@@ -36,7 +36,7 @@ export function DocumentsSection() {
           </div>
         </div>
 
-        <div className="docstage viz-glow reveal" ref={stage.ref}>
+        <div className="docstage viz-glow reveal" ref={stageRef}>
           {/* Entrance: each sheet slides in from its own lower corner on reveal
               (CSS, gated on `[data-shown]`). Drag reuses the hero's DraggableCard
               (capability-gated, spring-back); the elastic is asymmetric so each
@@ -53,7 +53,7 @@ export function DocumentsSection() {
           </div>
         </div>
 
-        <div className="exports reveal" ref={exports.ref}>
+        <div className="exports reveal" ref={exportsRef}>
           <span className="export-cap">exports</span>
           <span className="export-chip">PDF</span>
           <span className="export-chip">LaTeX</span>

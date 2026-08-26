@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest'
-import { relativeTime, shortDate, dayKey, dayGroupLabel } from './relative-time'
+import { relativeTime, shortDate, dayKey, dayGroupLabel, isPast } from './relative-time'
+
+describe('isPast', () => {
+  const now = new Date('2026-06-03T12:00:00.000Z')
+
+  it('is true for a timestamp before now', () => {
+    expect(isPast('2026-06-03T11:59:59.000Z', now)).toBe(true)
+  })
+  it('is false for a timestamp after now', () => {
+    expect(isPast('2026-06-03T12:00:01.000Z', now)).toBe(false)
+  })
+  it('is false for an invalid timestamp', () => {
+    expect(isPast('nope', now)).toBe(false)
+  })
+  it('defaults to the current clock', () => {
+    expect(isPast('2000-01-01T00:00:00.000Z')).toBe(true)
+    expect(isPast('2099-01-01T00:00:00.000Z')).toBe(false)
+  })
+})
 
 describe('relativeTime', () => {
   const now = new Date('2026-06-03T12:00:00.000Z')
