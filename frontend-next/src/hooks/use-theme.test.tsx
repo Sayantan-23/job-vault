@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, renderHook, screen } from '@testing-library/react'
+import { render, renderHook, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { ThemeProvider } from '@/components/theme/theme-provider'
@@ -78,6 +78,12 @@ describe('useTheme', () => {
     media.matches = true
     media.listeners.forEach((cb) => cb())
     expect(document.documentElement.classList.contains('dark')).toBe(true)
+  })
+
+  it('adopts the theme already persisted in the cookie', async () => {
+    document.cookie = 'theme=dark; path=/'
+    render(<Harness />, { wrapper: withProvider })
+    await waitFor(() => expect(screen.getByTestId('theme').textContent).toBe('dark'))
   })
 
   it('throws when used outside a ThemeProvider', () => {

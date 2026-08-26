@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 
 /**
@@ -14,6 +14,16 @@ function dragCapable(): boolean {
   const nav = navigator as Navigator & { deviceMemory?: number }
   return (nav.deviceMemory ?? 8) >= 4 && (nav.hardwareConcurrency ?? 8) >= 4
 }
+
+// Read as an external store rather than in an effect: the server snapshot is
+// `false` (inert markup, no hydration mismatch) and React picks up the real
+// capability right after hydrating. The verdict is settled once per page load —
+// it is fixed for the session, and a stable snapshot is what the store contract
+// requires — so nothing ever notifies and `subscribe` has no work to do.
+let capable: boolean | null = null
+const getDragCapable = () => (capable ??= dragCapable())
+const getServerSnapshot = () => false
+const subscribe = () => () => {}
 
 /**
  * DraggableCard — playful elastic drag for the hero collage cards. Zero-size
@@ -30,10 +40,7 @@ export function DraggableCard({
   /** Per-side drag give (motion dragElastic): higher = farther travel that way. */
   elastic?: number | { top?: number; left?: number; right?: number; bottom?: number }
 }) {
-  const [enabled, setEnabled] = useState(false)
-  useEffect(() => {
-    setEnabled(dragCapable())
-  }, [])
+  const enabled = useSyncExternalStore(subscribe, getDragCapable, getServerSnapshot)
   return (
     <motion.div
       className={enabled ? 'vc-drag' : undefined}

@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useEffect, useSyncExternalStore, type ReactNode } from 'react'
 import { applyTheme, readThemeCookie, writeThemeCookie, type Theme } from '@/lib/theme'
 
 export interface ThemeContextValue {
@@ -10,20 +10,28 @@ export interface ThemeContextValue {
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null)
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Start at 'system' on both server and client first render so hydration never
-  // mismatches; the real value is read from the cookie in the effect below. The
-  // inline ThemeScript already applied the correct `.dark` class pre-paint, so
-  // there is no color flash. The only residual is cosmetic: on a *hard load* of
-  // a page that displays the selected theme (Settings), the control briefly
-  // highlights 'system' until this effect runs. Eliminating that would require
-  // reading the cookie server-side in the root layout (making it dynamic and
-  // hurting static generation of the marketing pages) — not worth it.
-  const [theme, setThemeState] = useState<Theme>('system')
+// The `theme` cookie is the store React subscribes to. `setTheme` below is its
+// only writer, so a plain listener set is all the notification it needs.
+const listeners = new Set<() => void>()
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+// Server render (and therefore hydration) resolves to 'system' so the markup
+// never mismatches; React re-reads the cookie snapshot right after hydrating.
+const getServerSnapshot = (): Theme => 'system'
 
-  useEffect(() => {
-    setThemeState(readThemeCookie())
-  }, [])
+export function ThemeProvider({ children }: { children: ReactNode }) {
+  // The inline ThemeScript already applied the correct `.dark` class pre-paint,
+  // so there is no color flash. The only residual is cosmetic: on a *hard load*
+  // of a page that displays the selected theme (Settings), the control briefly
+  // highlights 'system' until the post-hydration snapshot lands. Eliminating
+  // that would require reading the cookie server-side in the root layout
+  // (making it dynamic and hurting static generation of the marketing pages) —
+  // not worth it.
+  const theme = useSyncExternalStore(subscribe, readThemeCookie, getServerSnapshot)
 
   // While following the OS, re-apply when the OS preference flips.
   useEffect(() => {
@@ -35,9 +43,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, [theme])
 
   const setTheme = useCallback((next: Theme) => {
-    setThemeState(next)
     writeThemeCookie(next)
     applyTheme(next)
+    for (const listener of listeners) listener()
   }, [])
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>

@@ -1,8 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { readSidebar, writeSidebar, applySidebar } from '@/lib/sidebar'
+
+// The `sidebar` cookie is the store; `toggle` below is its only writer. Server
+// render (and hydration) resolves to 'expanded' so the markup never mismatches
+// — React re-reads the cookie snapshot right after hydrating, and the pre-paint
+// SidebarScript has already set the rail's real width by then.
+const listeners = new Set<() => void>()
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+const isCollapsed = () => readSidebar() === 'collapsed'
+const serverIsCollapsed = () => false
 
 /**
  * Collapse / expand the rail. Two affordances share one toggle, both revealed on
@@ -16,17 +30,13 @@ import { readSidebar, writeSidebar, applySidebar } from '@/lib/sidebar'
  * attribute flip + the icon.
  */
 export function SidebarToggle() {
-  const [collapsed, setCollapsed] = useState(false)
-
-  useEffect(() => {
-    setCollapsed(readSidebar() === 'collapsed')
-  }, [])
+  const collapsed = useSyncExternalStore(subscribe, isCollapsed, serverIsCollapsed)
 
   function toggle() {
     const next: 'expanded' | 'collapsed' = collapsed ? 'expanded' : 'collapsed'
-    setCollapsed(!collapsed)
     writeSidebar(next)
     applySidebar(next)
+    for (const listener of listeners) listener()
   }
 
   const label = collapsed ? 'Expand sidebar' : 'Collapse sidebar'
