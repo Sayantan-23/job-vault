@@ -10,7 +10,9 @@ import type { AiStatus } from '@/types/persona'
 
 export const metadata: Metadata = { title: 'Cover letter' }
 
-export default async function CoverLetterEditorPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function CoverLetterEditorPage({
+  params,
+}: PageProps<'/app/cover-letters/[id]'>) {
   const { id } = await params
   const letter = coverLetterQuery(id)
 

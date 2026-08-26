@@ -7,6 +7,8 @@ const backendUrl =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Auto-memoization in place of hand-written useMemo/useCallback (decision d-0c7hxl).
+  reactCompiler: true,
   output: 'standalone',
   // The /api rewrite proxy aborts slow upstream responses after 30s by default,
   // returning a bare text 500 to the browser. AI endpoints (parse-resume,
