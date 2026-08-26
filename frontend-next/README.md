@@ -1,6 +1,6 @@
 # JobVault Frontend (Next.js)
 
-Node 20+ / Next.js 15 (App Router) / React 19 / TanStack Query / Tailwind v4 frontend for JobVault.
+Node 20+ / Next.js 16 (App Router) / React 19 / TanStack Query / Tailwind v4 frontend for JobVault.
 
 ## Scripts
 

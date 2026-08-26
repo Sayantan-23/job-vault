@@ -452,7 +452,18 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] **Adversarially reviewed** — five findings fixed: a cross-record draft leak (the `key` was on `AnswerEditor` while the parent owned the state, so browser Back then opening another row rendered answer A's draft under B), `.min(1)` on the draft schema, the copy stamp firing before the clipboard write, an unsurfaced delete error, and the 390px truncation. Two findings accepted: the unwired `jobId` (`t-0c61ek`) and a TOCTOU on the at-least-one-variant rule that one UI cannot produce.
 ---
 
-> ## ⚠️ Everything below is the original NestJS + Nuxt plan (superseded)
+## Next.js 16 Upgrade (on `upgrade-next-16`, 2026-08-26)
+
+> Tracker: `.blink/tasks/t-0c7hxm` / `t-0c7hxn` / `t-0c7hxo`, decision `d-0c7hxl`. Security-driven (15.0.3 predated the CVE-2025-29927 middleware-bypass fix and months of patches) and done **before** the next feature slices so they build on 16 once.
+
+- [x] **next 16.3.3 / react 19.2.8** (+ matching @types, `eslint-config-next` 16) — no peer-dep conflicts.
+- [x] **`src/middleware.ts` → `src/proxy.ts`** (Node runtime; logic byte-identical — reviewer diffed content, and verified Next 16 still sends the `next-router-prefetch` header the refresh-rotation guard reads). `lib/middleware-cookies.ts` name kept (shared lib, not a convention file).
+- [x] **Turbopack** (16 default) for dev + prod: dev ready in ~300ms, prod compile 8.8s. `transpilePackages: ['@react-pdf/renderer']` **removed** — it was a webpack-only ESM workaround; Turbopack resolves it natively (build + in-browser PDF preview both verified). `experimental.proxyTimeout`, `skipTrailingSlashRedirect`, rewrites, standalone output all unchanged and re-verified valid in 16.
+- [x] **React Compiler on** (`reactCompiler: true` + `babel-plugin-react-compiler`), and **vitest runs it too** (review finding — the suite now tests compiled render semantics). `eslint-plugin-react-hooks` v7's compiler rules surfaced **16 pre-existing violations** in 12 files → demoted to `warn` with the fix tracked as `t-0c7ire` (components the compiler bails on aren't memoized — that's where the win lands). Deferred by decision `d-0c7hxl`: Cache Components/PPR (server-cache model doesn't fit an auth'd per-user app), `<Activity/>` Board⇄List (`t-0c7irf`), TypeScript 7 (`t-0c7irg`).
+- [x] **Typegen route props** — `PageProps<'/app/cover-letters/[id]'>` on the app's one dynamic route; `npm run typecheck` now runs `next typegen` first (heals the host/container generated-type path drift). `eslint.config.mjs` rewritten off `FlatCompat` (eslint-config-next 16 is flat-only; `--print-config` verified all five custom rules survive at `error`).
+- [x] **Adversarially reviewed** — 19 candidates, 16 refuted, 3 LOW fixed (stale Next 15/middleware doc refs; untriaged new `no-location-assign-relative-destination` warning → deliberate hard-nav gets an explaining disable; vitest/compiler gap above).
+- [x] **Live-smoked 11/11** on the Docker stack: login → proxy gate, real WebSocket through the rewrite, board drag (`move` 200), job drawer + timeline, react-pdf preview, one Gemini answer generation (both variants), `[id]` editor route, `/extension/authorize`, 390px no horizontal scroll. Only benign pre-existing warnings (dnd-kit SSR id drift, StrictMode socket first-attempt close, Radix a11y).
+
 >
 > The sections from here to the end are the pre-migration checklist. The stacks
 > they describe (`backend/` NestJS, `frontend/` Nuxt) were **deleted 2026-07-05**;

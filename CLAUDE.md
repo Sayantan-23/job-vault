@@ -6,7 +6,7 @@ Guidance for Claude Code when working in this repository.
 
 JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: the original stack (NestJS + Nuxt 4) is being rebuilt as **Express + Next.js**, feature-by-feature, with a fresh **minimalist-ui** design.
 
-- **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 15). **Build here.**
+- **Active code:** `backend-express/` (Express 5 + Drizzle) and `frontend-next/` (Next.js 16). **Build here.**
 - **Legacy stacks removed** (2026-07-05): the original `backend/` (NestJS) and `frontend/` (Nuxt) reference folders were deleted. Read the original behavior/contracts via git history (last present at commit `dd9daa1`).
 - **Done** — one line per shipped unit. Full detail (decisions, migration numbers, verification) lives in `progress.md`; keep it that way: **a finished slice adds ONE line here, the narrative goes in `progress.md`.**
   - Slices 0–5 (2026-06-01..04): Foundation · Auth (JWT cookies + silent refresh) · Jobs (CRUD + Cheerio/Turndown scraper, AddJobModal, `?job=` JobDrawer) · Dashboard/Kanban (`@dnd-kit`, optimistic move, live ghost-days) · 3.5 unified Jobs workspace (Board⇄List) · Timeline/Reminders/Notifications (node-cron sweeps + socket.io real-time) · Filters/Search/List (URL-synced `useJobFilters`, ⌘K search, hybrid board drag).
@@ -16,6 +16,7 @@ JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: th
   - App editorial-shell redesign (merged 2026-06-25): de-dashboarded `/app` — dissolved sidebar, no top bar, Jobs is home (KPI page deleted), grouped borderless JobList, Newsreader serif, centered 1240px frame, window-edge scrollbar, collapsible icon rail.
   - Public landing v3 + six sub-pages + global dark finale (merged 2026-07-15) · Mobile app nav (speed-dial below `lg`, merged 2026-07-15).
   - Slice 9 referral outreach (merged 2026-07-17): `job_contacts` (migration `0012`), `contacts` module with AUTO timeline events, JobDrawer Outreach section, `OutreachBadge` on list + kanban; ghost meter untouched (employer-signal only).
+  - Next.js 16 upgrade (branch `upgrade-next-16`, 2026-08-26): next 16.3.3 + react 19.2.8, `middleware.ts`→`proxy.ts`, Turbopack dev+build (`transpilePackages` workaround dropped), React Compiler on (in vitest too; 16 pre-existing hooks violations demoted to warn → `t-0c7ire`), typegen `PageProps`, `next typegen` before typecheck. Deferred per `d-0c7hxl`: Cache Components, `<Activity/>` (`t-0c7irf`), TS7 (`t-0c7irg`).
   - Saved answers library (branch `slice-answers-library`, 2026-08-25): `question_answers` (migration `0013`), two **character-measured** variants, one-call dual-variant Gemini generate, `/app/answers` + `?answer=`/`?new` slideover, copy chips stamping `last_used_at`. `jobId` wired end-to-end but no UI sends it (`.blink/tasks/t-0c61ek`).
 - **Next:** **Google OAuth**, **email reminders**; then the two follow-ups this slice sets up — **extension answer surfacing** [`t-0c5uc8`, where most of the value is] and **global search** [`t-0c5wyz`, Postgres FTS per decision `d-0c5wyy`; it also builds `/app/resumes/[id]` and a `?persona=` slideover]. **The backlog now lives in `.blink/tasks/`, one file per item** — `docs/deferred-tasks.md` and `docs/polish-and-tech-debt.md` are just pointers. (User pushes — local master ahead of `origin/master`.)
 
@@ -50,8 +51,8 @@ Recurring defect class: a new page hand-rolls a pattern a sibling already implem
 ## Tech Stack (target)
 
 - **Backend** (`backend-express/`): Express 5, Drizzle ORM, PostgreSQL 16, Pino, Zod, strict TypeScript (NodeNext — imports use `.js`).
-- **Frontend** (`frontend-next/`): Next.js 15 (App Router) + React 19, Tailwind v4 (CSS-first), TanStack Query v5, React Hook Form + Zod. **UI primitives are hand-written in `src/components/ui/` with our tokens (not the shadcn CLI); Radix is used only for overlay *behavior* (`@radix-ui/react-dialog` → dialog/sheet). Any styled element gets its own component — never inline styled markup.**
-- **Auth:** custom JWT in **HTTP-only cookies** (access 15m, refresh 7d, **both `path:/`**) + refresh rotation + **silent refresh** (api-client retries 401→`/api/auth/refresh`→retry, single-flight; `middleware.ts` gates `/app/*` on either cookie). (NestJS used Bearer-in-body; the cookie model is the intentional change.)
+- **Frontend** (`frontend-next/`): Next.js 16 (App Router) + React 19, Tailwind v4 (CSS-first), TanStack Query v5, React Hook Form + Zod. **UI primitives are hand-written in `src/components/ui/` with our tokens (not the shadcn CLI); Radix is used only for overlay *behavior* (`@radix-ui/react-dialog` → dialog/sheet). Any styled element gets its own component — never inline styled markup.**
+- **Auth:** custom JWT in **HTTP-only cookies** (access 15m, refresh 7d, **both `path:/`**) + refresh rotation + **silent refresh** (api-client retries 401→`/api/auth/refresh`→retry, single-flight; `proxy.ts` gates `/app/*` on either cookie). (NestJS used Bearer-in-body; the cookie model is the intentional change.)
 - **Design:** minimalist-ui — warm-stone base, **flat muted-indigo** accent, **Geist** (sans) + **Geist Mono** (numerics signature) + **Instrument Serif** (editorial headings), faint hairline borders, near-zero diffuse shadows, dark-mode first-class. Use the `minimalist-ui` skill.
 - **Deferred (not yet built):** Google OAuth, AI/cover-letters/resume (Gemini), file storage (Cloudinary/pdfkit), public-page redesign, Chrome extension. (Automatic token refresh is now **done**.)
 

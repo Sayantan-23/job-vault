@@ -7,16 +7,14 @@ const backendUrl =
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Auto-memoization in place of hand-written useMemo/useCallback (decision d-0c7hxl).
+  reactCompiler: true,
   output: 'standalone',
   // The /api rewrite proxy aborts slow upstream responses after 30s by default,
   // returning a bare text 500 to the browser. AI endpoints (parse-resume,
   // résumé/cover-letter generation) can legitimately exceed that — give them
   // room; the backend's own Gemini timeout (60s) still bounds the wait.
   experimental: { proxyTimeout: 180_000 },
-  // @react-pdf/renderer ships ESM-only; Next's webpack build errors with
-  // "ESM packages need to be imported" unless we transpile it. (Used client-only
-  // for the résumé PDF preview/download via next/dynamic ssr:false.)
-  transpilePackages: ['@react-pdf/renderer'],
   // socket.io-client connects to `/socket.io/` (with a trailing slash). With the
   // default trailing-slash handling, Next 308-redirects `/socket.io/?EIO=4…` to
   // `/socket.io?EIO=4…`, which breaks the engine.io handshake before the rewrite

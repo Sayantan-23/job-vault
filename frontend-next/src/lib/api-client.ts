@@ -97,6 +97,9 @@ async function request<T>(
     // the current URL in ?next= so login can return the user here afterwards.
     if (typeof window !== 'undefined') {
       const next = window.location.pathname + window.location.search
+      // Hard navigation on purpose: a full document load drops the TanStack
+      // Query cache holding the previous user's data, which router.push would keep.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.assign(`/login?next=${encodeURIComponent(next)}`)
     }
   }
