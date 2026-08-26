@@ -12,8 +12,8 @@ import type { ProfileContent } from '@/types/profile'
 
 // The profile is prefetched on the server (page.tsx) and hydrated into the
 // cache before this renders, so the draft starts populated on first paint. The
-// effect below covers the other case — a failed/slow server read, where the
-// data arrives from the client fetch instead.
+// render-time re-seed below covers the other case — a failed/slow server read,
+// where the data arrives from the client fetch instead.
 export function ProfileWorkspace() {
   const { data } = useProfile()
   const update = useUpdateProfile()

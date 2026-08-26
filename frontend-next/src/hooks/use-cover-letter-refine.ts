@@ -21,8 +21,10 @@ export function useCoverLetterRefine(coverLetterId: string, currentBody: string,
   // Switching to a different letter discards any staged rewrite/undo, else a
   // candidate for letter A could be kept into letter B's buffer. Clearing it
   // during render (React's documented pattern for syncing to changed input)
-  // closes that leak completely: an effect would let the stale candidate commit
-  // for one frame under the new letter's id before it was cleared.
+  // avoids the one-frame stale-candidate window an effect would leave. A refine
+  // still in flight across the switch can resolve after this render but before
+  // the reset effect detaches its observer — the effect below re-nulls for that
+  // case.
   const [seenId, setSeenId] = useState(coverLetterId)
   if (seenId !== coverLetterId) {
     setSeenId(coverLetterId)
@@ -35,8 +37,16 @@ export function useCoverLetterRefine(coverLetterId: string, currentBody: string,
 
   // The mutation's own cached result/error is external state, so it is dropped
   // from an effect rather than during render. `reset` is stable in TanStack v5.
+  // The setters cover an in-flight refine for the previous letter whose
+  // onSuccess fired between the render-time clear above and this reset — async
+  // race cleanup, not derivable state, hence the targeted disable.
   const { reset } = refine
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clears a pre-reset async onSuccess for the previous letter
+    setCandidate(null)
+    setUndoBody(null)
+    setLastAction(null)
+    setLastInstructions(undefined)
     reset()
   }, [coverLetterId, reset])
 

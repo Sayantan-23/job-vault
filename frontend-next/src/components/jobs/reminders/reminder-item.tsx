@@ -16,6 +16,9 @@ export function ReminderItem({
   onToggleComplete: (reminder: Reminder) => void
   onDelete: (id: string) => void
 }) {
+  // The React Compiler memoizes this keyed on `reminder`, so overdue can stay
+  // stale until the row's identity changes (any reminder mutation refetches the
+  // list). Accepted: the pre-compiler code also only recomputed on re-render.
   const overdue = !reminder.isCompleted && isPast(reminder.remindAt)
   const due = new Date(reminder.remindAt)
   const { confirm, confirmDialog } = useConfirm()
