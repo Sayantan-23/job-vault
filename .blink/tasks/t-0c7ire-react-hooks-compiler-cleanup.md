@@ -1,11 +1,12 @@
 ---
 id: t-0c7ire
 title: "Fix the 16 react-hooks compiler diagnostics demoted to warnings in the Next 16 upgrade"
-status: backlog
+status: done
+owner: coder
 milestone: m-01
 decisions: [d-0c7hxl]
 created: 2026-08-26T08:11:41Z
-updated: 2026-08-26T08:11:41Z
+updated: 2026-08-26T09:03:27Z
 tags: [frontend, tech-debt, react-compiler]
 ---
 
