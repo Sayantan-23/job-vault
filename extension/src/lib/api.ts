@@ -20,6 +20,13 @@ export interface ScrapeResult {
   status: 'ok' | 'partial' | 'empty'
   source: string
 }
+export interface SavedAnswer {
+  id: string
+  question: string
+  answerShort: string | null
+  answerLong: string | null
+  lastUsedAt: string | null
+}
 
 export class ApiError extends Error {
   constructor(
@@ -93,4 +100,12 @@ export function quickCreate(serverUrl: string, token: string, job: QuickCreateIn
       description: job.description,
     }),
   })
+}
+
+export function listAnswers(serverUrl: string, token: string): Promise<SavedAnswer[]> {
+  return call<SavedAnswer[]>(serverUrl, token, '/api/extension/answers')
+}
+
+export function markAnswerUsed(serverUrl: string, token: string, id: string): Promise<{ id: string }> {
+  return call<{ id: string }>(serverUrl, token, `/api/extension/answers/${id}/used`, { method: 'POST' })
 }
