@@ -3,6 +3,7 @@ import { AppError } from '@/shared/errors.js'
 import { extensionService } from './extension.service.js'
 import type { QuickCreateJobInput, CheckUrlInput } from './extension.schema.js'
 import type { ScrapeUrlInput } from '@/modules/jobs/jobs.schema.js'
+import { answersService } from '@/modules/answers/answers.service.js'
 
 // The api-key principal (set by apiKeyMiddleware), not a cookie user.
 function requireApiUserId(req: Request): string {
@@ -27,4 +28,14 @@ async function scrape(req: Request, res: Response): Promise<void> {
   res.status(200).json({ data: await extensionService.scrape(requireApiUserId(req), sourceUrl) })
 }
 
-export const extensionController = { verifyKey, checkUrl, quickCreate, scrape }
+// The saved-answer library, reachable from the api-key runtime: answersRouter
+// mounts the cookie authMiddleware, so the extension cannot call /api/answers.
+async function listAnswers(req: Request, res: Response): Promise<void> {
+  res.status(200).json({ data: await answersService.list(requireApiUserId(req)) })
+}
+async function markAnswerUsed(req: Request, res: Response): Promise<void> {
+  const { id } = req.params as { id: string }
+  res.status(200).json({ data: await answersService.markUsed(requireApiUserId(req), id) })
+}
+
+export const extensionController = { verifyKey, checkUrl, quickCreate, scrape, listAnswers, markAnswerUsed }
