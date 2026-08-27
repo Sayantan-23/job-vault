@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type MouseEvent } from 'react'
 import { Badge } from '../ui/Badge'
 import { Input } from '../ui/Input'
 import { Spinner } from '../ui/Spinner'
@@ -35,6 +35,13 @@ function defaultVariant(answer: SavedAnswer, maxLength: number | null): Variant 
   return 'long'
 }
 
+// A popup can't navigate itself anywhere useful — open the web app in a tab,
+// the way CaptureView and SuccessView do.
+function openInApp(event: MouseEvent<HTMLAnchorElement>, url: string) {
+  event.preventDefault()
+  chrome.tabs.create({ url })
+}
+
 export function AnswersView({ fields, tabId, onSettings }: Props) {
   const [answers, setAnswers] = useState<SavedAnswer[]>([])
   const [serverUrl, setServerUrl] = useState('')
@@ -43,8 +50,13 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
   const [query, setQuery] = useState('')
   const [chosen, setChosen] = useState<Record<string, Variant>>({})
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [insertedId, setInsertedId] = useState<string | null>(null)
+  const [pickedId, setPickedId] = useState<string | null>(null)
 
-  const target = fields[0] ?? null
+  // The page scan is form-wide, so the user picks which of its questions the
+  // list ranks against and Insert writes into. Derived, not synced: a pick that
+  // no longer exists just falls back to the first field.
+  const target = fields.find((item) => item.fieldId === pickedId) ?? fields[0] ?? null
   const detected = target?.question ?? null
 
   useEffect(() => {
@@ -99,8 +111,12 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
       setError('Couldn’t fill that field. Copy the answer instead.')
       return
     }
+    // The popup stays open on purpose: a screening page stacks several
+    // questions, and closing here would cost a reopen per insert — the exact
+    // cost this view exists to remove.
+    setInsertedId(answer.id)
+    setTimeout(() => setInsertedId((current) => (current === answer.id ? null : current)), 2500)
     await stamp(answer.id)
-    window.close()
   }
 
   const ranked = rankAnswers(answers, detected)
@@ -142,13 +158,27 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
             </div>
           ) : null}
 
-          {detected ? (
+          {target ? (
             <div className="rounded-lg border border-border bg-muted/60 px-3 py-2">
               <div className="mb-0.5 flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                 <FileTextIcon className="size-3" />
                 From this page
               </div>
-              <p className="text-[13px] font-medium">{detected}</p>
+              {fields.length > 1 ? (
+                <QuestionSwitcher
+                  fields={fields}
+                  picked={target.fieldId}
+                  onPick={(fieldId) => {
+                    setPickedId(fieldId)
+                    // A variant picked under one field's cap must not survive into a
+                    // field with a tighter one — that is how the 1,240-character long
+                    // variant ends up in a 500-character box. Re-default instead.
+                    setChosen({})
+                  }}
+                />
+              ) : (
+                <p className="text-[13px] font-medium">{target.question}</p>
+              )}
             </div>
           ) : null}
 
@@ -168,6 +198,7 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
                 href={`${serverUrl}/app/answers`}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(event) => openInApp(event, `${serverUrl}/app/answers`)}
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-border bg-card px-3.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 Write this answer in JobVault
@@ -204,6 +235,7 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
                         variant={variant}
                         best={index === 0 && entry.isMatch}
                         copied={copiedId === answer.id}
+                        inserted={insertedId === answer.id}
                         onVariant={(next) => setChosen((prev) => ({ ...prev, [answer.id]: next }))}
                         onCopy={text ? () => void copy(answer, text) : null}
                         onInsert={canInsert && text ? () => void insert(answer, text) : null}
@@ -217,6 +249,7 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
                 href={more.href}
                 target="_blank"
                 rel="noreferrer"
+                onClick={(event) => openInApp(event, more.href)}
                 className="block border-t border-border pt-3 text-[12.5px] text-muted-foreground transition-colors hover:text-foreground"
               >
                 {more.label}
@@ -229,11 +262,54 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
   )
 }
 
+// One chip per open-ended question found on the page. Labels are truncated in
+// CSS rather than in the string so the accessible name stays the whole question
+// — questions are long and the popup is 360px wide.
+function QuestionSwitcher({
+  fields,
+  picked,
+  onPick,
+}: {
+  fields: AnswerField[]
+  picked: string
+  onPick: (fieldId: string) => void
+}) {
+  return (
+    <div
+      role="tablist"
+      aria-label="Questions on this page"
+      className="-mx-1 flex gap-1.5 overflow-x-auto px-1 py-0.5"
+    >
+      {fields.map((item) => {
+        const active = item.fieldId === picked
+        return (
+          <button
+            key={item.fieldId}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            title={item.question}
+            onClick={() => onPick(item.fieldId)}
+            className={`max-w-[168px] flex-none truncate rounded-full border px-2.5 py-[3px] text-[11px] font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              active
+                ? 'border-primary/45 bg-primary/10 text-primary'
+                : 'border-border text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {item.question}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 function AnswerRow({
   answer,
   variant,
   best,
   copied,
+  inserted,
   onVariant,
   onCopy,
   onInsert,
@@ -242,6 +318,7 @@ function AnswerRow({
   variant: Variant
   best: boolean
   copied: boolean
+  inserted: boolean
   onVariant: (variant: Variant) => void
   onCopy: (() => void) | null
   onInsert: (() => void) | null
@@ -276,9 +353,17 @@ function AnswerRow({
             <button
               type="button"
               onClick={onInsert}
-              className="h-7 rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground shadow-[0_1px_2px_rgba(17,17,17,0.06)] transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className={`inline-flex h-7 items-center gap-1 rounded-lg px-3 text-xs font-medium shadow-[0_1px_2px_rgba(17,17,17,0.06)] transition-opacity hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                inserted ? 'bg-success/12 text-success shadow-none' : 'bg-primary text-primary-foreground'
+              }`}
             >
-              Insert
+              {inserted ? (
+                <>
+                  <CheckIcon className="size-3" /> Inserted
+                </>
+              ) : (
+                'Insert'
+              )}
             </button>
           ) : null}
           <button
