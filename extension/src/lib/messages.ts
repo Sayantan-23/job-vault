@@ -11,3 +11,15 @@ export interface ConnectMessage {
 }
 
 export type ConnectResponse = { ok: true } | { ok: false; error: string }
+
+export const SCAN_FIELDS = 'JOBVAULT_SCAN_FIELDS' as const
+export const INSERT_ANSWER = 'JOBVAULT_INSERT_ANSWER' as const
+
+export interface ScanFieldsMessage {
+  type: typeof SCAN_FIELDS
+}
+export interface InsertAnswerMessage {
+  type: typeof INSERT_ANSWER
+  fieldId: string
+  text: string
+}
