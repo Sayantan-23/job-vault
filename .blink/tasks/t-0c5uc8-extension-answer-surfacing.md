@@ -1,9 +1,10 @@
 ---
 id: t-0c5uc8
 title: Surface saved answers in the extension on application pages
-status: planned
+status: in_progress
 created: 2026-08-25T10:26:32Z
-updated: 2026-08-27T12:18:52Z
+updated: 2026-08-27T12:41:00Z
+owner: claude
 milestone: m-01
 estimate: L
 decisions: [d-0c9ove, d-0c9ovf]

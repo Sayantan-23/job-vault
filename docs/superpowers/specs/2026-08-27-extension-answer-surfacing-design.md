@@ -99,10 +99,26 @@ granted by the user gesture of opening the popup.
 
 `App.tsx` (tab state + preselect) · `capture.ts` (combined pass) · `api.ts`
 (+2 calls) · `messages.ts` (+2 messages) · `CaptureView.tsx` (props, not
-self-load).
+self-load) · `extension.router.ts` and `extension.controller.ts` (+2 routes).
 
-**Backend: zero changes.** `GET /api/answers` and `POST /api/answers/:id/used`
-already exist.
+### Backend
+
+`answersRouter` mounts `authMiddleware`, which reads the access-token cookie.
+The extension authenticates with `X-API-Key` through `apiKeyMiddleware`, mounted
+on `/api/extension/*`. So the extension cannot call `/api/answers` directly — it
+would 401 — and slice 8's rule stands: the API key is the extension's runtime
+auth and the cookie model is not weakened to accommodate it.
+
+Two thin routes are added to the **extension** module, mirroring how
+`quickCreate` and `checkUrl` already delegate:
+
+| Route | Delegates to |
+|---|---|
+| `GET /api/extension/answers` | `answersService.list(userId)` |
+| `POST /api/extension/answers/:id/used` | `answersService.markUsed(userId, id)` |
+
+No new service logic, no schema change, no migration. The controller resolves
+the principal with the existing `requireApiUserId(req)`.
 
 ## Field detection
 
