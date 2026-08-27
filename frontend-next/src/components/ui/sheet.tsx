@@ -38,6 +38,14 @@ export function SheetContent({
       <SheetOverlay />
       <DialogPrimitive.Content
         data-theme-scope="app"
+        // Radix autofocuses the first tabbable node with `select: true`, which
+        // selects the whole value when that node is a text input. Focus the
+        // panel itself instead: the dialog is still announced and Tab lands on
+        // the first field, with nothing pre-selected.
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          ;(e.currentTarget as HTMLElement | null)?.focus()
+        }}
         className={cn(
           'fixed inset-y-0 right-0 z-50 flex h-full w-full flex-col overflow-y-auto border-l border-border bg-card text-card-foreground shadow-lg focus:outline-none',
           'sm:max-w-2xl',

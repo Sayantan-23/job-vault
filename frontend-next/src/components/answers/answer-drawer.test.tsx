@@ -43,6 +43,13 @@ describe('AnswerDrawer', () => {
     expect(screen.getAllByRole('heading', { name: 'Edit answer' })).toHaveLength(1)
   })
 
+  it('opens without selecting the question text', () => {
+    render(<AnswerDrawer {...props} answer={answerA} />)
+    const question = screen.getByLabelText('Question') as HTMLInputElement
+    expect(document.activeElement).not.toBe(question)
+    expect(question.selectionStart).toBe(question.selectionEnd)
+  })
+
   it('drops the previous answer’s draft when a different answer is opened', async () => {
     const { rerender } = render(<AnswerDrawer {...props} answer={answerA} />)
     await userEvent.click(screen.getByRole('button', { name: /generate/i }))
