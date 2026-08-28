@@ -12,6 +12,7 @@ import {
   jobsListKey,
   kanbanKey,
   resumesByJobKey,
+  searchKey,
 } from './query-keys'
 import { buildBoardQuery, buildListQuery } from './filters'
 import type { GhostFilter, JobFilters } from '@/types/filters'
@@ -58,6 +59,11 @@ export const resumesQuery = (jobId?: string): QueryDesc =>
 export const coverLettersQuery: QueryDesc = { key: COVER_LETTERS_KEY, path: '/api/cover-letters' }
 
 export const answersQuery: QueryDesc = { key: ANSWERS_KEY, path: '/api/answers' }
+
+export const searchQuery = (q: string): QueryDesc => ({
+  key: searchKey(q),
+  path: `/api/search?q=${encodeURIComponent(q)}`,
+})
 
 export const coverLettersByJobQuery = (jobId: string): QueryDesc => ({
   key: coverLettersByJobKey(jobId),

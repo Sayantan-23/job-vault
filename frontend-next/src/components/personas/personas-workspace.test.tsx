@@ -11,6 +11,17 @@ vi.mock('@/lib/api-client', () => ({
   apiClient: { get: vi.fn(), post: vi.fn(), postForm: vi.fn(), patch: vi.fn(), delete: vi.fn() },
   ApiError: class ApiError extends Error {},
 }))
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push }),
+  usePathname: () => '/app/personas',
+  // A fresh instance per call, like Next (which hands back a new
+  // ReadonlyURLSearchParams per navigation). Returning the mutated-in-place
+  // object lets React Compiler cache values derived from it.
+  useSearchParams: () => new URLSearchParams(params),
+}))
+
+const push = vi.fn()
+let params = new URLSearchParams()
 
 import { apiClient } from '@/lib/api-client'
 import { PersonasWorkspace } from './personas-workspace'
@@ -41,7 +52,10 @@ const PROFILE: ProfileContent = {
   education: [],
 }
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  params = new URLSearchParams()
+})
 
 describe('PersonasWorkspace', () => {
   it('renders personas and the count against the cap', async () => {
@@ -111,13 +125,41 @@ describe('PersonasWorkspace', () => {
     await waitFor(() => expect(api.delete).toHaveBeenCalledWith('/api/personas/p1'))
   })
 
-  it('opens the edit sheet for a persona', async () => {
+  it('opens a persona for editing by pushing ?persona=<id>', async () => {
     render(
       <PersonasWorkspace />,
       { wrapper: seeded([PERSONA], { enabled: true, maxPersonas: 5 }) },
     )
     await userEvent.click(screen.getByRole('button', { name: /edit backend/i }))
+    expect(push).toHaveBeenCalledWith('/app/personas?persona=p1')
+  })
+
+  it('opens the edit sheet for the persona named in ?persona=', async () => {
+    params = new URLSearchParams('persona=p1')
+    render(
+      <PersonasWorkspace />,
+      { wrapper: seeded([PERSONA], { enabled: true, maxPersonas: 5 }) },
+    )
     expect(await screen.findByRole('heading', { name: /edit persona/i })).toBeInTheDocument()
     expect(screen.getByLabelText('Persona name')).toHaveValue('Backend')
+  })
+
+  it('closes the sheet by dropping the param', async () => {
+    params = new URLSearchParams('persona=p1')
+    render(
+      <PersonasWorkspace />,
+      { wrapper: seeded([PERSONA], { enabled: true, maxPersonas: 5 }) },
+    )
+    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }))
+    expect(push).toHaveBeenCalledWith('/app/personas')
+  })
+
+  it('ignores a ?persona= id that is not in the list', () => {
+    params = new URLSearchParams('persona=gone')
+    render(
+      <PersonasWorkspace />,
+      { wrapper: seeded([PERSONA], { enabled: true, maxPersonas: 5 }) },
+    )
+    expect(screen.queryByRole('heading', { name: /edit persona/i })).not.toBeInTheDocument()
   })
 })

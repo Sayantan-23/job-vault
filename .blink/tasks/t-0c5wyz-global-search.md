@@ -1,11 +1,11 @@
 ---
 id: t-0c5wyz
 title: Global search — expanding command palette over Postgres FTS
-status: backlog
+status: done
 created: 2026-08-25T11:23:24Z
-updated: 2026-08-25T11:23:24Z
+updated: 2026-08-28T12:00:00Z
 estimate: L
-decisions: [d-0c5wyy]
+decisions: [d-0c5wyy, d-0cbc74]
 tags: [search, frontend, backend]
 ---
 
@@ -52,15 +52,29 @@ One element for 300ms is fine; noted rather than pretended away.
 |---|---|---|
 | Job | `/app/jobs?job=<id>` | exists |
 | Cover letter | `/app/cover-letters/<id>` | exists |
-| Answer | `/app/answers?answer=<id>` | ships with the answer library |
-| Résumé | `/app/resumes/<id>` | **build — this is [[t-0021]]** |
-| Persona | `/app/personas?persona=<id>` | **build** |
+| Answer | `/app/answers?answer=<id>` | exists |
+| Résumé | `/app/resumes?resume=<id>` | **exists** |
+| Persona | `/app/personas?persona=<id>` | build — ~10 lines |
 
-Résumés get a real route mirroring `cover-letters/[id]`; personas get a
-query-param slideover like jobs, because a persona is edited rather than read
-at length. [[t-0021]] is therefore absorbed here, including its other half —
-moving the résumé split from `lg` to `xl`, for the rail-width reason recorded
-at `cover-letter-editor.tsx:130`.
+**Scope correction, verified 2026-08-28.** The paragraph this replaces claimed
+résumés needed a new `/app/resumes/[id]` route and therefore absorbed [[t-0021]].
+That premise is wrong: `resume/resumes-page-client.tsx:11` already reads
+`?resume=<id>` and passes it to the workspace as `initialResumeId`, with a
+comment saying exactly why ("résumés have no per-id route, so they open in the
+list"). A résumé hit links there and needs no new code.
+
+[[t-0021]] is therefore **not absorbed and not a dependency** — the résumé route
+split and the `lg`→`xl` breakpoint move stay independent polish, on their own
+task. This drops the slice from L to M.
+
+Personas are the only missing deep link: `personas-workspace.tsx:23` holds the
+edited persona in local `useState`, so `?persona=<id>` is URL→that state and the
+existing `EditPersonaSheet`.
+
+**Shell.** The morph is built over Radix `DialogPrimitive` rather than as a
+free-standing `fixed` element, and the origin is read off whichever trigger was
+clicked so the desktop cluster and the mobile header both work. Reasoning and
+the free fallback in [[d-0cbc74]].
 
 **Conflict to resolve first.** `Cmd/Ctrl+K` is already bound on `window` by the
 jobs search field (`components/jobs/search-input.tsx:37`), so it fires on every

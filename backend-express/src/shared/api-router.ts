@@ -15,6 +15,7 @@ import { coverLettersRouter } from '@/modules/cover-letters/cover-letters.router
 import { answersRouter } from '@/modules/answers/answers.router.js'
 import { apiKeysRouter } from '@/modules/api-keys/api-keys.router.js'
 import { extensionRouter } from '@/modules/extension/extension.router.js'
+import { searchRouter } from '@/modules/search/search.router.js'
 
 const router = Router()
 
@@ -41,5 +42,6 @@ router.use('/cover-letters', coverLettersRouter)
 router.use('/answers', answersRouter)
 router.use('/api-keys', apiKeysRouter)
 router.use('/extension', extensionRouter)
+router.use('/search', searchRouter)
 
 export { router as apiRouter }

@@ -25,12 +25,13 @@ describe('SearchInput', () => {
     expect(onChange).toHaveBeenCalledWith('')
   })
 
-  it('focuses the input on Cmd/Ctrl+K', () => {
+  // The global search palette owns ⌘K now; this field used to bind it on window,
+  // which fired on every page that mounts it.
+  it('no longer claims Cmd/Ctrl+K', () => {
     render(<SearchInput value="" onChange={vi.fn()} />)
     const input = screen.getByRole('searchbox')
-    expect(input).not.toHaveFocus()
     fireEvent.keyDown(window, { key: 'k', metaKey: true })
-    expect(input).toHaveFocus()
+    expect(input).not.toHaveFocus()
   })
 
   it('does not re-emit the stale term after clearing within the debounce window', () => {

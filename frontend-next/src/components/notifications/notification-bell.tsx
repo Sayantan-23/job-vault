@@ -13,6 +13,7 @@ import {
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
 } from '@/hooks/use-notifications'
+import { IconButton } from '@/components/ui/icon-button'
 import { NotificationPanel } from './notification-panel'
 import type { Notification } from '@/types/notification'
 import { cn } from '@/lib/utils'
@@ -45,15 +46,10 @@ export function NotificationBell({ className }: { className?: string }) {
   return (
     <AnchoredPopover open={open} onOpenChange={setOpen}>
       <AnchoredPopoverTrigger asChild>
-        <button
-          type="button"
+        <IconButton
           title="Notifications"
           aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
-          className={cn(
-            'grid size-9 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground',
-            open && 'bg-accent text-foreground',
-            className,
-          )}
+          className={cn(open && 'bg-accent text-foreground', className)}
         >
           <span className="relative">
             <Bell className="size-[18px]" aria-hidden="true" />
@@ -66,7 +62,7 @@ export function NotificationBell({ className }: { className?: string }) {
               />
             ) : null}
           </span>
-        </button>
+        </IconButton>
       </AnchoredPopoverTrigger>
       <AnchoredPopoverContent aria-label="Notifications" align="end" sideOffset={8} className="w-80 p-0">
         <NotificationPanel

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { SearchPalette } from '@/components/search/search-palette'
 import { cn } from '@/lib/utils'
 import { AccountMenu } from './account-menu'
 import { BrandMark } from './brand-mark'
@@ -86,7 +87,11 @@ export function MobileHeader() {
           <span className="text-[15px] font-semibold tracking-tight">JobVault</span>
         </div>
 
+        {/* Mounted here as well as in the desktop cluster: exactly one of the two
+            is displayed per width, and the palette ignores the ⌘K chord from the
+            instance whose trigger measures a zero rect. */}
         <div className="ml-auto flex items-center gap-1.5">
+          <SearchPalette />
           <NotificationBell />
           <AccountMenu compact side="bottom" />
         </div>

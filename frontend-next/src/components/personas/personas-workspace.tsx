@@ -1,8 +1,9 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
-import type { Persona, AiStatus } from '@/types/persona'
+import type { AiStatus } from '@/types/persona'
 import { emptyProfileContent } from '@/lib/profile'
 import { Button } from '@/components/ui/button'
 import { PageHeading } from '@/components/layout/app/page-heading'
@@ -19,8 +20,12 @@ import { EditPersonaSheet } from './edit-persona-sheet'
 const STATUS_FALLBACK: AiStatus = { enabled: false, maxPersonas: 5 }
 
 export function PersonasWorkspace() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const selectedId = searchParams.get('persona')
+
   const [createOpen, setCreateOpen] = useState(false)
-  const [editing, setEditing] = useState<Persona | null>(null)
   const { data: personas = [] } = usePersonas()
   const { data: status = STATUS_FALLBACK } = useAiStatus()
   const { data: profileData } = useProfile()
@@ -28,9 +33,28 @@ export function PersonasWorkspace() {
   // stand-in while the real one is in flight. Memoised so they don't see a new
   // object identity on every render.
   const profile = useMemo(() => profileData ?? emptyProfileContent(), [profileData])
+  // An id that isn't in the list — deleted, someone else's, or the list still
+  // in flight — reads as no selection, so the sheet stays closed instead of
+  // opening empty. It opens on its own if the list arrives holding that id.
+  const editing = personas.find((p) => p.id === selectedId) ?? null
   const atCap = personas.length >= status.maxPersonas
   // Manual creation never needs AI — only the résumé-import mode does.
   const canCreate = !atCap
+
+  const setParam = (next: URLSearchParams) => {
+    const qs = next.toString()
+    router.push(qs ? `${pathname}?${qs}` : pathname)
+  }
+  const open = (id: string) => {
+    const next = new URLSearchParams(searchParams)
+    next.set('persona', id)
+    setParam(next)
+  }
+  const close = () => {
+    const next = new URLSearchParams(searchParams)
+    next.delete('persona')
+    setParam(next)
+  }
 
   return (
     <>
@@ -68,7 +92,7 @@ export function PersonasWorkspace() {
               You&rsquo;ve reached the maximum of {status.maxPersonas} personas. Delete one to add another.
             </p>
           )}
-          <PersonaList personas={personas} onEdit={setEditing} />
+          <PersonaList personas={personas} onEdit={(p) => open(p.id)} />
         </div>
       </AppPage>
 
@@ -83,7 +107,7 @@ export function PersonasWorkspace() {
         profile={profile}
         open={editing !== null}
         onOpenChange={(o) => {
-          if (!o) setEditing(null)
+          if (!o) close()
         }}
       />
     </>
