@@ -17,8 +17,8 @@ type Source = {
   subtitle: AnyPgColumn | null
   /** Columns concatenated into the tsvector — the recall surface. */
   fts: AnyPgColumn[]
-  /** The single short column typos are measured against. */
-  trgm: AnyPgColumn
+  /** The short columns typos are measured against — best match across them wins. */
+  trgm: AnyPgColumn[]
   /** The column ts_headline excerpts in the outer query. */
   snippet: AnyPgColumn
 }
@@ -32,7 +32,7 @@ const SOURCES: Source[] = [
     title: jobs.title,
     subtitle: jobs.company,
     fts: [jobs.title, jobs.company, jobs.snapshotMarkdown],
-    trgm: jobs.title,
+    trgm: [jobs.title, jobs.company],
     snippet: jobs.snapshotMarkdown,
   },
   {
@@ -43,7 +43,7 @@ const SOURCES: Source[] = [
     title: generatedResumes.title,
     subtitle: null,
     fts: [generatedResumes.title, generatedResumes.instructions],
-    trgm: generatedResumes.title,
+    trgm: [generatedResumes.title],
     snippet: generatedResumes.instructions,
   },
   {
@@ -54,7 +54,7 @@ const SOURCES: Source[] = [
     title: coverLetters.title,
     subtitle: null,
     fts: [coverLetters.title, coverLetters.instructions, coverLetters.bodyMarkdown],
-    trgm: coverLetters.title,
+    trgm: [coverLetters.title],
     snippet: coverLetters.bodyMarkdown,
   },
   {
@@ -65,7 +65,7 @@ const SOURCES: Source[] = [
     title: personas.name,
     subtitle: null,
     fts: [personas.name, personas.rawInput],
-    trgm: personas.name,
+    trgm: [personas.name],
     snippet: personas.rawInput,
   },
   {
@@ -76,7 +76,7 @@ const SOURCES: Source[] = [
     title: questionAnswers.question,
     subtitle: null,
     fts: [questionAnswers.question, questionAnswers.answerShort, questionAnswers.answerLong],
-    trgm: questionAnswers.question,
+    trgm: [questionAnswers.question],
     snippet: questionAnswers.answerLong,
   },
 ]
@@ -102,18 +102,34 @@ function tsVector(cols: AnyPgColumn[]): SQL {
   return sql`to_tsvector('english', concat_ws(' ', ${sql.join(cols, sql`, `)}))`
 }
 
+// greatest() over one argument is just that argument, so single-column sources
+// need no special case.
+function trgmSimilarity(cols: AnyPgColumn[], q: string): SQL {
+  const scores = cols.map((col) => sql`similarity(${col}, ${q})`)
+  return sql`greatest(${sql.join(scores, sql`, `)})`
+}
+
+// The rank is banded, because ts_rank (~0.06 for a good hit) and similarity
+// (0..1) are incompatible scales: a plain greatest() of the two ranked every
+// fuzzy title match above every exact match found in a body field. Both scores
+// are 0..1, so the +1.0 puts all FTS hits strictly above all trigram-only hits,
+// and within each band rows still sort by their own score.
 function branch(source: Source, userId: string, q: string): SQL {
   const vector = tsVector(source.fts)
   const query = tsQuery(q)
+  const trgmSim = trgmSimilarity(source.trgm, q)
   return sql`(select ${source.type}::text as type,
                      ${source.id}::text as id,
                      coalesce(${source.title}, 'Untitled') as title,
                      ${source.subtitle ?? sql`null::text`} as subtitle,
                      ${source.snippet} as snippet_source,
-                     greatest(ts_rank(${vector}, ${query}), similarity(${source.trgm}, ${q})) as rank
+                     case when ${vector} @@ ${query}
+                          then 1.0 + ts_rank(${vector}, ${query})
+                          else ${trgmSim}
+                     end as rank
                 from ${source.table}
                where ${source.userId} = ${userId}
-                 and (${vector} @@ ${query} or similarity(${source.trgm}, ${q}) > ${TRIGRAM_FLOOR})
+                 and (${vector} @@ ${query} or ${trgmSim} > ${TRIGRAM_FLOOR})
                order by rank desc
                limit ${PER_TYPE_LIMIT})`
 }

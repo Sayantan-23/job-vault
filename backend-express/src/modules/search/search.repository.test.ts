@@ -21,6 +21,14 @@ const BODY_TAG = word() // jobs.snapshot_markdown only
 const ANSWER_TAG = word() // seven answers, to prove the per-type cap
 const PERSONA_NAME = `Persona ${word()}`
 
+// The two-band ranking fixture. RANK_TAG lives in one job's body (an FTS hit);
+// RANK_NEAR is another job's whole title, one character off RANK_TAG — close
+// enough for pg_trgm (~0.63) but a different lexeme, so it can never match FTS.
+// The near-miss title is the WHOLE title on purpose: extra words dilute the
+// trigram set and would drag similarity down towards the 0.3 floor.
+const RANK_TAG = word()
+const RANK_NEAR = `${RANK_TAG.slice(0, 6)}${RANK_TAG[6] === 'q' ? 'z' : 'q'}${RANK_TAG.slice(7)}`
+
 const EMAIL = `search-repo-${Date.now()}@example.com`
 const C: ResumeContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
 const P: ProfileContent = { basics: { name: 'A', links: [] }, summary: '', experience: [], projects: [], skills: [], education: [] }
@@ -30,8 +38,12 @@ let otherUserId: string
 let jobId: string
 let personaId: string
 let otherJobId: string
+let rankBodyJobId: string
+let rankNearJobId: string
 
-async function seedFor(uid: string): Promise<{ jobId: string; personaId: string }> {
+async function seedFor(
+  uid: string,
+): Promise<{ jobId: string; personaId: string; rankBodyJobId: string; rankNearJobId: string }> {
   const db = getDb()
   const jobRows = await db
     .insert(jobs)
@@ -46,9 +58,24 @@ async function seedFor(uid: string): Promise<{ jobId: string; personaId: string 
     .insert(personas)
     .values({ userId: uid, name: PERSONA_NAME, data: P, rawInput: 'Backend engineer, eight years.' })
     .returning()
+  // Distinct companies so these two never collide with the 'Acme Corp' typo test.
+  const rankRows = await db
+    .insert(jobs)
+    .values([
+      {
+        userId: uid,
+        title: 'Ranking body match',
+        company: `${word()} Systems`,
+        snapshotMarkdown: `The deployment guide mentions ${RANK_TAG} throughout.`,
+      },
+      { userId: uid, title: RANK_NEAR, company: `${word()} Systems` },
+    ])
+    .returning()
   const job = jobRows[0]
   const persona = personaRows[0]
-  if (!job || !persona) throw new Error('failed to seed job/persona')
+  const rankBody = rankRows[0]
+  const rankNear = rankRows[1]
+  if (!job || !persona || !rankBody || !rankNear) throw new Error('failed to seed job/persona')
 
   await db
     .insert(generatedResumes)
@@ -68,7 +95,7 @@ async function seedFor(uid: string): Promise<{ jobId: string; personaId: string 
       answerLong: 'A longer version of the same answer about the platform work.',
     })),
   )
-  return { jobId: job.id, personaId: persona.id }
+  return { jobId: job.id, personaId: persona.id, rankBodyJobId: rankBody.id, rankNearJobId: rankNear.id }
 }
 
 beforeAll(async () => {
@@ -90,6 +117,8 @@ beforeAll(async () => {
   const mineSeed = await seedFor(userId)
   jobId = mineSeed.jobId
   personaId = mineSeed.personaId
+  rankBodyJobId = mineSeed.rankBodyJobId
+  rankNearJobId = mineSeed.rankNearJobId
   // User B gets byte-identical rows, so every assertion below also proves scoping.
   const otherSeed = await seedFor(otherUserId)
   otherJobId = otherSeed.jobId
@@ -139,6 +168,21 @@ describe('searchRepository (real DB)', () => {
 
   it('returns an empty array when nothing matches', async () => {
     expect(await searchRepository.search(userId, word())).toEqual([])
+  })
+
+  // Regression guard: ts_rank (~0.06 for a good hit) and similarity (up to 1.0)
+  // are incompatible scales, so a plain greatest() of the two put every fuzzy
+  // title match above every exact body match.
+  it('ranks an exact body match above a fuzzy title match', async () => {
+    const ids = (await searchRepository.search(userId, RANK_TAG)).map((r) => r.id)
+    expect(ids).toContain(rankBodyJobId)
+    expect(ids).toContain(rankNearJobId)
+    expect(ids.indexOf(rankBodyJobId)).toBeLessThan(ids.indexOf(rankNearJobId))
+  })
+
+  it('finds a job through a one-character typo in its company', async () => {
+    // 'Acne Corp' shares no lexeme with the row, so this can only match on trigrams.
+    expect((await searchRepository.search(userId, 'Acne Corp')).map((r) => r.id)).toEqual([jobId])
   })
 
   it('caps any single type at five rows', async () => {
