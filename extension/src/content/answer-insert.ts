@@ -23,6 +23,13 @@ export function insertIntoField(doc: Document, fieldId: string, text: string): b
     return true
   }
 
+  // ponytail: plain contenteditable only. A rich-text editor (Draft.js,
+  // ProseMirror, Slate) owns its own document model and reverts a raw
+  // textContent write on the next render — the same looks-filled-submits-empty
+  // failure the textarea path above avoids. Unverified: no surveyed ATS
+  // (Greenhouse, Ashby, Lever) used one. The working path there is
+  // document.execCommand('insertText', false, text) on a focused editor. See
+  // t-0cb5xk.
   if (el.getAttribute('contenteditable') !== null) {
     el.textContent = text
     el.dispatchEvent(new Event('input', { bubbles: true }))

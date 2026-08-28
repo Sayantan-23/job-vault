@@ -1,9 +1,9 @@
 ---
 id: t-0c5uc8
 title: Surface saved answers in the extension on application pages
-status: in_progress
+status: done
 created: 2026-08-25T10:26:32Z
-updated: 2026-08-27T12:41:00Z
+updated: 2026-08-28T06:50:00Z
 owner: claude
 milestone: m-01
 estimate: L
@@ -68,3 +68,21 @@ Two refinements the spec adds over this file's original scope:
 - **Insert is conditional.** A row shows Insert only when it has a target
   field; with no field detected the row offers copy alone. A dead Insert
   button is worse than no Insert button.
+
+**Done 2026-08-28**, merged to `develop` as `c22c4a7`.
+
+Closed on browser evidence, not on the unit suite. The one claim jsdom could not
+settle — that the native-value-setter insert reaches a real ATS's React handler
+— was measured against live Greenhouse (React 17), Ashby (React 17) and a React
+19 control: `onChange` fires once with the full string, indistinguishable from
+Playwright's `.fill()`, while naive assignment fires zero times *even with the
+input and change events dispatched*. Lever (jQuery) showed no regression.
+
+The mechanism was confirmed directly rather than inferred: React installs its
+own `value` accessor that updates `_valueTracker` alongside the DOM, so naive
+assignment leaves the two in sync and React's change plugin concludes nothing
+changed. The prototype setter leaves the tracker stale, which is what makes the
+diff detectable.
+
+Carried forward: the `[contenteditable]` branch is still unverified and likely
+wrong for rich-text editors — [[t-0cb5xk]].
