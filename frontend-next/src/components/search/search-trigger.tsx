@@ -30,12 +30,22 @@ export function SearchTrigger({
       onClick={onOpen}
       className={cn(
         // Hidden, not unmounted, while the palette is open: Radix still needs this
-        // button to return focus to. The hide is a hard cut on purpose — an opacity
-        // *transition* is invisible where it would matter (the card opens on top of
-        // this button, covering it) and very visible where it hurts: once the card
-        // flies off, a half-faded second magnifier sits here for ~150ms, against a
-        // morph whose whole premise is that one icon travels.
-        paletteOpen && 'pointer-events-none opacity-0',
+        // button to return focus to. Both edges are hard cuts — a *fading* second
+        // magnifier next to a morph whose whole premise is that one icon travels is
+        // exactly the artefact to avoid. Opening cuts it out instantly (the card is
+        // on top of this button anyway). Closing delays the cut back in by 200ms of
+        // the card's 220ms return, so the trigger reappears underneath the card in
+        // its last frames: never a gap with neither painted, never two magnifiers
+        // side by side. A zero-duration transition is the delay — `color` and
+        // `background-color` are re-listed because setting transition-property
+        // would otherwise drop IconButton's own hover fade.
+        paletteOpen
+          ? 'pointer-events-none opacity-0 transition-none'
+          : [
+              'transition-[opacity,color,background-color]',
+              'duration-[0ms,150ms,150ms] delay-[200ms,0ms,0ms]',
+              'motion-reduce:transition-none',
+            ],
         className,
       )}
     >

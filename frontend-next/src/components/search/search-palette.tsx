@@ -37,6 +37,7 @@ const MIN_TERM = 2
 export function SearchPalette({ className }: { className?: string }) {
   const router = useRouter()
   const triggerRef = useRef<HTMLButtonElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const listboxId = `${useId()}search`
   const [open, setOpen] = useState(false)
@@ -76,6 +77,12 @@ export function SearchPalette({ className }: { className?: string }) {
         ...(col ? { '--jv-search-cx': `${col.left + col.width / 2}px` } : {}),
       }),
     )
+    // Reset here rather than on close: the close morph carries the card's real
+    // content back into the trigger, so the results have to stay painted for the
+    // length of the exit. Clearing on the way in is the same guarantee — every
+    // open starts empty — without emptying the card mid-flight.
+    setTerm('')
+    setActive(0)
     setOpen(true)
   }, [])
 
@@ -90,11 +97,25 @@ export function SearchPalette({ className }: { className?: string }) {
   }, [openFrom])
 
   function handleOpenChange(next: boolean) {
-    setOpen(next)
-    if (!next) {
-      setTerm('')
-      setActive(0)
+    // The card's open height is `auto` (the results list grows into it) and CSS
+    // cannot interpolate *from* auto, so the exit's starting geometry is measured
+    // here — the same measure-then-animate the open path does with the trigger's
+    // rect. Batched with setOpen, so the vars are on the node in the very commit
+    // that flips data-state to closed.
+    const card = cardRef.current
+    if (!next && card) {
+      const rect = card.getBoundingClientRect()
+      setOrigin((prev) => ({
+        ...prev,
+        ...cssVars({
+          '--jv-search-out-top': `${rect.top}px`,
+          '--jv-search-out-left': `${rect.left + rect.width / 2}px`,
+          '--jv-search-out-w': `${rect.width}px`,
+          '--jv-search-out-h': `${rect.height}px`,
+        }),
+      }))
     }
+    setOpen(next)
   }
 
   function select(result: SearchResult) {
@@ -129,6 +150,7 @@ export function SearchPalette({ className }: { className?: string }) {
       <DialogPrimitive.Portal>
         <DialogOverlay />
         <DialogPrimitive.Content
+          ref={cardRef}
           data-theme-scope="app"
           // A palette has no prose to describe it; this is Radix's documented
           // opt-out from its missing-Description dev warning.
@@ -151,7 +173,7 @@ export function SearchPalette({ className }: { className?: string }) {
             // centred on the 36px capsule instead of hanging 11px below the trigger's
             // icon. Once the card lands its height is content-driven, so it is inert.
             'jv-search-card group z-50 flex flex-col justify-center overflow-hidden border border-border bg-card text-card-foreground shadow-lg focus:outline-none',
-            'data-[state=open]:animate-jv-search-in data-[state=closed]:animate-jv-surface-out',
+            'data-[state=open]:animate-jv-search-in data-[state=closed]:animate-jv-search-out',
           )}
         >
           <DialogPrimitive.Title className="sr-only">Search</DialogPrimitive.Title>
@@ -161,7 +183,11 @@ export function SearchPalette({ className }: { className?: string }) {
               at exactly its height, then travels with the card. Only what cannot be
               read inside a 36px capsule — the placeholder, the close control — waits
               for the delayed fade, so the card is never a blank pill. */}
-          <div className="flex h-[var(--jv-search-head-h)] shrink-0 items-center gap-3 px-4">
+          {/* `max-h-full` is what keeps the magnifier centred once the card is
+              smaller than its own header — both ends of the morph. The header
+              shrinks with the box instead of overflowing it, so the icon lands on
+              the trigger's icon rather than 10px below it. */}
+          <div className="flex h-[var(--jv-search-head-h)] max-h-full shrink-0 items-center gap-3 px-4">
             <Search className="size-[18px] shrink-0 text-muted-foreground" aria-hidden="true" />
             <input
               ref={inputRef}
@@ -188,10 +214,10 @@ export function SearchPalette({ className }: { className?: string }) {
               // motion-safe, not `motion-reduce:animate-none`: that utility sorts
               // *before* the group-data one at equal specificity and loses, which
               // left reduced-motion users staring at a blank card for 140ms.
-              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 motion-safe:group-data-[state=open]:animate-jv-search-content-in"
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 motion-safe:group-data-[state=open]:animate-jv-search-content-in motion-safe:group-data-[state=closed]:animate-jv-search-content-out"
             />
             <DialogPrimitive.Close
-              className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:group-data-[state=open]:animate-jv-search-content-in"
+              className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:group-data-[state=open]:animate-jv-search-content-in motion-safe:group-data-[state=closed]:animate-jv-search-content-out"
               aria-label="Close search"
             >
               <X className="size-4" aria-hidden="true" />
@@ -201,7 +227,11 @@ export function SearchPalette({ className }: { className?: string }) {
               The wrapper stays mounted so the very first expansion animates. */}
           <div
             className={cn(
-              'grid transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
+              // `min-h-0`: while the card is shrinking back into the trigger its
+              // height is a definite (animated) value, and this region has to give
+              // it up — otherwise the flex column stays taller than the box and
+              // `justify-center` slides the header, magnifier included, out of view.
+              'grid min-h-0 transition-[grid-template-rows] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
               expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
             )}
           >

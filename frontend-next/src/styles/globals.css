@@ -172,8 +172,8 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
   position: fixed;
   top: var(--jv-search-top);
   left: var(--jv-search-cx, 50%);
-  /* `translate`, not `transform`: the exit animation scales the card, and the two
-     properties compose instead of overwriting each other. */
+  /* `translate`, not `transform`: the -50% centring has to survive whatever the
+     morph animates, and the two properties compose instead of overwriting. */
   translate: -50% 0;
   width: var(--jv-search-w);
   border-radius: var(--jv-search-radius);
@@ -205,29 +205,58 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
      it never fades. Only the placeholder and the close control use the delayed
      fade below (they cannot be read inside a 36px capsule). No fill-mode
      on the morph, so the card reverts to its own `height: auto` the instant it
-     lands and the results region can grow. Closing reuses the app's ordinary
-     surface exit — the reverse morph would have to interpolate to `auto`. */
+     lands and the results region can grow.
+     Closing reverses it: 0.22s, deliberately shorter than the open — a return
+     gesture reads faster than the outbound one. The card's open height is `auto`
+     and CSS cannot interpolate *from* auto, so JS measures the card and writes
+     --jv-search-out-* first (the same measure-then-animate trick the open uses
+     for the trigger's rect); the fallbacks below are the geometry the card lands
+     on, so an unmeasured close still travels. `both` holds the last frame until
+     Radix unmounts. The content fade mirrors the open's order — placeholder and
+     close control leave *first*, so only the magnifier arrives at the trigger. */
   --animate-jv-search-in: jv-search-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-jv-search-out: jv-search-out 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
   --animate-jv-search-content-in: jv-search-content-in 0.2s ease-out 0.14s both;
+  --animate-jv-search-content-out: jv-search-content-out 0.1s ease-in both;
 
+  /* Geometry only — deliberately no `border-radius`. The card keeps its own 12px
+     corners from the first frame to the last, in both directions: animating the
+     radius made the card visibly change shape while it travelled. The cost is
+     one frame where 12px corners sit on the circular trigger; the trigger is
+     paired with the notification bell and stays round. */
   @keyframes jv-search-in {
     from {
       top: var(--jv-search-y, var(--jv-search-top));
       left: var(--jv-search-x, 50%);
       width: var(--jv-search-size, 2.25rem);
       height: var(--jv-search-size, 2.25rem);
-      border-radius: 9999px;
     }
     to {
       top: var(--jv-search-top);
       left: var(--jv-search-cx, 50%);
       width: var(--jv-search-w);
       height: var(--jv-search-head-h);
-      border-radius: var(--jv-search-radius);
+    }
+  }
+  @keyframes jv-search-out {
+    from {
+      top: var(--jv-search-out-top, var(--jv-search-top));
+      left: var(--jv-search-out-left, var(--jv-search-cx, 50%));
+      width: var(--jv-search-out-w, var(--jv-search-w));
+      height: var(--jv-search-out-h, var(--jv-search-head-h));
+    }
+    to {
+      top: var(--jv-search-y, var(--jv-search-top));
+      left: var(--jv-search-x, 50%);
+      width: var(--jv-search-size, 2.25rem);
+      height: var(--jv-search-size, 2.25rem);
     }
   }
   @keyframes jv-search-content-in {
     from { opacity: 0; }
+  }
+  @keyframes jv-search-content-out {
+    to { opacity: 0; }
   }
 
   @keyframes jv-fab-item {
