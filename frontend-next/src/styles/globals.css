@@ -148,6 +148,34 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
 }
 
 /*
+ * Global search palette — the trigger→card morph (d-0cbc74). Geometry only: the
+ * focus trap, Escape, scroll lock and focus return all come from the Radix Dialog
+ * Content underneath. JS writes the *clicked* trigger's rect into
+ * --jv-search-x/y/size, so one component morphs from the desktop cluster and from
+ * the mobile header with no branching.
+ *
+ * `width`/`height` are not compositor-accelerated; one element for 300ms is the
+ * cost recorded in the decision rather than hidden. Under prefers-reduced-motion
+ * the block at the bottom of this file drops the animation and the card simply
+ * lands here — a plain centred palette, which is also the agreed fallback if the
+ * morph is rejected in the browser.
+ */
+.jv-search-card {
+  --jv-search-w: min(36rem, calc(100vw - 2rem));
+  --jv-search-top: 4.5rem;
+  --jv-search-head-h: 3.5rem;
+  --jv-search-radius: 0.75rem;
+  position: fixed;
+  top: var(--jv-search-top);
+  left: 50%;
+  /* `translate`, not `transform`: the exit animation scales the card, and the two
+     properties compose instead of overwriting each other. */
+  translate: -50% 0;
+  width: var(--jv-search-w);
+  border-radius: var(--jv-search-radius);
+}
+
+/*
  * Overlay/surface motion for Radix-Dialog-based primitives (Sheet drawer, Dialog
  * modal, Popover dropdown). Driven by Radix's [data-state=open|closed]; Radix keeps
  * the node mounted through a CSS exit animation, so the *-out variants play on close.
@@ -168,6 +196,33 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
   /* Mobile speed-dial nav pills: each cascades in from the hamburger with a per-
      item `animation-delay` (set inline) — Google-Keep-style stagger. */
   --animate-jv-fab-item: jv-fab-item 0.18s ease-out both;
+  /* Search palette: the card grows out of the trigger's rect, then its chrome
+     fades in behind that (delayed past the squeezed first frames). No fill-mode
+     on the morph, so the card reverts to its own `height: auto` the instant it
+     lands and the results region can grow. Closing reuses the app's ordinary
+     surface exit — the reverse morph would have to interpolate to `auto`. */
+  --animate-jv-search-in: jv-search-in 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-jv-search-content-in: jv-search-content-in 0.2s ease-out 0.14s both;
+
+  @keyframes jv-search-in {
+    from {
+      top: var(--jv-search-y, var(--jv-search-top));
+      left: var(--jv-search-x, 50%);
+      width: var(--jv-search-size, 2.25rem);
+      height: var(--jv-search-size, 2.25rem);
+      border-radius: 9999px;
+    }
+    to {
+      top: var(--jv-search-top);
+      left: 50%;
+      width: var(--jv-search-w);
+      height: var(--jv-search-head-h);
+      border-radius: var(--jv-search-radius);
+    }
+  }
+  @keyframes jv-search-content-in {
+    from { opacity: 0; }
+  }
 
   @keyframes jv-fab-item {
     from { opacity: 0; transform: translateY(-8px) scale(0.9); }

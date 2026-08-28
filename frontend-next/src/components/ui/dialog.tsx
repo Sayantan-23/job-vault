@@ -11,7 +11,9 @@ export const DialogClose = DialogPrimitive.Close
 export const DialogTitle = DialogPrimitive.Title
 export const DialogDescription = DialogPrimitive.Description
 
-function DialogOverlay({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
+// Exported for the search palette, which restyles Content into a morphing card
+// but wants the app's one scrim treatment behind it.
+export function DialogOverlay({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
   return (
     <DialogPrimitive.Overlay
       // Radix portals to <body>, outside [data-theme-scope="app"]; re-apply the
