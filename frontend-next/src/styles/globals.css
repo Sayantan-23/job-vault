@@ -152,7 +152,11 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
  * focus trap, Escape, scroll lock and focus return all come from the Radix Dialog
  * Content underneath. JS writes the *clicked* trigger's rect into
  * --jv-search-x/y/size, so one component morphs from the desktop cluster and from
- * the mobile header with no branching.
+ * the mobile header with no branching. It also writes the measured centre of the
+ * surrounding .jv-content-col into --jv-search-cx: the rail offsets the column
+ * from the viewport, so `left: 50%` would centre the card on the wrong thing (and
+ * overlap the nav around 1024). Unset — the mobile header, which has no column —
+ * the 50% fallback is the right answer.
  *
  * `width`/`height` are not compositor-accelerated; one element for 300ms is the
  * cost recorded in the decision rather than hidden. Under prefers-reduced-motion
@@ -167,7 +171,7 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
   --jv-search-radius: 0.75rem;
   position: fixed;
   top: var(--jv-search-top);
-  left: 50%;
+  left: var(--jv-search-cx, 50%);
   /* `translate`, not `transform`: the exit animation scales the card, and the two
      properties compose instead of overwriting each other. */
   translate: -50% 0;
@@ -214,7 +218,7 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
     }
     to {
       top: var(--jv-search-top);
-      left: 50%;
+      left: var(--jv-search-cx, 50%);
       width: var(--jv-search-w);
       height: var(--jv-search-head-h);
       border-radius: var(--jv-search-radius);

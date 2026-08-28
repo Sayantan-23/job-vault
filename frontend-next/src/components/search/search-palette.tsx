@@ -44,7 +44,7 @@ export function SearchPalette({ className }: { className?: string }) {
   const [term, setTerm] = useState('')
   const [active, setActive] = useState(0)
 
-  const { data, isFetching } = useSearch(term)
+  const { data, isFetching, settled } = useSearch(term)
   const expanded = term.trim().length >= MIN_TERM
   // Grouped up front, not at render time: the palette traverses the very array
   // the listbox paints, so arrow keys follow the visible top-to-bottom order.
@@ -52,17 +52,28 @@ export function SearchPalette({ className }: { className?: string }) {
   const activeIndex = Math.min(active, results.length - 1)
 
   const openFrom = useCallback(() => {
-    const rect = triggerRef.current?.getBoundingClientRect()
+    const trigger = triggerRef.current
+    if (!trigger) return
+    const rect = trigger.getBoundingClientRect()
     // The palette is mounted twice — desktop cluster and mobile header — but only
     // one of the two is displayed at any width, and a display:none trigger
     // measures zero. So the off-screen instance ignores the chord, and the origin
     // is always the rect of the trigger the user can actually see.
-    if (!rect || rect.width === 0) return
+    if (rect.width === 0) return
+    // Where the card lands is the content column's centre, not the viewport's:
+    // the rail offsets the column, so `left: 50%` sits ~120px off at 1440 and
+    // puts the card's left edge over the nav at 1024. Measured rather than
+    // offset by a hardcoded rail width, so it stays right when the rail
+    // collapses and when the scrollbar width changes. The mobile header has no
+    // column ancestor — leaving the var unset falls back to the viewport
+    // centre in CSS, which is the correct answer there.
+    const col = trigger.closest('.jv-content-col')?.getBoundingClientRect()
     setOrigin(
       cssVars({
         '--jv-search-x': `${rect.left + rect.width / 2}px`,
         '--jv-search-y': `${rect.top}px`,
         '--jv-search-size': `${rect.width}px`,
+        ...(col ? { '--jv-search-cx': `${col.left + col.width / 2}px` } : {}),
       }),
     )
     setOpen(true)
@@ -146,7 +157,10 @@ export function SearchPalette({ className }: { className?: string }) {
               aria-label="Search jobs, résumés, cover letters, personas and answers"
               aria-autocomplete="list"
               aria-controls={listboxId}
-              aria-expanded={results.length > 0}
+              // The listbox is rendered for the whole expanded state, empty or
+              // not, so this tracks the popup being on screen — not whether it
+              // happens to hold options.
+              aria-expanded={expanded}
               aria-activedescendant={
                 results.length > 0 ? searchOptionId(listboxId, activeIndex) : undefined
               }
@@ -178,7 +192,11 @@ export function SearchPalette({ className }: { className?: string }) {
               {expanded ? (
                 <SearchResults
                   results={results}
-                  loading={data === undefined || isFetching}
+                  // Not settled = the query for what is on screen has not been
+                  // sent yet, which is still loading from the user's side.
+                  // Without it the palette reports "no matches" for the previous
+                  // term's empty answer for the length of the debounce.
+                  loading={!settled || data === undefined || isFetching}
                   term={term.trim()}
                   listboxId={listboxId}
                   activeIndex={activeIndex}

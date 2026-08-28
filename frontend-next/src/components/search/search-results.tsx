@@ -34,21 +34,24 @@ export function groupByType(results: SearchResult[]): SearchResult[] {
   return [...groups.values()].flat()
 }
 
+// Loading and empty both live *inside* the listbox: `aria-controls` on the
+// combobox has to resolve to a real element in every state, and a listbox with
+// no options is valid where a dangling IDREF is not.
 function SearchLoading() {
   return (
-    <div className="space-y-2 px-4 pb-4 pt-2" aria-hidden="true">
+    <li className="space-y-2 px-2 pb-2 pt-2" aria-hidden="true">
       <Skeleton className="h-8 w-full" />
       <Skeleton className="h-8 w-4/5" />
       <Skeleton className="h-8 w-3/5" />
-    </div>
+    </li>
   )
 }
 
 function SearchEmpty({ term }: { term: string }) {
   return (
-    <p className="px-4 pb-6 pt-3 text-center text-sm text-muted-foreground">
+    <li className="px-2 pb-4 pt-3 text-center text-sm text-muted-foreground">
       No matches for “{term}”.
-    </p>
+    </li>
   )
 }
 
@@ -67,8 +70,6 @@ export function SearchResults({
   activeIndex: number
   onSelect: (result: SearchResult) => void
 }) {
-  if (results.length === 0) return loading ? <SearchLoading /> : <SearchEmpty term={term} />
-
   return (
     <ul
       id={listboxId}
@@ -76,6 +77,13 @@ export function SearchResults({
       aria-label="Search results"
       className="app-scroll max-h-[min(60vh,24rem)] overflow-y-auto px-2 pb-2"
     >
+      {results.length === 0 ? (
+        loading ? (
+          <SearchLoading />
+        ) : (
+          <SearchEmpty term={term} />
+        )
+      ) : null}
       {/* `results` arrives grouped (groupByType), so a type change marks the start
           of a group. The labels are decorative — each option names its own type. */}
       {results.map((result, index) => (

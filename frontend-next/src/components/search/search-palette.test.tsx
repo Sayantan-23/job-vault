@@ -16,7 +16,8 @@ const RANKED: SearchResult[] = [
 ]
 let results: SearchResult[] = RANKED
 let isFetching = false
-vi.mock('@/hooks/use-search', () => ({ useSearch: () => ({ data: results, isFetching }) }))
+let settled = true
+vi.mock('@/hooks/use-search', () => ({ useSearch: () => ({ data: results, isFetching, settled }) }))
 
 // jsdom gives every element a zero rect; the palette reads the trigger's rect to
 // place the morph's origin and skips the chord when the trigger measures zero
@@ -27,6 +28,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   results = RANKED
   isFetching = false
+  settled = true
   rect.mockReturnValue({
     x: 1200, y: 16, top: 16, left: 1200, right: 1236, bottom: 52, width: 36, height: 36,
     toJSON: () => ({}),
@@ -205,5 +207,63 @@ describe('SearchPalette', () => {
     await openAndType('zzzz')
 
     expect(await screen.findByText(/no matches/i)).toBeInTheDocument()
+  })
+
+  // The debounced query trails the typed term by 300ms, so `data` is the previous
+  // term's answer. Claiming "no matches" for a term that was never sent is a lie
+  // the user reads for a third of a second before the request even fires.
+  it('withholds the empty state while the typed term is still unsearched', async () => {
+    results = []
+    settled = false
+    await openAndType('react')
+
+    expect(screen.queryByText(/no matches/i)).not.toBeInTheDocument()
+    expect(screen.getByRole('listbox')).toBeInTheDocument()
+  })
+
+  it('keeps the combobox pointed at a real listbox while the popup is empty', async () => {
+    results = []
+    await openAndType('zzzz')
+
+    const listbox = screen.getByRole('listbox')
+    const input = screen.getByRole('combobox')
+    // aria-controls must resolve: an IDREF to a listbox that only exists once
+    // there are hits is a dangling reference for the whole loading/empty state.
+    expect(document.getElementById(listbox.id)).toBe(listbox)
+    expect(input).toHaveAttribute('aria-controls', listbox.id)
+    // The popup is on screen, so aria-expanded may not say otherwise.
+    expect(input).toHaveAttribute('aria-expanded', 'true')
+    expect(input).not.toHaveAttribute('aria-activedescendant')
+  })
+
+  // The 240px rail offsets the content column from the viewport, so a card
+  // centred with `left: 50%` sits ~120px left of the column at 1440 and overlaps
+  // the nav at 1024. The column is measured, never assumed.
+  it('centres the card on the content column the trigger sits in', async () => {
+    const user = userEvent.setup()
+    render(
+      <div data-testid="col" className="jv-content-col">
+        <SearchPalette />
+      </div>,
+    )
+    screen.getByTestId('col').getBoundingClientRect = () => ({
+      x: 240, y: 0, top: 0, left: 240, right: 1440, bottom: 900, width: 1200, height: 900,
+      toJSON: () => ({}),
+    })
+    await user.click(screen.getByRole('button', { name: /^search$/i }))
+
+    const card = await screen.findByRole('dialog')
+    expect(card.style.getPropertyValue('--jv-search-cx')).toBe('840px')
+  })
+
+  it('leaves the centre to the viewport when there is no content column', async () => {
+    const user = userEvent.setup()
+    render(<SearchPalette />)
+    await user.click(screen.getByRole('button', { name: /^search$/i }))
+
+    // Unset, so the stylesheet's own `50%` fallback applies — correct for the
+    // mobile header, which is not inside a content column.
+    const card = await screen.findByRole('dialog')
+    expect(card.style.getPropertyValue('--jv-search-cx')).toBe('')
   })
 })
