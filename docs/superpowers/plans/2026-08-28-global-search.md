@@ -26,7 +26,8 @@
 | `backend-express/src/modules/search/search.router.ts` | `authMiddleware` + one GET |
 | `backend-express/src/shared/api-router.ts` | Mount `/search` |
 | `frontend-next/src/types/search.ts` | `SearchResult`, `searchResultHref` |
-| `frontend-next/src/lib/query-keys.ts` | `searchQuery` key |
+| `frontend-next/src/lib/query-keys.ts` | `searchKey(q)` |
+| `frontend-next/src/lib/queries.ts` | `searchQuery(q)` — key + path, per the repo's key/query split |
 | `frontend-next/src/hooks/use-search.ts` | Debounced `useQuery`, gated at 2 chars |
 | `frontend-next/src/components/search/search-trigger.tsx` | The circular button, used in both clusters |
 | `frontend-next/src/components/search/search-palette.tsx` | Morph shell + combobox behaviour |
@@ -181,7 +182,7 @@ All new tests green, no pre-existing test broken.
 - Modify: `frontend-next/src/lib/query-keys.ts`
 - Test: `frontend-next/src/types/search.test.ts`
 
-- [ ] **Step 1: Failing test for the href mapper**
+- [x] **Step 1: Failing test for the href mapper**
 
 `searchResultHref` is a pure total function over the five types; test one case per type against the table below. This is the check that catches a route drifting later.
 
@@ -193,11 +194,11 @@ All new tests green, no pre-existing test broken.
 | `resume` | `/app/resumes?resume=<id>` |
 | `persona` | `/app/personas?persona=<id>` |
 
-- [ ] **Step 2: Types + mapper + hook**
+- [x] **Step 2: Types + mapper + hook**
 
 Mirror `hooks/use-answers.ts` for the apiClient and query-key idiom. One `useQuery`, keyed on the **debounced** term, `enabled: q.trim().length >= 2`, `placeholderData: keepPreviousData` so results do not flash empty between keystrokes.
 
-- [ ] **Step 3: Verify** — `make test-web && make typecheck`
+- [x] **Step 3: Verify** — `make test-web && make typecheck`
 
 ---
 
@@ -271,13 +272,13 @@ The only missing deep link of the five.
 - Modify: `frontend-next/src/components/personas/personas-workspace.tsx`
 - Test: `frontend-next/src/components/personas/personas-workspace.test.tsx`
 
-- [ ] **Step 1: Failing test** — with `?persona=<id>` in the URL, the `EditPersonaSheet` for that persona is open; clearing it closes the sheet.
+- [x] **Step 1: Failing test** — with `?persona=<id>` in the URL, the `EditPersonaSheet` for that persona is open; clearing it closes the sheet.
 
-- [ ] **Step 2: Build it**
+- [x] **Step 2: Build it**
 
 `personas-workspace.tsx:23` holds `editing` in local `useState`. Drive it from `useSearchParams()` instead, mirroring how `AnswersIndex` reads `?answer=` and how its `close()` deletes the param and re-pushes. Do not add a second pattern — copy the answers one.
 
-- [ ] **Step 3: Verify** — `make test-web`
+- [x] **Step 3: Verify** — `make test-web`
 
 ---
 

@@ -39,5 +39,9 @@ export const ANSWERS_KEY = ['answers'] as const
 
 export const PROFILE_KEY = ['profile'] as const
 
+// Global search. Keyed on the debounced term, so each settled term caches
+// separately and re-typing an earlier one is instant.
+export const searchKey = (q: string) => ['search', q] as const
+
 // Extension API keys ("Connected apps"). Managed first-party in Settings.
 export const API_KEYS_KEY = ['api-keys'] as const
