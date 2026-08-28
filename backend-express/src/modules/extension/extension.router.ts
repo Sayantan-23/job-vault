@@ -23,5 +23,7 @@ router.post('/verify-key', asyncHandler(extensionController.verifyKey))
 router.get('/check-url', validate(CheckUrlSchema, 'query'), asyncHandler(extensionController.checkUrl))
 router.post('/jobs', validate(QuickCreateJobSchema), asyncHandler(extensionController.quickCreate))
 router.post('/scrape', validate(ScrapeUrlSchema), asyncHandler(extensionController.scrape))
+router.get('/answers', asyncHandler(extensionController.listAnswers))
+router.post('/answers/:id/used', asyncHandler(extensionController.markAnswerUsed))
 
 export { router as extensionRouter }

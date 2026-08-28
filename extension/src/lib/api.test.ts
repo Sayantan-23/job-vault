@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { verifyKey, checkUrl, quickCreate, ApiError } from './api'
+import { verifyKey, checkUrl, quickCreate, listAnswers, markAnswerUsed, ApiError } from './api'
 
 let fetchMock: ReturnType<typeof vi.fn>
 beforeEach(() => {
@@ -58,6 +58,33 @@ describe('extension api', () => {
         method: 'POST',
         body: JSON.stringify({ title: 'T', company: 'C', sourceUrl: 'https://x.com/j', description: 'd' }),
       }),
+    )
+  })
+
+  it('listAnswers GETs the answers list and unwraps data', async () => {
+    fetchMock.mockResolvedValue(
+      jsonRes(200, {
+        data: [{ id: '1', question: 'Why us?', answerShort: 'a', answerLong: null, lastUsedAt: null }],
+      }),
+    )
+    const answers = await listAnswers(SERVER, 'jv_x')
+    expect(answers).toHaveLength(1)
+    expect(answers[0]?.question).toBe('Why us?')
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${SERVER}/api/extension/answers`,
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({ 'X-API-Key': 'jv_x' }),
+      }),
+    )
+  })
+
+  it('markAnswerUsed POSTs to the used endpoint', async () => {
+    fetchMock.mockResolvedValue(jsonRes(200, { data: { id: '1', lastUsedAt: '2026-08-27T00:00:00Z' } }))
+    await markAnswerUsed(SERVER, 'jv_x', '1')
+    expect(fetchMock).toHaveBeenCalledWith(
+      `${SERVER}/api/extension/answers/1/used`,
+      expect.objectContaining({ method: 'POST' }),
     )
   })
 

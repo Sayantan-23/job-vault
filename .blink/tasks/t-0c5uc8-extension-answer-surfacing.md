@@ -1,10 +1,13 @@
 ---
 id: t-0c5uc8
 title: Surface saved answers in the extension on application pages
-status: backlog
+status: in_progress
 created: 2026-08-25T10:26:32Z
-updated: 2026-08-25T10:26:32Z
+updated: 2026-08-27T12:41:00Z
+owner: claude
+milestone: m-01
 estimate: L
+decisions: [d-0c9ove, d-0c9ovf]
 tags: [extension, answers, deferred]
 ---
 
@@ -49,3 +52,19 @@ app, where the fallback stays the responsive web app plus system copy/paste.
 State this rather than implying the extension covers every apply path.
 
 **Depends on** the answer library existing (the web slice).
+
+---
+
+**Planned 2026-08-27.** Design spec:
+`docs/superpowers/specs/2026-08-27-extension-answer-surfacing-design.md`.
+Surface and navigation settled in [[d-0c9ove]], the ranking approach in
+[[d-0c9ovf]]. Branch `slice-extension-answers` off `develop`.
+
+Two refinements the spec adds over this file's original scope:
+
+- **The whole form is scanned, not just the focused field.** A screening page
+  stacks several open-ended questions; scanning all of them is one popup open
+  instead of one per question.
+- **Insert is conditional.** A row shows Insert only when it has a target
+  field; with no field detected the row offers copy alone. A dead Insert
+  button is worse than no Insert button.

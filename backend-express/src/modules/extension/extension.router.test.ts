@@ -9,12 +9,18 @@ vi.mock('@/modules/api-keys/api-keys.service.js', () => ({
 vi.mock('./extension.service.js', () => ({
   extensionService: { verifyKey: vi.fn(), checkUrl: vi.fn(), quickCreateJob: vi.fn(), scrape: vi.fn() },
 }))
+// The answers routes delegate straight to the cookie-side service.
+vi.mock('@/modules/answers/answers.service.js', () => ({
+  answersService: { list: vi.fn(), markUsed: vi.fn() },
+}))
 
 import { apiKeysService } from '@/modules/api-keys/api-keys.service.js'
 import { extensionService } from './extension.service.js'
+import { answersService } from '@/modules/answers/answers.service.js'
 
 const auth = vi.mocked(apiKeysService)
 const svc = vi.mocked(extensionService)
+const answers = vi.mocked(answersService)
 
 let app: Express
 const KEY = 'jv_test'
@@ -83,5 +89,31 @@ describe('extension routes', () => {
     expect(ok.status).toBe(200)
     const bad = await request(app).post('/api/extension/scrape').set('X-API-Key', KEY).send({})
     expect(bad.status).toBe(400)
+  })
+})
+
+describe('GET /api/extension/answers', () => {
+  it('returns the api-key user’s answers', async () => {
+    answers.list.mockResolvedValue([])
+    const res = await request(app).get('/api/extension/answers').set('X-API-Key', KEY)
+    expect(res.status).toBe(200)
+    expect(Array.isArray(res.body.data)).toBe(true)
+    expect(answers.list).toHaveBeenCalledWith('u1')
+  })
+
+  it('rejects a request with no api key', async () => {
+    const res = await request(app).get('/api/extension/answers')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('POST /api/extension/answers/:id/used', () => {
+  it('stamps lastUsedAt and returns the id', async () => {
+    answers.markUsed.mockResolvedValue({ id: 'a1', lastUsedAt: new Date('2026-08-27T00:00:00Z') })
+    const res = await request(app).post('/api/extension/answers/a1/used').set('X-API-Key', KEY)
+    expect(res.status).toBe(200)
+    expect(res.body.data.id).toBe('a1')
+    expect(res.body.data.lastUsedAt).not.toBeNull()
+    expect(answers.markUsed).toHaveBeenCalledWith('u1', 'a1')
   })
 })
