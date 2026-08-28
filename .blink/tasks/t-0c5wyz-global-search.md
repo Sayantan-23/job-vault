@@ -1,9 +1,9 @@
 ---
 id: t-0c5wyz
 title: Global search — expanding command palette over Postgres FTS
-status: planned
+status: done
 created: 2026-08-25T11:23:24Z
-updated: 2026-08-28T00:00:00Z
+updated: 2026-08-28T12:00:00Z
 estimate: L
 decisions: [d-0c5wyy, d-0cbc74]
 tags: [search, frontend, backend]

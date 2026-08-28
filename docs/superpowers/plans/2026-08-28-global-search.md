@@ -51,17 +51,17 @@ Drizzle-kit generates migrations from schema objects and there is no schema obje
 - Create: `backend-express/src/db/migrations/0014_add_pg_trgm.sql`
 - Modify: `backend-express/src/db/migrations/meta/_journal.json`
 
-- [ ] **Step 1: Write the migration**
+- [x] **Step 1: Write the migration**
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 ```
 
-- [ ] **Step 2: Register it**
+- [x] **Step 2: Register it**
 
 Append an entry to `meta/_journal.json` mirroring the shape of the `0013` entry: `idx: 14`, `version` and `when` copied from the sibling entries' format, `tag: "0014_add_pg_trgm"`, `breakpoints: true`.
 
-- [ ] **Step 3: Verify**
+- [x] **Step 3: Verify**
 
 `make up` (the backend runs `db:migrate` on boot), then:
 
@@ -82,7 +82,7 @@ Mirror `src/modules/answers/` exactly — same file split, same envelope, same e
 - Modify: `backend-express/src/shared/api-router.ts`
 - Test: `backend-express/src/modules/search/search.repository.test.ts`
 
-- [ ] **Step 1: Write the failing repository test**
+- [x] **Step 1: Write the failing repository test**
 
 Mirror `answers.repository.test.ts` — same `beforeAll` user seeding, same `afterAll` cleanup, real Postgres at `localhost:5433`, no mocks. Seed **two** users and one row of each of the five types for user A. Assert:
 
@@ -93,7 +93,7 @@ Mirror `answers.repository.test.ts` — same `beforeAll` user seeding, same `aft
 - a term matching nothing returns `[]`
 - no single type can occupy more than 5 of the returned rows
 
-- [ ] **Step 2: `search.schema.ts`**
+- [x] **Step 2: `search.schema.ts`**
 
 ```ts
 export const SearchQuerySchema = z.object({ q: z.string().trim().min(1).max(200) })
@@ -109,7 +109,7 @@ export type SearchResult = {
 }
 ```
 
-- [ ] **Step 3: `search.repository.ts`**
+- [x] **Step 3: `search.repository.ts`**
 
 Do **not** hand-write five near-identical SQL blocks. Declare the five sources once and generate the branches — there are exactly five instances today, so this is deduplication, not speculative abstraction:
 
@@ -157,7 +157,7 @@ select type, id, title, subtitle,
 
 > **Security — do not simplify this away.** `ts_headline`'s default `StartSel`/`StopSel` are `<b>`/`</b>`, i.e. HTML, and one snippet source is `jobs.snapshotMarkdown`, which is **scraped from third-party job pages**. Rendering that as HTML is a stored-XSS path. Use the control characters `\x02` (STX) and `\x03` (ETX) as the delimiters instead and split on them client-side into React nodes. No `dangerouslySetInnerHTML` anywhere in this feature.
 
-- [ ] **Step 4: service, controller, router**
+- [x] **Step 4: service, controller, router**
 
 Service: return `[]` when the trimmed query is under 2 characters — the client debounces and will fire at one character, and an error there is noise, not a fault. Otherwise delegate to the repository.
 
@@ -165,7 +165,7 @@ Controller: `requireUserId(req)`, `{ data }` envelope, 200. Router: `router.use(
 
 Mount in `src/shared/api-router.ts` beside the others: `router.use('/search', searchRouter)`.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 ```bash
 make test-backend && make typecheck && make lint
@@ -211,11 +211,11 @@ The morph, per `d-0cbc74`. Read that decision before starting.
 - Modify: `frontend-next/src/styles/globals.css`
 - Test: `frontend-next/src/components/search/search-palette.test.tsx`
 
-- [ ] **Step 1: Failing behaviour test**
+- [x] **Step 1: Failing behaviour test**
 
 Assert the parts that are not visual: ⌘K opens it, Escape closes it, ArrowDown moves `aria-activedescendant` through the options, Enter navigates to the active option's href, and the input carries `role="combobox"` with `aria-expanded` / `aria-controls`.
 
-- [ ] **Step 2: Build it**
+- [x] **Step 2: Build it**
 
 - `SearchTrigger` — a `size-9 rounded-full` button matching the bell's geometry in `notification-bell.tsx:48`. Same component in both clusters.
 - `SearchPalette` — controlled `DialogPrimitive.Root`. On open, read `getBoundingClientRect()` off **the trigger that was clicked** and write `--jv-search-x` / `--jv-search-y` onto the content element. That is what makes one component work from both the desktop cluster and the mobile header with no branching.
@@ -225,7 +225,7 @@ Assert the parts that are not visual: ⌘K opens it, Escape closes it, ArrowDown
 - `motion-reduce:` drops the geometry transition and lands the card centred. **This is also the fallback if the morph is rejected**, so verify it renders correctly as a plain dialog.
 - Combobox semantics are not optional and Radix Dialog supplies none of them: `role="combobox"`, `aria-expanded`, `aria-controls`, `aria-activedescendant`, a `role="listbox"` of `role="option"` rows, arrow keys, Enter, Escape.
 
-- [ ] **Step 3: Verify** — `make test-web`
+- [x] **Step 3: Verify** — `make test-web`
 
 ---
 
@@ -235,15 +235,15 @@ Assert the parts that are not visual: ⌘K opens it, Escape closes it, ArrowDown
 - Create: `frontend-next/src/components/search/search-results.tsx`, `search-result-row.tsx`
 - Test: `frontend-next/src/components/search/search-result-row.test.tsx`
 
-- [ ] **Step 1: Failing test for highlight rendering**
+- [x] **Step 1: Failing test for highlight rendering**
 
 Given a snippet containing `\x02term\x03`, the row renders `term` inside a `<mark>` and the surrounding text as plain nodes. Add a case where the snippet contains `<script>` or `<img onerror=…>` literal text and assert it is rendered as **text**, not parsed as markup. That test is the standing guard on the XSS path named in Task 2.
 
-- [ ] **Step 2: Build it**
+- [x] **Step 2: Build it**
 
 Split the snippet on the STX/ETX sentinels into an array of `{ text, marked }` and map to React nodes. Group rows by `type` under a small label per group; keep the flat DOM order matching the ranked order so arrow-key traversal stays in rank order. Empty state and a loading state consistent with the existing list pages.
 
-- [ ] **Step 3: Verify** — `make test-web`
+- [x] **Step 3: Verify** — `make test-web`
 
 ---
 
@@ -252,15 +252,15 @@ Split the snippet on the STX/ETX sentinels into an array of `{ text, marked }` a
 **Files:**
 - Modify: `frontend-next/src/components/layout/app/app-shell.tsx`, `mobile-header.tsx`, `frontend-next/src/components/jobs/search-input.tsx`
 
-- [ ] **Step 1: Mount**
+- [x] **Step 1: Mount**
 
 `app-shell.tsx:46` — add the trigger beside `NotificationBell` inside the `jv-content-col` cluster, with the same `pointer-events-auto`. `mobile-header.tsx:90` — add it to the `ml-auto` row before the bell. The cluster is `lg:block` only, which is exactly why both mounts are needed.
 
-- [ ] **Step 2: Take the chord**
+- [x] **Step 2: Take the chord**
 
 `jobs/search-input.tsx:51-60` binds ⌘K on `window`, so it fires on every page mounting that field. Delete that effect — the palette owns the chord now. The jobs field keeps its debounce, its clear button and its focus behaviour; it just loses the global shortcut.
 
-- [ ] **Step 3: Verify** — `make test-web` (the existing `search-input` test asserting the shortcut must be updated to assert it is gone, not deleted outright).
+- [x] **Step 3: Verify** — `make test-web` (the existing `search-input` test asserting the shortcut must be updated to assert it is gone, not deleted outright).
 
 ---
 
@@ -284,8 +284,8 @@ The only missing deep link of the five.
 
 ## Final verification
 
-- [ ] `make gates` — typecheck + lint + both suites + production web build, once, green.
-- [ ] Browser pass **in a subagent** (`playwright-cli`), never reading screenshots into the main thread: at 1440, 1024 and 390 — the morph open/close from both the desktop cluster and the mobile header, ⌘K, arrow-key traversal, a hit of each of the five types navigating to the right place, and the reduced-motion fallback rendering as a plain centred dialog.
-- [ ] Live-smoke ranking against seeded data: a term found only in a job description, and a one-character typo against a persona name.
-- [ ] `reviewer` agent over the branch diff.
-- [ ] Update `progress.md`; set `t-0c5wyz` to `done`; `blink validate` → 0.
+- [x] `make gates` — typecheck + lint + both suites + production web build, once, green.
+- [x] Browser pass **in a subagent** (`playwright-cli`), never reading screenshots into the main thread: at 1440, 1024 and 390 — the morph open/close from both the desktop cluster and the mobile header, ⌘K, arrow-key traversal, a hit of each of the five types navigating to the right place, and the reduced-motion fallback rendering as a plain centred dialog.
+- [x] Live-smoke ranking against seeded data: a term found only in a job description, and a one-character typo against a persona name.
+- [x] `reviewer` agent over the branch diff.
+- [x] Update `progress.md`; set `t-0c5wyz` to `done`; `blink validate` → 0.
