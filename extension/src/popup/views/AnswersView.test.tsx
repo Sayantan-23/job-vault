@@ -58,26 +58,26 @@ afterEach(() => vi.unstubAllGlobals())
 
 describe('AnswersView', () => {
   it('floats the matching answer to the top and marks it', async () => {
-    render(<AnswersView fields={[field()]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[field()]} tabId={7} />)
     const rows = await screen.findAllByRole('article')
     expect(rows[0]!).toHaveTextContent('Why do you want to work at this company?')
     expect(rows[0]!).toHaveTextContent(/match/i)
   })
 
   it('shows the detected question', async () => {
-    render(<AnswersView fields={[field()]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[field()]} tabId={7} />)
     expect(await screen.findByText('Why do you want to work at Acme?')).toBeInTheDocument()
   })
 
   it('offers copy only when no field was detected', async () => {
-    render(<AnswersView fields={[]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[]} tabId={7} />)
     await screen.findAllByRole('article')
     expect(screen.queryByRole('button', { name: /insert/i })).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /copy/i }).length).toBeGreaterThan(0)
   })
 
   it('preselects the short variant when the field caps below the long one', async () => {
-    render(<AnswersView fields={[field({ maxLength: 15 })]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[field({ maxLength: 15 })]} tabId={7} />)
     const short = (await screen.findAllByRole('radio', { name: /short/i }))[0]!
     expect(short).toBeChecked()
   })
@@ -86,7 +86,7 @@ describe('AnswersView', () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.assign(navigator, { clipboard: { writeText } })
 
-    render(<AnswersView fields={[]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[]} tabId={7} />)
     const copies = await screen.findAllByRole('button', { name: /copy/i })
     await userEvent.click(copies[0]!)
 
@@ -95,7 +95,7 @@ describe('AnswersView', () => {
   })
 
   it('filters the list by the search box', async () => {
-    render(<AnswersView fields={[]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[]} tabId={7} />)
     await screen.findAllByRole('article')
     await userEvent.type(screen.getByRole('searchbox'), 'salary')
     expect(screen.getAllByRole('article')).toHaveLength(1)
@@ -106,7 +106,6 @@ describe('AnswersView', () => {
       <AnswersView
         fields={[field({ question: 'Describe your favourite programming language.' })]}
         tabId={7}
-        onSettings={() => {}}
       />,
     )
     expect(await screen.findByRole('link', { name: /write an answer/i })).toBeInTheDocument()
@@ -114,12 +113,12 @@ describe('AnswersView', () => {
 
   it('shows an empty state with a CTA when nothing is saved', async () => {
     vi.mocked(listAnswers).mockResolvedValue([])
-    render(<AnswersView fields={[]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[]} tabId={7} />)
     expect(await screen.findByText(/nothing saved yet/i)).toBeInTheDocument()
   })
 
   it('lists every detected question as a chip and selects the first', async () => {
-    render(<AnswersView fields={twoFields} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={twoFields} tabId={7} />)
     const chips = await screen.findAllByRole('tab')
     expect(chips).toHaveLength(2)
     expect(chips[0]!).toHaveTextContent('Why do you want to work at Acme?')
@@ -128,7 +127,7 @@ describe('AnswersView', () => {
   })
 
   it('re-ranks the list against the picked question', async () => {
-    render(<AnswersView fields={twoFields} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={twoFields} tabId={7} />)
     const before = await screen.findAllByRole('article')
     expect(before[0]!).toHaveTextContent('Why do you want to work at this company?')
 
@@ -137,7 +136,7 @@ describe('AnswersView', () => {
   })
 
   it('re-targets insert at the picked question’s field', async () => {
-    render(<AnswersView fields={twoFields} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={twoFields} tabId={7} />)
     await screen.findAllByRole('article')
     await userEvent.click(screen.getByRole('tab', { name: /salary expectations/i }))
     await userEvent.click(screen.getAllByRole('button', { name: /^insert$/i })[0]!)
@@ -146,14 +145,14 @@ describe('AnswersView', () => {
   })
 
   it('renders no switcher when the page asks a single question', async () => {
-    render(<AnswersView fields={[field()]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[field()]} tabId={7} />)
     expect(await screen.findByText('Why do you want to work at Acme?')).toBeInTheDocument()
     expect(screen.queryAllByRole('tab')).toHaveLength(0)
   })
 
   it('confirms an insert on the row and keeps the popup open', async () => {
     const close = vi.spyOn(window, 'close').mockImplementation(() => {})
-    render(<AnswersView fields={[field()]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[field()]} tabId={7} />)
     const inserts = await screen.findAllByRole('button', { name: /^insert$/i })
     await userEvent.click(inserts[0]!)
 
@@ -171,7 +170,7 @@ describe('AnswersView', () => {
         maxLength: 15,
       }),
     ]
-    render(<AnswersView fields={capped} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={capped} tabId={7} />)
     await screen.findAllByRole('article')
 
     const row = () => screen.getByText('Why do you want to work at this company?').closest('article')!
@@ -183,7 +182,7 @@ describe('AnswersView', () => {
   })
 
   it('opens the web app in a tab rather than navigating the popup', async () => {
-    render(<AnswersView fields={[]} tabId={7} onSettings={() => {}} />)
+    render(<AnswersView fields={[]} tabId={7} />)
     await userEvent.click(await screen.findByRole('link', { name: /browse all/i }))
     expect(chrome.tabs.create).toHaveBeenCalledWith({ url: 'http://localhost:8080/app/answers' })
   })

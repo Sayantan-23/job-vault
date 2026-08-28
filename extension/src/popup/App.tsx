@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Activity, useCallback, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { getToken, getSettings, clearToken } from '@/lib/storage'
 import { verifyKey, type QuickCreateResult } from '@/lib/api'
@@ -58,22 +58,33 @@ export default function App() {
     void refresh()
   }, [refresh])
 
-  switch (screen.name) {
-    case 'loading':
-      return (
-        <div>
-          <TopBar />
-          <Centered>
-            <Spinner className="text-primary" />
-          </Centered>
-        </div>
-      )
-    case 'connect':
-      return <ConnectView onConnected={() => void refresh()} />
-    case 'capture': {
-      const onSettings = () => setScreen({ name: 'settings', email: screen.email })
-      return (
-        <div>
+  // The confirmation is full-bleed by design — the one screen with no header.
+  if (screen.name === 'success') {
+    return <SuccessView result={screen.result} serverUrl={screen.serverUrl} onDone={() => void refresh()} />
+  }
+
+  return (
+    <div>
+      {/* One header for the whole popup, owned here rather than by each view —
+          rendered per view it landed *below* the tab strip. */}
+      <TopBar
+        onSettings={
+          screen.name === 'capture'
+            ? () => setScreen({ name: 'settings', email: screen.email })
+            : undefined
+        }
+        onBack={screen.name === 'settings' ? () => void refresh() : undefined}
+      />
+      {screen.name === 'loading' ? (
+        <Centered>
+          <Spinner className="text-primary" />
+        </Centered>
+      ) : screen.name === 'connect' ? (
+        <ConnectView onConnected={() => void refresh()} />
+      ) : screen.name === 'settings' ? (
+        <SettingsView email={screen.email} onDisconnected={() => setScreen({ name: 'connect' })} />
+      ) : (
+        <>
           <Tabs
             items={[
               { id: 'job', label: 'Save job' },
@@ -82,29 +93,25 @@ export default function App() {
             active={tab}
             onChange={(id) => setTab(id as 'job' | 'answers')}
           />
-          {tab === 'job' ? (
+          {/* Both tabs stay mounted: <Activity> hides the inactive one
+              (display:none, effects torn down) instead of unmounting it, so a
+              half-typed capture edit survives the switch — the same pattern as
+              the web app's Board⇄List toggle. React does not mount the effects
+              of a hidden Activity, so Answers costs no request until it is
+              first shown. */}
+          <Activity mode={tab === 'job' ? 'visible' : 'hidden'}>
             <CaptureView
               page={screen.page}
               onSaved={(result, serverUrl) => setScreen({ name: 'success', result, serverUrl })}
-              onSettings={onSettings}
             />
-          ) : (
-            <AnswersView fields={screen.page.fields} tabId={screen.page.tabId} onSettings={onSettings} />
-          )}
-        </div>
-      )
-    }
-    case 'success':
-      return <SuccessView result={screen.result} serverUrl={screen.serverUrl} onDone={() => void refresh()} />
-    case 'settings':
-      return (
-        <SettingsView
-          email={screen.email}
-          onBack={() => void refresh()}
-          onDisconnected={() => setScreen({ name: 'connect' })}
-        />
-      )
-  }
+          </Activity>
+          <Activity mode={tab === 'job' ? 'hidden' : 'visible'}>
+            <AnswersView fields={screen.page.fields} tabId={screen.page.tabId} />
+          </Activity>
+        </>
+      )}
+    </div>
+  )
 }
 
 function Centered({ children }: { children: ReactNode }) {

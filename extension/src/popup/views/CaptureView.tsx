@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Field } from '../ui/Field'
 import { Badge } from '../ui/Badge'
 import { Spinner } from '../ui/Spinner'
-import { TopBar } from '../ui/TopBar'
 import { ExternalLinkIcon } from '../ui/icons'
 import type { PageRead } from '../capture'
 import { getSettings, getToken } from '@/lib/storage'
@@ -14,7 +13,6 @@ import type { ExtractedJobData } from '@/lib/types'
 interface Props {
   page: PageRead
   onSaved: (result: QuickCreateResult, serverUrl: string) => void
-  onSettings: () => void
 }
 
 function sourceLabel(data: ExtractedJobData): string {
@@ -27,7 +25,7 @@ function sourceLabel(data: ExtractedJobData): string {
   }
 }
 
-export function CaptureView({ page, onSaved, onSettings }: Props) {
+export function CaptureView({ page, onSaved }: Props) {
   const data = page.job
   const [title, setTitle] = useState(data.title)
   const [company, setCompany] = useState(data.company)
@@ -42,8 +40,13 @@ export function CaptureView({ page, onSaved, onSettings }: Props) {
 
   const sourceUrl = data.sourceUrl
 
+  // Once per popup session, not once per tab switch: <Activity> tears this
+  // effect down while the tab is hidden and re-runs it on return, and
+  // re-checking the same URL costs a request that can only give the same answer.
+  const checked = useRef(false)
   useEffect(() => {
-    if (!sourceUrl) return
+    if (!sourceUrl || checked.current) return
+    checked.current = true
     void (async () => {
       try {
         const { serverUrl } = await getSettings()
@@ -90,56 +93,53 @@ export function CaptureView({ page, onSaved, onSettings }: Props) {
   const canSave = title.trim().length > 0 && company.trim().length > 0 && !saving
 
   return (
-    <div>
-      <TopBar onSettings={onSettings} />
-      <div className="space-y-4 p-5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>Captured from</span>
-          <Badge>{sourceLabel(data)}</Badge>
-        </div>
-
-        {duplicate ? (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm">
-            <span className="text-muted-foreground">Already in your JobVault</span>
-            <button
-              onClick={openDuplicate}
-              className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
-            >
-              Open <ExternalLinkIcon className="size-3.5" />
-            </button>
-          </div>
-        ) : null}
-
-        {error ? (
-          <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            {error}
-          </p>
-        ) : null}
-
-        <div className="space-y-3">
-          <Field label="Title">
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Job title" />
-          </Field>
-          <Field label="Company">
-            <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company" />
-          </Field>
-          <Field label="Location">
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional" />
-          </Field>
-        </div>
-
-        <Button onClick={save} disabled={!canSave} className="w-full">
-          {saving ? (
-            <>
-              <Spinner /> Saving…
-            </>
-          ) : duplicate ? (
-            'Save again'
-          ) : (
-            'Save to JobVault'
-          )}
-        </Button>
+    <div className="space-y-4 p-5">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span>Captured from</span>
+        <Badge>{sourceLabel(data)}</Badge>
       </div>
+
+      {duplicate ? (
+        <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/60 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">Already in your JobVault</span>
+          <button
+            onClick={openDuplicate}
+            className="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+          >
+            Open <ExternalLinkIcon className="size-3.5" />
+          </button>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="space-y-3">
+        <Field label="Title">
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Job title" />
+        </Field>
+        <Field label="Company">
+          <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company" />
+        </Field>
+        <Field label="Location">
+          <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional" />
+        </Field>
+      </div>
+
+      <Button onClick={save} disabled={!canSave} className="w-full">
+        {saving ? (
+          <>
+            <Spinner /> Saving…
+          </>
+        ) : duplicate ? (
+          'Save again'
+        ) : (
+          'Save to JobVault'
+        )}
+      </Button>
     </div>
   )
 }

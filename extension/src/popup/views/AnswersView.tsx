@@ -1,8 +1,7 @@
-import { useEffect, useState, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Badge } from '../ui/Badge'
 import { Input } from '../ui/Input'
 import { Spinner } from '../ui/Spinner'
-import { TopBar } from '../ui/TopBar'
 import { VariantChip } from '../ui/VariantChip'
 import { CheckIcon, CopyIcon, FileTextIcon, SearchIcon } from '../ui/icons'
 import { insertAnswer } from '../capture'
@@ -16,7 +15,6 @@ type Variant = 'short' | 'long'
 interface Props {
   fields: AnswerField[]
   tabId: number | null
-  onSettings: () => void
 }
 
 function textFor(answer: SavedAnswer, variant: Variant): string | null {
@@ -42,7 +40,7 @@ function openInApp(event: MouseEvent<HTMLAnchorElement>, url: string) {
   chrome.tabs.create({ url })
 }
 
-export function AnswersView({ fields, tabId, onSettings }: Props) {
+export function AnswersView({ fields, tabId }: Props) {
   const [answers, setAnswers] = useState<SavedAnswer[]>([])
   const [serverUrl, setServerUrl] = useState('')
   const [loading, setLoading] = useState(true)
@@ -59,7 +57,12 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
   const target = fields.find((item) => item.fieldId === pickedId) ?? fields[0] ?? null
   const detected = target?.question ?? null
 
+  // Loads on first show and never again: <Activity> re-runs effects each time
+  // the tab comes back, and the library does not change while the popup is open.
+  const loaded = useRef(false)
   useEffect(() => {
+    if (loaded.current) return
+    loaded.current = true
     void load()
   }, [])
 
@@ -136,7 +139,6 @@ export function AnswersView({ fields, tabId, onSettings }: Props) {
 
   return (
     <div>
-      <TopBar onSettings={onSettings} />
       {loading ? (
         <div className="flex h-44 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
           <Spinner className="text-primary" />
