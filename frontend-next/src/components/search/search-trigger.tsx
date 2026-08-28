@@ -29,13 +29,12 @@ export function SearchTrigger({
       aria-label="Search"
       onClick={onOpen}
       className={cn(
-        // The transition has to cover opacity, not just colours: the card's own
-        // header fades in on a 140ms delay, so a hard-cut trigger leaves an empty
-        // capsule for the first half of the morph instead of cross-fading with it.
-        'transition-[color,background-color,opacity] duration-200 motion-reduce:transition-none',
-        // Faded rather than unmounted while the palette is open: the card carries
-        // its own close control at the same corner, so the icon reads as one
-        // element travelling — and Radix still has this button to return focus to.
+        // Hidden, not unmounted, while the palette is open: Radix still needs this
+        // button to return focus to. The hide is a hard cut on purpose — an opacity
+        // *transition* is invisible where it would matter (the card opens on top of
+        // this button, covering it) and very visible where it hurts: once the card
+        // flies off, a half-faded second magnifier sits here for ~150ms, against a
+        // morph whose whole premise is that one icon travels.
         paletteOpen && 'pointer-events-none opacity-0',
         className,
       )}

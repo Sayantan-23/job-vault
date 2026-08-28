@@ -200,8 +200,10 @@ html[data-sidebar='collapsed'] .jv-account-trigger {
   /* Mobile speed-dial nav pills: each cascades in from the hamburger with a per-
      item `animation-delay` (set inline) — Google-Keep-style stagger. */
   --animate-jv-fab-item: jv-fab-item 0.18s ease-out both;
-  /* Search palette: the card grows out of the trigger's rect, then its chrome
-     fades in behind that (delayed past the squeezed first frames). No fill-mode
+  /* Search palette: the card grows out of the trigger's rect carrying the
+     magnifier — the one element that exists in both the trigger and the card, so
+     it never fades. Only the placeholder and the close control use the delayed
+     fade below (they cannot be read inside a 36px capsule). No fill-mode
      on the morph, so the card reverts to its own `height: auto` the instant it
      lands and the results region can grow. Closing reuses the app's ordinary
      surface exit — the reverse morph would have to interpolate to `auto`. */

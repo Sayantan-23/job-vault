@@ -137,17 +137,31 @@ export function SearchPalette({ className }: { className?: string }) {
           // dialog.tsx and sheet.tsx focus the panel instead of the first field,
           // because Radix's default selects a pre-filled input's text. A palette
           // has to land in its own input and there is nothing there to select.
+          // preventScroll matters: the card is `overflow-hidden` and only 36px wide
+          // in the morph's first frame, so focusing the input scrolls the card to
+          // reveal it (measured scrollLeft 30, scrollTop 5) — which drags the header,
+          // magnifier included, out of the clip box and leaves a blank pill.
           onOpenAutoFocus={(event) => {
             event.preventDefault()
-            inputRef.current?.focus()
+            inputRef.current?.focus({ preventScroll: true })
           }}
           className={cn(
-            'jv-search-card group z-50 flex flex-col overflow-hidden border border-border bg-card text-card-foreground shadow-lg focus:outline-none',
+            // `justify-center` only bites while the card is shorter than its header — i.e.
+            // during the morph, where it keeps the 56px header (and so the magnifier)
+            // centred on the 36px capsule instead of hanging 11px below the trigger's
+            // icon. Once the card lands its height is content-driven, so it is inert.
+            'jv-search-card group z-50 flex flex-col justify-center overflow-hidden border border-border bg-card text-card-foreground shadow-lg focus:outline-none',
             'data-[state=open]:animate-jv-search-in data-[state=closed]:animate-jv-surface-out',
           )}
         >
           <DialogPrimitive.Title className="sr-only">Search</DialogPrimitive.Title>
-          <div className="flex h-[var(--jv-search-head-h)] shrink-0 items-center gap-3 px-4 group-data-[state=open]:animate-jv-search-content-in motion-reduce:animate-none">
+          {/* The magnifier is what the morph is *about*: the same icon sits in the
+              trigger and here, so it carries no fade at all. In the card's first frame
+              it paints at full opacity 8px right of where the trigger's icon was and
+              at exactly its height, then travels with the card. Only what cannot be
+              read inside a 36px capsule — the placeholder, the close control — waits
+              for the delayed fade, so the card is never a blank pill. */}
+          <div className="flex h-[var(--jv-search-head-h)] shrink-0 items-center gap-3 px-4">
             <Search className="size-[18px] shrink-0 text-muted-foreground" aria-hidden="true" />
             <input
               ref={inputRef}
@@ -171,10 +185,13 @@ export function SearchPalette({ className }: { className?: string }) {
                 setActive(0)
               }}
               onKeyDown={onInputKeyDown}
-              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60"
+              // motion-safe, not `motion-reduce:animate-none`: that utility sorts
+              // *before* the group-data one at equal specificity and loses, which
+              // left reduced-motion users staring at a blank card for 140ms.
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-foreground outline-none placeholder:text-muted-foreground/60 motion-safe:group-data-[state=open]:animate-jv-search-content-in"
             />
             <DialogPrimitive.Close
-              className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-safe:group-data-[state=open]:animate-jv-search-content-in"
               aria-label="Close search"
             >
               <X className="size-4" aria-hidden="true" />
