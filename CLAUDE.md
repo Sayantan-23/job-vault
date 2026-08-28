@@ -24,6 +24,7 @@ JobVault ("Ghost-Proof Job Application & AI Assistant") is **mid-migration**: th
 
 ### Where to look (source of truth)
 - `progress.md` — **status of every slice; read this first.**
+- **Mobile (next milestone, no code yet):** `docs/superpowers/specs/2026-08-28-mobile-app-expo-scope.md` — page-by-page scope, chunk list C0–C10, and a **§8 "Start here"** written to be read cold. Milestone `m-0cc02t`; decisions `d-0cc01s` (Expo not Flutter), `d-0cc1x6` (native token auth), `d-0cc24z` (native chrome / branded content, NativeWind), `d-0cc2vk` (standalone `mobile/`, workspaces later), `d-0cc2w5` (Android first, `jobvault-mobile` EAS project).
 - `docs/superpowers/specs/2026-04-26-nest-to-express-nuxt-to-next-migration-design.md` — overall migration architecture + the slice roadmap.
 - `docs/superpowers/specs/2026-06-01-app-redesign-express-next-minimalist-design.md` — scope of this effort (app surface + Express), design direction, decisions.
 - `docs/superpowers/plans/` — the executed slice plans (Slices 0–4, incl. `2026-06-03-slice-4{a,b,c}-*.md`); use the latest as the pattern for new slices.
