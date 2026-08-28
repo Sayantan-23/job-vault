@@ -91,6 +91,21 @@ const TOTAL_LIMIT = 20
 // delimiter would make every snippet a stored-XSS carrier the moment a client
 // rendered it as markup. The client splits on these sentinels into React nodes.
 const HEADLINE_OPTIONS = 'StartSel=\u0002,StopSel=\u0003,MaxWords=18,MinWords=5,MaxFragments=1'
+const START_SEL = '\u0002'
+const SENTINELS = '\u0002\u0003'
+
+// Two snippet sources are markdown (jobs.snapshot_markdown, cover_letters.body_markdown),
+// so an untouched excerpt showed literal '**' and '###' in the results list. Only
+// the markers that are always decoration are dropped — NOT '-' ("Full-Stack") and
+// NOT '_' (it appears inside identifiers). A snippet is not a rendered document,
+// so a regexp_replace is the whole job; there is no markdown parser here.
+const MARKDOWN_MARKERS = '[*#`~]'
+
+// Sentinels are stripped from the source BEFORE ts_headline puts its own back in.
+// sanitizeSnapshotMarkdown removes images and data: URIs, not control characters,
+// so a scraped page containing a literal STX would otherwise reach the client and
+// invert every highlight after it (the client splitter is pure parity).
+const SNIPPET_SOURCE = sql`regexp_replace(translate(hits.snippet_source, ${SENTINELS}, ''), ${MARKDOWN_MARKERS}, '', 'g')`
 
 function tsQuery(q: string): SQL {
   return sql`plainto_tsquery('english', ${q})`
@@ -138,10 +153,15 @@ async function search(userId: string, q: string): Promise<SearchResult[]> {
   const branches = SOURCES.map((source) => branch(source, userId, q))
   // ts_headline runs in the OUTER query, on the ~20 surviving rows — not on
   // every job description in the table.
-  const statement = sql`select type, id, title, subtitle,
-                               ts_headline('english', snippet_source, ${tsQuery(q)}, ${HEADLINE_OPTIONS}) as snippet
+  // The lateral exists so the headline can be tested for a start sentinel without
+  // computing it twice: with no match in the body ts_headline returns the head of
+  // the document, which rendered as an unrelated, unhighlighted excerpt under a
+  // row that matched on its title alone. No highlight, no snippet.
+  const statement = sql`select hits.type, hits.id, hits.title, hits.subtitle,
+                               case when strpos(h.snippet, ${START_SEL}) > 0 then h.snippet end as snippet
                           from (${sql.join(branches, sql` union all `)}) hits
-                         order by rank desc
+                          cross join lateral (select ts_headline('english', ${SNIPPET_SOURCE}, ${tsQuery(q)}, ${HEADLINE_OPTIONS}) as snippet) h
+                         order by hits.rank desc
                          limit ${TOTAL_LIMIT}`
   const { rows } = await getDb().execute(statement)
   return rows.map((row) => ({

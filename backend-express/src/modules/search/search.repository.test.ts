@@ -21,6 +21,11 @@ const BODY_TAG = word() // jobs.snapshot_markdown only
 const ANSWER_TAG = word() // seven answers, to prove the per-type cap
 const PERSONA_NAME = `Persona ${word()}`
 
+// Snippet-shaping fixtures (one job/résumé each, tag unique per run).
+const MD_TAG = word() // sits in a body full of markdown markers
+const SPOOF_TAG = word() // sits in a body carrying a literal STX sentinel
+const TITLE_ONLY_TAG = word() // résumé title only — nothing to highlight in the body
+
 // The two-band ranking fixture. RANK_TAG lives in one job's body (an FTS hit);
 // RANK_NEAR is another job's whole title, one character off RANK_TAG — close
 // enough for pg_trgm (~0.63) but a different lexeme, so it can never match FTS.
@@ -77,9 +82,32 @@ async function seedFor(
   const rankNear = rankRows[1]
   if (!job || !persona || !rankBody || !rankNear) throw new Error('failed to seed job/persona')
 
-  await db
-    .insert(generatedResumes)
-    .values({ userId: uid, personaId: persona.id, title: 'Platform resume', instructions: 'Lead with platform work.', content: C })
+  // Short bodies on purpose: under MaxWords the whole document is the fragment.
+  await db.insert(jobs).values([
+    {
+      userId: uid,
+      title: 'Markdown body',
+      company: `${word()} Systems`,
+      snapshotMarkdown: `Full-Stack **${MD_TAG}** ### role with \`code\` and ~~cuts~~.`,
+    },
+    {
+      userId: uid,
+      title: 'Spoofed sentinel body',
+      company: `${word()} Systems`,
+      snapshotMarkdown: `Scraped \u0002 text mentions ${SPOOF_TAG} once.`,
+    },
+  ])
+
+  await db.insert(generatedResumes).values([
+    { userId: uid, personaId: persona.id, title: 'Platform resume', instructions: 'Lead with platform work.', content: C },
+    {
+      userId: uid,
+      personaId: persona.id,
+      title: `Resume ${TITLE_ONLY_TAG}`,
+      instructions: 'Emphasize product sense and TypeScript.',
+      content: C,
+    },
+  ])
   await db.insert(coverLetters).values({
     userId: uid,
     adhocJob: { title: 'Pasted role', company: 'Pasted co' },
@@ -188,5 +216,40 @@ describe('searchRepository (real DB)', () => {
   it('caps any single type at five rows', async () => {
     const results = await searchRepository.search(userId, ANSWER_TAG)
     expect(results.filter((r) => r.type === 'answer')).toHaveLength(5)
+  })
+
+  // snapshot_markdown and body_markdown are markdown, so an unstripped source
+  // put literal '**' and '###' next to otherwise clean typography.
+  it('strips markdown markers out of a snippet, keeping hyphens', async () => {
+    const results = await searchRepository.search(userId, MD_TAG)
+    expect(results).toHaveLength(1)
+    const snippet = results[0]?.snippet ?? ''
+    expect(snippet).not.toMatch(/[*#`~]/)
+    expect(snippet).toContain('Full-Stack')
+    expect(snippet).toContain(`\u0002${MD_TAG}\u0003`)
+  })
+
+  // The client splits the snippet on the sentinels and treats odd segments as
+  // marked, so one unpaired STX from a scraped page inverts every highlight
+  // after it.
+  it('drops a sentinel already present in the source, so highlights stay paired', async () => {
+    const results = await searchRepository.search(userId, SPOOF_TAG)
+    expect(results).toHaveLength(1)
+    const snippet = results[0]?.snippet ?? ''
+    // split, not a regex: eslint's no-control-regex forbids the literal sentinel.
+    expect(snippet.split('\u0002')).toHaveLength(2)
+    expect(snippet.split('\u0003')).toHaveLength(2)
+    expect(snippet).toContain(`\u0002${SPOOF_TAG}\u0003`)
+  })
+
+  // With no match in the body ts_headline returns the head of the document, so
+  // the row showed an unrelated, unhighlighted excerpt.
+  it('returns no snippet when only the title matched', async () => {
+    const titleOnly = await searchRepository.search(userId, TITLE_ONLY_TAG)
+    expect(titleOnly).toHaveLength(1)
+    expect(titleOnly[0]?.type).toBe('resume')
+    expect(titleOnly[0]?.snippet).toBeNull()
+    // A body match still gets its highlighted excerpt.
+    expect((await searchRepository.search(userId, BODY_TAG))[0]?.snippet).toContain('\u0002')
   })
 })
