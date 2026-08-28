@@ -99,6 +99,13 @@
       "when": 1787659837660,
       "tag": "0013_dazzling_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787910270719,
+      "tag": "0014_add_pg_trgm",
+      "breakpoints": true
     }
   ]
 }
