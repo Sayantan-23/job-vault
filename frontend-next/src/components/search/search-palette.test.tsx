@@ -7,8 +7,8 @@ import type { SearchResult } from '@/types/search'
 const push = vi.fn()
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 
-// Ranked, deliberately interleaved by type: the listbox groups visually but the
-// DOM stays in rank order, so arrow traversal follows the ranking.
+// Ranked, deliberately interleaved by type: the listbox regroups them (jobs
+// first — the rank-1 hit is a job — then personas) and traverses that same order.
 const RANKED: SearchResult[] = [
   { type: 'job', id: 'j1', title: 'Senior Backend Engineer', subtitle: 'Monzo', snippet: null },
   { type: 'persona', id: 'p1', title: 'Backend generalist', subtitle: null, snippet: null },
@@ -69,6 +69,34 @@ describe('SearchPalette', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  // Both mounts (desktop cluster + mobile header) are always in the tree; only
+  // one is displayed per width, and a display:none trigger measures zero.
+  it('opens exactly one card on the chord when it is mounted twice', async () => {
+    const user = userEvent.setup()
+    render(
+      <>
+        <SearchPalette />
+        <SearchPalette />
+      </>,
+    )
+    // Second mount = the one that is display:none at this width.
+    screen.getAllByRole('button', { name: /^search$/i }).forEach((trigger, index) => {
+      if (index === 0) return
+      trigger.getBoundingClientRect = () => ({
+        x: 0, y: 0, top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0,
+        toJSON: () => ({}),
+      })
+    })
+
+    await user.keyboard('{Meta>}k{/Meta}')
+
+    // Radix marks the rest of the tree aria-hidden once a modal opens, so count
+    // the raw DOM rather than the accessibility tree.
+    const cards = document.querySelectorAll<HTMLElement>('[role="dialog"]')
+    expect(cards).toHaveLength(1)
+    expect(cards[0]?.style.getPropertyValue('--jv-search-x')).toBe('1218px')
+  })
+
   it('anchors the morph on the clicked trigger', async () => {
     const user = userEvent.setup()
     render(<SearchPalette />)
@@ -125,19 +153,40 @@ describe('SearchPalette', () => {
     expect(input).toHaveAttribute('aria-activedescendant', ids[0])
   })
 
-  it('keeps the options in ranked DOM order even though they are grouped visually', async () => {
+  it('orders the groups by their best-ranked member, rows inside a group by rank', async () => {
     await openAndType('back')
 
-    const titles = screen.getAllByRole('option').map((o) => o.textContent)
-    expect(titles[0]).toContain('Senior Backend Engineer')
-    expect(titles[1]).toContain('Backend generalist')
-    expect(titles[2]).toContain('Platform Engineer')
+    // Every child of the listbox, in document order — nothing carries a CSS
+    // `order`, so document order IS the visible top-to-bottom order.
+    const rows = [...screen.getByRole('listbox').children] as HTMLElement[]
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Jobs',
+      expect.stringContaining('Senior Backend Engineer'),
+      expect.stringContaining('Platform Engineer'),
+      'Personas',
+      expect.stringContaining('Backend generalist'),
+    ])
+    for (const row of rows) expect(row.style.order).toBe('')
+  })
+
+  it('walks the options in the order they are rendered, not in flat rank order', async () => {
+    const { user, input } = await openAndType('back')
+    const titles = screen.getAllByRole('option').map((option) => option.textContent)
+
+    // Rank order is job/persona/job; the rendered order is job/job/persona, and
+    // the highlight must follow the rendered one rather than hopping groups.
+    for (const [index, title] of titles.entries()) {
+      if (index > 0) await user.keyboard('{ArrowDown}')
+      const activeId = input.getAttribute('aria-activedescendant')
+      expect(document.getElementById(activeId ?? '')).toHaveTextContent(title ?? '')
+    }
   })
 
   it('navigates to the active option on Enter', async () => {
     const { user } = await openAndType('back')
 
-    await user.keyboard('{ArrowDown}{Enter}')
+    // Third option top-to-bottom: the persona under its own group heading.
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}')
 
     expect(push).toHaveBeenCalledWith('/app/personas?persona=p1')
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())

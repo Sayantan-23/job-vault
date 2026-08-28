@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { SearchPalette } from '@/components/search/search-palette'
 import { AccountMenu } from './account-menu'
 import { BrandMark } from './brand-mark'
 import { MobileHeader } from './mobile-header'
@@ -37,15 +38,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             trigger, bell, and account menu. It's the scroll container's first
             child so its `sticky top-0` pins to the canvas top. */}
         <MobileHeader />
-        {/* The notification bell floats at the top-right of the canvas — a
+        {/* Search + the notification bell float at the top-right of the canvas — a
             featherweight header that stays put on scroll. It shares the page's
             content column + padding so it lines up above each PageHeading's
             actions. Zero-height + pointer-events-none so it never displaces or
-            blocks the page beneath; only the bell itself is interactive.
-            Hidden below lg — MobileHeader renders the bell there instead. */}
+            blocks the page beneath; only the controls themselves are interactive.
+            Hidden below lg — MobileHeader renders the same pair there instead. */}
         <div className="pointer-events-none sticky top-0 z-30 hidden h-0 lg:block">
           <div className="jv-content-col w-full px-6 pt-4 sm:px-8 lg:px-10">
-            <div className="flex justify-end">
+            <div className="flex items-center justify-end gap-1.5">
+              <SearchPalette className="pointer-events-auto" />
               <NotificationBell className="pointer-events-auto" />
             </div>
           </div>

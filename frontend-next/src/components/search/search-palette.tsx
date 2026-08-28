@@ -16,7 +16,7 @@ import { DialogOverlay } from '@/components/ui/dialog'
 import { useSearch } from '@/hooks/use-search'
 import { searchResultHref, type SearchResult } from '@/types/search'
 import { cn } from '@/lib/utils'
-import { SearchResults, searchOptionId } from './search-results'
+import { SearchResults, groupByType, searchOptionId } from './search-results'
 import { SearchTrigger } from './search-trigger'
 
 // `CSSProperties` doesn't type custom properties; cast through a parameter
@@ -46,7 +46,9 @@ export function SearchPalette({ className }: { className?: string }) {
 
   const { data, isFetching } = useSearch(term)
   const expanded = term.trim().length >= MIN_TERM
-  const results = expanded ? (data ?? []) : []
+  // Grouped up front, not at render time: the palette traverses the very array
+  // the listbox paints, so arrow keys follow the visible top-to-bottom order.
+  const results = expanded ? groupByType(data ?? []) : []
   const activeIndex = Math.min(active, results.length - 1)
 
   const openFrom = useCallback(() => {

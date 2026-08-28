@@ -4,9 +4,9 @@ import { useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import type { SearchResult, SearchResultType } from '@/types/search'
 
-// The visible group label is decorative (aria-hidden, placed by CSS order), so
-// each option names its own type — otherwise a screen reader hears five kinds of
-// hit with no way to tell them apart.
+// The visible group label is decorative (aria-hidden), so each option names its
+// own type — otherwise a screen reader hears five kinds of hit with no way to
+// tell them apart.
 const TYPE_NAMES: Record<SearchResultType, string> = {
   job: 'Job',
   resume: 'Résumé',
@@ -45,13 +45,11 @@ export function SearchResultRow({
   result,
   id,
   active,
-  order,
   onSelect,
 }: {
   result: SearchResult
   id: string
   active: boolean
-  order: number
   onSelect: () => void
 }) {
   const ref = useRef<HTMLLIElement>(null)
@@ -68,7 +66,6 @@ export function SearchResultRow({
       id={id}
       role="option"
       aria-selected={active}
-      style={{ order }}
       onClick={onSelect}
       className={cn(
         'cursor-pointer scroll-my-2 rounded-lg px-2.5 py-2 transition-colors',

@@ -17,7 +17,7 @@ function row(snippet: string | null) {
   }
   return render(
     <ul>
-      <SearchResultRow result={result} id="opt-0" active={false} order={0} onSelect={() => {}} />
+      <SearchResultRow result={result} id="opt-0" active={false} onSelect={() => {}} />
     </ul>,
   )
 }

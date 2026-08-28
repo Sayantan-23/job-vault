@@ -20,7 +20,6 @@ export function SearchInput({
 }) {
   const [local, setLocal] = useState(value)
   const [lastValue, setLastValue] = useState(value)
-  const ref = useRef<HTMLInputElement>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   function cancelPending() {
@@ -47,18 +46,6 @@ export function SearchInput({
   // Cancel a pending timer on unmount.
   useEffect(() => () => cancelPending(), [])
 
-  // Cmd/Ctrl+K focuses the search field.
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        ref.current?.focus()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
-
   // Debounce only the user's own typing (300ms), driven from the input handler —
   // never from a derived effect, so it can't race an external value change.
   function handleInput(next: string) {
@@ -84,7 +71,6 @@ export function SearchInput({
     <div className={cn('relative min-w-[8rem] grow basis-full sm:basis-0', className)}>
       <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
       <Input
-        ref={ref}
         type="text"
         role="searchbox"
         aria-label={ariaLabel}
