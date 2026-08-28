@@ -1,10 +1,10 @@
 ---
 id: t-0cbm48
 title: Partial (substring) matching in global search
-status: backlog
+status: planned
 created: 2026-08-28T00:00:00Z
-updated: 2026-08-28T00:00:00Z
-estimate: M
+updated: 2026-08-28T18:59:45Z
+estimate: S
 decisions: [d-0c5wyy]
 tags: [search, backend, frontend]
 ---
@@ -13,6 +13,11 @@ Two characters should find anything that contains them — **anywhere in the
 word, not only at the start**. Raised by the user against the shipped feature
 ([[t-0c5wyz]]): "it is not about only match from first, it should be a proper
 partial match."
+
+**Planned 2026-08-29. The executable plan is
+`docs/superpowers/plans/2026-08-29-partial-substring-search.md`** — three
+tasks, self-contained, every open question below already answered. Execute that;
+this file is the why.
 
 ## Why it does not work today
 
@@ -52,9 +57,7 @@ react:9`.
 5. **Substring hits get no highlight.** `ts_headline` marks lexemes the tsquery
    matched, so a substring-only hit emits no `\x02` sentinel — and the rule
    added in `8174954` returns a `null` snippet when no sentinel is present.
-   Those rows would show a title and nothing else. Needs client-side
-   highlighting of the raw substring, a small addition to the existing parity
-   splitter in `search-result-row.tsx`.
+   Those rows show a title and nothing else.
 
 6. **Known performance ceiling, not a blocker.** `ILIKE '%q%'` cannot use a
    B-tree index. At ~100 rows per user that is the same unindexed scan
@@ -62,31 +65,50 @@ react:9`.
    index, which *does* accelerate `%…%` — so the ceiling has a known fix and
    this does not close it.
 
-## Design
+## Design (revised 2026-08-29 on measured evidence — supersedes the four-band version)
 
-Four bands, non-overlapping, highest first — extending the two-band `case`
-already in `search.repository.ts`:
+Two changes to `search.repository.ts`, ~15 lines, no migration, no new
+dependency, **no frontend change**:
+
+1. **Prefix folds into the existing FTS band.** `tsQuery()` ORs a
+   `to_tsquery('reac:*')` arm onto the `plainto_tsquery` it already builds. That
+   one function feeds both `branch()` and the outer `ts_headline`, so prefix hits
+   are ranked *and highlighted* with no other edit.
+2. **One substring band** — `ILIKE '%q%'` over `Source.trgm`, which is already
+   exactly the short-field list complication 4 asks for. No new descriptor field.
 
 | Band | Match | Rank |
 |---|---|---|
-| 1 | FTS (exact / stemmed), incl. bodies | `2.0 + ts_rank` |
-| 2 | Substring at a word start (`"engin"` in *Engineering*) | `1.0 + coverage` |
-| 3 | Substring mid-word (`"gine"` in *Engineer*) | `0.5 + coverage` |
-| 4 | Trigram fuzzy (typos) | `similarity` scaled into `0..0.5` |
+| 1 | FTS — exact, stemmed or prefix, incl. bodies | `2.0 + ts_rank` |
+| 2 | Substring in a short identifying column | `1.0 + similarity` |
+| 3 | Trigram fuzzy (typos) | `similarity`, floored at 0.3 |
 
-`coverage` = matched length ÷ field length, so `"eng"` scores better against
-*Engineer* than against a 90-character title. Bands 2 and 3 run on the short
-fields listed in complication 4 only. Band 4 keeps the existing `> 0.3` floor.
+### What changed from the original design, and why
 
-## Open question
+The first version specified four bands (splitting word-start from mid-word), a
+`coverage` scoring function, and client-side highlighting in
+`search-result-row.tsx`. Measured against the live DB, two premises were wrong:
 
-**At exactly two characters: full infix, or prefix-only with infix from three?**
-Two-char infix is where the noise of complication 3 is worst. The user asked
-for two, so the default is full infix at two with the ranking carrying the
-load — but this is worth one look at real results before committing to it.
+- **Substring-on-short-fields does not fix the motivating example.** `react`
+  appears in **zero** short columns and in 16 `snapshot_markdown` bodies, so
+  `reac` would still have found nothing. Prefix FTS is what fixes it — and it
+  reaches bodies, which the substring band deliberately cannot.
+- **Prefix hits highlight for free**, which removes the frontend work entirely.
+  Complication 5 then bites only on infix hits, where the match is in the title
+  the row already shows.
+
+Bands 2/3 of the old design collapse to one, ordered by the `similarity()`
+already in the query; a `coverage` score goes in only if two-character results
+prove arbitrary in use. The ceiling is marked with a `ponytail:` comment.
+
+## Open question — answered
+
+*Full infix at two characters, or prefix-only until three?* **Full infix from
+two.** That is what was asked for, the banding carries the ordering, and the
+evidence shows prefix alone leaves `gine` and `in` unmatched. Revisit only on
+real results.
 
 ## Depends on
 
-[[t-0c5wyz]], shipped. Touches `search.repository.ts` (bands + the substring
-predicates), `search-result-row.tsx` (highlighting band 2/3 hits), and the
-repository tests.
+[[t-0c5wyz]], shipped. Touches `search.repository.ts` and its repository tests.
+Nothing else.
