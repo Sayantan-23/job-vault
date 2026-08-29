@@ -1,10 +1,10 @@
 ---
 id: t-0cd9jx
 title: "Mobile palette does not render, and the bar corner curves the wrong way"
-status: in_progress
+status: done
 milestone: m-0cc02t
 created: 2026-08-29T10:40:00Z
-updated: 2026-08-29T11:20:00Z
+updated: 2026-08-29T15:00:00Z
 estimate: S
 decisions: [d-0cd3wr, d-006]
 tags: [mobile, design, bug]
@@ -110,3 +110,24 @@ a different section". They were right. See the **second amendment** in
 
 This is an explicit trial — the user's words were *"if it does not look good then
 we will think of something else."* Screenshot it and say plainly how it reads.
+
+---
+
+**Done 2026-08-29**, merged to develop, signed off by the user on the device:
+*"it looks good and kind of what i wanted."*
+
+Page-to-bar contrast went from 1-3 of 255 to **18.39:1**, so the corner reads at
+arm's length rather than under magnification. Geometry was unchanged and already
+correct (R = 19.2 logical px, symmetric); only legibility moved. Contrast
+re-derived from device pixels, not from the palette: inactive glyph on bar
+6.03:1, capsule on bar 3.80:1, active label on capsule 4.83:1 — all passing.
+
+Known loose ends, deliberately left:
+- `--tab-bar-foreground` has **no consumer**. The active label sits on the
+  capsule (`--primary-foreground`), the inactive uses `--tab-bar-muted`. Dead
+  until [[t-0cdegw]] needs it.
+- The bar is now the heaviest element in the app — a full-width near-black band
+  against warm stone and hairlines elsewhere. Deliberate, and it is what makes
+  the corner work, but it is a real departure from [[d-006]]'s near-zero-contrast
+  material. Only tokens have to move if that reads as too much.
+- User noted it "may need a little touch for some adjustment" — [[t-0cdfyq]].
