@@ -1,7 +1,7 @@
 ---
 id: t-0cd55z
 title: "Refresh-token reuse detection does not fire — bcrypt truncates at 72 bytes"
-status: backlog
+status: in_progress
 created: 2026-08-29T09:05:00Z
 updated: 2026-08-29T10:05:00Z
 estimate: M
