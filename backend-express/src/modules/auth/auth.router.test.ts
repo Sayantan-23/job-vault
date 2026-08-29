@@ -8,23 +8,42 @@ vi.mock('./auth.repository.js', () => ({
     findByEmail: vi.fn(),
     findById: vi.fn(),
     create: vi.fn(),
-    setRefreshTokenHash: vi.fn(),
-    clearRefreshTokenHash: vi.fn(),
     updateProfile: vi.fn(),
   },
 }))
 
+vi.mock('./auth.sessions.repository.js', () => ({
+  sessionsRepository: {
+    create: vi.fn(),
+    listByUser: vi.fn().mockResolvedValue([]),
+    rotate: vi.fn(),
+    deleteById: vi.fn(),
+    deleteAllForUser: vi.fn(),
+  },
+}))
+
 import { authRepository } from './auth.repository.js'
-import { signAccessToken, signRefreshToken, hashSecret } from './auth.tokens.js'
+import { sessionsRepository } from './auth.sessions.repository.js'
+import { signAccessToken, signRefreshToken, hashSecret, hashToken } from './auth.tokens.js'
 
 const repo = vi.mocked(authRepository)
+const sessions = vi.mocked(sessionsRepository)
 let app: Express
 
 function fakeUser(over: Partial<Record<string, unknown>> = {}) {
   return {
-    id: 'u1', name: 'Ada', email: 'a@b.co', passwordHash: null, refreshTokenHash: null,
+    id: 'u1', name: 'Ada', email: 'a@b.co', passwordHash: null,
     googleId: null, isEmailVerified: false, masterResumeUrl: null, masterProfileJson: null,
     preferences: null, createdAt: new Date(), updatedAt: new Date(), ...over,
+  }
+}
+
+/** The live session holding `token`, as the sessions repository would return it. */
+function fakeSession(token: string, over: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: 's1', userId: 'u1', tokenHash: hashToken(token), client: 'web' as const, label: null,
+    createdAt: new Date(), lastUsedAt: new Date(),
+    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), ...over,
   }
 }
 
@@ -45,7 +64,10 @@ beforeAll(async () => {
   app = (await import('@/app.js')).createApp()
 })
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  sessions.listByUser.mockResolvedValue([])
+})
 
 describe('POST /api/auth/register', () => {
   it('400s on invalid body', async () => {
@@ -119,21 +141,36 @@ describe('POST /api/auth/login', () => {
 })
 
 describe('POST /api/auth/refresh', () => {
-  it('200s and rotates tokens for a valid refresh cookie', async () => {
+  it('200s and rotates the session for a valid refresh cookie', async () => {
     const token = signRefreshToken('u1')
-    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret(token) }))
+    repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([fakeSession(token)])
     const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
     expect(res.status).toBe(200)
-    expect(repo.setRefreshTokenHash).toHaveBeenCalledOnce()
+    expect(sessions.rotate).toHaveBeenCalledOnce()
     expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
   })
 
-  it('401s and clears the stored hash on reuse (token != stored hash)', async () => {
+  it('401s and revokes every session on reuse (no session holds the token)', async () => {
     const token = signRefreshToken('u1')
-    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret('a-different-token') }))
+    repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([fakeSession(signRefreshToken('u1'))])
     const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
     expect(res.status).toBe(401)
-    expect(repo.clearRefreshTokenHash).toHaveBeenCalledWith('u1')
+    expect(sessions.deleteAllForUser).toHaveBeenCalledWith('u1')
+    expect(sessions.rotate).not.toHaveBeenCalled()
+  })
+
+  it('401s on an expired session and drops only that session', async () => {
+    const token = signRefreshToken('u1')
+    repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([
+      fakeSession(token, { expiresAt: new Date(Date.now() - 1000) }),
+    ])
+    const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
+    expect(res.status).toBe(401)
+    expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')
+    expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
   })
 
   it('401s for a malformed refresh token', async () => {
@@ -148,13 +185,25 @@ describe('POST /api/auth/refresh', () => {
 })
 
 describe('POST /api/auth/logout', () => {
-  it('200s, revokes the refresh hash, and clears cookies', async () => {
-    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
-    const res = await request(app).post('/api/auth/logout').set('Cookie', [`accessToken=${token}`])
+  it('200s, ends the presented session, and clears cookies', async () => {
+    const access = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const refreshToken = signRefreshToken('u1')
+    sessions.listByUser.mockResolvedValue([fakeSession(refreshToken)])
+    const res = await request(app)
+      .post('/api/auth/logout')
+      .set('Cookie', [`accessToken=${access}`, `refreshToken=${refreshToken}`])
     expect(res.status).toBe(200)
     expect(res.body.data.message).toMatch(/logged out/i)
-    expect(repo.clearRefreshTokenHash).toHaveBeenCalledWith('u1')
+    expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')
+    expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
     expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
+  })
+
+  it('200s and revokes every session when no refresh token is presented', async () => {
+    const access = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const res = await request(app).post('/api/auth/logout').set('Cookie', [`accessToken=${access}`])
+    expect(res.status).toBe(200)
+    expect(sessions.deleteAllForUser).toHaveBeenCalledWith('u1')
   })
 
   it('401s without an access token cookie', async () => {
@@ -246,10 +295,11 @@ describe('native token transport', () => {
 
   it('refresh rotates from a body token and returns the new pair in the body', async () => {
     const token = signRefreshToken('u1')
-    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret(token) }))
+    repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([fakeSession(token, { client: 'native' })])
     const res = await request(app).post('/api/auth/refresh').send({ refreshToken: token })
     expect(res.status).toBe(200)
-    expect(repo.setRefreshTokenHash).toHaveBeenCalledOnce()
+    expect(sessions.rotate).toHaveBeenCalledOnce()
     expect(res.body.data.user.id).toBe('u1')
     expect(typeof res.body.data.accessToken).toBe('string')
     expect(typeof res.body.data.refreshToken).toBe('string')
@@ -258,17 +308,18 @@ describe('native token transport', () => {
 
   it('applies reuse detection to body refresh too', async () => {
     const token = signRefreshToken('u1')
-    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret('another-token') }))
+    repo.findById.mockResolvedValue(fakeUser())
     const res = await request(app).post('/api/auth/refresh').send({ refreshToken: token })
     expect(res.status).toBe(401)
-    expect(repo.clearRefreshTokenHash).toHaveBeenCalledWith('u1')
+    expect(sessions.deleteAllForUser).toHaveBeenCalledWith('u1')
   })
 
   // The security core of d-0cc1x6: a header must NOT be able to select native
   // mode, or an XSS on the web could read the HttpOnly refresh token back out.
   it('never leaks the pair to a cookie refresh, even with a native-looking header', async () => {
     const token = signRefreshToken('u1')
-    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret(token) }))
+    repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([fakeSession(token)])
     const res = await request(app)
       .post('/api/auth/refresh')
       .set('Cookie', [`refreshToken=${token}`])

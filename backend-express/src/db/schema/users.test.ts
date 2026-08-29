@@ -17,7 +17,6 @@ describe('users table', () => {
         'name',
         'passwordHash',
         'preferences',
-        'refreshTokenHash',
         'updatedAt',
       ].sort(),
     )

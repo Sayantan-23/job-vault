@@ -20,20 +20,6 @@ async function create(input: Pick<NewUserRow, 'name' | 'email' | 'passwordHash'>
   return row
 }
 
-async function setRefreshTokenHash(id: string, hash: string): Promise<void> {
-  await getDb()
-    .update(users)
-    .set({ refreshTokenHash: hash, updatedAt: new Date() })
-    .where(eq(users.id, id))
-}
-
-async function clearRefreshTokenHash(id: string): Promise<void> {
-  await getDb()
-    .update(users)
-    .set({ refreshTokenHash: null, updatedAt: new Date() })
-    .where(eq(users.id, id))
-}
-
 async function updateProfile(id: string, input: UpdateProfileInput): Promise<UserRow> {
   const patch: Partial<NewUserRow> = { updatedAt: new Date() }
   if (input.name !== undefined) patch.name = input.name
@@ -45,11 +31,4 @@ async function updateProfile(id: string, input: UpdateProfileInput): Promise<Use
   return row
 }
 
-export const authRepository = {
-  findByEmail,
-  findById,
-  create,
-  setRefreshTokenHash,
-  clearRefreshTokenHash,
-  updateProfile,
-}
+export const authRepository = { findByEmail, findById, create, updateProfile }

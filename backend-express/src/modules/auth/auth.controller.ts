@@ -42,20 +42,28 @@ async function login(req: Request, res: Response): Promise<void> {
   res.status(200).json({ data: authData(res, result, input.client === 'native') })
 }
 
-async function refresh(req: Request, res: Response): Promise<void> {
-  // Native mode is selected by input source, never by a header: only a client
-  // that already holds the refresh token can put it in the body, so a browser
-  // XSS cannot ask for the HttpOnly pair to be echoed back (d-0cc1x6).
+/**
+ * The refresh token and the transport it arrived on. Native mode is selected by
+ * input source, never by a header: only a client that already holds the token
+ * can put it in the body, so a browser XSS cannot ask for the HttpOnly pair to
+ * be echoed back (d-0cc1x6).
+ */
+function readRefreshToken(req: Request): { token: string | undefined; native: boolean } {
   const bodyToken = (req.body as { refreshToken?: unknown } | undefined)?.refreshToken
-  const native = typeof bodyToken === 'string' && bodyToken.length > 0
-  const token = native ? bodyToken : (req.cookies?.['refreshToken'] as string | undefined)
+  if (typeof bodyToken === 'string' && bodyToken.length > 0) return { token: bodyToken, native: true }
+  return { token: req.cookies?.['refreshToken'] as string | undefined, native: false }
+}
+
+async function refresh(req: Request, res: Response): Promise<void> {
+  const { token, native } = readRefreshToken(req)
   if (!token) throw new AppError('UNAUTHORIZED', 'No refresh token')
   const result = await authService.refresh(token)
   res.status(200).json({ data: authData(res, result, native) })
 }
 
 async function logout(req: Request, res: Response): Promise<void> {
-  await authService.logout(requireUserId(req))
+  // The refresh token names the session to end; without it every session goes.
+  await authService.logout(requireUserId(req), readRefreshToken(req).token)
   clearAuthCookies(res)
   res.status(200).json({ data: { message: 'Logged out successfully' } })
 }

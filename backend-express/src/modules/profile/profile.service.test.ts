@@ -34,7 +34,6 @@ function userRow(name: string, email: string): UserRow {
     masterResumeUrl: null,
     masterProfileJson: null,
     preferences: null,
-    refreshTokenHash: null,
   }
 }
 
