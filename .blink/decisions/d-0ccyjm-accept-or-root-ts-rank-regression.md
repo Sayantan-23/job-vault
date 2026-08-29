@@ -4,7 +4,7 @@ title: Partial search keeps the plainto arm, accepting the OP_OR ts_rank regress
 status: accepted
 date: 2026-08-29
 created: 2026-08-29T06:40:34Z
-updated: 2026-08-29T06:40:34Z
+updated: 2026-08-29T07:08:15Z
 tags: [search, backend]
 ---
 
@@ -67,4 +67,5 @@ side of the trade at this corpus size.
 
 ## Related
 
-[[t-0cbm48]] · [[d-0c5wyy]] (Postgres FTS, not a search engine)
+[[t-0cbm48]] · [[d-0c5wyy]] (Postgres FTS, not a search engine) ·
+[[t-0cczse]] — the backlog task that undoes this, with three measured-first ways out
