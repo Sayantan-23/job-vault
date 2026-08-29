@@ -37,7 +37,7 @@ beforeAll(async () => {
   process.env['LOG_LEVEL'] = 'silent'; process.env['AI_RATE_LIMIT_PER_HOUR'] = '10'
   app = (await import('@/app.js')).createApp()
   const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
-  cookie = `accessToken=${signAccessToken({ id: 'u1', email: 'a@b.c' })}`
+  cookie = `accessToken=${signAccessToken({ id: 'u1', email: 'a@b.c' }, 's1')}`
 })
 beforeEach(() => { vi.clearAllMocks(); ai.isAiEnabled.mockReturnValue(true) })
 

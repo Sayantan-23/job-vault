@@ -16,15 +16,17 @@ vi.mock('./auth.sessions.repository.js', () => ({
   sessionsRepository: {
     create: vi.fn(),
     listByUser: vi.fn().mockResolvedValue([]),
-    rotate: vi.fn(),
+    rotate: vi.fn().mockResolvedValue(true),
     deleteById: vi.fn(),
     deleteAllForUser: vi.fn(),
+    deleteExpired: vi.fn(),
   },
 }))
 
 import { authRepository } from './auth.repository.js'
 import { sessionsRepository } from './auth.sessions.repository.js'
 import { signAccessToken, signRefreshToken, hashSecret, hashToken } from './auth.tokens.js'
+import { authLimiter } from './auth.router.js'
 
 const repo = vi.mocked(authRepository)
 const sessions = vi.mocked(sessionsRepository)
@@ -41,9 +43,10 @@ function fakeUser(over: Partial<Record<string, unknown>> = {}) {
 /** The live session holding `token`, as the sessions repository would return it. */
 function fakeSession(token: string, over: Partial<Record<string, unknown>> = {}) {
   return {
-    id: 's1', userId: 'u1', tokenHash: hashToken(token), client: 'web' as const, label: null,
-    createdAt: new Date(), lastUsedAt: new Date(),
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), ...over,
+    id: 's1', userId: 'u1', tokenHash: hashToken(token), client: 'web' as const,
+    previousTokenHash: null, rotatedAt: null,
+    createdAt: new Date(), updatedAt: new Date(), lastUsedAt: new Date(),
+    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), ...over,
   }
 }
 
@@ -67,6 +70,11 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.clearAllMocks()
   sessions.listByUser.mockResolvedValue([])
+  sessions.rotate.mockResolvedValue(true)
+  sessions.create.mockImplementation(async (values) => ({ ...fakeSession(''), ...values }))
+  // The whole file shares one rate-limit bucket (20 per window); reset it per
+  // test rather than budgeting requests. Never raise `max` — that is the control.
+  authLimiter.resetKey('::ffff:127.0.0.1')
 })
 
 describe('POST /api/auth/register', () => {
@@ -151,25 +159,28 @@ describe('POST /api/auth/refresh', () => {
     expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
   })
 
-  it('401s and revokes every session on reuse (no session holds the token)', async () => {
+  it('401s on replay and revokes only the session that held the token', async () => {
     const token = signRefreshToken('u1')
     repo.findById.mockResolvedValue(fakeUser())
-    sessions.listByUser.mockResolvedValue([fakeSession(signRefreshToken('u1'))])
-    const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
-    expect(res.status).toBe(401)
-    expect(sessions.deleteAllForUser).toHaveBeenCalledWith('u1')
-    expect(sessions.rotate).not.toHaveBeenCalled()
-  })
-
-  it('401s on an expired session and drops only that session', async () => {
-    const token = signRefreshToken('u1')
-    repo.findById.mockResolvedValue(fakeUser())
+    // Rotated away long ago: still the session's `previous`, but past the grace window.
     sessions.listByUser.mockResolvedValue([
-      fakeSession(token, { expiresAt: new Date(Date.now() - 1000) }),
+      fakeSession(signRefreshToken('u1'), {
+        previousTokenHash: hashToken(token),
+        rotatedAt: new Date(Date.now() - 60_000),
+      }),
     ])
     const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
     expect(res.status).toBe(401)
     expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')
+    expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
+    expect(sessions.rotate).not.toHaveBeenCalled()
+  })
+
+  it('401s for an access token posted as a refresh token, touching no session', async () => {
+    const access = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's1')
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: access })
+    expect(res.status).toBe(401)
+    expect(sessions.deleteById).not.toHaveBeenCalled()
     expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
   })
 
@@ -185,25 +196,14 @@ describe('POST /api/auth/refresh', () => {
 })
 
 describe('POST /api/auth/logout', () => {
-  it('200s, ends the presented session, and clears cookies', async () => {
-    const access = signAccessToken({ id: 'u1', email: 'a@b.co' })
-    const refreshToken = signRefreshToken('u1')
-    sessions.listByUser.mockResolvedValue([fakeSession(refreshToken)])
-    const res = await request(app)
-      .post('/api/auth/logout')
-      .set('Cookie', [`accessToken=${access}`, `refreshToken=${refreshToken}`])
-    expect(res.status).toBe(200)
-    expect(res.body.data.message).toMatch(/logged out/i)
-    expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')
-    expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
-    expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
-  })
-
-  it('200s and revokes every session when no refresh token is presented', async () => {
-    const access = signAccessToken({ id: 'u1', email: 'a@b.co' })
+  it('200s, ends the session named by the access token, and clears cookies', async () => {
+    const access = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's7')
     const res = await request(app).post('/api/auth/logout').set('Cookie', [`accessToken=${access}`])
     expect(res.status).toBe(200)
-    expect(sessions.deleteAllForUser).toHaveBeenCalledWith('u1')
+    expect(res.body.data.message).toMatch(/logged out/i)
+    expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's7')
+    expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
+    expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
   })
 
   it('401s without an access token cookie', async () => {
@@ -220,7 +220,7 @@ describe('GET /api/auth/me', () => {
 
   it('200s with a valid access token cookie', async () => {
     repo.findById.mockResolvedValue(fakeUser())
-    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's1')
     const res = await request(app).get('/api/auth/me').set('Cookie', [`accessToken=${token}`])
     expect(res.status).toBe(200)
     expect(res.body.data.id).toBe('u1')
@@ -231,7 +231,7 @@ describe('PATCH /api/auth/profile', () => {
   it('200s and returns the updated user', async () => {
     repo.findById.mockResolvedValue(fakeUser())
     repo.updateProfile.mockResolvedValue(fakeUser({ name: 'New Name' }))
-    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's1')
     const res = await request(app)
       .patch('/api/auth/profile')
       .set('Cookie', [`accessToken=${token}`])
@@ -246,7 +246,7 @@ describe('PATCH /api/auth/profile', () => {
   })
 
   it('400s on an invalid body (name too long)', async () => {
-    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's1')
     const res = await request(app)
       .patch('/api/auth/profile')
       .set('Cookie', [`accessToken=${token}`])
@@ -309,9 +309,15 @@ describe('native token transport', () => {
   it('applies reuse detection to body refresh too', async () => {
     const token = signRefreshToken('u1')
     repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([
+      fakeSession(signRefreshToken('u1'), {
+        previousTokenHash: hashToken(token),
+        rotatedAt: new Date(Date.now() - 60_000),
+      }),
+    ])
     const res = await request(app).post('/api/auth/refresh').send({ refreshToken: token })
     expect(res.status).toBe(401)
-    expect(sessions.deleteAllForUser).toHaveBeenCalledWith('u1')
+    expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')
   })
 
   // The security core of d-0cc1x6: a header must NOT be able to select native
@@ -337,9 +343,19 @@ describe('native token transport', () => {
 
   it('authenticates a protected route with Authorization: Bearer', async () => {
     repo.findById.mockResolvedValue(fakeUser())
-    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's1')
     const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`)
     expect(res.status).toBe(200)
     expect(res.body.data.id).toBe('u1')
+  })
+
+  // A refresh token is a 7-day credential; only its `typ` claim stops it being
+  // an account-wide Bearer token (t-0cd55z).
+  it('refuses a refresh token as a Bearer credential', async () => {
+    repo.findById.mockResolvedValue(fakeUser())
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${signRefreshToken('u1')}`)
+    expect(res.status).toBe(401)
   })
 })

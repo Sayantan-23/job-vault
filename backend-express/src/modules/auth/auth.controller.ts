@@ -62,8 +62,9 @@ async function refresh(req: Request, res: Response): Promise<void> {
 }
 
 async function logout(req: Request, res: Response): Promise<void> {
-  // The refresh token names the session to end; without it every session goes.
-  await authService.logout(requireUserId(req), readRefreshToken(req).token)
+  // `sid` rides on the access token, so the session names itself — the refresh
+  // token never has to travel on this route.
+  await authService.logout(requireUserId(req), req.user?.sid)
   clearAuthCookies(res)
   res.status(200).json({ data: { message: 'Logged out successfully' } })
 }

@@ -21,29 +21,29 @@ export interface AuthResult {
   refreshToken: string
 }
 
-interface TokenPair {
-  accessToken: string
-  refreshToken: string
-  tokenHash: string
-  expiresAt: Date
-}
+/**
+ * How long a session may live no matter how often it refreshes. Independent of
+ * JWT_REFRESH_EXPIRY on purpose: the JWT decides how long one token is usable,
+ * this decides when the user must log in again. Enforced in SQL by
+ * `listByUser` (`expires_at > now()`) and reaped by the scheduler.
+ */
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
+
+/**
+ * How long a just-rotated token keeps working. Two tabs waking together both
+ * refresh with the same token; the one that loses the race must get a usable
+ * pair back rather than be treated as a thief.
+ */
+const ROTATION_GRACE_MS = 30_000
 
 /** Which transport this session was opened for — cookies (web) or body tokens (native, d-0cc1x6). */
 function sessionClient(input: { client?: 'native' | undefined }): SessionClient {
   return input.client === 'native' ? 'native' : 'web'
 }
 
-/** A fresh pair plus what a session row needs to store for the refresh half. */
-function mintTokens(user: UserRow): TokenPair {
-  const accessToken = signAccessToken({ id: user.id, email: user.email })
-  const refreshToken = signRefreshToken(user.id)
-  return {
-    accessToken,
-    refreshToken,
-    tokenHash: hashToken(refreshToken),
-    // The JWT's own `exp` is the single source of truth for session expiry.
-    expiresAt: new Date(verifyToken(refreshToken).exp * 1000),
-  }
+function mintRefresh(userId: string): { refreshToken: string; tokenHash: string } {
+  const refreshToken = signRefreshToken(userId)
+  return { refreshToken, tokenHash: hashToken(refreshToken) }
 }
 
 /** Opens a new session (login/register): one row per device, so devices don't evict each other. */
@@ -51,15 +51,25 @@ async function issueTokens(
   user: UserRow,
   client: SessionClient,
 ): Promise<{ accessToken: string; refreshToken: string }> {
-  const { accessToken, refreshToken, tokenHash, expiresAt } = mintTokens(user)
-  await sessionsRepository.create({ userId: user.id, tokenHash, client, expiresAt })
-  return { accessToken, refreshToken }
+  const { refreshToken, tokenHash } = mintRefresh(user.id)
+  const session = await sessionsRepository.create({
+    userId: user.id,
+    tokenHash,
+    client,
+    expiresAt: new Date(Date.now() + SESSION_MAX_AGE_MS),
+  })
+  // The access token names its session, so logout revokes exactly this device.
+  return { accessToken: signAccessToken({ id: user.id, email: user.email }, session.id), refreshToken }
 }
 
-/** The session holding this refresh token, or null if none does. */
-async function findSession(userId: string, refreshToken: string): Promise<UserSessionRow | null> {
-  const sessions = await sessionsRepository.listByUser(userId)
-  return sessions.find((s) => compareToken(refreshToken, s.tokenHash)) ?? null
+/** True if `token` is the token this session rotated away from moments ago. */
+function isRecentlyRotatedFrom(session: UserSessionRow, token: string): boolean {
+  return (
+    session.previousTokenHash !== null &&
+    session.rotatedAt !== null &&
+    Date.now() - session.rotatedAt.getTime() <= ROTATION_GRACE_MS &&
+    compareToken(token, session.previousTokenHash)
+  )
 }
 
 async function register(input: RegisterInput): Promise<AuthResult> {
@@ -89,10 +99,11 @@ async function login(input: LoginInput): Promise<AuthResult> {
   return { user: toPublicUser(user), accessToken, refreshToken }
 }
 
-async function refresh(oldRefreshToken: string): Promise<AuthResult> {
+async function refresh(oldRefreshToken: string, isRetry = false): Promise<AuthResult> {
   let sub: string
   try {
-    sub = verifyToken(oldRefreshToken).sub
+    // 'refresh' only: an access token must not be able to rotate — or delete — a session.
+    sub = verifyToken(oldRefreshToken, 'refresh').sub
   } catch (err) {
     throw new AppError('UNAUTHORIZED', 'Invalid or expired refresh token', err)
   }
@@ -100,36 +111,50 @@ async function refresh(oldRefreshToken: string): Promise<AuthResult> {
   const user = await authRepository.findById(sub)
   if (!user) throw new AppError('UNAUTHORIZED', 'Refresh token has been revoked')
 
-  const session = await findSession(sub, oldRefreshToken)
+  const sessions = await sessionsRepository.listByUser(sub)
+  const session =
+    sessions.find((s) => compareToken(oldRefreshToken, s.tokenHash)) ??
+    sessions.find((s) => isRecentlyRotatedFrom(s, oldRefreshToken))
+
   if (!session) {
-    // Correctly signed but held by no session: this token was already rotated
-    // away, so it is a replay — the legitimate holder and the thief are
-    // indistinguishable from here. Revoke the whole family and make both log in.
-    await sessionsRepository.deleteAllForUser(sub)
+    // No live session holds this token and the grace window has passed, so it
+    // was rotated away long ago: a replay. Revoke the session it belonged to if
+    // we can still name it — the user's other devices are not implicated.
+    const replayed = sessions.find(
+      (s) => s.previousTokenHash !== null && compareToken(oldRefreshToken, s.previousTokenHash),
+    )
+    if (replayed) await sessionsRepository.deleteById(sub, replayed.id)
     throw new AppError('UNAUTHORIZED', 'Refresh token reuse detected. Please log in again.')
   }
 
-  // Independent of JWT expiry: a session revoked by date must die even if the
-  // signed token still verifies (clock skew, a shortened JWT_REFRESH_EXPIRY).
-  if (session.expiresAt.getTime() <= Date.now()) {
-    await sessionsRepository.deleteById(sub, session.id)
-    throw new AppError('UNAUTHORIZED', 'Session has expired. Please log in again.')
+  const { refreshToken, tokenHash } = mintRefresh(user.id)
+  const rotated = await sessionsRepository.rotate(sub, session.id, {
+    tokenHash,
+    previousTokenHash: session.tokenHash,
+  })
+  if (!rotated) {
+    // Another request rotated between our read and our write. It stored our
+    // token as `previous_token_hash`, so one re-read lands in the grace branch
+    // above and hands this caller a working pair instead of a spurious logout.
+    if (isRetry) throw new AppError('UNAUTHORIZED', 'Refresh token was rotated concurrently')
+    return refresh(oldRefreshToken, true)
   }
 
-  const { accessToken, refreshToken, tokenHash, expiresAt } = mintTokens(user)
-  await sessionsRepository.rotate(sub, session.id, { tokenHash, expiresAt })
-  return { user: toPublicUser(user), accessToken, refreshToken }
+  return {
+    user: toPublicUser(user),
+    accessToken: signAccessToken({ id: user.id, email: user.email }, session.id),
+    refreshToken,
+  }
 }
 
 /**
- * Ends the session the caller presents its refresh token for, leaving the
- * user's other devices signed in. Without a usable token we cannot tell the
- * devices apart, so we fail closed and revoke all of them rather than leave a
- * live refresh token behind a "signed out" screen.
+ * Ends the session named by the access token's `sid`, leaving the user's other
+ * devices signed in. A credential minted without one cannot say which device it
+ * is, so we fail closed and revoke all of them rather than leave a live refresh
+ * token behind a "signed out" screen.
  */
-async function logout(userId: string, refreshToken?: string): Promise<void> {
-  const session = refreshToken ? await findSession(userId, refreshToken) : null
-  if (session) await sessionsRepository.deleteById(userId, session.id)
+async function logout(userId: string, sessionId: string | undefined): Promise<void> {
+  if (sessionId) await sessionsRepository.deleteById(userId, sessionId)
   else await sessionsRepository.deleteAllForUser(userId)
 }
 

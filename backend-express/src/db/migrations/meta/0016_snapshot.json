@@ -1,5 +1,5 @@
 {
-  "id": "5357162d-ddec-4da7-a62c-eeabdc12d1e9",
+  "id": "487eaf76-2291-4579-8321-c4d55ca0be3e",
   "prevId": "60c4ceb9-6014-4e9c-9a71-dfc097f74a39",
   "version": "7",
   "dialect": "postgresql",
@@ -1721,6 +1721,13 @@
           "notNull": true,
           "default": "now()"
         },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
         "user_id": {
           "name": "user_id",
           "type": "uuid",
@@ -1733,18 +1740,24 @@
           "primaryKey": false,
           "notNull": true
         },
+        "previous_token_hash": {
+          "name": "previous_token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rotated_at": {
+          "name": "rotated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "client": {
           "name": "client",
           "type": "session_client",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
-        },
-        "label": {
-          "name": "label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "last_used_at": {
           "name": "last_used_at",

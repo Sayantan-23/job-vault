@@ -2,10 +2,12 @@ CREATE TYPE "public"."session_client" AS ENUM('web', 'native');--> statement-bre
 CREATE TABLE "user_sessions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"user_id" uuid NOT NULL,
 	"token_hash" text NOT NULL,
+	"previous_token_hash" text,
+	"rotated_at" timestamp with time zone,
 	"client" "session_client" NOT NULL,
-	"label" text,
 	"last_used_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"expires_at" timestamp with time zone NOT NULL,
 	CONSTRAINT "user_sessions_token_hash_unique" UNIQUE("token_hash")

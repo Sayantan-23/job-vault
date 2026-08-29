@@ -5,16 +5,21 @@ import { getEnv } from '@/config/env.js'
 
 const BCRYPT_SALT_ROUNDS = 12
 
+export type TokenType = 'access' | 'refresh'
+
 export interface JwtPayload {
   sub: string
   email?: string
+  typ?: TokenType
+  /** Session the access token was minted for — what logout revokes. */
+  sid?: string
   iat: number
   exp: number
 }
 
-export function signAccessToken(user: { id: string; email: string }): string {
+export function signAccessToken(user: { id: string; email: string }, sessionId: string): string {
   const env = getEnv()
-  return jwt.sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
+  return jwt.sign({ sub: user.id, email: user.email, typ: 'access', sid: sessionId }, env.JWT_SECRET, {
     expiresIn: env.JWT_ACCESS_EXPIRY as NonNullable<jwt.SignOptions['expiresIn']>,
   })
 }
@@ -25,14 +30,22 @@ export function signRefreshToken(userId: string): string {
   // seconds, so without it two tokens minted for the same user inside one
   // second are byte-identical — rotation would be a no-op and the new session
   // would collide with the old one on the unique token hash.
-  return jwt.sign({ sub: userId, jti: randomUUID() }, env.JWT_SECRET, {
+  return jwt.sign({ sub: userId, jti: randomUUID(), typ: 'refresh' }, env.JWT_SECRET, {
     expiresIn: env.JWT_REFRESH_EXPIRY as NonNullable<jwt.SignOptions['expiresIn']>,
   })
 }
 
-export function verifyToken(token: string): JwtPayload {
+/**
+ * Verifies signature, expiry AND kind. Both tokens are signed with the same
+ * secret, so without the `typ` check a refresh token is a valid Bearer
+ * credential and an access token can drive /auth/refresh. `typ` is a required
+ * argument so a new call site cannot forget to state what it expects.
+ */
+export function verifyToken(token: string, typ: TokenType): JwtPayload {
   const env = getEnv()
-  return jwt.verify(token, env.JWT_SECRET) as JwtPayload
+  const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload
+  if (payload.typ !== typ) throw new jwt.JsonWebTokenError(`expected a ${typ} token`)
+  return payload
 }
 
 /**

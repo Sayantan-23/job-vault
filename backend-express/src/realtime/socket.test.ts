@@ -36,10 +36,28 @@ describe('parseAccessTokenCookie', () => {
 })
 
 describe('socketAuthMiddleware', () => {
+  it('rejects a refresh token in the cookie or the handshake', async () => {
+    const { signRefreshToken } = await import('@/modules/auth/auth.tokens.js')
+    const { socketAuthMiddleware } = await import('./socket.js')
+    const refresh = signRefreshToken('u1')
+
+    const viaCookie = fakeSocket(`accessToken=${refresh}`)
+    const cookieNext = vi.fn()
+    socketAuthMiddleware(viaCookie as never, cookieNext)
+    expect(viaCookie.data.userId).toBeUndefined()
+    expect(cookieNext.mock.calls[0]?.[0]).toBeInstanceOf(Error)
+
+    const viaHandshake = fakeSocket(undefined, { token: refresh })
+    const handshakeNext = vi.fn()
+    socketAuthMiddleware(viaHandshake as never, handshakeNext)
+    expect(viaHandshake.data.userId).toBeUndefined()
+    expect(handshakeNext.mock.calls[0]?.[0]).toBeInstanceOf(Error)
+  })
+
   it('attaches socket.data.userId for a valid signed cookie', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { socketAuthMiddleware } = await import('./socket.js')
-    const token = signAccessToken({ id: 'u1', email: 'a@b.c' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.c' }, 's1')
     const socket = fakeSocket(`accessToken=${token}`)
     const next = vi.fn()
     socketAuthMiddleware(socket as never, next)
@@ -72,7 +90,7 @@ describe('socketAuthMiddleware', () => {
   it('attaches socket.data.userId for a valid handshake auth token', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { socketAuthMiddleware } = await import('./socket.js')
-    const token = signAccessToken({ id: 'u2', email: 'n@b.c' })
+    const token = signAccessToken({ id: 'u2', email: 'n@b.c' }, 's1')
     const socket = fakeSocket(undefined, { token })
     const next = vi.fn()
     socketAuthMiddleware(socket as never, next)
@@ -83,8 +101,8 @@ describe('socketAuthMiddleware', () => {
   it('prefers the handshake auth token over the cookie', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { socketAuthMiddleware } = await import('./socket.js')
-    const cookieToken = signAccessToken({ id: 'cookie-user', email: 'c@b.c' })
-    const authToken = signAccessToken({ id: 'auth-user', email: 'n@b.c' })
+    const cookieToken = signAccessToken({ id: 'cookie-user', email: 'c@b.c' }, 's1')
+    const authToken = signAccessToken({ id: 'auth-user', email: 'n@b.c' }, 's1')
     const socket = fakeSocket(`accessToken=${cookieToken}`, { token: authToken })
     const next = vi.fn()
     socketAuthMiddleware(socket as never, next)
@@ -94,7 +112,7 @@ describe('socketAuthMiddleware', () => {
   it('falls back to the cookie when the handshake auth token is absent or not a string', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { socketAuthMiddleware } = await import('./socket.js')
-    const token = signAccessToken({ id: 'u1', email: 'a@b.c' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.c' }, 's1')
     const socket = fakeSocket(`accessToken=${token}`, { token: 42 })
     const next = vi.fn()
     socketAuthMiddleware(socket as never, next)

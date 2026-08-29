@@ -60,7 +60,7 @@ beforeAll(async () => {
   process.env['LOG_LEVEL'] = 'silent'
   app = (await import('@/app.js')).createApp()
   const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
-  cookie = `accessToken=${signAccessToken({ id: 'u1', email: 'a@b.c' })}`
+  cookie = `accessToken=${signAccessToken({ id: 'u1', email: 'a@b.c' }, 's1')}`
 })
 
 beforeEach(() => vi.clearAllMocks())

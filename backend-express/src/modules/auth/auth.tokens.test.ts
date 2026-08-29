@@ -12,22 +12,36 @@ beforeAll(() => {
 describe('auth.tokens', () => {
   it('signs and verifies an access token carrying sub + email', async () => {
     const { signAccessToken, verifyToken } = await import('./auth.tokens.js')
-    const token = signAccessToken({ id: 'u1', email: 'a@b.c' })
-    const payload = verifyToken(token)
+    const token = signAccessToken({ id: 'u1', email: 'a@b.c' }, 's1')
+    const payload = verifyToken(token, 'access')
     expect(payload.sub).toBe('u1')
     expect(payload.email).toBe('a@b.c')
+    expect(payload.typ).toBe('access')
+    expect(payload.sid).toBe('s1')
   })
 
   it('signs a refresh token carrying only sub', async () => {
     const { signRefreshToken, verifyToken } = await import('./auth.tokens.js')
     const token = signRefreshToken('u1')
-    const payload = verifyToken(token)
+    const payload = verifyToken(token, 'refresh')
     expect(payload.sub).toBe('u1')
+    expect(payload.typ).toBe('refresh')
+    expect(payload.sid).toBeUndefined()
+  })
+
+  // Both kinds are signed with the same secret, so `typ` is the only thing
+  // keeping a refresh token from working as a Bearer credential (t-0cd55z).
+  it('refuses to verify each token kind as the other', async () => {
+    const { signAccessToken, signRefreshToken, verifyToken } = await import('./auth.tokens.js')
+    const access = signAccessToken({ id: 'u1', email: 'a@b.c' }, 's1')
+    const refresh = signRefreshToken('u1')
+    expect(() => verifyToken(refresh, 'access')).toThrow(/expected an? access token/)
+    expect(() => verifyToken(access, 'refresh')).toThrow(/expected an? refresh token/)
   })
 
   it('throws on a tampered token', async () => {
     const { verifyToken } = await import('./auth.tokens.js')
-    expect(() => verifyToken('not.a.jwt')).toThrow()
+    expect(() => verifyToken('not.a.jwt', 'access')).toThrow()
   })
 
   it('hashes a secret and verifies it with bcrypt', async () => {

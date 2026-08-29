@@ -35,7 +35,7 @@ export function socketAuthMiddleware(socket: Socket, next: SocketNext): void {
     return
   }
   try {
-    const payload = verifyToken(token)
+    const payload = verifyToken(token, 'access')
     socket.data.userId = payload.sub
     next()
   } catch {

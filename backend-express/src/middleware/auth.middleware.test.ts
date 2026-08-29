@@ -26,10 +26,10 @@ describe('authMiddleware', () => {
   it('attaches req.user for a valid access token', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { authMiddleware } = await import('./auth.middleware.js')
-    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const token = signAccessToken({ id: 'u1', email: 'a@b.co' }, 's1')
     const { req, next } = invoke({ accessToken: token })
     authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
-    expect(req.user).toEqual({ id: 'u1', email: 'a@b.co' })
+    expect(req.user).toEqual({ id: 'u1', email: 'a@b.co', sid: 's1' })
     expect(next.mock.calls[0]).toEqual([])
   })
 
@@ -55,17 +55,17 @@ describe('authMiddleware', () => {
   it('attaches req.user for a valid Authorization: Bearer token', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { authMiddleware } = await import('./auth.middleware.js')
-    const token = signAccessToken({ id: 'u2', email: 'n@b.co' })
+    const token = signAccessToken({ id: 'u2', email: 'n@b.co' }, 's1')
     const { req, next } = invoke({}, { authorization: `Bearer ${token}` })
     authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
-    expect(req.user).toEqual({ id: 'u2', email: 'n@b.co' })
+    expect(req.user).toEqual({ id: 'u2', email: 'n@b.co', sid: 's1' })
     expect(next.mock.calls[0]).toEqual([])
   })
 
   it('accepts a lowercase bearer scheme', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { authMiddleware } = await import('./auth.middleware.js')
-    const token = signAccessToken({ id: 'u2', email: 'n@b.co' })
+    const token = signAccessToken({ id: 'u2', email: 'n@b.co' }, 's1')
     const { req, next } = invoke({}, { authorization: `bearer ${token}` })
     authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
     expect(req.user?.id).toBe('u2')
@@ -74,8 +74,8 @@ describe('authMiddleware', () => {
   it('prefers the Bearer header over the cookie', async () => {
     const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
     const { authMiddleware } = await import('./auth.middleware.js')
-    const bearer = signAccessToken({ id: 'bearer-user', email: 'n@b.co' })
-    const cookie = signAccessToken({ id: 'cookie-user', email: 'c@b.co' })
+    const bearer = signAccessToken({ id: 'bearer-user', email: 'n@b.co' }, 's1')
+    const cookie = signAccessToken({ id: 'cookie-user', email: 'c@b.co' }, 's1')
     const { req, next } = invoke({ accessToken: cookie }, { authorization: `Bearer ${bearer}` })
     authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
     expect(req.user?.id).toBe('bearer-user')
@@ -95,5 +95,24 @@ describe('authMiddleware', () => {
     const { req, next } = invoke({}, { authorization: 'Basic abc' })
     authMiddleware(req, asType<Response>({}), next as unknown as NextFunction)
     expect(next.mock.calls[0]?.[0]).toBeInstanceOf(AppError)
+  })
+
+  // A refresh token is signed with the same secret; only its `typ` claim keeps
+  // it from being a 7-day Bearer credential for the whole account (t-0cd55z).
+  it('rejects a refresh token, as a cookie and as a Bearer credential', async () => {
+    const { signRefreshToken } = await import('@/modules/auth/auth.tokens.js')
+    const { authMiddleware } = await import('./auth.middleware.js')
+    const { AppError } = await import('@/shared/errors.js')
+    const refresh = signRefreshToken('u1')
+
+    const viaCookie = invoke({ accessToken: refresh })
+    authMiddleware(viaCookie.req, asType<Response>({}), viaCookie.next as unknown as NextFunction)
+    expect(viaCookie.req.user).toBeUndefined()
+    expect(viaCookie.next.mock.calls[0]?.[0]).toBeInstanceOf(AppError)
+
+    const viaBearer = invoke({}, { authorization: `Bearer ${refresh}` })
+    authMiddleware(viaBearer.req, asType<Response>({}), viaBearer.next as unknown as NextFunction)
+    expect(viaBearer.req.user).toBeUndefined()
+    expect(viaBearer.next.mock.calls[0]?.[0]).toBeInstanceOf(AppError)
   })
 })

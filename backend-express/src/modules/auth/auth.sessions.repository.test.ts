@@ -49,20 +49,65 @@ describe('sessionsRepository (real DB)', () => {
     expect(await sessionsRepository.listByUser(userId)).toHaveLength(0)
   })
 
-  it('rotates a session in place, keeping the row and its created_at', async () => {
+  it('rotates a session in place, keeping the row, its created_at and its expiry cap', async () => {
     const before = await sessionsRepository.create({
       userId, tokenHash: `rotate-a-${Date.now()}`, client: 'web', expiresAt: IN_A_WEEK(),
     })
     const nextHash = `rotate-b-${Date.now()}`
-    const nextExpiry = new Date(Date.now() + 60_000)
-    await sessionsRepository.rotate(userId, before.id, { tokenHash: nextHash, expiresAt: nextExpiry })
+    const ok = await sessionsRepository.rotate(userId, before.id, {
+      tokenHash: nextHash, previousTokenHash: before.tokenHash,
+    })
+    expect(ok).toBe(true)
 
     const [after] = await sessionsRepository.listByUser(userId)
     expect(after?.id).toBe(before.id)
     expect(after?.tokenHash).toBe(nextHash)
-    expect(after?.expiresAt.getTime()).toBe(nextExpiry.getTime())
+    expect(after?.previousTokenHash).toBe(before.tokenHash)
+    expect(after?.rotatedAt).not.toBeNull()
     expect(after?.createdAt.getTime()).toBe(before.createdAt.getTime())
-    expect(after?.lastUsedAt.getTime()).toBeGreaterThanOrEqual(before.lastUsedAt.getTime())
+    // Absolute cap: rotation must not slide it.
+    expect(after?.expiresAt.getTime()).toBe(before.expiresAt.getTime())
+    expect(after?.updatedAt.getTime()).toBeGreaterThanOrEqual(before.updatedAt.getTime())
+    await sessionsRepository.deleteAllForUser(userId)
+  })
+
+  // Compare-and-swap: two concurrent refreshes both read the same token hash,
+  // and exactly one may win — the loser must not blindly overwrite the row.
+  it('refuses a rotation whose previous hash is no longer current', async () => {
+    const start = `cas-start-${Date.now()}`
+    const session = await sessionsRepository.create({
+      userId, tokenHash: start, client: 'web', expiresAt: IN_A_WEEK(),
+    })
+    const winner = await sessionsRepository.rotate(userId, session.id, {
+      tokenHash: `cas-winner-${Date.now()}`, previousTokenHash: start,
+    })
+    const loser = await sessionsRepository.rotate(userId, session.id, {
+      tokenHash: `cas-loser-${Date.now()}`, previousTokenHash: start,
+    })
+    expect(winner).toBe(true)
+    expect(loser).toBe(false)
+    expect((await sessionsRepository.listByUser(userId))[0]?.tokenHash).toMatch(/^cas-winner-/)
+    await sessionsRepository.deleteAllForUser(userId)
+  })
+
+  it('hides sessions past their cap and reaps them', async () => {
+    const live = await sessionsRepository.create({
+      userId, tokenHash: `live-${Date.now()}`, client: 'web', expiresAt: IN_A_WEEK(),
+    })
+    const dead = await sessionsRepository.create({
+      userId, tokenHash: `dead-${Date.now()}`, client: 'web',
+      expiresAt: new Date(Date.now() - 1000),
+    })
+    expect((await sessionsRepository.listByUser(userId)).map((s) => s.id)).toEqual([live.id])
+    // The expired row is invisible to every lookup, so it cannot be rotated.
+    expect(
+      await sessionsRepository.rotate(userId, dead.id, {
+        tokenHash: `x-${Date.now()}`, previousTokenHash: dead.tokenHash,
+      }),
+    ).toBe(true) // rotate is id+hash scoped, not expiry scoped — the sweep is what removes it
+
+    expect(await sessionsRepository.deleteExpired()).toBeGreaterThanOrEqual(1)
+    expect((await sessionsRepository.listByUser(userId)).map((s) => s.id)).toEqual([live.id])
     await sessionsRepository.deleteAllForUser(userId)
   })
 
@@ -71,9 +116,10 @@ describe('sessionsRepository (real DB)', () => {
       userId, tokenHash: `scoped-${Date.now()}`, client: 'web', expiresAt: IN_A_WEEK(),
     })
     await sessionsRepository.deleteById(otherUserId, mine.id)
-    await sessionsRepository.rotate(otherUserId, mine.id, {
-      tokenHash: `stolen-${Date.now()}`, expiresAt: IN_A_WEEK(),
+    const stolen = await sessionsRepository.rotate(otherUserId, mine.id, {
+      tokenHash: `stolen-${Date.now()}`, previousTokenHash: mine.tokenHash,
     })
+    expect(stolen).toBe(false)
 
     const [still] = await sessionsRepository.listByUser(userId)
     expect(still?.id).toBe(mine.id)

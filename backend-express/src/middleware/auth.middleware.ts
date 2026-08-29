@@ -16,8 +16,9 @@ export const authMiddleware: RequestHandler = (
     return
   }
   try {
-    const payload = verifyToken(token)
-    req.user = { id: payload.sub, email: payload.email ?? '' }
+    // 'access' only: a refresh token must never work as a Bearer credential.
+    const payload = verifyToken(token, 'access')
+    req.user = { id: payload.sub, email: payload.email ?? '', ...(payload.sid ? { sid: payload.sid } : {}) }
     next()
   } catch (err) {
     next(new AppError('UNAUTHORIZED', 'Invalid or expired token', err))
