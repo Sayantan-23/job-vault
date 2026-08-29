@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, lt, sql } from 'drizzle-orm'
+import { and, desc, eq, gt, lt, or, sql } from 'drizzle-orm'
 import { getDb } from '@/db/client.js'
 import {
   userSessions,
@@ -23,29 +23,60 @@ async function listByUser(userId: string): Promise<UserSessionRow[]> {
 }
 
 /**
- * Compare-and-swap rotation: the update only lands if the row still holds
- * `previousTokenHash`. Returns false when another request rotated first, so two
- * concurrent refreshes cannot both succeed and orphan one of the tokens.
- * `expiresAt` is deliberately untouched — it is an absolute cap, not a sliding one.
+ * How long a token that was just rotated away keeps working. Tabs waking
+ * together all present the same cookie, and the ones that lose the race must
+ * still be served. One generation deep and short by design — Auth0 ships the
+ * same shape as its "rotation overlap period".
+ */
+export const ROTATION_GRACE_MS = 15_000
+
+/**
+ * The whole of refresh, in one statement — there is no read-then-write window
+ * to lose, so no racer ever gets a transient 401.
+ *
+ * Two arms. The row rotates only when the caller presents the CURRENT token
+ * (compare-and-swap on `token_hash`). A caller presenting the token this
+ * session rotated away from moments ago still matches, but the row is left
+ * untouched: it gets a fresh access token and keeps using the winner's refresh
+ * token. Rotating for it too would demote the winner's brand-new token to a
+ * `ROTATION_GRACE_MS` lifetime and start a ping-pong.
+ *
+ * Returns the row as it stands after the statement (compare `tokenHash` to know
+ * which arm matched), or null when the token is neither — a genuine replay.
+ * `expiresAt` is never extended: it is an absolute cap, not a sliding one.
  */
 async function rotate(
   userId: string,
   id: string,
   values: { tokenHash: string; previousTokenHash: string },
-): Promise<boolean> {
-  const now = new Date()
+): Promise<UserSessionRow | null> {
+  const presented = values.previousTokenHash
+  const isCurrent = sql`${userSessions.tokenHash} = ${presented}`
   const rows = await getDb()
     .update(userSessions)
-    .set({ ...values, rotatedAt: now, lastUsedAt: now, updatedAt: now })
+    .set({
+      tokenHash: sql`CASE WHEN ${isCurrent} THEN ${values.tokenHash} ELSE ${userSessions.tokenHash} END`,
+      previousTokenHash: sql`CASE WHEN ${isCurrent} THEN ${presented} ELSE ${userSessions.previousTokenHash} END`,
+      rotatedAt: sql`CASE WHEN ${isCurrent} THEN now() ELSE ${userSessions.rotatedAt} END`,
+      lastUsedAt: sql`now()`,
+      updatedAt: sql`now()`,
+    })
     .where(
       and(
         eq(userSessions.id, id),
         eq(userSessions.userId, userId),
-        eq(userSessions.tokenHash, values.previousTokenHash),
+        gt(userSessions.expiresAt, sql`now()`),
+        or(
+          isCurrent,
+          and(
+            eq(userSessions.previousTokenHash, presented),
+            gt(userSessions.rotatedAt, sql`now() - make_interval(secs => ${ROTATION_GRACE_MS / 1000})`),
+          ),
+        ),
       ),
     )
-    .returning({ id: userSessions.id })
-  return rows.length > 0
+    .returning()
+  return rows[0] ?? null
 }
 
 /** Revoke a single device. */

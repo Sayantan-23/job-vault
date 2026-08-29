@@ -16,7 +16,7 @@ vi.mock('./auth.sessions.repository.js', () => ({
   sessionsRepository: {
     create: vi.fn(),
     listByUser: vi.fn().mockResolvedValue([]),
-    rotate: vi.fn().mockResolvedValue(true),
+    rotate: vi.fn(),
     deleteById: vi.fn(),
     deleteAllForUser: vi.fn(),
     deleteExpired: vi.fn(),
@@ -70,7 +70,10 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.clearAllMocks()
   sessions.listByUser.mockResolvedValue([])
-  sessions.rotate.mockResolvedValue(true)
+  // Default: the presented token was current, so the row rotated to it.
+  sessions.rotate.mockImplementation(async (_userId, _id, values) => ({
+    ...fakeSession(''), ...values, rotatedAt: new Date(),
+  }))
   sessions.create.mockImplementation(async (values) => ({ ...fakeSession(''), ...values }))
   // The whole file shares one rate-limit bucket (20 per window); reset it per
   // test rather than budgeting requests. Never raise `max` — that is the control.
@@ -157,6 +160,24 @@ describe('POST /api/auth/refresh', () => {
     expect(res.status).toBe(200)
     expect(sessions.rotate).toHaveBeenCalledOnce()
     expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
+    expect(cookies(res).some((c) => c.startsWith('refreshToken='))).toBe(true)
+  })
+
+  // The loser of a rotation race: a fresh access cookie, and the winner's
+  // refresh token left untouched in the jar.
+  it('200s with an access cookie only when the rotation grace window served it', async () => {
+    const token = signRefreshToken('u1')
+    const winner = fakeSession(signRefreshToken('u1'), {
+      previousTokenHash: hashToken(token), rotatedAt: new Date(),
+    })
+    repo.findById.mockResolvedValue(fakeUser())
+    sessions.listByUser.mockResolvedValue([winner])
+    sessions.rotate.mockResolvedValue(winner) // row unchanged: the grace arm matched
+
+    const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
+    expect(res.status).toBe(200)
+    expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
+    expect(cookies(res).some((c) => c.startsWith('refreshToken='))).toBe(false)
   })
 
   it('401s on replay and revokes only the session that held the token', async () => {
@@ -169,11 +190,11 @@ describe('POST /api/auth/refresh', () => {
         rotatedAt: new Date(Date.now() - 60_000),
       }),
     ])
+    sessions.rotate.mockResolvedValue(null) // past the window: no arm matched
     const res = await request(app).post('/api/auth/refresh').set('Cookie', [`refreshToken=${token}`])
     expect(res.status).toBe(401)
     expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')
     expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
-    expect(sessions.rotate).not.toHaveBeenCalled()
   })
 
   it('401s for an access token posted as a refresh token, touching no session', async () => {
@@ -315,6 +336,7 @@ describe('native token transport', () => {
         rotatedAt: new Date(Date.now() - 60_000),
       }),
     ])
+    sessions.rotate.mockResolvedValue(null)
     const res = await request(app).post('/api/auth/refresh').send({ refreshToken: token })
     expect(res.status).toBe(401)
     expect(sessions.deleteById).toHaveBeenCalledWith('u1', 's1')

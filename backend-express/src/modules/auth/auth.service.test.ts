@@ -10,6 +10,7 @@ vi.mock('./auth.repository.js', () => ({
 }))
 
 vi.mock('./auth.sessions.repository.js', () => ({
+  ROTATION_GRACE_MS: 15_000,
   sessionsRepository: {
     create: vi.fn(),
     listByUser: vi.fn(),
@@ -21,7 +22,7 @@ vi.mock('./auth.sessions.repository.js', () => ({
 }))
 
 import { authRepository } from './auth.repository.js'
-import { sessionsRepository } from './auth.sessions.repository.js'
+import { sessionsRepository, ROTATION_GRACE_MS } from './auth.sessions.repository.js'
 import { authService } from './auth.service.js'
 import * as tokens from './auth.tokens.js'
 import type { UserSessionRow } from '@/db/schema/user-sessions.js'
@@ -59,12 +60,19 @@ function useSessionStore(): UserSessionRow[] {
     rows.filter((s) => s.userId === userId && s.expiresAt.getTime() > Date.now()),
   )
   sessions.rotate.mockImplementation(async (userId, id, values) => {
-    const row = rows.find(
-      (s) => s.id === id && s.userId === userId && s.tokenHash === values.previousTokenHash,
-    )
-    if (!row) return false
-    Object.assign(row, values, { rotatedAt: new Date(), lastUsedAt: new Date() })
-    return true
+    const row = rows.find((s) => s.id === id && s.userId === userId)
+    if (!row || row.expiresAt.getTime() <= Date.now()) return null
+    const isCurrent = row.tokenHash === values.previousTokenHash
+    const inGrace =
+      row.previousTokenHash === values.previousTokenHash &&
+      row.rotatedAt !== null &&
+      Date.now() - row.rotatedAt.getTime() < ROTATION_GRACE_MS
+    if (!isCurrent && !inGrace) return null
+    const now = new Date()
+    // Only the current-token arm writes; the grace arm leaves the row alone.
+    if (isCurrent) Object.assign(row, values, { rotatedAt: now })
+    Object.assign(row, { lastUsedAt: now, updatedAt: now })
+    return { ...row }
   })
   sessions.deleteById.mockImplementation(async (userId, id) => {
     const i = rows.findIndex((s) => s.id === id && s.userId === userId)
@@ -158,6 +166,12 @@ describe('authService.login', () => {
 })
 
 describe('authService.refresh', () => {
+  /** The refresh token of a result that rotated — fails loudly if the arm was wrong. */
+  function rotatedToken(result: { refreshToken?: string }): string {
+    if (!result.refreshToken) throw new Error('expected a rotated pair, got a grace response')
+    return result.refreshToken
+  }
+
   /** Log in and return the session store plus the first refresh token. */
   async function loggedIn(client?: 'native') {
     repo.findByEmail.mockResolvedValue(fakeUser({ passwordHash: await tokens.hashSecret('pw') }))
@@ -167,13 +181,13 @@ describe('authService.refresh', () => {
 
   it('rotates the session that holds the token, in place', async () => {
     const first = await loggedIn()
-    const second = await authService.refresh(first.refreshToken)
+    const second = await authService.refresh(rotatedToken(first))
 
     expect(second.user.id).toBe(USER_ID)
     expect(second.refreshToken).not.toBe(first.refreshToken)
     expect(store).toHaveLength(1)
-    expect(store[0]?.tokenHash).toBe(tokens.hashToken(second.refreshToken))
-    expect(store[0]?.previousTokenHash).toBe(tokens.hashToken(first.refreshToken))
+    expect(store[0]?.tokenHash).toBe(tokens.hashToken(rotatedToken(second)))
+    expect(store[0]?.previousTokenHash).toBe(tokens.hashToken(rotatedToken(first)))
   })
 
   it('refuses an access token: it must not rotate or revoke anything', async () => {
@@ -185,24 +199,51 @@ describe('authService.refresh', () => {
     expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
   })
 
-  // Two tabs waking together present the same token. Both must end up signed in.
-  it('lets the loser of a concurrent rotation through the grace window', async () => {
+  // Session restore with three pinned tabs: all three present the same cookie.
+  // Every one must be served, exactly one may rotate, and no alarm may be raised.
+  it('serves three concurrent refreshes of the same token, rotating once', async () => {
     const first = await loggedIn()
-    const [a, b] = await Promise.all([
-      authService.refresh(first.refreshToken),
-      authService.refresh(first.refreshToken),
+    const token = rotatedToken(first)
+    const results = await Promise.all([
+      authService.refresh(token),
+      authService.refresh(token),
+      authService.refresh(token),
     ])
-    expect(a.refreshToken).toBeTruthy()
-    expect(b.refreshToken).toBeTruthy()
-    expect(a.refreshToken).not.toBe(b.refreshToken)
-    expect(store).toHaveLength(1) // one session, rotated twice — nobody was revoked
+
+    expect(results.every((r) => r.accessToken.length > 0)).toBe(true)
+    expect(results.filter((r) => r.refreshToken !== undefined)).toHaveLength(1)
+    expect(store).toHaveLength(1)
+    // No false reuse alarm for an honest client.
+    expect(sessions.deleteById).not.toHaveBeenCalled()
+    expect(sessions.deleteAllForUser).not.toHaveBeenCalled()
   })
 
-  it('accepts the just-rotated token again within the grace window', async () => {
+  // The winner's token must not inherit the grace window's lifetime.
+  it('keeps the winner token working long after the grace window closes', async () => {
     const first = await loggedIn()
-    await authService.refresh(first.refreshToken)
-    const retry = await authService.refresh(first.refreshToken)
-    expect(retry.refreshToken).toBeTruthy()
+    const token = rotatedToken(first)
+    const [a, b] = await Promise.all([authService.refresh(token), authService.refresh(token)])
+    const winner = rotatedToken(a.refreshToken ? a : b)
+    if (b.refreshToken && a.refreshToken) throw new Error('two rotations, expected one')
+
+    const session = store[0]
+    if (!session) throw new Error('no session')
+    session.rotatedAt = new Date(Date.now() - 60_000) // grace long gone
+
+    await expect(authService.refresh(winner)).resolves.toMatchObject({ user: { id: USER_ID } })
+    expect(store).toHaveLength(1)
+    expect(sessions.deleteById).not.toHaveBeenCalled()
+  })
+
+  it('accepts the just-rotated token again within the grace window, without rotating', async () => {
+    const first = await loggedIn()
+    await authService.refresh(rotatedToken(first))
+    const held = store[0]?.tokenHash
+    const grace = await authService.refresh(rotatedToken(first))
+
+    expect(grace.accessToken).toBeTruthy()
+    expect(grace.refreshToken).toBeUndefined()
+    expect(store[0]?.tokenHash).toBe(held) // the winner's token still stands
     expect(store).toHaveLength(1)
   })
 
@@ -211,12 +252,12 @@ describe('authService.refresh', () => {
   it('detects replay past the grace window: 401, and only that session dies', async () => {
     const web = await loggedIn()
     await loggedIn('native')
-    await authService.refresh(web.refreshToken)
+    await authService.refresh(rotatedToken(web))
     const webSession = store[0]
     if (!webSession) throw new Error('no session')
     webSession.rotatedAt = new Date(Date.now() - 60_000) // past the grace window
 
-    await expect(authService.refresh(web.refreshToken)).rejects.toMatchObject({
+    await expect(authService.refresh(rotatedToken(web))).rejects.toMatchObject({
       code: 'UNAUTHORIZED',
     })
     expect(sessions.deleteById).toHaveBeenCalledWith(USER_ID, webSession.id)
@@ -239,26 +280,28 @@ describe('authService.refresh', () => {
     expect(store.map((s) => s.client)).toEqual(['web', 'native'])
 
     // The second login must not evict the first — that is the single-column bug.
-    const webAgain = await authService.refresh(web.refreshToken)
-    const nativeAgain = await authService.refresh(native.refreshToken)
+    const webAgain = await authService.refresh(rotatedToken(web))
+    const nativeAgain = await authService.refresh(rotatedToken(native))
     expect(store).toHaveLength(2)
     expect(webAgain.refreshToken).not.toBe(nativeAgain.refreshToken)
 
     // Logging the web session out leaves the phone able to refresh.
     await authService.logout(USER_ID, store[0]?.id)
     expect(store.map((s) => s.client)).toEqual(['native'])
-    await expect(authService.refresh(nativeAgain.refreshToken)).resolves.toMatchObject({
+    await expect(authService.refresh(rotatedToken(nativeAgain))).resolves.toMatchObject({
       user: { id: USER_ID },
     })
   })
 
   it('rejects a session past its absolute cap even though the JWT still verifies', async () => {
-    const { refreshToken } = await loggedIn()
+    const first = await loggedIn()
     const session = store[0]
     if (!session) throw new Error('no session')
     session.expiresAt = new Date(Date.now() - 1000)
 
-    await expect(authService.refresh(refreshToken)).rejects.toMatchObject({ code: 'UNAUTHORIZED' })
+    await expect(authService.refresh(rotatedToken(first))).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    })
     expect(sessions.rotate).not.toHaveBeenCalled()
   })
 

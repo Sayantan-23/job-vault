@@ -13,7 +13,8 @@ function requireUserId(req: Request): string {
 interface NativeAuthData {
   user: PublicUser
   accessToken: string
-  refreshToken: string
+  /** Omitted on a grace-window refresh — the client keeps the token it holds. */
+  refreshToken?: string
 }
 
 /**
@@ -24,7 +25,11 @@ interface NativeAuthData {
  */
 function authData(res: Response, result: AuthResult, native: boolean): PublicUser | NativeAuthData {
   if (native) {
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      ...(result.refreshToken ? { refreshToken: result.refreshToken } : {}),
+    }
   }
   setAuthCookies(res, result.accessToken, result.refreshToken)
   return result.user

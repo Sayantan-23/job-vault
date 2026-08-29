@@ -13,12 +13,18 @@ import {
 import { toPublicUser, type PublicUser } from './auth.schema.js'
 import type { RegisterInput, LoginInput, UpdateProfileInput } from './auth.schema.js'
 import type { UserRow } from '@/db/schema/users.js'
-import type { SessionClient, UserSessionRow } from '@/db/schema/user-sessions.js'
+import type { SessionClient } from '@/db/schema/user-sessions.js'
 
 export interface AuthResult {
   user: PublicUser
   accessToken: string
-  refreshToken: string
+  /**
+   * Absent when a refresh landed inside another request's rotation grace
+   * window: the caller keeps the refresh token it already holds (the winner's)
+   * and only the access token is renewed. Web sends no refresh Set-Cookie in
+   * that case; a native client must keep its stored token.
+   */
+  refreshToken?: string
 }
 
 /**
@@ -28,13 +34,6 @@ export interface AuthResult {
  * `listByUser` (`expires_at > now()`) and reaped by the scheduler.
  */
 const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000
-
-/**
- * How long a just-rotated token keeps working. Two tabs waking together both
- * refresh with the same token; the one that loses the race must get a usable
- * pair back rather than be treated as a thief.
- */
-const ROTATION_GRACE_MS = 30_000
 
 /** Which transport this session was opened for — cookies (web) or body tokens (native, d-0cc1x6). */
 function sessionClient(input: { client?: 'native' | undefined }): SessionClient {
@@ -60,16 +59,6 @@ async function issueTokens(
   })
   // The access token names its session, so logout revokes exactly this device.
   return { accessToken: signAccessToken({ id: user.id, email: user.email }, session.id), refreshToken }
-}
-
-/** True if `token` is the token this session rotated away from moments ago. */
-function isRecentlyRotatedFrom(session: UserSessionRow, token: string): boolean {
-  return (
-    session.previousTokenHash !== null &&
-    session.rotatedAt !== null &&
-    Date.now() - session.rotatedAt.getTime() <= ROTATION_GRACE_MS &&
-    compareToken(token, session.previousTokenHash)
-  )
 }
 
 async function register(input: RegisterInput): Promise<AuthResult> {
@@ -99,7 +88,7 @@ async function login(input: LoginInput): Promise<AuthResult> {
   return { user: toPublicUser(user), accessToken, refreshToken }
 }
 
-async function refresh(oldRefreshToken: string, isRetry = false): Promise<AuthResult> {
+async function refresh(oldRefreshToken: string): Promise<AuthResult> {
   let sub: string
   try {
     // 'refresh' only: an access token must not be able to rotate — or delete — a session.
@@ -111,39 +100,38 @@ async function refresh(oldRefreshToken: string, isRetry = false): Promise<AuthRe
   const user = await authRepository.findById(sub)
   if (!user) throw new AppError('UNAUTHORIZED', 'Refresh token has been revoked')
 
+  // Advisory read: names the row and compares hashes in constant time. The
+  // UPDATE below is the authority on whether this token may still be used.
   const sessions = await sessionsRepository.listByUser(sub)
   const session =
     sessions.find((s) => compareToken(oldRefreshToken, s.tokenHash)) ??
-    sessions.find((s) => isRecentlyRotatedFrom(s, oldRefreshToken))
-
-  if (!session) {
-    // No live session holds this token and the grace window has passed, so it
-    // was rotated away long ago: a replay. Revoke the session it belonged to if
-    // we can still name it — the user's other devices are not implicated.
-    const replayed = sessions.find(
+    sessions.find(
       (s) => s.previousTokenHash !== null && compareToken(oldRefreshToken, s.previousTokenHash),
     )
-    if (replayed) await sessionsRepository.deleteById(sub, replayed.id)
-    throw new AppError('UNAUTHORIZED', 'Refresh token reuse detected. Please log in again.')
+  if (!session) {
+    // Held by no live session and not attributable to one: already dead, so
+    // there is nothing to revoke and no reuse to report.
+    throw new AppError('UNAUTHORIZED', 'Refresh token has been revoked')
   }
 
   const { refreshToken, tokenHash } = mintRefresh(user.id)
-  const rotated = await sessionsRepository.rotate(sub, session.id, {
+  const updated = await sessionsRepository.rotate(sub, session.id, {
     tokenHash,
-    previousTokenHash: session.tokenHash,
+    previousTokenHash: hashToken(oldRefreshToken),
   })
-  if (!rotated) {
-    // Another request rotated between our read and our write. It stored our
-    // token as `previous_token_hash`, so one re-read lands in the grace branch
-    // above and hands this caller a working pair instead of a spurious logout.
-    if (isRetry) throw new AppError('UNAUTHORIZED', 'Refresh token was rotated concurrently')
-    return refresh(oldRefreshToken, true)
+  if (!updated) {
+    // The session is alive but this token is neither its current one nor inside
+    // the grace window: rotated away long ago, so this is a replay. Only the
+    // session it belonged to dies — the user's other devices are untouched.
+    await sessionsRepository.deleteById(sub, session.id)
+    throw new AppError('UNAUTHORIZED', 'Refresh token reuse detected. Please log in again.')
   }
 
   return {
     user: toPublicUser(user),
     accessToken: signAccessToken({ id: user.id, email: user.email }, session.id),
-    refreshToken,
+    // Only the arm that actually rotated hands out a refresh token.
+    ...(updated.tokenHash === tokenHash ? { refreshToken } : {}),
   }
 }
 

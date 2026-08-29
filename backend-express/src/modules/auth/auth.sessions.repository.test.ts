@@ -4,6 +4,7 @@ import { getDb, closeDb } from '@/db/client.js'
 import { users } from '@/db/schema/users.js'
 import { authRepository } from './auth.repository.js'
 import { sessionsRepository } from './auth.sessions.repository.js'
+import { userSessions } from '@/db/schema/user-sessions.js'
 
 const EMAIL = `sessions-test-${Date.now()}@example.com`
 const OTHER_EMAIL = `sessions-other-${Date.now()}@example.com`
@@ -54,10 +55,10 @@ describe('sessionsRepository (real DB)', () => {
       userId, tokenHash: `rotate-a-${Date.now()}`, client: 'web', expiresAt: IN_A_WEEK(),
     })
     const nextHash = `rotate-b-${Date.now()}`
-    const ok = await sessionsRepository.rotate(userId, before.id, {
+    const rotated = await sessionsRepository.rotate(userId, before.id, {
       tokenHash: nextHash, previousTokenHash: before.tokenHash,
     })
-    expect(ok).toBe(true)
+    expect(rotated?.tokenHash).toBe(nextHash)
 
     const [after] = await sessionsRepository.listByUser(userId)
     expect(after?.id).toBe(before.id)
@@ -71,22 +72,52 @@ describe('sessionsRepository (real DB)', () => {
     await sessionsRepository.deleteAllForUser(userId)
   })
 
-  // Compare-and-swap: two concurrent refreshes both read the same token hash,
-  // and exactly one may win — the loser must not blindly overwrite the row.
-  it('refuses a rotation whose previous hash is no longer current', async () => {
+  // Compare-and-swap on the first arm; everyone else lands on the grace arm and
+  // gets the row back untouched, so the winner's token is never demoted.
+  it('rotates once for the current token and serves the rest from the grace arm', async () => {
     const start = `cas-start-${Date.now()}`
     const session = await sessionsRepository.create({
       userId, tokenHash: start, client: 'web', expiresAt: IN_A_WEEK(),
     })
+    const winnerHash = `cas-winner-${Date.now()}`
     const winner = await sessionsRepository.rotate(userId, session.id, {
-      tokenHash: `cas-winner-${Date.now()}`, previousTokenHash: start,
+      tokenHash: winnerHash, previousTokenHash: start,
     })
-    const loser = await sessionsRepository.rotate(userId, session.id, {
-      tokenHash: `cas-loser-${Date.now()}`, previousTokenHash: start,
+    const loserA = await sessionsRepository.rotate(userId, session.id, {
+      tokenHash: `cas-loser-a-${Date.now()}`, previousTokenHash: start,
     })
-    expect(winner).toBe(true)
-    expect(loser).toBe(false)
-    expect((await sessionsRepository.listByUser(userId))[0]?.tokenHash).toMatch(/^cas-winner-/)
+    const loserB = await sessionsRepository.rotate(userId, session.id, {
+      tokenHash: `cas-loser-b-${Date.now()}`, previousTokenHash: start,
+    })
+
+    expect(winner?.tokenHash).toBe(winnerHash)
+    // Both losers matched (no 401) but neither moved the row.
+    expect(loserA?.tokenHash).toBe(winnerHash)
+    expect(loserB?.tokenHash).toBe(winnerHash)
+    expect(loserB?.previousTokenHash).toBe(start)
+    expect(loserB?.rotatedAt?.getTime()).toBe(winner?.rotatedAt?.getTime())
+    expect((await sessionsRepository.listByUser(userId))[0]?.tokenHash).toBe(winnerHash)
+    await sessionsRepository.deleteAllForUser(userId)
+  })
+
+  it('refuses the previous token once the grace window has closed', async () => {
+    const start = `grace-start-${Date.now()}`
+    const session = await sessionsRepository.create({
+      userId, tokenHash: start, client: 'web', expiresAt: IN_A_WEEK(),
+    })
+    await sessionsRepository.rotate(userId, session.id, {
+      tokenHash: `grace-next-${Date.now()}`, previousTokenHash: start,
+    })
+    await getDb()
+      .update(userSessions)
+      .set({ rotatedAt: new Date(Date.now() - 60_000) })
+      .where(eq(userSessions.id, session.id))
+
+    expect(
+      await sessionsRepository.rotate(userId, session.id, {
+        tokenHash: `grace-late-${Date.now()}`, previousTokenHash: start,
+      }),
+    ).toBeNull()
     await sessionsRepository.deleteAllForUser(userId)
   })
 
@@ -99,12 +130,13 @@ describe('sessionsRepository (real DB)', () => {
       expiresAt: new Date(Date.now() - 1000),
     })
     expect((await sessionsRepository.listByUser(userId)).map((s) => s.id)).toEqual([live.id])
-    // The expired row is invisible to every lookup, so it cannot be rotated.
+    // Past its cap, the row cannot be rotated either — the statement carries the
+    // expiry predicate itself, it does not rely on the caller having filtered.
     expect(
       await sessionsRepository.rotate(userId, dead.id, {
         tokenHash: `x-${Date.now()}`, previousTokenHash: dead.tokenHash,
       }),
-    ).toBe(true) // rotate is id+hash scoped, not expiry scoped — the sweep is what removes it
+    ).toBeNull()
 
     expect(await sessionsRepository.deleteExpired()).toBeGreaterThanOrEqual(1)
     expect((await sessionsRepository.listByUser(userId)).map((s) => s.id)).toEqual([live.id])
@@ -119,7 +151,7 @@ describe('sessionsRepository (real DB)', () => {
     const stolen = await sessionsRepository.rotate(otherUserId, mine.id, {
       tokenHash: `stolen-${Date.now()}`, previousTokenHash: mine.tokenHash,
     })
-    expect(stolen).toBe(false)
+    expect(stolen).toBeNull()
 
     const [still] = await sessionsRepository.listByUser(userId)
     expect(still?.id).toBe(mine.id)
