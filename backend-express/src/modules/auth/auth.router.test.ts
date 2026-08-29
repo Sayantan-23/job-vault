@@ -99,6 +99,8 @@ describe('POST /api/auth/login', () => {
       .send({ email: 'a@b.co', password: 'correct-horse' })
     expect(res.status).toBe(200)
     expect(res.body.data.id).toBe('u1')
+    expect(res.body.data).not.toHaveProperty('accessToken')
+    expect(res.body.data).not.toHaveProperty('refreshToken')
     expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
     expect(cookies(res).some((c) => c.startsWith('refreshToken='))).toBe(true)
   })
@@ -202,5 +204,91 @@ describe('PATCH /api/auth/profile', () => {
       .send({ name: 'x'.repeat(101) })
     expect(res.status).toBe(400)
     expect(res.body.error).toBe('VALIDATION_ERROR')
+  })
+})
+
+// Native clients (React Native — no cookie jar) opt in with `client: 'native'`
+// and get the token pair in the body instead of cookies. See d-0cc1x6.
+describe('native token transport', () => {
+  it('register returns the token pair in the body and sets no cookies', async () => {
+    repo.findByEmail.mockResolvedValue(null)
+    repo.create.mockResolvedValue(fakeUser({ passwordHash: 'h' }))
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ name: 'Ada', email: 'a@b.co', password: 'longenough', client: 'native' })
+    expect(res.status).toBe(201)
+    expect(res.body.data.user.email).toBe('a@b.co')
+    expect(res.body.data.user).not.toHaveProperty('passwordHash')
+    expect(typeof res.body.data.accessToken).toBe('string')
+    expect(typeof res.body.data.refreshToken).toBe('string')
+    expect(cookies(res)).toHaveLength(0)
+  })
+
+  it('login returns the token pair in the body and sets no cookies', async () => {
+    repo.findByEmail.mockResolvedValue(fakeUser({ passwordHash: await hashSecret('correct-horse') }))
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.co', password: 'correct-horse', client: 'native' })
+    expect(res.status).toBe(200)
+    expect(res.body.data.user.id).toBe('u1')
+    expect(typeof res.body.data.accessToken).toBe('string')
+    expect(typeof res.body.data.refreshToken).toBe('string')
+    expect(cookies(res)).toHaveLength(0)
+  })
+
+  it('rejects an unknown client value', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'a@b.co', password: 'x', client: 'web' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBe('VALIDATION_ERROR')
+  })
+
+  it('refresh rotates from a body token and returns the new pair in the body', async () => {
+    const token = signRefreshToken('u1')
+    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret(token) }))
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: token })
+    expect(res.status).toBe(200)
+    expect(repo.setRefreshTokenHash).toHaveBeenCalledOnce()
+    expect(res.body.data.user.id).toBe('u1')
+    expect(typeof res.body.data.accessToken).toBe('string')
+    expect(typeof res.body.data.refreshToken).toBe('string')
+    expect(cookies(res)).toHaveLength(0)
+  })
+
+  it('applies reuse detection to body refresh too', async () => {
+    const token = signRefreshToken('u1')
+    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret('another-token') }))
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: token })
+    expect(res.status).toBe(401)
+    expect(repo.clearRefreshTokenHash).toHaveBeenCalledWith('u1')
+  })
+
+  // The security core of d-0cc1x6: a header must NOT be able to select native
+  // mode, or an XSS on the web could read the HttpOnly refresh token back out.
+  it('never leaks the pair to a cookie refresh, even with a native-looking header', async () => {
+    const token = signRefreshToken('u1')
+    repo.findById.mockResolvedValue(fakeUser({ refreshTokenHash: await hashSecret(token) }))
+    const res = await request(app)
+      .post('/api/auth/refresh')
+      .set('Cookie', [`refreshToken=${token}`])
+      .set('X-Client', 'native')
+    expect(res.status).toBe(200)
+    expect(res.body.data).not.toHaveProperty('accessToken')
+    expect(res.body.data).not.toHaveProperty('refreshToken')
+    expect(cookies(res).some((c) => c.startsWith('accessToken='))).toBe(true)
+  })
+
+  it('401s when the body refresh token is not a string', async () => {
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: 42 })
+    expect(res.status).toBe(401)
+  })
+
+  it('authenticates a protected route with Authorization: Bearer', async () => {
+    repo.findById.mockResolvedValue(fakeUser())
+    const token = signAccessToken({ id: 'u1', email: 'a@b.co' })
+    const res = await request(app).get('/api/auth/me').set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    expect(res.body.data.id).toBe('u1')
   })
 })
