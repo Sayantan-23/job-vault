@@ -13,7 +13,8 @@ function requireUserId(req: Request): string {
 interface NativeAuthData {
   user: PublicUser
   accessToken: string
-  refreshToken: string
+  /** Omitted on a grace-window refresh — the client keeps the token it holds. */
+  refreshToken?: string
 }
 
 /**
@@ -24,7 +25,11 @@ interface NativeAuthData {
  */
 function authData(res: Response, result: AuthResult, native: boolean): PublicUser | NativeAuthData {
   if (native) {
-    return { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken }
+    return {
+      user: result.user,
+      accessToken: result.accessToken,
+      ...(result.refreshToken ? { refreshToken: result.refreshToken } : {}),
+    }
   }
   setAuthCookies(res, result.accessToken, result.refreshToken)
   return result.user
@@ -42,20 +47,29 @@ async function login(req: Request, res: Response): Promise<void> {
   res.status(200).json({ data: authData(res, result, input.client === 'native') })
 }
 
-async function refresh(req: Request, res: Response): Promise<void> {
-  // Native mode is selected by input source, never by a header: only a client
-  // that already holds the refresh token can put it in the body, so a browser
-  // XSS cannot ask for the HttpOnly pair to be echoed back (d-0cc1x6).
+/**
+ * The refresh token and the transport it arrived on. Native mode is selected by
+ * input source, never by a header: only a client that already holds the token
+ * can put it in the body, so a browser XSS cannot ask for the HttpOnly pair to
+ * be echoed back (d-0cc1x6).
+ */
+function readRefreshToken(req: Request): { token: string | undefined; native: boolean } {
   const bodyToken = (req.body as { refreshToken?: unknown } | undefined)?.refreshToken
-  const native = typeof bodyToken === 'string' && bodyToken.length > 0
-  const token = native ? bodyToken : (req.cookies?.['refreshToken'] as string | undefined)
+  if (typeof bodyToken === 'string' && bodyToken.length > 0) return { token: bodyToken, native: true }
+  return { token: req.cookies?.['refreshToken'] as string | undefined, native: false }
+}
+
+async function refresh(req: Request, res: Response): Promise<void> {
+  const { token, native } = readRefreshToken(req)
   if (!token) throw new AppError('UNAUTHORIZED', 'No refresh token')
   const result = await authService.refresh(token)
   res.status(200).json({ data: authData(res, result, native) })
 }
 
 async function logout(req: Request, res: Response): Promise<void> {
-  await authService.logout(requireUserId(req))
+  // `sid` rides on the access token, so the session names itself — the refresh
+  // token never has to travel on this route.
+  await authService.logout(requireUserId(req), req.user?.sid)
   clearAuthCookies(res)
   res.status(200).json({ data: { message: 'Logged out successfully' } })
 }

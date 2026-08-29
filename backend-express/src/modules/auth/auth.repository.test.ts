@@ -21,7 +21,7 @@ afterAll(async () => {
 })
 
 describe('authRepository (real DB)', () => {
-  it('creates, finds by email and id, sets and clears the refresh hash', async () => {
+  it('creates and finds by email and id', async () => {
     const created = await authRepository.create({ name: 'Repo', email: EMAIL, passwordHash: 'h' })
     expect(created.id).toBeTruthy()
 
@@ -30,12 +30,6 @@ describe('authRepository (real DB)', () => {
 
     const byId = await authRepository.findById(created.id)
     expect(byId?.email).toBe(EMAIL)
-
-    await authRepository.setRefreshTokenHash(created.id, 'rt-hash')
-    expect((await authRepository.findById(created.id))?.refreshTokenHash).toBe('rt-hash')
-
-    await authRepository.clearRefreshTokenHash(created.id)
-    expect((await authRepository.findById(created.id))?.refreshTokenHash).toBeNull()
   })
 
   it('returns null for an unknown email', async () => {

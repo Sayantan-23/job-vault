@@ -4,7 +4,12 @@ import { getEnv } from '@/config/env.js'
 const ACCESS_MAX_AGE = 15 * 60 * 1000
 const REFRESH_MAX_AGE = 7 * 24 * 60 * 60 * 1000
 
-export function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
+/**
+ * `refreshToken` is optional: a refresh served inside another request's
+ * rotation grace window renews only the access cookie, leaving the winner's
+ * refresh token in the jar.
+ */
+export function setAuthCookies(res: Response, accessToken: string, refreshToken?: string): void {
   const secure = getEnv().NODE_ENV === 'production'
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -13,6 +18,7 @@ export function setAuthCookies(res: Response, accessToken: string, refreshToken:
     maxAge: ACCESS_MAX_AGE,
     path: '/',
   })
+  if (!refreshToken) return
   // Site-wide path (not scoped to /api/auth) so the Next middleware can see the
   // refresh token on /app/* requests and the browser sends it on the same-origin
   // silent-refresh call. Still HttpOnly + SameSite=Lax + Secure(prod).

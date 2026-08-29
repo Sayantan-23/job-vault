@@ -93,3 +93,45 @@ than a tab.
 
 Build the shell early in C0 and screenshot it on a real device before C2 hardens
 anything — the user has signed off on the idea, not on how it looks.
+
+---
+
+## Amendment 2026-08-29 — the corner curves the other way
+
+This decision said "rounded **top** corners only". On-device verification
+([[t-0cd6ah]]) plus a measured comparison against the user's reference image
+showed C0 implemented that literally — `rounded-t-[20px]` on the bar — and that
+it is **backwards** relative to the reference. The user spotted it from the
+screenshot.
+
+Measured, not eyeballed. The reference photo is a tilted phone, so the white
+content region's left boundary was extracted as `x(y)`: one smooth minimum at
+x≈156, y≈56–68, with the tangent rotating continuously through zero. The sharp
+corner would sit at (144.4, 67.6); the white's actual tip is at (156, 62) —
+material **removed from the page and given to the bar**. Our implementation
+measures the opposite: corner insets *shrink* as y increases (62 → 56 → 51),
+fitting R=61 device px ÷ dpr 3.07 = exactly the 20 logical px of
+`rounded-t-[20px]`.
+
+So: ours arcs **away** from the bar's interior, the reference arcs **into** it.
+Same radius, mirrored curvature.
+
+**The reference is not an inverted corner at all.** It is a normal convex radius
+sitting on the *other element* — the page content has rounded **bottom** corners,
+and the bar colour shows through behind them. That is why it reads as OS chrome:
+the content looks like a card lifted off a system-owned surface.
+
+**Corrected instruction, superseding "rounded top corners only":** drop
+`rounded-t-*` from the bar, paint the bar colour as the screen background behind
+it, and give the page/scroll content wrapper `rounded-b-[20px]` with
+`overflow: 'hidden'`. One radius moved from one element to another — no mask, no
+SVG, no `@react-native-masked-view`, no new dependency.
+
+A true inverted corner (bar owns the curve, page stays full-bleed) is a
+different and much more expensive shape — neither CSS nor RN has it as a
+primitive, and it needs either two clipped quarter-disc views, an SVG path, or a
+mask library. **We do not need it.** Do not build it.
+
+Everything else in this decision stands: the geometry was verified correct on
+device — four tabs, full-bleed, safe-area paint, and the FAB's clearance,
+placement and hide-on-scroll all pass.

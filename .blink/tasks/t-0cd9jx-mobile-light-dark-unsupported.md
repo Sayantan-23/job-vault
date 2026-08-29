@@ -1,10 +1,10 @@
 ---
 id: t-0cd9jx
-title: "Mobile palette does not render — light-dark() is unsupported by react-native-css"
+title: "Mobile palette does not render, and the bar corner curves the wrong way"
 status: backlog
 milestone: m-0cc02t
 created: 2026-08-29T10:40:00Z
-updated: 2026-08-29T10:40:00Z
+updated: 2026-08-29T11:20:00Z
 estimate: S
 decisions: [d-0cd3wr, d-006]
 tags: [mobile, design, bug]
@@ -62,3 +62,32 @@ surface, the hairline top border, the stretching indigo capsule and the four
 icons. The geometry is already verified and needs no re-litigation.
 
 **Blocks C2** ([[t-0ccxkm]]): the silhouette is signed off, the palette is not.
+
+---
+
+## Second fix in the same device run — the corner direction
+
+Added 2026-08-29 after the user spotted it on the screenshot. See the amendment
+at the bottom of [[d-0cd3wr]] for the measurements; the short version:
+
+C0 implemented "rounded top corners only" literally as `rounded-t-[20px]` on the
+bar (`mobile/src/components/tab-bar.tsx:62-65`). Measured against the user's
+reference image, that is **mirrored** — ours arcs away from the bar's interior,
+the reference arcs into it.
+
+The reference is **not** an inverted corner. It is a normal convex radius on the
+*other element*: the page content has rounded **bottom** corners with the bar
+colour behind them, which is what makes it read as OS chrome.
+
+**Fix:** drop `rounded-t-*` from the bar, paint the bar colour as the screen
+background behind it, give the page/scroll content wrapper `rounded-b-[20px]`
+plus `overflow: 'hidden'`. One radius moved between elements — no mask, no SVG,
+no new dependency.
+
+**Do not build a true inverted corner.** RN has no such primitive and it would
+cost two clipped quarter-disc views, an SVG path or a mask library. It is not
+what the reference shows.
+
+Both fixes ship in one device rebuild — the first Android build took 24 minutes,
+and `mobile/android/` only exists in the primary checkout, so this task cannot
+run in a worktree.

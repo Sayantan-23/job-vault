@@ -17,7 +17,6 @@ export const users = pgTable('users', {
   masterResumeUrl: text('master_resume_url'),
   masterProfileJson: jsonb('master_profile_json').$type<Record<string, unknown>>(),
   preferences: jsonb('preferences').$type<UserPreferences>(),
-  refreshTokenHash: text('refresh_token_hash'),
 })
 
 export type UserRow = typeof users.$inferSelect

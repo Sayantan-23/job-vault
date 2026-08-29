@@ -6,7 +6,9 @@ import { authMiddleware } from '@/middleware/auth.middleware.js'
 import { authController } from './auth.controller.js'
 import { RegisterSchema, LoginSchema, UpdateProfileSchema } from './auth.schema.js'
 
-const authLimiter = rateLimit({ windowMs: 15 * 60_000, max: 20, standardHeaders: 'draft-7', legacyHeaders: false })
+// Exported so tests can reset the counter between cases — never raise `max`,
+// it is the brute-force control.
+export const authLimiter = rateLimit({ windowMs: 15 * 60_000, max: 20, standardHeaders: 'draft-7', legacyHeaders: false })
 
 const router = Router()
 

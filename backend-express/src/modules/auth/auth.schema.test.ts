@@ -25,7 +25,6 @@ describe('toPublicUser', () => {
       name: 'Ada',
       email: 'a@b.co',
       passwordHash: 'secret',
-      refreshTokenHash: 'secret',
       googleId: null,
       isEmailVerified: false,
       masterResumeUrl: null,
@@ -35,7 +34,6 @@ describe('toPublicUser', () => {
       updatedAt: new Date(),
     })
     expect(pub).not.toHaveProperty('passwordHash')
-    expect(pub).not.toHaveProperty('refreshTokenHash')
     expect(pub.email).toBe('a@b.co')
   })
 })
