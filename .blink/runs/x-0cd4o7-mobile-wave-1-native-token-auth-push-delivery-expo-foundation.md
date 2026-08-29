@@ -1,10 +1,10 @@
 ---
 id: x-0cd4o7
 title: 'Mobile wave 1 — native token auth, push delivery, Expo foundation'
-status: planned
+status: running
 tier: subagents
 created: '2026-08-29T08:52:55Z'
-updated: '2026-08-29T08:52:55Z'
+updated: '2026-08-29T08:55:02Z'
 tags: []
 tasks:
   - t-0ccxkj
@@ -18,16 +18,19 @@ gates:
   - blink validate
 lanes:
   - task: t-0ccxkj
-    state: pending
+    state: dispatched
     attempts: 0
     wave: 1
   - task: t-0009
-    state: pending
+    state: dispatched
     attempts: 0
     wave: 1
   - task: t-0ccxkk
-    state: pending
+    state: dispatched
     attempts: 0
     wave: 1
 ---
 
+## Log
+
+- 2026-08-29T08:55:02Z — wave 1 dispatched on branch slice-mobile-wave-1: t-0ccxkj, t-0009, t-0ccxkk
