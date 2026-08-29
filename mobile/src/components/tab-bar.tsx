@@ -57,10 +57,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   }));
 
   return (
-    // Square-edged and full-bleed. The rounded corner in the reference belongs to
-    // the *page*: the screen paints this bar's colour behind content whose bottom
-    // corners are rounded, so the curve arcs into the bar (d-0cd3wr amendment).
-    <View className="border-t border-hairline bg-card" style={{ paddingBottom: insets.bottom }}>
+    // Square-edged, full-bleed and deliberately borderless: a straight 1pt rule
+    // across the top read louder than the content's curve and made the bar look
+    // like a separate section. The dark surface against the near-white page is
+    // the boundary now (d-0cd3wr, second amendment). The rounded corner belongs
+    // to the *page*, which paints this colour behind its own curved bottom.
+    <View className="bg-tab-bar" style={{ paddingBottom: insets.bottom }}>
       <View
         className="flex-row"
         style={{ height: TAB_BAR_HEIGHT }}
@@ -78,7 +80,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           const meta = TAB_META[route.name];
           if (!meta) return null;
           const focused = state.index === index;
-          const tone = focused ? 'text-primary-foreground' : 'text-muted-foreground';
+          const tone = focused ? 'text-primary-foreground' : 'text-tab-bar-muted';
 
           return (
             <Pressable

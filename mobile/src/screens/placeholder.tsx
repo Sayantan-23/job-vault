@@ -25,7 +25,7 @@ export function Placeholder({ title, note, action }: PlaceholderProps) {
     // rounded bottom corners, so the bar's surface shows through at the two
     // corners and reads as OS chrome (d-0cd3wr amendment). The FAB stays outside
     // the clipped wrapper so it keeps its verified geometry.
-    <View className="flex-1 bg-card">
+    <View className="flex-1 bg-tab-bar">
       <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
         <AppHeader title={title} />
         <Animated.ScrollView

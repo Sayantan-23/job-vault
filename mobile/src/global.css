@@ -52,6 +52,19 @@
   --ring: #576cb7;
   --radius: 8px;
 
+  /*
+   * Tab bar surface. Dark in light mode, mirroring the reference's black bar
+   * under white content: with no border between bar and page, the colour
+   * contrast IS the boundary (d-0cd3wr, second amendment). Its own tokens
+   * rather than borrowed ones, so t-0cdegw can invert the bar for dark mode as
+   * a token change. Values are the palette's own dark surface/foreground tones,
+   * not new colours. No dark-mode counterparts here on purpose — that pairing
+   * is t-0cdegw's call, and the block below does not apply on device anyway.
+   */
+  --tab-bar: #131110;
+  --tab-bar-foreground: #f0eeeb;
+  --tab-bar-muted: #96918c;
+
   /* Status palette — reserved for application health only. */
   --ghost-active: #3bb974;
   --ghost-stale: #efa831;
@@ -115,6 +128,9 @@
     --color-hairline: var(--hairline);
     --color-input: var(--input);
     --color-ring: var(--ring);
+    --color-tab-bar: var(--tab-bar);
+    --color-tab-bar-foreground: var(--tab-bar-foreground);
+    --color-tab-bar-muted: var(--tab-bar-muted);
     --color-ghost-active: var(--ghost-active);
     --color-ghost-stale: var(--ghost-stale);
     --color-ghost-ghosted: var(--ghost-ghosted);
