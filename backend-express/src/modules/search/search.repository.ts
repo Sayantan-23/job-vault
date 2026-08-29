@@ -107,8 +107,18 @@ const MARKDOWN_MARKERS = '[*#`~]'
 // invert every highlight after it (the client splitter is pure parity).
 const SNIPPET_SOURCE = sql`regexp_replace(translate(hits.snippet_source, ${SENTINELS}, ''), ${MARKDOWN_MARKERS}, '', 'g')`
 
+// plainto_tsquery matches whole lexemes, so `reac` never finds React. OR in a
+// prefix query over the same words: `reac:*` does — in bodies too, which is
+// where the substring band below deliberately cannot look. The words are
+// rebuilt from the raw input rather than interpolated, because to_tsquery
+// parses its argument as tsquery syntax and a stray `&` or `!` is a 500.
+// A term of only punctuation yields no words; fall back to plainto alone
+// rather than emitting to_tsquery(''), which is a syntax error.
 function tsQuery(q: string): SQL {
-  return sql`plainto_tsquery('english', ${q})`
+  const words = q.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(' ').filter(Boolean)
+  if (words.length === 0) return sql`plainto_tsquery('english', ${q})`
+  const prefix = words.map((w) => `${w}:*`).join(' & ')
+  return sql`(plainto_tsquery('english', ${q}) || to_tsquery('english', ${prefix}))`
 }
 
 // concat_ws, not a `||` chain: it skips NULLs, where a single NULL in a plain

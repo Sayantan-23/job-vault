@@ -178,6 +178,18 @@ describe('searchRepository (real DB)', () => {
     expect(results[0]?.snippet).not.toContain('<b>')
   })
 
+  it('matches a prefix of a word in a title', async () => {
+    const results = await searchRepository.search(userId, TITLE_TAG.slice(0, 6))
+    expect(results.some((r) => r.id === jobId)).toBe(true)
+  })
+
+  it('matches a prefix of a word in a body, and highlights it', async () => {
+    const results = await searchRepository.search(userId, BODY_TAG.slice(0, 6))
+    const hit = results.find((r) => r.id === jobId)
+    expect(hit).toBeDefined()
+    expect(hit?.snippet).toContain('\u0002')
+  })
+
   it('finds a persona through a one-character typo in its name (pg_trgm)', async () => {
     const typo = PERSONA_NAME.slice(0, -1)
     const results = await searchRepository.search(userId, typo)
