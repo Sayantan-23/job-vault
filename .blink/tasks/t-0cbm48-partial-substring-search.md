@@ -1,11 +1,11 @@
 ---
 id: t-0cbm48
 title: Partial (substring) matching in global search
-status: planned
+status: done
 created: 2026-08-28T00:00:00Z
-updated: 2026-08-28T18:59:45Z
+updated: 2026-08-29T06:39:42Z
 estimate: S
-decisions: [d-0c5wyy]
+decisions: [d-0c5wyy, d-0ccyjm]
 tags: [search, backend, frontend]
 ---
 

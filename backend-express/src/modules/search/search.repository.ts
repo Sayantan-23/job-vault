@@ -107,8 +107,30 @@ const MARKDOWN_MARKERS = '[*#`~]'
 // invert every highlight after it (the client splitter is pure parity).
 const SNIPPET_SOURCE = sql`regexp_replace(translate(hits.snippet_source, ${SENTINELS}, ''), ${MARKDOWN_MARKERS}, '', 'g')`
 
+// plainto_tsquery matches whole lexemes, so `reac` never finds React. OR in a
+// prefix query over the same words: `reac:*` does — in bodies too, which is
+// where the substring band below deliberately cannot look. The words are
+// rebuilt from the raw input rather than interpolated, because to_tsquery
+// parses its argument as tsquery syntax and a stray `&` or `!` is a 500.
+// A term of only punctuation yields no words; fall back to plainto alone
+// rather than emitting to_tsquery(''), which is a syntax error.
+//
+// ponytail: the OR costs multi-word proximity. It moves the query's root node
+// from OP_AND to OP_OR, and calc_rank dispatches on the root — OP_AND goes to
+// calc_rank_and, which weights by word_distance, everything else to
+// calc_rank_or, which ignores adjacency. Measured on the seeded dev DB:
+// `staff engineer` against "Staff Frontend Engineer" scored 0.4963 before the
+// OR and 0.0827 after, with small real reorderings inside band 1. Accepted
+// because the alternative — dropping the plainto arm to keep an OP_AND root —
+// loses plainto's compound tokenization: `a@b.com` is one lexeme to plainto,
+// while the word-split emits `a:* & b:* & com:*`, which never matches it.
+// Upgrade path: keep both arms but rank on the plainto arm alone
+// (ts_rank(vector, plainto_tsquery(q)) as a tiebreak) if adjacency matters.
 function tsQuery(q: string): SQL {
-  return sql`plainto_tsquery('english', ${q})`
+  const words = q.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(' ').filter(Boolean)
+  if (words.length === 0) return sql`plainto_tsquery('english', ${q})`
+  const prefix = words.map((w) => `${w}:*`).join(' & ')
+  return sql`(plainto_tsquery('english', ${q}) || to_tsquery('english', ${prefix}))`
 }
 
 // concat_ws, not a `||` chain: it skips NULLs, where a single NULL in a plain
@@ -124,27 +146,44 @@ function trgmSimilarity(cols: AnyPgColumn[], q: string): SQL {
   return sql`greatest(${sql.join(scores, sql`, `)})`
 }
 
+// Infix, which FTS structurally cannot do (`gine` in Engineer). Runs on
+// source.trgm — already exactly the short identifying columns — because
+// '%in%' against a job description matches every job in the account.
+// LIKE metacharacters are escaped: an unescaped '%' typed by the user would
+// match every row.
+function substringMatch(cols: AnyPgColumn[], q: string): SQL {
+  const like = `%${q.replace(/[%_\\]/g, '\\$&')}%`
+  const tests = cols.map((col) => sql`${col} ilike ${like}`)
+  return sql`(${sql.join(tests, sql` or `)})`
+}
+
 // The rank is banded, because ts_rank (~0.06 for a good hit) and similarity
 // (0..1) are incompatible scales: a plain greatest() of the two ranked every
 // fuzzy title match above every exact match found in a body field. Both scores
-// are 0..1, so the +1.0 puts all FTS hits strictly above all trigram-only hits,
-// and within each band rows still sort by their own score.
+// are 0..1, so the offsets carve out three non-overlapping bands — FTS hits
+// (+2.0) above substring hits (+1.0) above trigram-only hits — and within each
+// band rows still sort by their own score.
 function branch(source: Source, userId: string, q: string): SQL {
   const vector = tsVector(source.fts)
   const query = tsQuery(q)
   const trgmSim = trgmSimilarity(source.trgm, q)
+  const substr = substringMatch(source.trgm, q)
   return sql`(select ${source.type}::text as type,
                      ${source.id}::text as id,
                      coalesce(${source.title}, 'Untitled') as title,
                      ${source.subtitle ?? sql`null::text`} as subtitle,
                      ${source.snippet} as snippet_source,
-                     case when ${vector} @@ ${query}
-                          then 1.0 + ts_rank(${vector}, ${query})
+                     case when ${vector} @@ ${query} then 2.0 + ts_rank(${vector}, ${query})
+                          -- ponytail: similarity() as the within-band tiebreak is ~0 for
+                          -- two-character terms, so their order inside the substring band
+                          -- is effectively arbitrary. Upgrade to a coverage score
+                          -- (matched length / field length) if that shows in real use.
+                          when ${substr} then 1.0 + ${trgmSim}
                           else ${trgmSim}
                      end as rank
                 from ${source.table}
                where ${source.userId} = ${userId}
-                 and (${vector} @@ ${query} or ${trgmSim} > ${TRIGRAM_FLOOR})
+                 and (${vector} @@ ${query} or ${substr} or ${trgmSim} > ${TRIGRAM_FLOOR})
                order by rank desc
                limit ${PER_TYPE_LIMIT})`
 }
