@@ -12,13 +12,19 @@ vi.mock('./notifications.repository.js', () => ({
 
 vi.mock('@/realtime/socket.js', () => ({ emitToUser: vi.fn() }))
 
+vi.mock('@/modules/push/push.service.js', () => ({
+  pushService: { sendToUser: vi.fn().mockResolvedValue(undefined) },
+}))
+
 import { notificationsRepository } from './notifications.repository.js'
 import { notificationsService } from './notifications.service.js'
 import { emitToUser } from '@/realtime/socket.js'
+import { pushService } from '@/modules/push/push.service.js'
 import type { NotificationRow } from '@/db/schema/notifications.js'
 
 const repo = vi.mocked(notificationsRepository)
 const emit = vi.mocked(emitToUser)
+const sendPush = vi.mocked(pushService.sendToUser)
 
 function fakeNotification(over: Partial<NotificationRow> = {}): NotificationRow {
   return {
@@ -95,5 +101,33 @@ describe('notificationsService.create emits over socket.io', () => {
     await expect(
       notificationsService.create({ userId: 'u1', message: 'x', type: 'GENERAL' }),
     ).resolves.toMatchObject({ id: 'n2' })
+  })
+})
+
+describe('notificationsService.create sends mobile push', () => {
+  it('titles the push by type and carries the job id for the deep link', async () => {
+    repo.create.mockResolvedValue(fakeNotification({ id: 'n3', type: 'GHOST_ALERT', message: 'quiet', relatedJobId: 'j1' }))
+    await notificationsService.create({ userId: 'u1', message: 'quiet', type: 'GHOST_ALERT', relatedJobId: 'j1' })
+    expect(sendPush).toHaveBeenCalledWith('u1', {
+      title: 'Ghost alert',
+      body: 'quiet',
+      data: { notificationId: 'n3', type: 'GHOST_ALERT', jobId: 'j1' },
+    })
+  })
+
+  it('omits jobId when the notification has no related job', async () => {
+    repo.create.mockResolvedValue(fakeNotification({ id: 'n4', type: 'GENERAL', message: 'hi' }))
+    await notificationsService.create({ userId: 'u1', message: 'hi', type: 'GENERAL' })
+    expect(sendPush).toHaveBeenCalledWith('u1', {
+      title: 'JobVault',
+      body: 'hi',
+      data: { notificationId: 'n4', type: 'GENERAL' },
+    })
+  })
+
+  it('does not let a rejected push reject create (delivery is a side channel)', async () => {
+    repo.create.mockResolvedValue(fakeNotification({ id: 'n5' }))
+    sendPush.mockRejectedValueOnce(new Error('expo down'))
+    await expect(notificationsService.create({ userId: 'u1', message: 'x', type: 'REMINDER' })).resolves.toMatchObject({ id: 'n5' })
   })
 })
