@@ -134,27 +134,44 @@ function trgmSimilarity(cols: AnyPgColumn[], q: string): SQL {
   return sql`greatest(${sql.join(scores, sql`, `)})`
 }
 
+// Infix, which FTS structurally cannot do (`gine` in Engineer). Runs on
+// source.trgm — already exactly the short identifying columns — because
+// '%in%' against a job description matches every job in the account.
+// LIKE metacharacters are escaped: an unescaped '%' typed by the user would
+// match every row.
+function substringMatch(cols: AnyPgColumn[], q: string): SQL {
+  const like = `%${q.replace(/[%_\\]/g, '\\$&')}%`
+  const tests = cols.map((col) => sql`${col} ilike ${like}`)
+  return sql`(${sql.join(tests, sql` or `)})`
+}
+
 // The rank is banded, because ts_rank (~0.06 for a good hit) and similarity
 // (0..1) are incompatible scales: a plain greatest() of the two ranked every
 // fuzzy title match above every exact match found in a body field. Both scores
-// are 0..1, so the +1.0 puts all FTS hits strictly above all trigram-only hits,
-// and within each band rows still sort by their own score.
+// are 0..1, so the offsets carve out three non-overlapping bands — FTS hits
+// (+2.0) above substring hits (+1.0) above trigram-only hits — and within each
+// band rows still sort by their own score.
 function branch(source: Source, userId: string, q: string): SQL {
   const vector = tsVector(source.fts)
   const query = tsQuery(q)
   const trgmSim = trgmSimilarity(source.trgm, q)
+  const substr = substringMatch(source.trgm, q)
   return sql`(select ${source.type}::text as type,
                      ${source.id}::text as id,
                      coalesce(${source.title}, 'Untitled') as title,
                      ${source.subtitle ?? sql`null::text`} as subtitle,
                      ${source.snippet} as snippet_source,
-                     case when ${vector} @@ ${query}
-                          then 1.0 + ts_rank(${vector}, ${query})
+                     case when ${vector} @@ ${query} then 2.0 + ts_rank(${vector}, ${query})
+                          -- ponytail: similarity() as the within-band tiebreak is ~0 for
+                          -- two-character terms, so their order inside the substring band
+                          -- is effectively arbitrary. Upgrade to a coverage score
+                          -- (matched length / field length) if that shows in real use.
+                          when ${substr} then 1.0 + ${trgmSim}
                           else ${trgmSim}
                      end as rank
                 from ${source.table}
                where ${source.userId} = ${userId}
-                 and (${vector} @@ ${query} or ${trgmSim} > ${TRIGRAM_FLOOR})
+                 and (${vector} @@ ${query} or ${substr} or ${trgmSim} > ${TRIGRAM_FLOOR})
                order by rank desc
                limit ${PER_TYPE_LIMIT})`
 }

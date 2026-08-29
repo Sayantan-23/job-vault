@@ -190,6 +190,19 @@ describe('searchRepository (real DB)', () => {
     expect(hit?.snippet).toContain('\u0002')
   })
 
+  it('matches a substring in the middle of a title', async () => {
+    const results = await searchRepository.search(userId, TITLE_TAG.slice(4, 9))
+    expect(results.some((r) => r.id === jobId)).toBe(true)
+  })
+
+  it('ranks an FTS hit above a substring-only hit', async () => {
+    // BODY_TAG is an FTS hit on one job; nothing else can reach band 1 for it,
+    // so an FTS hit must sort first. The same guarantee the two-band test makes
+    // for trigram, now for the middle band.
+    const results = await searchRepository.search(userId, BODY_TAG)
+    expect(results.findIndex((r) => r.id === jobId)).toBe(0)
+  })
+
   it('finds a persona through a one-character typo in its name (pg_trgm)', async () => {
     const typo = PERSONA_NAME.slice(0, -1)
     const results = await searchRepository.search(userId, typo)
