@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkk
 title: "C0 — Expo foundation: scaffold, tokens, fonts, tab shell, deep links"
-status: planned
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-08-29T08:10:00Z
 estimate: M
 decisions: [d-0cc2vk, d-0cc24z, d-0cc2w5]
 tags: [mobile, expo, foundation]
@@ -12,12 +12,20 @@ tags: [mobile, expo, foundation]
 
 Spec §4.12 (layout), §6 (chunk table), §8 (step list). Blocks everything.
 
-**⚠️ One prerequisite is the user's**, and it is only the scaffold:
+**Scaffold is done** — the user ran `npx create-expo-app@latest mobile` on
+2026-08-29. `mobile/` is managed (no `ios/`, no `android/`; prebuild regenerates
+them and `.gitignore` already excludes them).
 
-```bash
-cd "$(git rev-parse --show-toplevel)"
-npx create-expo-app@latest mobile
-```
+**Pinned versions — read version-matched docs, never `latest`:**
+
+| Package | Version |
+|---|---|
+| `expo` | `~57.0.18` (**SDK 57**) |
+| `react-native` | `0.86.3` |
+| `react` | `19.2.3` |
+
+Docs URLs are `https://docs.expo.dev/versions/v57.0.0/…`. The `latest` pages
+track the newest SDK and document APIs this project does not have.
 
 **EAS is deliberately deferred to C10** ([[t-0ccxku]]). Decided 2026-08-29: all
 development happens on **local** builds (`npx expo run:android` — free, unlimited,

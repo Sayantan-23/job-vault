@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkj
 title: "Native token auth transport on the backend"
-status: planned
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-08-29T08:10:00Z
 estimate: M
 decisions: [d-0cc1x6]
 tags: [backend, auth, mobile]

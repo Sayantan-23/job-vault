@@ -19,11 +19,17 @@ export function parseAccessTokenCookie(header: string | undefined): string | und
 }
 
 /**
- * Handshake auth: verify the `accessToken` cookie and attach `socket.data.userId`.
- * Runs on every new connection, so reconnects are re-verified automatically.
+ * Handshake auth: verify the access token and attach `socket.data.userId`.
+ * Web passes it as the `accessToken` cookie, native as `auth: { token }` in the
+ * handshake (d-0cc1x6). Runs on every new connection, so reconnects are
+ * re-verified automatically.
  */
 export function socketAuthMiddleware(socket: Socket, next: SocketNext): void {
-  const token = parseAccessTokenCookie(socket.handshake.headers.cookie)
+  const handshakeToken: unknown = socket.handshake.auth?.['token']
+  const token =
+    typeof handshakeToken === 'string' && handshakeToken.length > 0
+      ? handshakeToken
+      : parseAccessTokenCookie(socket.handshake.headers.cookie)
   if (!token) {
     next(new Error('unauthorized'))
     return

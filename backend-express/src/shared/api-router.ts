@@ -16,6 +16,7 @@ import { answersRouter } from '@/modules/answers/answers.router.js'
 import { apiKeysRouter } from '@/modules/api-keys/api-keys.router.js'
 import { extensionRouter } from '@/modules/extension/extension.router.js'
 import { searchRouter } from '@/modules/search/search.router.js'
+import { pushRouter } from '@/modules/push/push.router.js'
 
 const router = Router()
 
@@ -43,5 +44,6 @@ router.use('/answers', answersRouter)
 router.use('/api-keys', apiKeysRouter)
 router.use('/extension', extensionRouter)
 router.use('/search', searchRouter)
+router.use('/push', pushRouter)
 
 export { router as apiRouter }

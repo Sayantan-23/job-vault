@@ -11,12 +11,15 @@ beforeAll(() => {
 })
 
 interface FakeSocket {
-  handshake: { headers: { cookie?: string } }
+  handshake: { headers: { cookie?: string }; auth?: Record<string, unknown> }
   data: { userId?: string }
 }
 
-function fakeSocket(cookie?: string): FakeSocket {
-  return { handshake: { headers: cookie === undefined ? {} : { cookie } }, data: {} }
+function fakeSocket(cookie?: string, auth?: Record<string, unknown>): FakeSocket {
+  return {
+    handshake: { headers: cookie === undefined ? {} : { cookie }, ...(auth ? { auth } : {}) },
+    data: {},
+  }
 }
 
 describe('parseAccessTokenCookie', () => {
@@ -58,6 +61,49 @@ describe('socketAuthMiddleware', () => {
   it('rejects an invalid token with an unauthorized error', async () => {
     const { socketAuthMiddleware } = await import('./socket.js')
     const socket = fakeSocket('accessToken=not-a-real-jwt')
+    const next = vi.fn()
+    socketAuthMiddleware(socket as never, next)
+    const err = next.mock.calls[0]?.[0] as Error
+    expect(err.message).toBe('unauthorized')
+  })
+
+  // Native clients have no cookie jar and pass the token in the handshake
+  // instead (d-0cc1x6) — otherwise realtime silently never connects.
+  it('attaches socket.data.userId for a valid handshake auth token', async () => {
+    const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
+    const { socketAuthMiddleware } = await import('./socket.js')
+    const token = signAccessToken({ id: 'u2', email: 'n@b.c' })
+    const socket = fakeSocket(undefined, { token })
+    const next = vi.fn()
+    socketAuthMiddleware(socket as never, next)
+    expect(next).toHaveBeenCalledWith()
+    expect(socket.data.userId).toBe('u2')
+  })
+
+  it('prefers the handshake auth token over the cookie', async () => {
+    const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
+    const { socketAuthMiddleware } = await import('./socket.js')
+    const cookieToken = signAccessToken({ id: 'cookie-user', email: 'c@b.c' })
+    const authToken = signAccessToken({ id: 'auth-user', email: 'n@b.c' })
+    const socket = fakeSocket(`accessToken=${cookieToken}`, { token: authToken })
+    const next = vi.fn()
+    socketAuthMiddleware(socket as never, next)
+    expect(socket.data.userId).toBe('auth-user')
+  })
+
+  it('falls back to the cookie when the handshake auth token is absent or not a string', async () => {
+    const { signAccessToken } = await import('@/modules/auth/auth.tokens.js')
+    const { socketAuthMiddleware } = await import('./socket.js')
+    const token = signAccessToken({ id: 'u1', email: 'a@b.c' })
+    const socket = fakeSocket(`accessToken=${token}`, { token: 42 })
+    const next = vi.fn()
+    socketAuthMiddleware(socket as never, next)
+    expect(socket.data.userId).toBe('u1')
+  })
+
+  it('rejects an invalid handshake auth token', async () => {
+    const { socketAuthMiddleware } = await import('./socket.js')
+    const socket = fakeSocket(undefined, { token: 'not-a-real-jwt' })
     const next = vi.fn()
     socketAuthMiddleware(socket as never, next)
     const err = next.mock.calls[0]?.[0] as Error

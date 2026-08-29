@@ -1,15 +1,20 @@
 import { z } from 'zod'
 import type { UserRow } from '@/db/schema/users.js'
 
+// A native client (no cookie jar) opts into the body-token transport (d-0cc1x6).
+const clientField = z.literal('native').optional()
+
 export const RegisterSchema = z.object({
   name: z.string().min(1).max(100),
   email: z.string().email(),
   password: z.string().min(8).max(72),
+  client: clientField,
 })
 
 export const LoginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
+  client: clientField,
 })
 
 export const UpdateProfileSchema = z.object({

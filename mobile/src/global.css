@@ -1,0 +1,85 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+
+/*
+ * Tokens ported verbatim (same names, same values) from
+ * frontend-next/src/styles/app/theme.css — the app surface of minimalist-ui:
+ * warm-stone neutral, flat muted-indigo accent.
+ *
+ * The web file writes oklch(); these are the same colours resolved to sRGB,
+ * because React Native has no oklch parser. Light and dark are paired with
+ * light-dark() so the whole palette follows the OS colour scheme with no
+ * class toggling.
+ */
+:root {
+  --background: light-dark(#fefcf9, #131110);
+  --foreground: light-dark(#1c1714, #f0eeeb);
+  --card: light-dark(#ffffff, #1a1816);
+  --card-foreground: light-dark(#1c1714, #f0eeeb);
+  --popover: light-dark(#ffffff, #1a1816);
+  --popover-foreground: light-dark(#1c1714, #f0eeeb);
+  --primary: light-dark(#576cb7, #708ade);
+  --primary-foreground: light-dark(#fcfcfc, #090b0f);
+  --secondary: light-dark(#f4f1ee, #282624);
+  --secondary-foreground: light-dark(#2a2522, #f0eeeb);
+  --muted: light-dark(#f4f1ee, #282624);
+  --muted-foreground: light-dark(#706b66, #96918c);
+  --accent: light-dark(#f4f1ee, #282624);
+  --accent-foreground: light-dark(#2a2522, #f0eeeb);
+  --destructive: light-dark(#e62b34, #bb061e);
+  --destructive-foreground: light-dark(#fcfcfc, #f8f8f8);
+  --border: light-dark(#e9e7e6, #282623);
+  --hairline: light-dark(#f0eeec, #302d2b);
+  --input: light-dark(#dcdad8, #282623);
+  --ring: light-dark(#576cb7, #708ade);
+  --radius: 8px;
+
+  /* Status palette — reserved for application health only. */
+  --ghost-active: light-dark(#3bb974, #43c07a);
+  --ghost-stale: light-dark(#efa831, #f5ae39);
+  --ghost-ghosted: light-dark(#e94554, #f44f5d);
+}
+
+/*
+ * Bridge, mirroring frontend-next/src/styles/globals.css so the utility
+ * vocabulary is identical across the two clients: bg-background,
+ * text-muted-foreground, border-hairline, font-mono, rounded-md.
+ * Font families are the expo-font names loaded in src/app/_layout.tsx.
+ */
+@layer theme {
+  @theme {
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-hairline: var(--hairline);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-ghost-active: var(--ghost-active);
+    --color-ghost-stale: var(--ghost-stale);
+    --color-ghost-ghosted: var(--ghost-ghosted);
+
+    --font-sans: Geist_400Regular;
+    --font-sans-medium: Geist_500Medium;
+    --font-sans-semibold: Geist_600SemiBold;
+    --font-mono: GeistMono_400Regular;
+    --font-mono-medium: GeistMono_500Medium;
+    --font-serif: InstrumentSerif_400Regular;
+
+    --radius-md: var(--radius);
+  }
+}

@@ -7,7 +7,10 @@ export const authMiddleware: RequestHandler = (
   _res: Response,
   next: NextFunction,
 ) => {
-  const token = req.cookies?.['accessToken'] as string | undefined
+  // Web sends the HTTP-only cookie; native clients have no cookie jar and send
+  // `Authorization: Bearer <accessToken>` instead (d-0cc1x6).
+  const bearer = /^Bearer (.+)$/i.exec(req.headers?.authorization ?? '')?.[1]
+  const token = bearer ?? (req.cookies?.['accessToken'] as string | undefined)
   if (!token) {
     next(new AppError('UNAUTHORIZED', 'Authentication required'))
     return
