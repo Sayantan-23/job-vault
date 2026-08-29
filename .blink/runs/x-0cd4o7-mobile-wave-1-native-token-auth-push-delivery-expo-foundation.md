@@ -4,7 +4,7 @@ title: 'Mobile wave 1 — native token auth, push delivery, Expo foundation'
 status: running
 tier: subagents
 created: '2026-08-29T08:52:55Z'
-updated: '2026-08-29T09:03:43Z'
+updated: '2026-08-29T09:23:50Z'
 tags: []
 tasks:
   - t-0ccxkj
@@ -26,7 +26,7 @@ lanes:
     attempts: 0
     wave: 1
   - task: t-0ccxkk
-    state: dispatched
+    state: ready
     attempts: 0
     wave: 1
 ---
@@ -36,3 +36,4 @@ lanes:
 - 2026-08-29T08:55:02Z — wave 1 dispatched on branch slice-mobile-wave-1: t-0ccxkj, t-0009, t-0ccxkk
 - 2026-08-29T09:03:26Z — t-0ccxkj: checks green at 2427a11 (76 tests, typecheck, lint) — no api-router or schema edits
 - 2026-08-29T09:03:43Z — t-0009: checks green at 23b0ec8 (41 tests, typecheck, lint, migration 0015 applied)
+- 2026-08-29T09:23:50Z — t-0ccxkk: mobile tests/typecheck/lint green at f7aadfd; android bundle builds; device screenshot NOT run (no emulator image installed)
