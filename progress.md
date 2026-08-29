@@ -549,6 +549,37 @@ Personas (AI-structured backgrounds) → tailored **résumés** (LaTeX `.tex` + 
 - [x] **Two tests were guarding nothing, and both were rebuilt to fail.** `ranks an FTS hit above a substring-only hit` asserted `findIndex === 0` on a **one-row** result set — a tautology that survived deleting the band separation outright. It now seeds a real band-2 competitor (`pre${BODY_TAG}post`, a single lexeme no tsquery arm can reach) and asserts relative order; removing the offsets now fails two tests. The `[%_\\]` escape — the one security-relevant line — had **no test at all**; the new one asserts `'%%'`/`'a%'`/`'_'` return nothing, and fails by dumping the whole account when the escape is removed.
 
 **Deliberately not done:** the word-start/mid-word band split and `coverage` function (unmeasured precision); client-side substring highlighting (prefix hits highlight via `ts_headline`; infix hits matched in the title, which the row already shows); a GIN `gin_trgm_ops` index — `ILIKE '%q%'` cannot use a B-tree, so this is the same unindexed scan `d-0c5wyy` already accepted at ~100 rows per user, and `pg_trgm` is installed so the index is available the day it measures; a mode switch at two vs three characters (full infix from two, which is what was asked for). `job_contacts` remains unsearchable — a separate, untracked gap.
+## Mobile Wave 1 — Expo foundation + session-based auth (on `slice-mobile-wave-1` / `slice-auth-sessions` / `slice-mobile-palette`, 2026-08-29)
+
+> Milestone `m-0cc02t` · Runs `x-0cd4o7` (three lanes) and `x-0cd9x9` (two lanes) · Spec `docs/superpowers/specs/2026-08-28-mobile-app-expo-scope.md` §8. First code of the mobile app, plus the auth defect it uncovered.
+
+**Shipped:** C0 Expo foundation (`t-0ccxkk`) — SDK 57, RN 0.86.3, NativeWind, four-tab shell per `d-0cd3wr`. Native token auth transport (`t-0ccxkj`). Push delivery (`t-0009`) — `device_tokens`, migration `0015`, plain `fetch` to Expo rather than `expo-server-sdk`.
+
+### The bug the mobile work uncovered (`t-0cd55z`, `d-0cdcga`)
+
+**Refresh-token reuse detection had never fired in production.** `hashSecret` stored refresh tokens with **bcrypt, which truncates input at 72 bytes**; a refresh JWT is ~171 chars and two tokens for the same user share their first 72 — `iat`, `exp` and the signature all sit past the cut. `bcrypt.compare(b, hash(a))` returned **true**, so replaying a rotated token returned **200**. The existing test compared against the literal `'a-different-token'`, whose first 72 bytes genuinely do differ, so it passed and proved nothing. Blast radius was refresh tokens only: API keys are 51 chars and passwords are `.max(72)`, both correct bcrypt uses.
+
+**It was masking a second bug.** `users.refresh_token_hash` was a single column — one refresh token per user. Two devices coexisted *only because* the compare was broken. Fixing the hash alone would have made web and mobile evict each other, so `user_sessions` (migration `0016`) shipped in the same change.
+
+**Two review rounds then found four more HIGH issues, all confirmed empirically:**
+- **Access and refresh tokens were interchangeable** — same secret, no discriminator, so a refresh token was a valid `Bearer` credential. A thief never had to call `/refresh`, making the whole revocation mechanism decorative. Mirror case: any 15-minute access token posted to `/refresh` deleted every session for that user. Fixed with a `typ` claim; `verifyToken(token, typ)` takes the expected kind as a **required argument**.
+- **Concurrent rotation orphaned a token**, then revoked every device on the next refresh. New regression — bcrypt had masked it.
+- **Three concurrent refreshes 401'd the third caller**, which the frontend treats as a dead session, *and* wrote a false reuse alarm for an honest client.
+- **The grace arm re-rotated**, demoting the winner's token to a 15s life.
+
+Final shape: rotation is **one atomic UPDATE** accepting the current hash or the previous one inside a **15s grace window**, and the grace arm returns an **access token only** so racers cannot demote each other. Verified independently: three parallel refreshes → 200/200/200, exactly one refresh token issued, one session row. Grace duration matches Auth0's "Rotation Overlap Period" and Okta's `leeway` (capped at 60s); both are one-token-deep, as ours is.
+
+### Mobile palette and the tab bar corner (`t-0cd9jx`)
+
+**Nothing rendered.** Every token in `mobile/src/global.css` was wrapped in CSS `light-dark()`, which `react-native-css@3.0.7` does not implement: lightningcss lowers it inside a custom property to a `var()` pair, and `metro.config.js` sets `inlineVariables: false`, so the runtime stringified `"#706b66,#96918c"` as a colour. Zero warm-toned pixels on screen. **Every gate passed** — `expo export` succeeded, jest passed, and grepping the compiled bundle found the token string present. A bundle grep cannot distinguish "present" from "parses"; only rendering can, which is the argument for having blocked on the device screenshot.
+
+**The corner curved the wrong way.** C0 read "rounded top corners" literally as `rounded-t-[20px]` on the bar. Measured against the user's reference, that is mirrored — and the reference is **not** an inverted corner at all: the page content has rounded **bottom** corners with the bar colour behind, which is what makes it read as OS chrome. One radius moved between elements; no mask, no SVG, no dependency.
+
+**Then it was invisible.** The full-width hairline drew a straight line across the curve, and `--card` #ffffff against `--background` #fefcf9 is 1–3 of 255. Border removed entirely (the reference has none — the contrast *is* the boundary) and the bar surface went dark in light mode via `--tab-bar*` tokens. Contrast 1–3/255 → **18.39:1**. User signed it off on device.
+
+**Deliberately deferred:** mobile dark mode (`t-0cdegw`) — this stack drops **conditional root variables**, proven with four device tests; the fix is NativeWind's `vars` + `VariableContextProvider`, not `dark:` on every utility. Cross-tab refresh lock (`t-0cdbwh`) — the web client's single-flight is a module-scope promise, so it de-duplicates per *tab*; the server grace window is a safety net for jitter, not a substitute. Mobile serif still Instrument Serif where web uses Newsreader (`t-0cd5ka`). Tab bar polish (`t-0cdfyq`).
+
+
 
 >
 > The sections from here to the end are the pre-migration checklist. The stacks
