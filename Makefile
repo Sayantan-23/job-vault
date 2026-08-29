@@ -176,3 +176,19 @@ clean: ## Stop the stack and remove volumes + orphans
 	@read -p "Remove containers AND volumes (database included)? [y/N] " ok; \
 	 [ "$$ok" = "y" ] || { echo "aborted"; exit 1; }
 	$(DC) down -v --remove-orphans
+
+# --- Mobile (Expo) -----------------------------------------------------------
+# The documented exception to "everything goes through Compose": Metro runs on
+# the host, because it must be reachable from a phone or emulator on the LAN and
+# needs the Android SDK. It therefore reads mobile/.env, not the root .env.
+
+.PHONY: mobile mobile-android test-mobile
+
+mobile: ## Start the Expo dev server on the host (mobile/, not in Compose)
+	cd mobile && npx expo start
+
+mobile-android: ## Build + run a local Android dev build (free, no EAS account)
+	cd mobile && npx expo run:android
+
+test-mobile: ## Mobile tests (jest-expo + React Native Testing Library)
+	npm --prefix mobile test

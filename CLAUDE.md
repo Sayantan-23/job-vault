@@ -95,6 +95,12 @@ committed **`.env.example`**.
 - The one exception: Next can only auto-load env files from its own directory, so
   a **host-run** `npm run dev` in `frontend-next/` needs `.env.local` (copy
   `frontend-next/.env.example`). It holds no secrets. Under Docker it is unused.
+- The second exception is `mobile/.env` (`EXPO_PUBLIC_API_URL`, copied from
+  `mobile/.env.example`): Metro is **not in Compose** — it runs on the host so a
+  phone/emulator can reach it and so it can use the Android SDK — and therefore
+  cannot read the root `.env`. It holds no secrets. Mobile is likewise the
+  documented exception to "everything goes through the Makefile": `make mobile` /
+  `make mobile-android` shell out to `npx expo` on the host, not into a container.
 - Host ports `5432`/`3000`/`3001` are taken on this machine, hence
   `DB_PORT_EXTERNAL=5433`, `BACKEND_PORT=3100`, `FRONTEND_PORT=8080`. Keep
   `DATABASE_URL`'s port in sync with `DB_PORT_EXTERNAL` (host runs use it).
