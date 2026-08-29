@@ -1,7 +1,7 @@
 ---
 id: t-0cd9jx
 title: "Mobile palette does not render, and the bar corner curves the wrong way"
-status: backlog
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T10:40:00Z
 updated: 2026-08-29T11:20:00Z
