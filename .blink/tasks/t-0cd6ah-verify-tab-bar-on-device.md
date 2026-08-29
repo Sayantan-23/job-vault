@@ -1,10 +1,10 @@
 ---
 id: t-0cd6ah
 title: "Screenshot the tab bar on a real device before C2 hardens anything"
-status: backlog
+status: done
 milestone: m-0cc02t
 created: 2026-08-29T09:42:00Z
-updated: 2026-08-29T09:42:00Z
+updated: 2026-08-29T10:45:00Z
 estimate: XS
 decisions: [d-0cd3wr]
 tags: [mobile, verification]
@@ -32,3 +32,26 @@ the images and reports — do not read them into the main thread.
 
 Blocks hardening in C2 ([[t-0ccxkm]]): restyling components against a bar nobody
 has looked at is how a wrong silhouette gets baked in.
+
+---
+
+**Done 2026-08-29.** Ran on a physical OnePlus CPH2691 (`BUILD SUCCESSFUL in
+23m 58s`, no file change needed; Gradle 9.3.1 and NDK 27.1 self-installed, no
+emulator image touched). `mobile/android/` is gitignored, so reruns are
+incremental.
+
+**Geometry: every claim in [[d-0cd3wr]] holds.** Four tabs in the right order in
+equal 316px slots; full-bleed 0..1264; rounded top corners only; bar bottom 2725
+against a 2780 screen, so the 55px gesture inset is covered; no elevation; no
+frosted glass. The FAB sits at `[998,2259][1194,2455]` against a bar top of
+2511 — a 56px gap, 20dp right margin, overlapping no tab target — and hide-on-
+scroll-down / return-on-scroll-up was confirmed through the a11y tree.
+
+**Material: unverifiable, because the palette does not render.** Filed as
+[[t-0cd9jx]]. The bar surface, the indigo capsule and the icons are all
+invisible, and the hairline renders as a solid black rule. Re-check those four
+things after that task lands; the geometry above does not need re-litigating.
+
+Note for whoever reruns this: `npx expo run:android --device 1d8a211` fails with
+`Could not find device with name` — the flag wants a display name. Plain
+`npx expo run:android` picks the single connected device.
