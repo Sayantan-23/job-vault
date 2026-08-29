@@ -8,37 +8,96 @@
  * warm-stone neutral, flat muted-indigo accent.
  *
  * The web file writes oklch(); these are the same colours resolved to sRGB,
- * because React Native has no oklch parser. Light and dark are paired with
- * light-dark() so the whole palette follows the OS colour scheme with no
- * class toggling.
+ * because React Native has no oklch parser.
+ *
+ * Light and dark are two separate blocks, mirroring the web file's shape
+ * (light values on the scope, dark values in an override). They are NOT paired
+ * with light-dark(): Metro runs this file through lightningcss first, which
+ * lowers light-dark() inside a custom property to a var() pair, and
+ * react-native-css — configured inlineVariables:false in metro.config.js —
+ * then hands the runtime an unresolved token list. Every colour silently died
+ * as "#706b66,#96918c is not a valid color or brush" (t-0cd9jx).
+ *
+ * KNOWN GAP — the dark block below is currently inert on device. Measured on a
+ * physical OnePlus CPH2691 with the OS in dark mode: a value set inside
+ * @media (...) { :root { ... } } never reaches the runtime, for
+ * prefers-color-scheme AND for an always-true min-width probe, while the same
+ * edit to the unconditional :root block does apply. The scheme itself IS
+ * detected — a rule-level `dark:` utility flips correctly on the same build.
+ * So conditional *root variables* are the thing this stack drops, not dark mode.
+ * The block is kept because it is the shape we want and costs nothing, but until
+ * it is fixed the app renders its light palette in both schemes. Picking the
+ * replacement mechanism is a design decision, not a cleanup (t-0cd9jx).
  */
 :root {
-  --background: light-dark(#fefcf9, #131110);
-  --foreground: light-dark(#1c1714, #f0eeeb);
-  --card: light-dark(#ffffff, #1a1816);
-  --card-foreground: light-dark(#1c1714, #f0eeeb);
-  --popover: light-dark(#ffffff, #1a1816);
-  --popover-foreground: light-dark(#1c1714, #f0eeeb);
-  --primary: light-dark(#576cb7, #708ade);
-  --primary-foreground: light-dark(#fcfcfc, #090b0f);
-  --secondary: light-dark(#f4f1ee, #282624);
-  --secondary-foreground: light-dark(#2a2522, #f0eeeb);
-  --muted: light-dark(#f4f1ee, #282624);
-  --muted-foreground: light-dark(#706b66, #96918c);
-  --accent: light-dark(#f4f1ee, #282624);
-  --accent-foreground: light-dark(#2a2522, #f0eeeb);
-  --destructive: light-dark(#e62b34, #bb061e);
-  --destructive-foreground: light-dark(#fcfcfc, #f8f8f8);
-  --border: light-dark(#e9e7e6, #282623);
-  --hairline: light-dark(#f0eeec, #302d2b);
-  --input: light-dark(#dcdad8, #282623);
-  --ring: light-dark(#576cb7, #708ade);
+  --background: #fefcf9;
+  --foreground: #1c1714;
+  --card: #ffffff;
+  --card-foreground: #1c1714;
+  --popover: #ffffff;
+  --popover-foreground: #1c1714;
+  --primary: #576cb7;
+  --primary-foreground: #fcfcfc;
+  --secondary: #f4f1ee;
+  --secondary-foreground: #2a2522;
+  --muted: #f4f1ee;
+  --muted-foreground: #706b66;
+  --accent: #f4f1ee;
+  --accent-foreground: #2a2522;
+  --destructive: #e62b34;
+  --destructive-foreground: #fcfcfc;
+  --border: #e9e7e6;
+  --hairline: #f0eeec;
+  --input: #dcdad8;
+  --ring: #576cb7;
   --radius: 8px;
 
+  /*
+   * Tab bar surface. Dark in light mode, mirroring the reference's black bar
+   * under white content: with no border between bar and page, the colour
+   * contrast IS the boundary (d-0cd3wr, second amendment). Its own tokens
+   * rather than borrowed ones, so t-0cdegw can invert the bar for dark mode as
+   * a token change. Values are the palette's own dark surface/foreground tones,
+   * not new colours. No dark-mode counterparts here on purpose — that pairing
+   * is t-0cdegw's call, and the block below does not apply on device anyway.
+   */
+  --tab-bar: #131110;
+  --tab-bar-foreground: #f0eeeb;
+  --tab-bar-muted: #96918c;
+
   /* Status palette — reserved for application health only. */
-  --ghost-active: light-dark(#3bb974, #43c07a);
-  --ghost-stale: light-dark(#efa831, #f5ae39);
-  --ghost-ghosted: light-dark(#e94554, #f44f5d);
+  --ghost-active: #3bb974;
+  --ghost-stale: #efa831;
+  --ghost-ghosted: #e94554;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #131110;
+    --foreground: #f0eeeb;
+    --card: #1a1816;
+    --card-foreground: #f0eeeb;
+    --popover: #1a1816;
+    --popover-foreground: #f0eeeb;
+    --primary: #708ade;
+    --primary-foreground: #090b0f;
+    --secondary: #282624;
+    --secondary-foreground: #f0eeeb;
+    --muted: #282624;
+    --muted-foreground: #96918c;
+    --accent: #282624;
+    --accent-foreground: #f0eeeb;
+    --destructive: #bb061e;
+    --destructive-foreground: #f8f8f8;
+    --border: #282623;
+    --hairline: #302d2b;
+    --input: #282623;
+    --ring: #708ade;
+
+    --ghost-active: #43c07a;
+    --ghost-stale: #f5ae39;
+    --ghost-ghosted: #f44f5d;
+  }
 }
 
 /*
@@ -69,6 +128,9 @@
     --color-hairline: var(--hairline);
     --color-input: var(--input);
     --color-ring: var(--ring);
+    --color-tab-bar: var(--tab-bar);
+    --color-tab-bar-foreground: var(--tab-bar-foreground);
+    --color-tab-bar-muted: var(--tab-bar-muted);
     --color-ghost-active: var(--ghost-active);
     --color-ghost-stale: var(--ghost-stale);
     --color-ghost-ghosted: var(--ghost-ghosted);

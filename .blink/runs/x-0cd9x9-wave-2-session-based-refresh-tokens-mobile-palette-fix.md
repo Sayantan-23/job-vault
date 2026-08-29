@@ -4,7 +4,7 @@ title: 'Wave 2 — session-based refresh tokens, mobile palette fix'
 status: running
 tier: subagents
 created: '2026-08-29T10:46:21Z'
-updated: '2026-08-29T11:42:48Z'
+updated: '2026-08-29T11:42:58Z'
 tags: []
 tasks:
   - t-0cd55z
@@ -21,7 +21,7 @@ lanes:
     attempts: 0
     wave: 1
   - task: t-0cd9jx
-    state: pending
+    state: dispatched
     attempts: 0
     wave: 1
 ---

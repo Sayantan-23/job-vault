@@ -135,3 +135,43 @@ mask library. **We do not need it.** Do not build it.
 Everything else in this decision stands: the geometry was verified correct on
 device — four tabs, full-bleed, safe-area paint, and the FAB's clearance,
 placement and hide-on-scroll all pass.
+
+---
+
+## Amendment 2026-08-29 (second) — no top border, dark bar surface
+
+The first amendment moved the radius to the content. On device that was
+geometrically exact (20.0 logical px, symmetric) and **visually invisible**, and
+the user read the bar as "a fully straight top … a different section". Two causes,
+both material rather than geometric:
+
+1. **The hairline overrode the curve.** `border-t border-hairline` ran the bar's
+   **full width**, including behind both rounded corners — a straight 1pt line
+   across the top of a curved boundary. The straight line wins the eye.
+2. **No contrast.** `--card` #ffffff against `--background` #fefcf9 is 1–3 of 255.
+   The curve only read under magnification.
+
+The reference has **no border between bar and content at all**. The colour
+contrast *is* the boundary, which is exactly what makes it read as OS chrome: a
+card lifted off a system surface, not two panels with a rule between them.
+
+**Superseding the original "hairline top border":**
+
+- **The bar has no top border.** Remove it rather than shortening it to clear the
+  corners — the reference has none, and any straight segment reintroduces the
+  problem.
+- **The bar surface is dark in light mode**, mirroring the reference's black bar
+  under white content. Chosen by the user over a warm-stone `--muted` #f4f1ee,
+  which measured only ~4% separation from the page and would have stayed quiet.
+  Trialled deliberately: *"if it does not look good then we will think of
+  something else."*
+- **Dedicated tokens, not borrowed ones.** `--tab-bar`, `--tab-bar-foreground`,
+  `--tab-bar-muted` — so the surface is semantically a surface rather than
+  `--foreground` pressed into service, and so [[t-0cdegw]] can invert it for dark
+  mode as a token change rather than a component change.
+- The active capsule stays flat muted-indigo `--primary` #576cb7, which holds up
+  on a dark surface. Inactive tabs use `--tab-bar-muted`.
+
+Unchanged and already verified on device: four tabs, full-bleed, safe-area paint,
+rounded **bottom** corners on the content, and the FAB's clearance, placement and
+hide-on-scroll.

@@ -57,53 +57,52 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   }));
 
   return (
-    // Only the two rounded top corners reveal this layer, which is why it is the
-    // page background rather than the bar's own surface.
-    <View className="bg-background">
+    // Square-edged, full-bleed and deliberately borderless: a straight 1pt rule
+    // across the top read louder than the content's curve and made the bar look
+    // like a separate section. The dark surface against the near-white page is
+    // the boundary now (d-0cd3wr, second amendment). The rounded corner belongs
+    // to the *page*, which paints this colour behind its own curved bottom.
+    <View className="bg-tab-bar" style={{ paddingBottom: insets.bottom }}>
       <View
-        className="rounded-t-[20px] border-t border-hairline bg-card"
-        style={{ paddingBottom: insets.bottom }}>
-        <View
-          className="flex-row"
-          style={{ height: TAB_BAR_HEIGHT }}
-          onLayout={(event: LayoutChangeEvent) => setBarWidth(event.nativeEvent.layout.width)}>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              { position: 'absolute', top: CAPSULE_INSET_Y, bottom: CAPSULE_INSET_Y },
-              capsuleStyle,
-            ]}>
-            <View className="flex-1 rounded-full bg-primary" />
-          </Animated.View>
+        className="flex-row"
+        style={{ height: TAB_BAR_HEIGHT }}
+        onLayout={(event: LayoutChangeEvent) => setBarWidth(event.nativeEvent.layout.width)}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            { position: 'absolute', top: CAPSULE_INSET_Y, bottom: CAPSULE_INSET_Y },
+            capsuleStyle,
+          ]}>
+          <View className="flex-1 rounded-full bg-primary" />
+        </Animated.View>
 
-          {state.routes.map((route, index) => {
-            const meta = TAB_META[route.name];
-            if (!meta) return null;
-            const focused = state.index === index;
-            const tone = focused ? 'text-primary-foreground' : 'text-muted-foreground';
+        {state.routes.map((route, index) => {
+          const meta = TAB_META[route.name];
+          if (!meta) return null;
+          const focused = state.index === index;
+          const tone = focused ? 'text-primary-foreground' : 'text-tab-bar-muted';
 
-            return (
-              <Pressable
-                key={route.key}
-                accessibilityRole="button"
-                accessibilityState={focused ? { selected: true } : {}}
-                className="flex-1 items-center justify-center gap-1"
-                onPress={() => {
-                  const event = navigation.emit({
-                    type: 'tabPress',
-                    target: route.key,
-                    canPreventDefault: true,
-                  });
-                  if (!focused && !event.defaultPrevented) {
-                    navigation.navigate(route.name, route.params);
-                  }
-                }}>
-                <Icon icon={meta.icon} size={20} strokeWidth={1.75} className={tone} />
-                <Text className={`font-mono text-[10px] ${tone}`}>{meta.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+          return (
+            <Pressable
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : {}}
+              className="flex-1 items-center justify-center gap-1"
+              onPress={() => {
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!focused && !event.defaultPrevented) {
+                  navigation.navigate(route.name, route.params);
+                }
+              }}>
+              <Icon icon={meta.icon} size={20} strokeWidth={1.75} className={tone} />
+              <Text className={`font-mono text-[10px] ${tone}`}>{meta.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );

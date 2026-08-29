@@ -1,7 +1,7 @@
 ---
 id: t-0cd9jx
 title: "Mobile palette does not render, and the bar corner curves the wrong way"
-status: backlog
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T10:40:00Z
 updated: 2026-08-29T11:20:00Z
@@ -91,3 +91,22 @@ what the reference shows.
 Both fixes ship in one device rebuild — the first Android build took 24 minutes,
 and `mobile/android/` only exists in the primary checkout, so this task cannot
 run in a worktree.
+
+---
+
+## Round 2 — the corner is invisible (user feedback on device, 2026-08-29)
+
+Palette and corner geometry both landed and were pixel-verified, but the user
+looked at the device and reported the bar still reads as "a fully straight top …
+a different section". They were right. See the **second amendment** in
+[[d-0cd3wr]] for the full reasoning; the work is:
+
+- **Remove the bar's top border entirely.** Do not shorten it to clear the
+  corners — the reference has no border at all, and the straight full-width
+  hairline is what was overriding the curve.
+- **Dark bar surface in light mode**, via new `--tab-bar`, `--tab-bar-foreground`
+  and `--tab-bar-muted` tokens. Do not borrow `--foreground` as a surface.
+- Active capsule stays `--primary`; inactive tabs use `--tab-bar-muted`.
+
+This is an explicit trial — the user's words were *"if it does not look good then
+we will think of something else."* Screenshot it and say plainly how it reads.
