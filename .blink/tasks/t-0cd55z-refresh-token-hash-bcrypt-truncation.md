@@ -1,9 +1,9 @@
 ---
 id: t-0cd55z
 title: "Refresh-token reuse detection does not fire — bcrypt truncates at 72 bytes"
-status: in_progress
+status: done
 created: 2026-08-29T09:05:00Z
-updated: 2026-08-29T10:05:00Z
+updated: 2026-08-29T13:10:00Z
 estimate: M
 tags: [backend, auth, security]
 ---
@@ -86,3 +86,36 @@ one leaves the other working.
 
 Do not fold this into a mobile chunk — it is not mobile work, though C1 depends
 on item 3 landing.
+
+---
+
+**Done 2026-08-29**, merged to develop. Gates green: 767 backend, 648 frontend,
+3 mobile.
+
+Two review rounds found four HIGH issues beyond the original defect, all of
+which shipped fixed:
+
+1. **Access and refresh tokens were interchangeable** — same secret, no type
+   discriminator, so a refresh token was a valid Bearer credential. A thief
+   never had to call `/refresh`, which made this task's whole revocation
+   mechanism decorative against its own threat model. The mirror case: any
+   15-minute access token posted to `/refresh` deleted every session for that
+   user. Fixed with a `typ` claim; `verifyToken(token, typ)` takes the expected
+   kind as a **required argument** so no call site can forget it.
+2. **Concurrent rotation orphaned a token, then revoked every device.** Fixed
+   with one atomic UPDATE plus the grace window in [[d-0cdcga]].
+3. **Three concurrent refreshes 401'd the third caller**, which the frontend
+   treats as a dead session — and wrote a false reuse alarm for an honest
+   client. Fixed by collapsing read-CAS-retry into a single statement.
+4. **The grace arm re-rotated**, demoting the winner's token to a 15s life.
+   Fixed by returning an access token only on that arm.
+
+Verified independently, not just from the lane's report: three parallel
+refreshes → 200/200/200, exactly one refresh token issued, three access tokens,
+one session row. Refresh-as-Bearer → 401. Access-token-to-`/refresh` → 401 with
+the session surviving.
+
+Follow-ups deliberately left open: [[t-0cdbwh]] (the web client's single-flight
+is per-tab; needs the Web Locks API — the client half of the same bug), and the
+`authLimiter` bucket that keys every proxy-side refresh on the Next container's
+IP (pre-existing, untouched here).
