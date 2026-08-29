@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkk
 title: "C0 — Expo foundation: scaffold, tokens, fonts, tab shell, deep links"
-status: in_progress
+status: done
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T08:10:00Z
+updated: 2026-08-29T09:40:00Z
 estimate: M
 decisions: [d-0cc2vk, d-0cc24z, d-0cc2w5]
 tags: [mobile, expo, foundation]

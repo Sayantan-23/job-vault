@@ -1,10 +1,10 @@
 ---
 id: t-0009
 title: Mobile push delivery — device tokens and Expo send
-status: in_progress
+status: done
 milestone: m-0cc02t
 created: 2026-06-04
-updated: 2026-08-29T08:10:00Z
+updated: 2026-08-29T09:40:00Z
 estimate: L
 tags: [notifications, backend, mobile]
 ---
