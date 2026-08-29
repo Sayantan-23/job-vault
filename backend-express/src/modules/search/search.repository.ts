@@ -114,6 +114,18 @@ const SNIPPET_SOURCE = sql`regexp_replace(translate(hits.snippet_source, ${SENTI
 // parses its argument as tsquery syntax and a stray `&` or `!` is a 500.
 // A term of only punctuation yields no words; fall back to plainto alone
 // rather than emitting to_tsquery(''), which is a syntax error.
+//
+// ponytail: the OR costs multi-word proximity. It moves the query's root node
+// from OP_AND to OP_OR, and calc_rank dispatches on the root — OP_AND goes to
+// calc_rank_and, which weights by word_distance, everything else to
+// calc_rank_or, which ignores adjacency. Measured on the seeded dev DB:
+// `staff engineer` against "Staff Frontend Engineer" scored 0.4963 before the
+// OR and 0.0827 after, with small real reorderings inside band 1. Accepted
+// because the alternative — dropping the plainto arm to keep an OP_AND root —
+// loses plainto's compound tokenization: `a@b.com` is one lexeme to plainto,
+// while the word-split emits `a:* & b:* & com:*`, which never matches it.
+// Upgrade path: keep both arms but rank on the plainto arm alone
+// (ts_rank(vector, plainto_tsquery(q)) as a tiebreak) if adjacency matters.
 function tsQuery(q: string): SQL {
   const words = q.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(' ').filter(Boolean)
   if (words.length === 0) return sql`plainto_tsquery('english', ${q})`

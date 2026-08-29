@@ -45,10 +45,11 @@ let personaId: string
 let otherJobId: string
 let rankBodyJobId: string
 let rankNearJobId: string
+let substrJobId: string
 
 async function seedFor(
   uid: string,
-): Promise<{ jobId: string; personaId: string; rankBodyJobId: string; rankNearJobId: string }> {
+): Promise<{ jobId: string; personaId: string; rankBodyJobId: string; rankNearJobId: string; substrJobId: string }> {
   const db = getDb()
   const jobRows = await db
     .insert(jobs)
@@ -83,20 +84,30 @@ async function seedFor(
   if (!job || !persona || !rankBody || !rankNear) throw new Error('failed to seed job/persona')
 
   // Short bodies on purpose: under MaxWords the whole document is the fragment.
-  await db.insert(jobs).values([
-    {
-      userId: uid,
-      title: 'Markdown body',
-      company: `${word()} Systems`,
-      snapshotMarkdown: `Full-Stack **${MD_TAG}** ### role with \`code\` and ~~cuts~~.`,
-    },
-    {
-      userId: uid,
-      title: 'Spoofed sentinel body',
-      company: `${word()} Systems`,
-      snapshotMarkdown: `Scraped \u0002 text mentions ${SPOOF_TAG} once.`,
-    },
-  ])
+  // The last row is the band-separation competitor for BODY_TAG: `pre<tag>post`
+  // is a SINGLE lexeme, so neither tsquery arm can reach it — plainto wants the
+  // whole tag, and the prefix arm `<tag>:*` anchors at 'pre'. ilike still finds
+  // it, so it lands in the substring band and can never enter the FTS band.
+  const extraRows = await db
+    .insert(jobs)
+    .values([
+      {
+        userId: uid,
+        title: 'Markdown body',
+        company: `${word()} Systems`,
+        snapshotMarkdown: `Full-Stack **${MD_TAG}** ### role with \`code\` and ~~cuts~~.`,
+      },
+      {
+        userId: uid,
+        title: 'Spoofed sentinel body',
+        company: `${word()} Systems`,
+        snapshotMarkdown: `Scraped \u0002 text mentions ${SPOOF_TAG} once.`,
+      },
+      { userId: uid, title: `pre${BODY_TAG}post`, company: `${word()} Systems` },
+    ])
+    .returning()
+  const substrJob = extraRows[2]
+  if (!substrJob) throw new Error('failed to seed substring-band job')
 
   await db.insert(generatedResumes).values([
     { userId: uid, personaId: persona.id, title: 'Platform resume', instructions: 'Lead with platform work.', content: C },
@@ -123,7 +134,13 @@ async function seedFor(
       answerLong: 'A longer version of the same answer about the platform work.',
     })),
   )
-  return { jobId: job.id, personaId: persona.id, rankBodyJobId: rankBody.id, rankNearJobId: rankNear.id }
+  return {
+    jobId: job.id,
+    personaId: persona.id,
+    rankBodyJobId: rankBody.id,
+    rankNearJobId: rankNear.id,
+    substrJobId: substrJob.id,
+  }
 }
 
 beforeAll(async () => {
@@ -147,6 +164,7 @@ beforeAll(async () => {
   personaId = mineSeed.personaId
   rankBodyJobId = mineSeed.rankBodyJobId
   rankNearJobId = mineSeed.rankNearJobId
+  substrJobId = mineSeed.substrJobId
   // User B gets byte-identical rows, so every assertion below also proves scoping.
   const otherSeed = await seedFor(otherUserId)
   otherJobId = otherSeed.jobId
@@ -171,13 +189,20 @@ describe('searchRepository (real DB)', () => {
 
   it('finds a job by a term that only appears in its scraped body', async () => {
     const results = await searchRepository.search(userId, BODY_TAG)
-    expect(results.map((r) => r.id)).toEqual([jobId])
+    // This row is reachable through snapshot_markdown and nothing else. It is no
+    // longer the only match — the substring-band competitor carries the tag in
+    // its title — so the ranking claim lives in its own test below.
+    expect(results.map((r) => r.id)).toContain(jobId)
     // Highlights are delimited with STX/ETX control characters, never HTML —
     // snapshot_markdown is third-party scraped text.
-    expect(results[0]?.snippet).toContain('\u0002')
-    expect(results[0]?.snippet).not.toContain('<b>')
+    const hit = results.find((r) => r.id === jobId)
+    expect(hit?.snippet).toContain('\u0002')
+    expect(hit?.snippet).not.toContain('<b>')
   })
 
+  // Redundant coverage since the substring band landed: `title ilike '%...%'`
+  // matches a prefix too, so this passes with the tsquery prefix arm removed.
+  // The body test below is the actual prefix regression guard.
   it('matches a prefix of a word in a title', async () => {
     const results = await searchRepository.search(userId, TITLE_TAG.slice(0, 6))
     expect(results.some((r) => r.id === jobId)).toBe(true)
@@ -196,11 +221,24 @@ describe('searchRepository (real DB)', () => {
   })
 
   it('ranks an FTS hit above a substring-only hit', async () => {
-    // BODY_TAG is an FTS hit on one job; nothing else can reach band 1 for it,
-    // so an FTS hit must sort first. The same guarantee the two-band test makes
-    // for trigram, now for the middle band.
-    const results = await searchRepository.search(userId, BODY_TAG)
-    expect(results.findIndex((r) => r.id === jobId)).toBe(0)
+    // Both rows carry BODY_TAG, but only the body job can reach band 1: the
+    // other's title is the single lexeme `pre<tag>post`, an ilike match and
+    // nothing more. Band 1 (+2.0) must outrank band 2 (+1.0) — drop the offsets
+    // and the body's ts_rank (~0.06) loses to the title's similarity (~0.43).
+    // The same guarantee the two-band test makes for trigram, now for the middle band.
+    const ids = (await searchRepository.search(userId, BODY_TAG)).map((r) => r.id)
+    expect(ids).toContain(jobId)
+    expect(ids).toContain(substrJobId)
+    expect(ids.indexOf(jobId)).toBeLessThan(ids.indexOf(substrJobId))
+  })
+
+  // The escape in substringMatch is the one security-relevant line in the query:
+  // an unescaped '%' or '_' from the user turns band 2 into `ilike '%%'`, which
+  // returns the whole account. None of these appear literally in the fixture.
+  it('treats LIKE metacharacters as literals, not wildcards', async () => {
+    for (const wildcard of ['%%', 'a%', '_']) {
+      expect(await searchRepository.search(userId, wildcard)).toEqual([])
+    }
   })
 
   it('finds a persona through a one-character typo in its name (pg_trgm)', async () => {
@@ -275,6 +313,7 @@ describe('searchRepository (real DB)', () => {
     expect(titleOnly[0]?.type).toBe('resume')
     expect(titleOnly[0]?.snippet).toBeNull()
     // A body match still gets its highlighted excerpt.
-    expect((await searchRepository.search(userId, BODY_TAG))[0]?.snippet).toContain('\u0002')
+    const body = await searchRepository.search(userId, BODY_TAG)
+    expect(body.find((r) => r.id === jobId)?.snippet).toContain('\u0002')
   })
 })
