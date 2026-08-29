@@ -96,6 +96,11 @@ anything — the user has signed off on the idea, not on how it looks.
 
 ---
 
+**Reference image:** `docs/assets/bottom-bar-reference.png` — the photo the user
+supplied and the source of every measurement in the amendments below. It is a
+tilted phone, so nothing in it is axis-aligned; the numbers were extracted from
+boundary sampling, not eyeballed.
+
 ## Amendment 2026-08-29 — the corner curves the other way
 
 This decision said "rounded **top** corners only". On-device verification
