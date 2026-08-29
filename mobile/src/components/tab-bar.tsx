@@ -57,53 +57,50 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   }));
 
   return (
-    // Only the two rounded top corners reveal this layer, which is why it is the
-    // page background rather than the bar's own surface.
-    <View className="bg-background">
+    // Square-edged and full-bleed. The rounded corner in the reference belongs to
+    // the *page*: the screen paints this bar's colour behind content whose bottom
+    // corners are rounded, so the curve arcs into the bar (d-0cd3wr amendment).
+    <View className="border-t border-hairline bg-card" style={{ paddingBottom: insets.bottom }}>
       <View
-        className="rounded-t-[20px] border-t border-hairline bg-card"
-        style={{ paddingBottom: insets.bottom }}>
-        <View
-          className="flex-row"
-          style={{ height: TAB_BAR_HEIGHT }}
-          onLayout={(event: LayoutChangeEvent) => setBarWidth(event.nativeEvent.layout.width)}>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              { position: 'absolute', top: CAPSULE_INSET_Y, bottom: CAPSULE_INSET_Y },
-              capsuleStyle,
-            ]}>
-            <View className="flex-1 rounded-full bg-primary" />
-          </Animated.View>
+        className="flex-row"
+        style={{ height: TAB_BAR_HEIGHT }}
+        onLayout={(event: LayoutChangeEvent) => setBarWidth(event.nativeEvent.layout.width)}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            { position: 'absolute', top: CAPSULE_INSET_Y, bottom: CAPSULE_INSET_Y },
+            capsuleStyle,
+          ]}>
+          <View className="flex-1 rounded-full bg-primary" />
+        </Animated.View>
 
-          {state.routes.map((route, index) => {
-            const meta = TAB_META[route.name];
-            if (!meta) return null;
-            const focused = state.index === index;
-            const tone = focused ? 'text-primary-foreground' : 'text-muted-foreground';
+        {state.routes.map((route, index) => {
+          const meta = TAB_META[route.name];
+          if (!meta) return null;
+          const focused = state.index === index;
+          const tone = focused ? 'text-primary-foreground' : 'text-muted-foreground';
 
-            return (
-              <Pressable
-                key={route.key}
-                accessibilityRole="button"
-                accessibilityState={focused ? { selected: true } : {}}
-                className="flex-1 items-center justify-center gap-1"
-                onPress={() => {
-                  const event = navigation.emit({
-                    type: 'tabPress',
-                    target: route.key,
-                    canPreventDefault: true,
-                  });
-                  if (!focused && !event.defaultPrevented) {
-                    navigation.navigate(route.name, route.params);
-                  }
-                }}>
-                <Icon icon={meta.icon} size={20} strokeWidth={1.75} className={tone} />
-                <Text className={`font-mono text-[10px] ${tone}`}>{meta.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+          return (
+            <Pressable
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={focused ? { selected: true } : {}}
+              className="flex-1 items-center justify-center gap-1"
+              onPress={() => {
+                const event = navigation.emit({
+                  type: 'tabPress',
+                  target: route.key,
+                  canPreventDefault: true,
+                });
+                if (!focused && !event.defaultPrevented) {
+                  navigation.navigate(route.name, route.params);
+                }
+              }}>
+              <Icon icon={meta.icon} size={20} strokeWidth={1.75} className={tone} />
+              <Text className={`font-mono text-[10px] ${tone}`}>{meta.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
