@@ -45,7 +45,7 @@ Audited against `frontend-next/package.json` and `src/`.
 | Layer | Detail |
 |---|---|
 | 25 data hooks | `src/hooks/use-*.ts` — TanStack Query v5, zero DOM |
-| API client | `lib/api-client.ts` incl. single-flight silent refresh (auth transport aside) |
+| API client | the single-flight silent-refresh *logic* — but three lines change, see §2.2 |
 | All types + Zod schemas | `src/types/*`, shared with the backend contract |
 | Pure logic | `cover-letter-markdown.ts`, `resume-markup.ts`, the `.tex` deriver, `job-status.ts`, `dashboard-defaults.ts` |
 | Realtime | `socket.io-client` works natively |
@@ -98,6 +98,47 @@ chrome ever collided with the brand.
 
 Note `@expo/ui` `List` is **not** virtualized — jobs and answers lists use
 `FlatList`/`FlashList` regardless.
+
+### 2.2 Transport and reachability — RESOLVED
+
+`lib/api-client.ts` is listed above as reused, and its refresh logic genuinely is.
+Three lines are not, and the first has nothing to do with auth:
+
+| Line | Web | Native |
+|---|---|---|
+| `const API_BASE = ''` (l.5) | relative URL, Next's `/api/*` rewrite resolves it | no page origin and no Next in the loop — needs an **absolute** base |
+| `credentials: 'include'` (l.43) | sends the HTTP-only cookie | meaningless; the cookie jar is not the transport |
+| refresh sets a cookie | server-side | token pair from the body → `expo-secure-store` (`d-0cc1x6`) |
+
+`lib/socket.ts:12` has the same first problem: `io(undefined, …)` connects to the
+page origin. Native must pass the absolute URL **and** `auth: { token }` — the
+URL is the trap next to the documented one.
+
+**Reachability.** No backend change is required: Compose maps
+`"${BACKEND_PORT:-3000}:3000"` with no `127.0.0.1:` prefix, so the API already
+binds all interfaces and is reachable on the LAN. What differs is only *which
+host the device should dial* — `10.0.2.2` on an Android emulator, the machine's
+LAN IP on a physical device. Hardcoding either breaks the other, and both break
+when the IP changes or the machine does.
+
+Derive it from the dev server, which has already solved exactly this:
+
+```ts
+// mobile/src/lib/api-base.ts
+import Constants from 'expo-constants'
+
+// Dev: reuse the host Metro is already reachable at — 10.0.2.2 on an emulator,
+// the LAN IP on a physical device. Prod: baked in at build time.
+export const API_BASE =
+  process.env.EXPO_PUBLIC_API_URL ??
+  `http://${Constants.expoConfig?.hostUri?.split(':')[0] ?? 'localhost'}:3100`
+```
+
+Covers emulator, USB device, Wi-Fi device and both machines with no per-machine
+config. Fallback for a device on another subnet: `adb reverse tcp:3100 tcp:3100`,
+after which `localhost` resolves. CORS is not involved — React Native's `fetch`
+does not enforce it — but `CORS_ORIGINS` would matter the moment anything runs in
+a browser (an Expo web preview), so leave that note standing.
 
 ### The 16 UI primitives
 
@@ -175,15 +216,34 @@ turns out to be genuinely missed, it gets built natively or not at all.
 `frontend-next/src/styles/`. Unistyles 3 is faster and ships no components, but it
 cannot run in Expo Go and would put a second styling idiom across the two clients.
 
-### 3.5 Navigation model — ⚠️ PROPOSED — **ASK THE USER, DO NOT ASSUME**
+### 3.5 Navigation model — RESOLVED 2026-08-29, see `d-0cd3wr`
 
-Expo Router with a bottom tab bar. Proposed tabs: **Jobs · Answers · Timeline ·
-Profile**, with search as a header action and notifications as a header badge.
-The web app's icon rail and speed-dial do not translate.
+An earlier draft proposed **Jobs · Answers · Timeline · Profile** and flagged it
+as unconfirmed. It was wrong in two ways: web's `NAV` is **six** routes, not
+four, and §4.4 had already given the bottom-right corner to the add-job FAB.
 
-**This has never been confirmed.** Put it to the user before building the tab
-shell in C0 — which tabs, in what order, and whether Profile earns a tab at all
-given it is read-only (§4.8). Building it and asking later means rebuilding.
+**Resolved: four tabs, six routes regrouped.**
+
+| Tab | Holds |
+|---|---|
+| Jobs | list, detail, capture |
+| Answers | library, copy chips — **top-level, not inside Vault** |
+| Vault | résumés + cover letters |
+| Activity | timeline **+** notifications, with the unread badge |
+
+Profile, personas and settings leave the bar and hang off a **header avatar**,
+mirroring web's `AccountMenu`. Search stays a header icon.
+
+**Shell.** Full-bleed bar with rounded **top** corners only, painted into the
+bottom safe area — that trio is what makes it read as OS chrome rather than an app
+widget. The **FAB clears the bar entirely**: raised above it, on the right, never
+breaking or notching its top edge. Icon **+** Geist Mono label. Material is ours,
+not the reference's — stone with a hairline border, flat muted indigo, near-zero
+shadow; no frosted glass.
+
+**This cannot use `NativeTabs`** (it renders a real `UITabBar` and will not take a
+custom silhouette) — the bar is a custom `tabBar` component. Full reasoning,
+including the rejected alternatives, in `d-0cd3wr`.
 
 ---
 
@@ -228,10 +288,12 @@ contacts get native affordances the web lacks: tap-to-call, tap-to-email.
 
 Web has a URL-paste form (Cheerio/Turndown scrape) and a manual form.
 
-**Mobile builds:** both, entered from a **floating action button, bottom-right,
-inset from both edges**, which morphs into the add-job surface via the same
-container-transform animation as the web search palette (`d-0cbc74`). Decided
-2026-08-29; revisitable. Plus the reason the app exists — an **Android/iOS
+**Mobile builds:** both, entered from a **floating action button on the right,
+raised clear above the tab bar** (`d-0cd3wr` — it does not break or notch the
+bar's edge), which morphs into the add-job surface via the same
+container-transform animation as the web search palette (`d-0cbc74`). It hides on
+scroll-down and returns on scroll-up, since bar plus FAB otherwise cost ~130pt of
+an 844pt screen. Plus the reason the app exists — an **Android/iOS
 share-sheet target**. Share a URL from any app → JobVault opens with the URL
 prefilled and the scrape already running against the existing
 `POST /api/jobs/scrape`. Zero new backend work.
@@ -327,7 +389,10 @@ the web app — the "consistency before novelty" rule is satisfied for free.
 Small, which is the point. Everything else is already REST and already
 user-scoped.
 
-1. **Native token transport** (§3.2) — new auth mode, no new tables.
+1. **Native token transport** (§3.2) — new auth mode, no new tables. Includes
+   teaching `authMiddleware` to accept `Authorization: Bearer` (it reads the
+   `accessToken` cookie only today) and the socket handshake to accept a token.
+   **Reachability needs nothing here** — see §2.2.
 2. **Push delivery** ([[t-0009]]) — device-token table, migration, Expo push
    send in the notifications service.
 3. **Optional but recommended first:** [[t-0cbm48]] substring search,
@@ -341,7 +406,7 @@ Dependency-ordered. `‖` marks chunks that can run in parallel.
 
 | # | Chunk | Depends on | Notes |
 |---|---|---|---|
-| C0 | Foundation — repo structure, Expo scaffold, NativeWind + tokens + fonts, tab shell | — | Blocks everything |
+| C0 | Foundation — repo structure, Expo scaffold, NativeWind + tokens + fonts, tab shell, **deep-link scheme** | — | Blocks everything. The scheme is one `app.json` line and both C5 and C6 need it |
 | C1 | Auth — native token mode (backend), secure-store, api-client port, login/register | C0 | Blocks all data |
 | C2 | UI primitives — the 16 `components/ui/` equivalents | C0 | ‖ with C1 |
 | C3 | Jobs — list, filters sheet, job detail screen, status change | C1, C2 | The big one |
@@ -351,7 +416,7 @@ Dependency-ordered. `‖` marks chunks that can run in parallel.
 | C7 | Search screen | C3, C4 | |
 | C8 | Cover letters + résumés, read/copy | C1, C2 | ‖ with C3 |
 | C9 | Profile + personas, read-only | C1, C2 | ‖ with C3 |
-| C10 | Settings + polish — deep links, icons, EAS build, store release | all | |
+| C10 | Settings + polish — icons, splash, EAS build, store release | all | Deep links moved to C0 |
 
 Three parallel lanes open after C1/C2: **C3→C5→C7** (jobs spine), **C4**,
 **C8/C9**. C6 joins the first lane once C3 lands.
@@ -377,8 +442,8 @@ Everything below is settled. Nothing in this section needs a decision first.
 
 ### Settled decisions
 
-**Still open — ask, never assume:** the tab shape (§3.5). Everything else below
-is decided.
+**Nothing is open.** The last unconfirmed item, the tab shape, was resolved
+2026-08-29 as `d-0cd3wr`.
 
 | Ref | What |
 |---|---|
@@ -386,25 +451,31 @@ is decided.
 | `d-0cc1x6` | Native token auth in `expo-secure-store`; web keeps cookies |
 | `d-0cc24z` | Native chrome for system moments, our tokens for content; NativeWind |
 | `d-0cc2vk` | `mobile/` standalone; workspaces on a named trigger |
-| `d-0cc2w5` | Android first, on a new `jobvault-mobile` EAS project |
+| `d-0cc2w5` | Android first, on a new `jobvault-mobile` EAS project (EAS itself deferred to C10) |
+| `d-0cd3wr` | Four tabs (Jobs · Answers · Vault · Activity), anchored bar, FAB raised clear above it |
 
-### ⚠️ The user does steps 1–3 themselves
+### ⚠️ The user does step 1 themselves
 
 **Sayantan: this is your part. Do not expect the agent to have done it.**
 
-The Expo project and the EAS link both need your own credentials and a browser
-login, so they cannot be handed off:
+**EAS is deferred to C10** (decided 2026-08-29). Development runs entirely on
+*local* builds — `npx expo run:android`, free and unlimited on a machine with the
+Android SDK — which need no EAS account. So the only prerequisite here is the
+scaffold; `eas login` and `eas init` move to C10 with the store release:
 
 ```bash
-cd /home/sayantan/Projects/job-vault
-npx create-expo-app@latest mobile      # scaffold
-cd mobile
-npx eas-cli@latest login               # opens a browser — your account
-npx eas-cli@latest init                # name it: jobvault-mobile
+cd "$(git rev-parse --show-toplevel)"   # repo root — differs per machine, never hardcode it
+npx create-expo-app@latest mobile       # scaffold — that is all C0 needs
 ```
 
-Do **not** reuse the `sayantan-expo` project id from `expo-prompt.md` — that is
-onboarding boilerplate (`d-0cc2w5`). Say `jobvault-mobile` when `init` asks.
+At C10, and not before, the EAS link happens: `npx eas-cli@latest login` then
+`npx eas-cli@latest init`, named **`jobvault-mobile`**. Do **not** reuse the
+`sayantan-expo` project id `b8aecc62-4896-4f2c-86ab-d42d261adcba` — that was Expo
+onboarding boilerplate, and the file carrying it has been deleted (`d-0cc2w5`).
+
+**Paths in this document are repo-relative on purpose.** This repo is worked on
+from two machines with different home directories; resolve the root with
+`git rev-parse --show-toplevel` rather than typing an absolute path.
 
 Once those three commands are done, the agent picks up from step 4.
 
@@ -413,21 +484,34 @@ Once those three commands are done, the agent picks up from step 4.
 1. `npx create-expo-app@latest mobile` at the repo root. **(user — see above)** Lay it out per
    `expo-project-structure` (§4.12): `src/app` routes-only, `src/screens`,
    `src/components`, kebab-case, colocated tests, `@/*` → `./src/*`.
-2. `npx eas-cli@latest login` — **(user)** it opens a browser. Never ask for or
-   type their credentials.
-3. `npx eas-cli@latest init` — **(user)** name the project **`jobvault-mobile`**.
-   Do *not* reuse `sayantan-expo` (`b8aecc62-4896-4f2c-86ab-d42d261adcba`).
+2. ~~`eas login`~~ — **moved to C10.** Local builds need no EAS account.
+3. ~~`eas init`~~ — **moved to C10.**
 4. NativeWind via the `expo-tailwind-setup` skill. Port the tokens from
    `frontend-next/src/styles/app/theme.css` under **the same names**, so the two
    clients share a vocabulary even while the code is duplicated.
 5. Fonts — Geist, Geist Mono, Instrument Serif — through `expo-font`.
-6. **⚠️ ASK FIRST:** the Expo Router tab shell. Jobs · Answers · Timeline ·
-   Profile is a *proposal* (§3.5), never confirmed. Ask which tabs and in what
-   order before building it.
+6. The tab shell, per `d-0cd3wr` — **no longer an open question**. Four tabs
+   (Jobs · Answers · Vault · Activity) in a custom `tabBar`, not `NativeTabs`.
+   Build it early and screenshot it on a real device before C2 hardens anything:
+   the shape is signed off, how it *looks* is not.
 
 Install native dependencies with `npx expo install`, never raw `npm install`.
-**No EAS build without explicit approval** — 10–20 minutes each, against a
-monthly quota.
+
+**Builds — cloud is gated, local is not.** *Cloud* EAS builds need explicit
+approval: 10–20 minutes each, against a monthly quota. *Local* Android builds
+(`npx expo run:android`) are free, unlimited and take ~2–5 minutes — this machine
+already has `ANDROID_HOME`, `adb` and Java 21. Use local builds for all day-to-day
+native work. iOS has no local path on Linux, which is a second reason for
+Android-first (`d-0cc2w5`).
+
+**Where Expo Go stops.** C0–C4 and C7–C9 run in Expo Go. Two chunks cannot:
+
+- **C5** — `expo-share-intent` ships native code, so it needs a dev build.
+- **C6** — remote push was removed from Expo Go in SDK 53; local notifications
+  still work there, remote does not.
+
+Neither is a blocker, because both are covered by a local `expo run:android`.
+Plan for a dev build to exist by C5, not by C10.
 
 ### Which skills to load
 

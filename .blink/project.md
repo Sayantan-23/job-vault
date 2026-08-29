@@ -2,7 +2,8 @@
 title: job-vault
 status: active
 started: 2026-04-26
-updated: 2026-08-25T12:30:00Z
+updated: 2026-08-29T07:15:35Z
+orchestration: subagents
 ---
 
 JobVault is a "ghost-proof" job-application tracker and AI assistant for one

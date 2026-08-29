@@ -18,3 +18,10 @@ frontend/nul
 
 # Playwright CLI scratch output (screenshots, logs, page dumps)
 .playwright-cli/
+
+# Expo mobile app — Metro/prebuild artifacts. ios/ and android/ are regenerated
+# by `expo prebuild`; committing them fights the config plugins.
+mobile/node_modules/
+mobile/.expo/
+mobile/ios/
+mobile/android/

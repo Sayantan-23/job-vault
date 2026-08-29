@@ -5,7 +5,7 @@ status: planned
 order: 2
 start: 2026-08-28
 created: 2026-08-28T00:00:00Z
-updated: 2026-08-29T00:00:00Z
+updated: 2026-08-29T07:15:35Z
 summary: A native iOS/Android companion to the web app, built on Expo, reusing the existing TypeScript data layer. Capture-first, not a port of every screen.
 tags: [mobile, expo]
 ---
@@ -33,12 +33,18 @@ Answers, Cover-letters and Profile chunks are independent of the Jobs chunk and
 of each other, so they can run in parallel; Capture, Reminders and Search all
 depend on Jobs being real first.
 
-**Where it stands (2026-08-29).** Scoping is done and every architectural
-decision is settled: framework [[d-0cc01s]], auth transport [[d-0cc1x6]],
+**Where it stands (2026-08-29).** Scoping is done, every architectural decision
+is settled — framework [[d-0cc01s]], auth transport [[d-0cc1x6]],
 component/styling split [[d-0cc24z]], repo structure [[d-0cc2vk]], platform
-order [[d-0cc2w5]]. Navigation shape is proposed but unconfirmed. No code
-written yet — C0 in §6 of the spec is the next move, and §8 of the spec is
-written to be read cold by a fresh session.
+order [[d-0cc2w5]] — and the chunk list in §6 of the spec is now thirteen
+`planned` tasks with their dependencies wired through `blocked_by`, so the waves
+derive rather than being written down. Navigation is settled too ([[d-0cd3wr]]): four
+tabs — Jobs · Answers · Vault · Activity — in an anchored full-bleed bar with the
+add-job FAB raised clear above it. **No open questions remain.**
+
+No code written yet. Two wave-1 tasks are pure backend and runnable immediately;
+the third, C0, waits on three commands only the user can run (they need a browser
+login — see §8 of the spec). Run it with `/blink:execute m-0cc02t`.
 
 **Not in scope.** The public `(web)` marketing surface, the Chrome extension,
 and offline-first sync (a read cache is in scope; conflict resolution is not).
