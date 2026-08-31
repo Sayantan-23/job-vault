@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkl
 title: "C1 — Mobile auth: secure-store, api-client port, login/register"
-status: planned
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-08-31T07:30:08Z
 estimate: M
 blocked_by: [t-0ccxkj, t-0ccxkk]
 decisions: [d-0cc1x6]

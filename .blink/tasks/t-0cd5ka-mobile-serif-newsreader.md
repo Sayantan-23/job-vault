@@ -1,10 +1,10 @@
 ---
 id: t-0cd5ka
 title: "Mobile ships Instrument Serif; web ships Newsreader — pick one"
-status: backlog
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T09:30:00Z
-updated: 2026-08-29T09:30:00Z
+updated: 2026-08-31T07:30:08Z
 estimate: XS
 tags: [mobile, design]
 ---

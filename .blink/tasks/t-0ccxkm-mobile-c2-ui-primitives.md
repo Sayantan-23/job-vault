@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkm
 title: "C2 — The 16 UI primitives on our tokens"
-status: planned
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-08-31T07:30:08Z
 estimate: L
 blocked_by: [t-0ccxkk]
 decisions: [d-006, d-0cc24z]
