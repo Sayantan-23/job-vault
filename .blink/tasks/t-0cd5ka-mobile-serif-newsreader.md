@@ -1,10 +1,11 @@
 ---
 id: t-0cd5ka
 title: "Mobile ships Instrument Serif; web ships Newsreader — pick one"
-status: in_progress
+status: paused
 milestone: m-0cc02t
 created: 2026-08-29T09:30:00Z
-updated: 2026-08-31T07:30:08Z
+updated: 2026-08-31T08:37:46Z
+paused_reason: "Newsreader swap landed on slice-mobile-c1-c2 (a47f27f) and gates are green, but the font is visually unverified: the device pass started and was stopped mid-scroll, having confirmed 3 of 5 opacity cases by exact pixel match and a failed RN font load falls back silently to system sans. theme.ts needed no change: it holds no font values."
 estimate: XS
 tags: [mobile, design]
 ---

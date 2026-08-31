@@ -1,10 +1,11 @@
 ---
 id: t-0ccxkm
 title: "C2 — The 16 UI primitives on our tokens"
-status: in_progress
+status: paused
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-31T07:30:08Z
+updated: 2026-08-31T08:37:46Z
+paused_reason: "15 of 16 primitives landed on slice-mobile-c1-c2 (a47f27f), gates green, visually unverified: the device pass started and was stopped mid-scroll, having confirmed 3 of 5 opacity cases by exact pixel match. MarkdownProse not built (react-native-markdown-display not installed, last release ~2021, React 19 support unknown) and @gorhom/bottom-sheet not installed, so Sheet uses RN Modal without snap points or drag-to-close. Both are user decisions."
 estimate: L
 blocked_by: [t-0ccxkk]
 decisions: [d-006, d-0cc24z]

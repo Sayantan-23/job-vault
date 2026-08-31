@@ -1,10 +1,11 @@
 ---
 id: t-0ccxkl
 title: "C1 — Mobile auth: secure-store, api-client port, login/register"
-status: in_progress
+status: paused
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-31T07:30:08Z
+updated: 2026-08-31T08:37:46Z
+paused_reason: "Code landed on slice-mobile-c1-c2 (3619107), all seven gates green, but visually unverified: the device pass started and was stopped mid-scroll, having confirmed 3 of 5 opacity cases by exact pixel match. Two open items: d-0cdcga names a stale logout contract (logout is session-bound via sid; the { refreshToken } body is inert) and no root session gate exists yet in src/app/_layout.tsx."
 estimate: M
 blocked_by: [t-0ccxkj, t-0ccxkk]
 decisions: [d-0cc1x6]
