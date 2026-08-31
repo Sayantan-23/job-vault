@@ -3,7 +3,7 @@ import '@/global.css';
 import { useEffect } from 'react';
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-google-fonts/geist';
 import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono';
-import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif';
+import { Newsreader_400Regular } from '@expo-google-fonts/newsreader';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -19,7 +19,7 @@ export default function RootLayout() {
     Geist_600SemiBold,
     GeistMono_400Regular,
     GeistMono_500Medium,
-    InstrumentSerif_400Regular,
+    Newsreader_400Regular,
   });
 
   useEffect(() => {
