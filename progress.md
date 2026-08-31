@@ -602,15 +602,15 @@ C1 was dispatched with "native logout MUST send `{ refreshToken }` in the body o
 - `auth.controller.ts:69-75` calls `authService.logout(requireUserId(req), req.user?.sid)` and reads no body. The route has no `validate()` schema, so `{ refreshToken }` is inert.
 - `auth.service.ts:144-147` — `if (sessionId) deleteById(...) else deleteAllForUser(userId)`.
 
-**The hazard is real but its trigger is different:** the fail-closed path is a **missing `sid` on the access token**, not a missing body. C1 sends the body anyway (as instructed, with a test); it is harmless dead weight that encodes a contract the server does not have. `d-0cdcga` needs an amendment and the client line needs a keep-or-drop call.
+**The hazard is real but its trigger is different:** the fail-closed path is a **missing `sid` on the access token**, not a missing body. C1 sends the body anyway (as instructed, with a test); it is harmless dead weight that encodes a contract the server does not have. `d-0cdcga` needs an amendment and the client line needs a keep-or-drop call (`t-0cgtgo`).
 
 ### Unfinished, by name
 
-- **`MarkdownProse` not built** — 15 of 16 primitives. Spec §2 names `react-native-markdown-display`; it is not installed and non-font deps were outside the lane's ownership, so it stopped correctly. `repairSplitBold` (the only logic in the web sibling) is ported with tests and the file header carries resume instructions. **That library last released ~2021** — React 19 compatibility is unverified, so "install it" is a decision, not a formality. Nothing needs rendered markdown before C8.
-- **`@gorhom/bottom-sheet` not installed.** `d-0cc24z` assigns bottom sheets to it. `Sheet` currently uses React Native's `Modal` with `animationType="slide"` — correct chrome and native slide, but no snap points, no velocity dismiss, no drag-to-close. The documented trap is pre-paid: `GestureHandlerRootView` is already at the root.
+- **`MarkdownProse` not built** (`t-0cgtgp`) — 15 of 16 primitives. Spec §2 names `react-native-markdown-display`; it is not installed and non-font deps were outside the lane's ownership, so it stopped correctly. `repairSplitBold` (the only logic in the web sibling) is ported with tests and the file header carries resume instructions. **That library last released ~2021** — React 19 compatibility is unverified, so "install it" is a decision, not a formality. Nothing needs rendered markdown before C8.
+- **`@gorhom/bottom-sheet` not installed** (`t-0cgtgq`). `d-0cc24z` assigns bottom sheets to it. `Sheet` currently uses React Native's `Modal` with `animationType="slide"` — correct chrome and native slide, but no snap points, no velocity dismiss, no drag-to-close. The documented trap is pre-paid: `GestureHandlerRootView` is already at the root.
 - **No root session gate.** Neither lane owns `src/app/_layout.tsx` in the auth direction, so nothing redirects a logged-out user to `/login` or a logged-in user past it. `/login` and `/register` are reachable only by deep link, and the tabs are reachable unauthenticated.
 - **`mobile/src/lib/auth-form.tsx` is a deliberate stub** (marked `ponytail:`) — `AuthScreen`/`Field`/`SubmitButton`/`FormError`/`FormFooter` on `react-native-css/components`, living in `lib/` only because `components/ui/` belonged to the other lane. Delete it and rewire the two auth screens onto `Button`/`Input`/`Label`.
-- **Consistency debt:** `mobile/src/components/app-header.tsx` and `fab.tsx` hand-roll the circular-icon-pressable that `IconButton` now owns — the repo's named recurring defect, one copy away from a third.
+- **Consistency debt** (`t-0cgtgr`): `mobile/src/components/app-header.tsx` and `fab.tsx` hand-roll the circular-icon-pressable that `IconButton` now owns — the repo's named recurring defect, one copy away from a third.
 - **`socket.ts` has no consumer** until C6/C8, so realtime could not be smoke-tested.
 
 ### Notes worth keeping
