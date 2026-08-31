@@ -4,7 +4,7 @@ title: Mobile C1 auth + C2 primitives + serif swap
 status: running
 tier: subagents
 created: '2026-08-31T07:29:37Z'
-updated: '2026-08-31T07:46:05Z'
+updated: '2026-08-31T07:59:48Z'
 tags: []
 tasks:
   - t-0ccxkl
@@ -24,11 +24,11 @@ lanes:
     attempts: 0
     wave: 1
   - task: t-0ccxkm
-    state: dispatched
+    state: ready
     attempts: 0
     wave: 1
   - task: t-0cd5ka
-    state: dispatched
+    state: ready
     attempts: 0
     wave: 1
 ---
@@ -37,3 +37,4 @@ lanes:
 
 - 2026-08-31T07:30:15Z — wave 1 dispatched: lane A t-0ccxkl (auth), lane B t-0ccxkm + t-0cd5ka (primitives + serif)
 - 2026-08-31T07:46:05Z — t-0ccxkl: lane A ready at 3619107 — mobile gates green scoped to owned paths; package-wide blocked on lane B TDD stubs
+- 2026-08-31T07:59:48Z — lane B ready at a47f27f — 15 of 16 primitives; MarkdownProse and bottom-sheet dep unresolved
