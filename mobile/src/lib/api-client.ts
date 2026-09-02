@@ -1,5 +1,6 @@
 import { API_BASE } from './api-base';
 import { authStore } from './auth-store';
+import { setSession } from './session';
 
 export class ApiError extends Error {
   public readonly statusCode: number;
@@ -106,10 +107,12 @@ async function request<T>(
     const refreshed = await refreshSession();
     if (refreshed) return request<T>(method, path, body, init, true, unwrap);
     // The refresh token is gone or revoked: the session is unrecoverable. Drop
-    // the keychain entries so nothing stale is replayed, and let the 401 throw
-    // — the caller decides where to send the user (there is no window.location
-    // to navigate here, which is the web client's third difference).
+    // the keychain entries so nothing stale is replayed and mark the session
+    // signed out — the root layout's route guard reacts to that, since there is
+    // no window.location to navigate here (the web client's third difference).
+    // The 401 still throws, so the caller also sees the failure.
     await authStore.clear();
+    setSession({ status: 'signedOut' });
   }
 
   const isJson = res.headers.get('content-type')?.includes('application/json') ?? false;

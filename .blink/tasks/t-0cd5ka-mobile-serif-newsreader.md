@@ -1,11 +1,10 @@
 ---
 id: t-0cd5ka
 title: "Mobile ships Instrument Serif; web ships Newsreader — pick one"
-status: paused
+status: done
 milestone: m-0cc02t
 created: 2026-08-29T09:30:00Z
-updated: 2026-08-31T08:37:46Z
-paused_reason: "Newsreader swap landed on slice-mobile-c1-c2 (a47f27f) and gates are green, but the font is visually unverified: the device pass started and was stopped mid-scroll, having confirmed 3 of 5 opacity cases by exact pixel match and a failed RN font load falls back silently to system sans. theme.ts needed no change: it holds no font values."
+updated: 2026-09-01T23:25:00Z
 estimate: XS
 tags: [mobile, design]
 ---
@@ -28,3 +27,11 @@ package, `mobile/src/theme.ts` and the `--font-serif` line in
 family reaches the compiled output.
 
 Cheap now, annoying after C2 hardens components against the current face.
+
+
+**Closed 2026-09-01.** Newsreader replaces Instrument Serif in the installed
+font package, root font loader and global serif token. The Android emulator
+rendered it; glyph comparison against the shipped Newsreader TTF (IoU 0.538)
+was materially closer than the system-serif fallback (0.228), ruling out silent
+fallback. The task's `theme.ts` condition was stale: that file contains only
+layout dimensions, not font values.

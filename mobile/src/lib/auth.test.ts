@@ -1,6 +1,7 @@
 import { apiClient } from './api-client';
 import { authStore } from './auth-store';
-import { login, logout, register } from './auth';
+import { getSession, setSession } from './session';
+import { hydrateSession, login, logout, register } from './auth';
 
 jest.mock('expo-constants', () => ({ expoConfig: { hostUri: '10.0.2.2:8081' } }));
 
@@ -17,14 +18,17 @@ jest.mock('expo-secure-store', () => {
   };
 });
 
-jest.mock('./api-client', () => ({ apiClient: { post: jest.fn() } }));
+jest.mock('./api-client', () => ({ apiClient: { post: jest.fn(), get: jest.fn() } }));
 
 const post = apiClient.post as jest.Mock;
+const get = apiClient.get as jest.Mock;
 const USER = { id: 'u1', name: 'Ada', email: 'ada@jobvault.app' };
 
 beforeEach(async () => {
   post.mockReset();
+  get.mockReset();
   await authStore.clear();
+  setSession({ status: 'loading' });
 });
 
 describe('login / register', () => {
@@ -41,6 +45,7 @@ describe('login / register', () => {
     });
     expect(await authStore.getAccessToken()).toBe('a1');
     expect(await authStore.getRefreshToken()).toBe('r1');
+    expect(getSession()).toEqual({ status: 'signedIn', user: USER });
   });
 
   it('registers with the native transport', async () => {
@@ -58,20 +63,22 @@ describe('login / register', () => {
 });
 
 describe('logout', () => {
-  // d-0cdcga contract 1: without the refresh token in the body the backend
-  // cannot name the session, fails closed, and signs the user out everywhere.
-  it('sends the refresh token in the body and clears the keychain', async () => {
+  // d-0cdcga amendment 1 (t-0cgtgo): the route reads no body — `sid` rides on the
+  // access token, so the session names itself. The fail-closed arm that revokes
+  // every device triggers on a missing `sid`, not on a missing body.
+  it('posts no body and clears the keychain', async () => {
     await authStore.save({ accessToken: 'a1', refreshToken: 'r1' });
     post.mockResolvedValue({ message: 'Logged out successfully' });
 
     await logout();
 
-    expect(post).toHaveBeenCalledWith('/api/auth/logout', { refreshToken: 'r1' });
+    expect(post).toHaveBeenCalledWith('/api/auth/logout');
     expect(await authStore.getAccessToken()).toBeNull();
     expect(await authStore.getRefreshToken()).toBeNull();
+    expect(getSession()).toEqual({ status: 'signedOut' });
   });
 
-  it('still clears the keychain when the call fails', async () => {
+  it('still clears the keychain and the session when the call fails', async () => {
     await authStore.save({ accessToken: 'a1', refreshToken: 'r1' });
     post.mockRejectedValue(new Error('offline'));
 
@@ -79,5 +86,36 @@ describe('logout', () => {
 
     expect(await authStore.getAccessToken()).toBeNull();
     expect(await authStore.getRefreshToken()).toBeNull();
+    expect(getSession()).toEqual({ status: 'signedOut' });
+  });
+});
+
+describe('hydrateSession', () => {
+  it('is signed out when the keychain is empty, without asking the server', async () => {
+    await hydrateSession();
+
+    expect(get).not.toHaveBeenCalled();
+    expect(getSession()).toEqual({ status: 'signedOut' });
+  });
+
+  it('trusts the server, not the stored token', async () => {
+    await authStore.save({ accessToken: 'a1', refreshToken: 'r1' });
+    get.mockResolvedValue(USER);
+
+    await hydrateSession();
+
+    expect(get).toHaveBeenCalledWith('/api/auth/me');
+    expect(getSession()).toEqual({ status: 'signedIn', user: USER });
+  });
+
+  // A stored token can be expired or its session revoked from another device.
+  it('clears a token the server rejects', async () => {
+    await authStore.save({ accessToken: 'stale', refreshToken: 'stale' });
+    get.mockRejectedValue(new Error('401'));
+
+    await hydrateSession();
+
+    expect(getSession()).toEqual({ status: 'signedOut' });
+    expect(await authStore.getAccessToken()).toBeNull();
   });
 });

@@ -1,10 +1,10 @@
 ---
 id: t-0cgtgo
 title: "d-0cdcga names a stale logout contract — amend it, and drop the inert body send"
-status: backlog
+status: done
 milestone: m-0cc02t
 created: 2026-08-31T08:41:55Z
-updated: 2026-08-31T08:41:55Z
+updated: 2026-09-01T10:05:00Z
 estimate: XS
 decisions: [d-0cdcga]
 tags: [auth, mobile, docs]
@@ -38,3 +38,16 @@ protecting a user's other devices is the token, not the request body.
   saying why, if the route is expected to gain a schema.
 - A grep for the old wording across `.blink/` and `docs/` finds no other copy
   still asserting the body contract.
+
+---
+
+**Closed 2026-09-01.** All three:
+
+- `d-0cdcga` carries "Amendment 2026-09-01 — logout is session-bound via `sid`,
+  not via a body field".
+- `mobile/src/lib/auth.ts` `logout()` posts to `/api/auth/logout` with **no
+  body**, and `auth.test.ts` asserts exactly that (`toHaveBeenCalledWith` with a
+  single argument), replacing the test that asserted the body.
+- The only other live copy of the old wording was `CLAUDE.md`'s "Next" bullet —
+  corrected in the same commit. `progress.md:600` also states it, but as the
+  narrative of *how the stale contract was caught*, which stays true.

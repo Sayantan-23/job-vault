@@ -1,5 +1,6 @@
 import { ApiError, apiClient } from './api-client';
 import { authStore } from './auth-store';
+import { getSession, setSession } from './session';
 
 jest.mock('expo-constants', () => ({ expoConfig: { hostUri: '10.0.2.2:8081' } }));
 
@@ -45,6 +46,7 @@ beforeEach(async () => {
   fetchMock.mockReset();
   globalThis.fetch = fetchMock as unknown as typeof fetch;
   await authStore.clear();
+  setSession({ status: 'signedIn', user: { id: 'u1', name: 'Ada', email: 'ada@jobvault.app' } });
 });
 
 describe('apiClient', () => {
@@ -119,6 +121,9 @@ describe('apiClient', () => {
     await expect(apiClient.get('/api/jobs')).rejects.toBeInstanceOf(ApiError);
     expect(await authStore.getAccessToken()).toBeNull();
     expect(await authStore.getRefreshToken()).toBeNull();
+    // The route guard reads the session store, so an unrecoverable 401 anywhere
+    // in the app is what sends the user back to the login screen.
+    expect(getSession()).toEqual({ status: 'signedOut' });
   });
 
   it('does not try to refresh a failed login', async () => {

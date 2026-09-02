@@ -608,10 +608,70 @@ C1 was dispatched with "native logout MUST send `{ refreshToken }` in the body o
 
 - **`MarkdownProse` not built** (`t-0cgtgp`) — 15 of 16 primitives. Spec §2 names `react-native-markdown-display`; it is not installed and non-font deps were outside the lane's ownership, so it stopped correctly. `repairSplitBold` (the only logic in the web sibling) is ported with tests and the file header carries resume instructions. **That library last released ~2021** — React 19 compatibility is unverified, so "install it" is a decision, not a formality. Nothing needs rendered markdown before C8.
 - **`@gorhom/bottom-sheet` not installed** (`t-0cgtgq`). `d-0cc24z` assigns bottom sheets to it. `Sheet` currently uses React Native's `Modal` with `animationType="slide"` — correct chrome and native slide, but no snap points, no velocity dismiss, no drag-to-close. The documented trap is pre-paid: `GestureHandlerRootView` is already at the root.
-- **No root session gate.** Neither lane owns `src/app/_layout.tsx` in the auth direction, so nothing redirects a logged-out user to `/login` or a logged-in user past it. `/login` and `/register` are reachable only by deep link, and the tabs are reachable unauthenticated.
-- **`mobile/src/lib/auth-form.tsx` is a deliberate stub** (marked `ponytail:`) — `AuthScreen`/`Field`/`SubmitButton`/`FormError`/`FormFooter` on `react-native-css/components`, living in `lib/` only because `components/ui/` belonged to the other lane. Delete it and rewire the two auth screens onto `Button`/`Input`/`Label`.
-- **Consistency debt** (`t-0cgtgr`): `mobile/src/components/app-header.tsx` and `fab.tsx` hand-roll the circular-icon-pressable that `IconButton` now owns — the repo's named recurring defect, one copy away from a third.
+- ~~**No root session gate.**~~ ~~**`auth-form.tsx` is a deliberate stub.**~~ ~~**app-header hand-rolls IconButton.**~~ All three closed 2026-09-01 — see *Finishing C1* below.
+- **Consistency debt** (`t-0cgtgr`): `app-header.tsx` is migrated; `fab.tsx` is deliberately not, and whether `IconButton` should grow props for it is an open call recorded on the task.
 - **`socket.ts` has no consumer** until C6/C8, so realtime could not be smoke-tested.
+
+### Finishing C1 (2026-09-01) — the app could be signed into, but not out of
+
+The wave left auth navigable only by deep link and offered no way to sign out at
+all: `useAuth().logout` had **zero callers**. What landed:
+
+- **`src/lib/session.ts`** — `loading | signedOut | signedIn` over React's own
+  `useSyncExternalStore`. Module scope rather than a context, because `api-client`
+  has to invalidate the session from outside React when a refresh fails; and not
+  TanStack Query, because the tokens live in the keychain, not in a cache (Query
+  arrives with the data screens in C3 and owns server state).
+- **The gate is `Stack.Protected guard`**, expo-router's own mechanism, not a
+  hand-rolled redirect: a false guard removes those routes from the tree and
+  navigates a user standing on one away. So flipping the session store *is* the
+  navigation, and `useAuth` no longer touches the router. `/gallery` sits outside
+  both guards on purpose — a primitives pass should not need an account.
+- **Boot asks the server.** `hydrateSession()` calls `/api/auth/me` rather than
+  trusting a stored token, which can be expired or belong to a session revoked
+  from another device. The splash covers that read as well as the fonts, so
+  neither the tabs nor the login screen is shown and then replaced.
+- **`AccountMenu`** behind the header avatar, mirroring the web's
+  `layout/app/account-menu.tsx` — identity row, divider, Sign out. Profile and
+  Settings are omitted until C9/C10 exist; an item that goes nowhere is worse than
+  no item. `AnchoredPopoverClose` gained an optional `onPress`, which the web gets
+  free from Radix `asChild`.
+- **The `lib/auth-form.tsx` stub is gone.** Both screens sit on `Button` / `Input`
+  / `Label`, and their copy was aligned to the web siblings ("Welcome back", the
+  error as a `bg-destructive/10` pill, placeholders, "Signing in…").
+- **Logout sends no body** (`t-0cgtgo`), `d-0cdcga` carries the amendment, and
+  `CLAUDE.md`'s stale "must send `{ refreshToken }`" line is corrected.
+
+**`expo export` earned its place in the gate list again.** The form tests were
+first written as `src/app/(auth)/login.test.tsx`; jest passed, and the Android
+bundle **failed** — expo-router's `require.context` sweeps every `.tsx` under
+`src/app/` into the route tree, so the test file became a route and pulled
+`@testing-library/react-native` (and its `require('console')`) into the app
+bundle. The fix is the web's own split: forms in `components/auth/`, thin route
+files. Same lesson as wave 1's palette, one layer out — a green suite is not a
+build, and a build is not a render.
+
+Gates on this work: 23 suites / 66 tests, `eslint .` clean, `tsc --noEmit` clean,
+`expo export --platform android` bundles.
+
+**Verified on an Android emulator (2026-09-01), including the behaviour only a
+device shows.** Login on the seeded account entered the guarded Jobs shell; the
+avatar menu showed the real identity (`Jordan Avery` / `demo@jobvault.app`, so
+`hydrateSession` and `/api/auth/me` are wired); Sign out returned to login and
+`select count(*) from user_sessions` went to **0**, so the no-body logout does
+reach the right session. **Flipping the guard navigates** — no blank stack, in
+both directions. The Newsreader face was confirmed by glyph match against the
+shipped TTF (IoU 0.538 vs 0.228 for the system serif — the fallback is ruled
+out), and four of the five opacity cases render at their exact expected mix:
+`bg-destructive/10` (252,231,229), `bg-primary/10` (237,238,242), `bg-muted/50`
+(249,246,244), `text-muted-foreground/60` (169,165,161). `bg-black/40` (the
+dialog and sheet scrim) is the one case still unsampled.
+
+**One emulator trap worth knowing:** a system dialog (the stylus-input prompt)
+dimmed every frame to ~68% for several captures, and `#fefcf9` read as
+(173,172,170). It looks exactly like a palette failure. Any colour probe should
+assert the background first — if `--background` is not (254,252,249), the frame
+is dimmed and every other reading is worthless.
 
 ### Notes worth keeping
 

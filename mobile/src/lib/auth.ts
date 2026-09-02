@@ -1,11 +1,8 @@
 import { apiClient } from './api-client';
 import { authStore } from './auth-store';
+import { setSession, type AuthUser } from './session';
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-}
+export type { AuthUser };
 
 /**
  * `client: 'native'` is what makes the backend answer with the token pair in
@@ -21,6 +18,7 @@ interface NativeAuthData {
 async function open(path: string, body: Record<string, string>): Promise<AuthUser> {
   const data = await apiClient.post<NativeAuthData>(path, { ...body, client: 'native' });
   await authStore.save({ accessToken: data.accessToken, refreshToken: data.refreshToken });
+  setSession({ status: 'signedIn', user: data.user });
   return data.user;
 }
 
@@ -33,18 +31,42 @@ export function register(name: string, email: string, password: string): Promise
 }
 
 /**
- * Ends the session server-side, then drops the keychain entries. The refresh
- * token goes in the body per d-0cdcga: a logout that cannot name its session
- * fails closed and revokes every device the user is signed in on.
+ * Ends the session server-side, then drops the keychain entries.
+ *
+ * No body: `sid` rides on the access token, so the session names itself
+ * (`auth.controller.ts` reads no body on this route and has no `validate`
+ * schema). The fail-closed arm in `auth.service.logout` triggers on a *missing
+ * `sid`*, not on a missing body — d-0cdcga amendment 1, t-0cgtgo.
  *
  * The keychain is cleared in a `finally` because a network failure must not
  * leave the app on a signed-out screen still holding live credentials.
  */
 export async function logout(): Promise<void> {
-  const refreshToken = await authStore.getRefreshToken();
   try {
-    await apiClient.post('/api/auth/logout', refreshToken ? { refreshToken } : {});
+    await apiClient.post('/api/auth/logout');
   } finally {
     await authStore.clear();
+    setSession({ status: 'signedOut' });
+  }
+}
+
+/**
+ * Resolves the `loading` session on boot. A stored access token is not proof of
+ * a live session — it may be expired, or its session may have been revoked from
+ * another device — so the truth comes from the server. `apiClient` refreshes a
+ * 401 once and clears the keychain when that fails, so a rejection here means
+ * signed out for good.
+ */
+export async function hydrateSession(): Promise<void> {
+  if (!(await authStore.getAccessToken())) {
+    setSession({ status: 'signedOut' });
+    return;
+  }
+  try {
+    const user = await apiClient.get<AuthUser>('/api/auth/me');
+    setSession({ status: 'signedIn', user });
+  } catch {
+    await authStore.clear();
+    setSession({ status: 'signedOut' });
   }
 }

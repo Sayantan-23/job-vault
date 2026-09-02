@@ -1,10 +1,10 @@
 ---
 id: t-0cgtgr
 title: "app-header and fab hand-roll the circular icon pressable IconButton now owns"
-status: backlog
+status: done
 milestone: m-0cc02t
 created: 2026-08-31T08:41:55Z
-updated: 2026-08-31T08:41:55Z
+updated: 2026-09-02T17:20:45Z
 estimate: XS
 blocked_by: [t-0ccxkm]
 tags: [mobile, ui, tech-debt]
@@ -31,3 +31,12 @@ has to own the icon to colour it.
 circular-pressable styling is left duplicated in either, and the FAB still clears
 the tab bar per [[d-0cd3wr]] (`FAB_SIZE` / `FAB_GAP` / `TAB_BAR_HEIGHT` in
 `mobile/src/theme.ts`). Verify on device — this is visual.
+
+---
+
+**Closed 2026-09-02.** `app-header.tsx` migrated onto `IconButton` — no
+hand-rolled circular pressable left in that file. `fab.tsx` is **not** a
+duplication: it differs from `IconButton` on every defining dimension (box size,
+surface, ink, stroke, animated wrapper). Routing it through `IconButton` would
+mean four one-caller props, which is speculative abstraction, not consistency.
+The decision is [[d-0cl6ul]].

@@ -1,11 +1,10 @@
 ---
 id: t-0ccxkm
 title: "C2 — The 16 UI primitives on our tokens"
-status: paused
+status: in_progress
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-31T08:37:46Z
-paused_reason: "15 of 16 primitives landed on slice-mobile-c1-c2 (a47f27f), gates green, visually unverified: the device pass started and was stopped mid-scroll, having confirmed 3 of 5 opacity cases by exact pixel match. MarkdownProse not built (react-native-markdown-display not installed, last release ~2021, React 19 support unknown) and @gorhom/bottom-sheet not installed, so Sheet uses RN Modal without snap points or drag-to-close. Both are user decisions."
+updated: 2026-08-31T09:00:00Z
 estimate: L
 blocked_by: [t-0ccxkk]
 decisions: [d-006, d-0cc24z]
@@ -37,3 +36,12 @@ Skills: `expo-design-system`, `expo-ui`, `expo-native-ui`.
 *Cold-start: read `docs/superpowers/specs/2026-08-28-mobile-app-expo-scope.md` §8 first — it is written to be read with no other
 context. Repo root is `git rev-parse --show-toplevel` (this repo is worked on
 from two machines; never hardcode a home path).*
+
+
+**2026-09-01 emulator note.** `/gallery` deep-link loaded on Android and the
+three previously highest-risk opacity cases were sampled successfully:
+`bg-primary/10`, `bg-destructive/10`, and `bg-muted/50`; the auth error pill and
+Newsreader render were also confirmed by the same emulator run. The broader
+visual sweep is intentionally paused at the user's request. MarkdownProse is
+still the one incomplete primitive; the RN markdown dependency decision and
+bottom-sheet decision remain open.

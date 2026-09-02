@@ -100,13 +100,20 @@ export function AnchoredPopoverTrigger({
   );
 }
 
+/**
+ * An item that acts and then dismisses. The web composes this with Radix
+ * `asChild` over its own button; React Native has no `asChild`, so the action
+ * comes in as `onPress` and this owns the press.
+ */
 export function AnchoredPopoverClose({
   children,
   accessibilityLabel,
+  onPress,
   className,
 }: {
   children: ReactNode;
   accessibilityLabel?: string;
+  onPress?: () => void;
   className?: string;
 }) {
   const { close } = useContext(PopoverContext);
@@ -114,7 +121,10 @@ export function AnchoredPopoverClose({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      onPress={close}
+      onPress={() => {
+        onPress?.();
+        close();
+      }}
       className={className}>
       {children}
     </Pressable>
