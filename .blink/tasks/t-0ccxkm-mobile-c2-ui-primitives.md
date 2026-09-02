@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkm
 title: "C2 — The 16 UI primitives on our tokens"
-status: in_progress
+status: done
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-31T09:00:00Z
+updated: 2026-09-02T18:01:54Z
 estimate: L
 blocked_by: [t-0ccxkk]
 decisions: [d-006, d-0cc24z]
@@ -45,3 +45,15 @@ Newsreader render were also confirmed by the same emulator run. The broader
 visual sweep is intentionally paused at the user's request. MarkdownProse is
 still the one incomplete primitive; the RN markdown dependency decision and
 bottom-sheet decision remain open.
+
+
+**Closed 2026-09-02T18:01:54Z.** All 16 primitives exist and render on our tokens, with a
+`/gallery` route that renders every one of them. The last gap, `MarkdownProse`,
+is built on `marked` ([[d-0cl8r6]]) — option 2 from its task, a deliberate
+divergence from the spec's `react-native-markdown-display`. Verified on an
+Android emulator: gallery deep-link loads, opacity cases render, Newsreader
+confirmed. The only visual item still unsampled is the `bg-black/40` dialog/sheet
+scrim, paused at the user's request.
+
+The `@gorhom/bottom-sheet` question ([[t-0cgtgq]]) is the last open follow-up
+from this wave — it is a decision, not a missing primitive.

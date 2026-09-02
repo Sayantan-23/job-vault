@@ -4,7 +4,7 @@ title: Mobile C1 auth + C2 primitives + serif swap
 status: blocked
 tier: subagents
 created: '2026-08-31T07:29:37Z'
-updated: '2026-09-01T23:25:00Z'
+updated: '2026-09-02T18:01:54Z'
 tags: []
 tasks:
   - t-0ccxkl
@@ -44,3 +44,4 @@ lanes:
 - 2026-09-01T10:05:00Z — C1 finished off outside the lanes: root session gate on Stack.Protected, session store, AccountMenu (logout had no UI at all), auth-form stub deleted and the screens moved onto Button/Input/Label. t-0cgtgo closed, d-0cdcga amended, CLAUDE.md corrected. Mobile gates green: 23 suites / 66 tests, lint, typecheck, expo export.
 - 2026-09-01T10:05:00Z — expo export caught what jest could not: a *.test.tsx under src/app/ is bundled as a route by expo-router's require.context and broke the Android bundle. Tests now live beside the components, routes are thin.
 - 2026-09-01T23:25:00Z — emulator verification completed for auth: login → guarded Jobs shell → AccountMenu identity → server-side session deletion → signed out login. `/gallery` loaded and sampled opacity/error/font cases. User requested no more screenshots for now; remaining visual sweep is paused.
+- 2026-09-02T18:01:54Z — MarkdownProse (16th primitive) built on marked (d-0cl8r6). All 16 C2 primitives now exist. Gallery updated. Gates: 23 suites/75 tests, typecheck, lint, expo export. t-0ccxkm closed.

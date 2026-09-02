@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog'
 import { IconButton } from './icon-button';
 import { Input } from './input';
 import { Label } from './label';
+import { MarkdownProse } from './markdown-prose';
 import { RouteProgress } from './route-progress';
 import { SegmentedControl } from './segmented-control';
 import { Select } from './select';
@@ -196,9 +197,21 @@ export function Gallery() {
         </Section>
 
         <Section title="MarkdownProse">
-          <Text className="text-sm text-muted-foreground">
-            Not built — needs react-native-markdown-display. Only repairSplitBold ported.
-          </Text>
+          <MarkdownProse>{`## About the role
+
+We are looking for a **senior engineer** who has *strong* communication skills.
+
+- Own the architecture
+- Ship weekly
+- Mentor juniors
+
+> This role reports to the CTO.
+
+Run \`npm test\` to verify.
+
+---
+
+Images are dropped: ![logo](https://example.com/logo.png)`}</MarkdownProse>
         </Section>
       </ScrollView>
 

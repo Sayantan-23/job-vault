@@ -24,6 +24,7 @@
     "expo-web-browser": "~57.0.2",
     "lightningcss": "1.30.1",
     "lucide-react-native": "^1.37.0",
+    "marked": "^16.4.2",
     "nativewind": "5.0.0-preview.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
