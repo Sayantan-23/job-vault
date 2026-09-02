@@ -71,3 +71,28 @@ this ships. Chosen over a dual-verify transitional branch (self-identifying
 formats made it possible — bcrypt starts `$2`, SHA-256 is 64 hex chars) because
 the storage shape was changing anyway and the transitional branch would have to
 be remembered and deleted later.
+
+## Amendment 2026-09-01 — logout is session-bound via `sid`, not via a body field
+
+Section 3 above was written when logout took the refresh token. It no longer
+does, and the stale wording had already been carried verbatim into the C1
+dispatch ([[t-0ccxkl]]), which implemented a contract the server does not have
+([[t-0cgtgo]]).
+
+`ba787fe` ("token kinds, session-bound logout, CAS rotation") moved the route to
+the access token's `sid`:
+
+- `auth.controller.ts:69-75` — `authService.logout(requireUserId(req), req.user?.sid)`.
+  The handler reads **no body**, and the route has no `validate()` schema, so a
+  `{ refreshToken }` field is inert.
+- `auth.service.ts:144-147` — `if (sessionId) deleteById(...) else deleteAllForUser(userId)`.
+
+**The fail-closed hazard is real but its trigger is different: an absent `sid` on
+the access token, not an absent body.** `signAccessToken` mints `sid` into every
+access token (login, register and both refresh arms), so what protects a user's
+other devices is the credential, not the request payload.
+
+The mobile client sends no body as of `mobile/src/lib/auth.ts` (t-0cgtgo), and
+`CLAUDE.md`'s "Next" bullet was corrected at the same time. The other contract in
+section 2 — **an absent `refreshToken` on a refresh response means keep the stored
+one** — is unaffected and still holds.

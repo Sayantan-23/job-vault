@@ -1,13 +1,14 @@
-import { Pressable, Text, View } from 'react-native-css/components';
+import { Text, View } from 'react-native-css/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, User } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
 
-import { Icon } from '@/components/icon';
+import { AccountMenu } from '@/components/account-menu';
+import { IconButton } from '@/components/ui/icon-button';
 
 /**
- * Editorial screen header. Search is an icon and the account menu (profile,
- * personas, settings) hangs off the avatar rather than taking a tab — d-0cd3wr,
- * mirroring the web app's AccountMenu. Both are inert until C7 / C9 land.
+ * Editorial screen header. Search is an icon and the account menu (sign out now,
+ * profile and settings once they exist) hangs off the avatar rather than taking a
+ * tab — d-0cd3wr, mirroring the web app's AccountMenu. Search is inert until C7.
  */
 export function AppHeader({ title }: { title: string }) {
   const insets = useSafeAreaInsets();
@@ -18,18 +19,8 @@ export function AppHeader({ title }: { title: string }) {
       style={{ paddingTop: insets.top + 8 }}>
       <Text className="font-serif text-[30px] leading-[34px] text-foreground">{title}</Text>
       <View className="flex-row items-center gap-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Search"
-          className="h-9 w-9 items-center justify-center rounded-full">
-          <Icon icon={Search} size={20} strokeWidth={1.75} className="text-muted-foreground" />
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Account"
-          className="h-9 w-9 items-center justify-center rounded-full border border-border bg-secondary">
-          <Icon icon={User} size={18} strokeWidth={1.75} className="text-muted-foreground" />
-        </Pressable>
+        <IconButton icon={Search} accessibilityLabel="Search" />
+        <AccountMenu />
       </View>
     </View>
   );

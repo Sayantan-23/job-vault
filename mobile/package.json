@@ -5,7 +5,7 @@
   "dependencies": {
     "@expo-google-fonts/geist": "^0.4.2",
     "@expo-google-fonts/geist-mono": "^0.4.3",
-    "@expo-google-fonts/instrument-serif": "^0.4.1",
+    "@expo-google-fonts/newsreader": "^0.4.1",
     "@expo/ui": "~57.0.14",
     "@tailwindcss/postcss": "^4.3.3",
     "expo": "~57.0.18",
@@ -16,6 +16,7 @@
     "expo-image": "~57.0.3",
     "expo-linking": "~57.0.8",
     "expo-router": "~57.0.17",
+    "expo-secure-store": "~57.0.2",
     "expo-splash-screen": "~57.0.8",
     "expo-status-bar": "~57.0.1",
     "expo-symbols": "~57.0.2",
@@ -23,6 +24,7 @@
     "expo-web-browser": "~57.0.2",
     "lightningcss": "1.30.1",
     "lucide-react-native": "^1.37.0",
+    "marked": "^16.4.2",
     "nativewind": "5.0.0-preview.4",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -35,6 +37,7 @@
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
     "react-native-worklets": "0.10.1",
+    "socket.io-client": "^4.8.3",
     "tailwindcss": "^4"
   },
   "devDependencies": {

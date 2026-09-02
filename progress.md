@@ -579,6 +579,108 @@ Final shape: rotation is **one atomic UPDATE** accepting the current hash or the
 
 **Deliberately deferred:** mobile dark mode (`t-0cdegw`) — this stack drops **conditional root variables**, proven with four device tests; the fix is NativeWind's `vars` + `VariableContextProvider`, not `dark:` on every utility. Cross-tab refresh lock (`t-0cdbwh`) — the web client's single-flight is a module-scope promise, so it de-duplicates per *tab*; the server grace window is a safety net for jitter, not a substitute. Mobile serif still Instrument Serif where web uses Newsreader (`t-0cd5ka`). Tab bar polish (`t-0cdfyq`).
 
+## Mobile Wave 2 — C1 auth + C2 primitives + serif swap (on `slice-mobile-c1-c2`, 2026-08-31)
+
+> Milestone `m-0cc02t` · Run `x-0cgq5d` (two lanes, one checkout, tier `subagents`) · Spec `docs/superpowers/specs/2026-08-28-mobile-app-expo-scope.md` §2, §2.2, §3.2. **Paused, not shipped** — code landed and all seven gates are green, but nothing has been seen rendering on a device.
+
+**Landed on the branch:** C1 mobile auth (`t-0ccxkl`) — `api-base` runtime host resolution, `auth-store` on `expo-secure-store`, `api-client` with silent refresh, `socket.ts` handshake, `use-auth`, and the `(auth)` login/register screens. C2 primitives (`t-0ccxkm`) — **15 of 16**, plus a `/gallery` route that renders all of them. Serif swap (`t-0cd5ka`) — `@expo-google-fonts/newsreader` replaces Instrument Serif.
+
+Gates green on `a47f27f`: `make typecheck` · `make lint` · `make test` · `npm --prefix mobile run typecheck` · `npm --prefix mobile run lint` · `npm --prefix mobile test` (19 suites / 53 tests) · `blink validate`. **Two of the seven were recorded malformed** — `npm --prefix mobile typecheck` is not a valid npm invocation and needs `run`; bare `npm test` passed only because npm has a builtin `test` alias. Corrected in the run record so a resuming session gets working commands.
+
+### Why it is paused, not done
+
+**Device verification began but did not finish.** The build succeeded, the APK installed and the app launched on the OnePlus (`1d8a211`). The pass first stalled on a secure lock screen — `adb exec-out screencap` returned an all-black frame, and `wm dismiss-keyguard` does not clear a secure keyguard, which needs a fingerprint or PIN. The phone was then unlocked and the pass started; it was **stopped mid-scroll** on request before it reported.
+
+**What it had established before it stopped:** three of the five opacity cases confirmed rendering by exact pixel match. That is real evidence and it is the highest-risk surface — but it is three of five, and it says nothing about the remaining two, the gallery as a whole, the four interactive overlays, the Newsreader face, the auth screens or the tab bar. **Treat the wave as visually unverified**; the outstanding work is one resumed pass on an unlocked device, not a fresh investigation.
+
+That matters here specifically. Wave 1 shipped a palette where **every gate passed and nothing rendered** — `light-dark()` is unimplemented by `react-native-css@3.0.7`, and a bundle grep found the token strings present while the runtime was stringifying `"#706b66,#96918c"` as a colour. **A bundle grep cannot distinguish "present" from "parses"**, and neither can a green test suite. So the same class of defect is still open on this wave's work, and the highest-risk surface is named: every opacity modifier (`bg-primary/10`, `bg-destructive/10`, `bg-muted/50`, `bg-black/40`, `placeholder:text-muted-foreground/60`) compiles to `color-mix(in oklab, …)` — the same CSS-function-lowering family. `react-native-css` does implement `color-mix` at runtime (`native/styles/functions/color-mix.js`, checked rather than assumed), but the failure mode is a missing background, not a crash.
+
+### `d-0cdcga` is stale on logout — the dispatch carried a false contract
+
+C1 was dispatched with "native logout MUST send `{ refreshToken }` in the body or it fails closed and deletes every session". **That is no longer true**, and the lane said so instead of quietly diverging. `ba787fe` ("token kinds, session-bound logout, CAS rotation") moved logout to the session id:
+
+- `auth.controller.ts:69-75` calls `authService.logout(requireUserId(req), req.user?.sid)` and reads no body. The route has no `validate()` schema, so `{ refreshToken }` is inert.
+- `auth.service.ts:144-147` — `if (sessionId) deleteById(...) else deleteAllForUser(userId)`.
+
+**The hazard is real but its trigger is different:** the fail-closed path is a **missing `sid` on the access token**, not a missing body. C1 sends the body anyway (as instructed, with a test); it is harmless dead weight that encodes a contract the server does not have. `d-0cdcga` needs an amendment and the client line needs a keep-or-drop call (`t-0cgtgo`).
+
+### Unfinished, by name
+
+- **`MarkdownProse` not built** (`t-0cgtgp`) — 15 of 16 primitives. Spec §2 names `react-native-markdown-display`; it is not installed and non-font deps were outside the lane's ownership, so it stopped correctly. `repairSplitBold` (the only logic in the web sibling) is ported with tests and the file header carries resume instructions. **That library last released ~2021** — React 19 compatibility is unverified, so "install it" is a decision, not a formality. Nothing needs rendered markdown before C8.
+- **`@gorhom/bottom-sheet` not installed** (`t-0cgtgq`). `d-0cc24z` assigns bottom sheets to it. `Sheet` currently uses React Native's `Modal` with `animationType="slide"` — correct chrome and native slide, but no snap points, no velocity dismiss, no drag-to-close. The documented trap is pre-paid: `GestureHandlerRootView` is already at the root.
+- ~~**No root session gate.**~~ ~~**`auth-form.tsx` is a deliberate stub.**~~ ~~**app-header hand-rolls IconButton.**~~ All three closed 2026-09-01 — see *Finishing C1* below.
+- **Consistency debt** (`t-0cgtgr`): `app-header.tsx` is migrated; `fab.tsx` is deliberately not, and whether `IconButton` should grow props for it is an open call recorded on the task.
+- **`socket.ts` has no consumer** until C6/C8, so realtime could not be smoke-tested.
+
+### Finishing C1 (2026-09-01) — the app could be signed into, but not out of
+
+The wave left auth navigable only by deep link and offered no way to sign out at
+all: `useAuth().logout` had **zero callers**. What landed:
+
+- **`src/lib/session.ts`** — `loading | signedOut | signedIn` over React's own
+  `useSyncExternalStore`. Module scope rather than a context, because `api-client`
+  has to invalidate the session from outside React when a refresh fails; and not
+  TanStack Query, because the tokens live in the keychain, not in a cache (Query
+  arrives with the data screens in C3 and owns server state).
+- **The gate is `Stack.Protected guard`**, expo-router's own mechanism, not a
+  hand-rolled redirect: a false guard removes those routes from the tree and
+  navigates a user standing on one away. So flipping the session store *is* the
+  navigation, and `useAuth` no longer touches the router. `/gallery` sits outside
+  both guards on purpose — a primitives pass should not need an account.
+- **Boot asks the server.** `hydrateSession()` calls `/api/auth/me` rather than
+  trusting a stored token, which can be expired or belong to a session revoked
+  from another device. The splash covers that read as well as the fonts, so
+  neither the tabs nor the login screen is shown and then replaced.
+- **`AccountMenu`** behind the header avatar, mirroring the web's
+  `layout/app/account-menu.tsx` — identity row, divider, Sign out. Profile and
+  Settings are omitted until C9/C10 exist; an item that goes nowhere is worse than
+  no item. `AnchoredPopoverClose` gained an optional `onPress`, which the web gets
+  free from Radix `asChild`.
+- **The `lib/auth-form.tsx` stub is gone.** Both screens sit on `Button` / `Input`
+  / `Label`, and their copy was aligned to the web siblings ("Welcome back", the
+  error as a `bg-destructive/10` pill, placeholders, "Signing in…").
+- **Logout sends no body** (`t-0cgtgo`), `d-0cdcga` carries the amendment, and
+  `CLAUDE.md`'s stale "must send `{ refreshToken }`" line is corrected.
+
+**`expo export` earned its place in the gate list again.** The form tests were
+first written as `src/app/(auth)/login.test.tsx`; jest passed, and the Android
+bundle **failed** — expo-router's `require.context` sweeps every `.tsx` under
+`src/app/` into the route tree, so the test file became a route and pulled
+`@testing-library/react-native` (and its `require('console')`) into the app
+bundle. The fix is the web's own split: forms in `components/auth/`, thin route
+files. Same lesson as wave 1's palette, one layer out — a green suite is not a
+build, and a build is not a render.
+
+Gates on this work: 23 suites / 66 tests, `eslint .` clean, `tsc --noEmit` clean,
+`expo export --platform android` bundles.
+
+**Verified on an Android emulator (2026-09-01), including the behaviour only a
+device shows.** Login on the seeded account entered the guarded Jobs shell; the
+avatar menu showed the real identity (`Jordan Avery` / `demo@jobvault.app`, so
+`hydrateSession` and `/api/auth/me` are wired); Sign out returned to login and
+`select count(*) from user_sessions` went to **0**, so the no-body logout does
+reach the right session. **Flipping the guard navigates** — no blank stack, in
+both directions. The Newsreader face was confirmed by glyph match against the
+shipped TTF (IoU 0.538 vs 0.228 for the system serif — the fallback is ruled
+out), and four of the five opacity cases render at their exact expected mix:
+`bg-destructive/10` (252,231,229), `bg-primary/10` (237,238,242), `bg-muted/50`
+(249,246,244), `text-muted-foreground/60` (169,165,161). `bg-black/40` (the
+dialog and sheet scrim) is the one case still unsampled.
+
+**One emulator trap worth knowing:** a system dialog (the stylus-input prompt)
+dimmed every frame to ~68% for several captures, and `#fefcf9` read as
+(173,172,170). It looks exactly like a palette failure. Any colour probe should
+assert the background first — if `--background` is not (254,252,249), the frame
+is dimmed and every other reading is worthless.
+
+### Notes worth keeping
+
+- **`expo lint` caches in `mobile/.expo/cache/eslint` and lies.** It reported 9 phantom `import/no-unresolved` errors against newly-created files while `npx eslint .` on the same tree reported zero. Delete the cache dir (gitignored) before trusting it.
+- **`t-0cd5ka` overspecified its own done-when.** `mobile/src/theme.ts` holds no font values — only `TAB_BAR_HEIGHT` / `FAB_SIZE` / `FAB_GAP` / `SCREEN_BOTTOM_INSET`. The serif name lives in `global.css` and `_layout.tsx`, both updated; nothing in `theme.ts` needed to change.
+- **Dark mode is satisfied at the token level only**, per the deliberate deferral in `t-0cdegw`. No `dark:` utilities and no dark-mode mechanism were added; the dark block in `global.css` is still inert on device.
+- **File ownership held again.** Two lanes, one checkout, zero collisions on owned paths. The two crossings were both forced and both declared: the serif lane edited 2 lines of `_layout.tsx` (removing the Instrument Serif package makes its import unresolvable) and added a 6-line `app/gallery.tsx` (a route cannot live under `components/`). One shared-file surprise: `npx expo install` in one lane left `mobile/package.json` + lockfile dirty, and the other lane's `git add` swept them into its commit. Lockfile consistent, nothing lost, but the commit is not purely one lane's.
+- **Web-API divergences are all native-idiom forced** and were declared rather than shipped silently: `hover:`→`active:`, `Sheet` enters from the bottom not the right, no Radix `asChild`, `Select` opens our Sheet rather than a second dropdown idiom, `MonogramAvatar` uses literal sRGB because Tailwind v4's oklch palette does not survive this runtime, `cn` without tailwind-merge because clsx/tailwind-merge are not installed.
+
 
 
 >

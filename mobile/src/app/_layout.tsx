@@ -3,12 +3,15 @@ import '@/global.css';
 import { useEffect } from 'react';
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-google-fonts/geist';
 import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono';
-import { InstrumentSerif_400Regular } from '@expo-google-fonts/instrument-serif';
+import { Newsreader_400Regular } from '@expo-google-fonts/newsreader';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import { hydrateSession } from '@/lib/auth';
+import { useSession } from '@/lib/session';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,19 +22,43 @@ export default function RootLayout() {
     Geist_600SemiBold,
     GeistMono_400Regular,
     GeistMono_500Medium,
-    InstrumentSerif_400Regular,
+    Newsreader_400Regular,
   });
+  const session = useSession();
+  const signedIn = session.status === 'signedIn';
 
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync();
-  }, [fontsLoaded]);
+    void hydrateSession();
+  }, []);
 
-  if (!fontsLoaded) return null;
+  // The splash covers the keychain read as well as the fonts, so neither the
+  // tabs nor the login screen is ever shown to be replaced a frame later.
+  const ready = fontsLoaded && session.status !== 'loading';
+
+  useEffect(() => {
+    if (ready) void SplashScreen.hideAsync();
+  }, [ready]);
+
+  if (!ready) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }} />
+      {/* `Stack.Protected` is expo-router's own guard: a false `guard` removes
+          those routes from the tree entirely, and a user standing on one is
+          navigated out. So signing in or out needs no imperative navigation —
+          flipping the session store is the navigation. */}
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen name="(tabs)" />
+        </Stack.Protected>
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen name="(auth)" />
+        </Stack.Protected>
+        {/* Dev surface, deliberately outside the guard: a device pass over the
+            primitives should not need an account. */}
+        <Stack.Screen name="gallery" />
+      </Stack>
     </GestureHandlerRootView>
   );
 }
