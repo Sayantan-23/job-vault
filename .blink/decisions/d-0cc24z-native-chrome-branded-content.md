@@ -72,3 +72,34 @@ competitor's authors and measure style resolution, not app performance.
   regardless of this decision.
 - Any future component sitting ambiguously across the line gets decided against
   the test above, once, rather than per-screen by whoever is writing it.
+
+## Amendment 2026-09-02 — bottom sheets are ours, not @gorhom's
+
+Section "Decision" above assigns bottom sheets to `@gorhom/bottom-sheet` for
+"native physics, branded chrome." After building and using the Modal-based
+`Sheet`, that assignment is **amended**: bottom sheets are **ours**, built on
+React Native's `Modal`, the same way buttons and headers are ours.
+
+**Why:** The app's identity is deliberately non-OS-native
+([[d-006]], warm-stone canvas, flat muted indigo, serif headings). A bottom sheet
+that slides up from the bottom of the screen with our own grab handle, our own
+border radius, our own surface token, and our own slide animation **is** branded
+chrome — it reads as JobVault, not as an iOS sheet. `@gorhom/bottom-sheet`
+exists to add native gesture physics (snap points, velocity drag-dismiss) on
+top of content; those are refinements, not the identity the sheet carries.
+
+**What the Modal version gets right:** correct bottom-up entrance, native
+`animationType="slide"`, Android back-button wired to close, grab handle,
+`GestureHandlerRootView` already at the root if gesture support is added later.
+
+**What it does not have (accepted):** snap points, velocity dismiss,
+drag-to-close. No current caller needs them — C3's filter sheet and C4's
+answer sheet are single-height panels. If a future caller needs snap points
+(e.g. a half-sheet that collapses to a peek), `@gorhom/bottom-sheet` can be
+installed then, with `Sheet` upgraded behind the same API. The trap is already
+paid for: `GestureHandlerRootView` is at the root.
+
+**`@expo/ui` `BottomSheet`** was considered and rejected in the original
+decision (it is a `UISheetPresentationController`, cannot morph). This
+amendment does not revisit that — it moves the sheet from "gorhom" to "ours"
+in the ownership table.
