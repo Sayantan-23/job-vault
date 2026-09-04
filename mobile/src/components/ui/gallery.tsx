@@ -10,8 +10,11 @@ import {
   AnchoredPopoverTrigger,
 } from './anchored-popover';
 import { MonogramAvatar } from './avatar';
+import { Badge, type BadgeVariant } from './badge';
 import { Button, type ButtonVariant } from './button';
+import { Card } from './card';
 import { Checkbox } from './checkbox';
+import { EmptyState } from './empty-state';
 import { ConfirmDialog } from './confirm-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './dialog';
 import { IconButton } from './icon-button';
@@ -34,6 +37,15 @@ const VARIANTS: ButtonVariant[] = [
   'softPrimary',
   'softDestructive',
   'link',
+];
+
+const BADGE_VARIANTS: BadgeVariant[] = [
+  'default',
+  'secondary',
+  'outline',
+  'ghost-active',
+  'ghost-stale',
+  'ghost-ghosted',
 ];
 
 const VIEW_OPTIONS = [
@@ -82,6 +94,14 @@ export function Gallery() {
             C2 — every primitive on our tokens.
           </Text>
         </View>
+
+        <Section title="Card">
+          <Card>
+            <Text className="text-sm text-card-foreground">
+              A flat surface on a hairline — no shadow.
+            </Text>
+          </Card>
+        </Section>
 
         <Section title="Button">
           <View className="flex-row flex-wrap gap-2">
@@ -149,6 +169,16 @@ export function Gallery() {
           </View>
         </Section>
 
+        <Section title="Badge">
+          <View className="flex-row flex-wrap gap-2">
+            {BADGE_VARIANTS.map((variant) => (
+              <Badge key={variant} variant={variant}>
+                {variant}
+              </Badge>
+            ))}
+          </View>
+        </Section>
+
         <Section title="Skeleton">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-full" />
@@ -194,6 +224,22 @@ export function Gallery() {
               Sheet
             </Button>
           </View>
+        </Section>
+
+        <Section title="EmptyState">
+          <EmptyState
+            title="No jobs match your filters"
+            description="Try widening or clearing them."
+            action={
+              <Button variant="outline" size="sm">
+                Reset filters
+              </Button>
+            }
+          />
+          <EmptyState
+            title="No jobs yet"
+            description="Add your first application to start tracking it."
+          />
         </Section>
 
         <Section title="MarkdownProse">

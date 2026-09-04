@@ -1,6 +1,7 @@
 import { API_BASE } from './api-base';
 import { authStore } from './auth-store';
 import { setSession } from './session';
+import type { Paginated } from '@/types/filters';
 
 export class ApiError extends Error {
   public readonly statusCode: number;
@@ -141,7 +142,7 @@ export const apiClient = {
   get: <T>(path: string, init?: RequestInit) => request<T>('GET', path, undefined, init),
   /** Whole-envelope GET, for the `{ data, meta }` pagination shape. */
   getPage: <T>(path: string, init?: RequestInit) =>
-    request<T>('GET', path, undefined, init, false, false),
+    request<Paginated<T>>('GET', path, undefined, init, false, false),
   post: <T>(path: string, body?: unknown, init?: RequestInit) =>
     request<T>('POST', path, body, init),
   postForm: <T>(path: string, form: FormData, init?: RequestInit) =>

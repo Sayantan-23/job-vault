@@ -1,10 +1,10 @@
 ---
 id: t-0ccxkn
 title: "C3 — Jobs: list, filter sheet, detail screen, status change"
-status: planned
+status: done
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-05T00:00:00Z
 estimate: XL
 blocked_by: [t-0ccxkl, t-0ccxkm]
 tags: [mobile, expo, jobs]
