@@ -19,8 +19,6 @@ import { CoverLetterLauncher } from './sections/cover-letter-launcher';
 import { TimelineSection } from './sections/timeline-section';
 import { JobDetailFooter } from './sections/job-detail-footer';
 
-export { JobDetailHeader, JobDetails, OutreachSection, JobSnapshot, RemindersSection, ResumeLauncher, CoverLetterLauncher, TimelineSection, JobDetailFooter };
-
 export function JobDetailScreen({ id }: { id: string }) {
   const { data: job, isLoading } = useJob(id);
   const queryClient = useQueryClient();
@@ -59,15 +57,16 @@ export function JobDetailScreen({ id }: { id: string }) {
     );
   }
 
+  // Fixed top bar + fixed bottom bar + flex-1 scroll area between them. RN's
+  // layout engine (Yoga) has no `position: sticky`; rendering the header/footer
+  // as siblings OUTSIDE the ScrollView is the only way they stay pinned (web
+  // job-details.tsx:22 uses CSS sticky, which RN does not have).
   return (
     <View className="flex-1 bg-background">
+      <JobDetailHeader job={job} />
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: SCREEN_BOTTOM_INSET }}>
-        {/* Sticky header/footer are DIRECT children of the ScrollView so they
-            pin across all content — a nested sticky only sticks within its own
-            short section and un-pins once scrolled past (web job-details.tsx:22). */}
-        <JobDetailHeader job={job} />
         <View className="gap-6 p-5">
           <JobDetails job={job} />
           <View className="border-t border-hairline pt-5">
@@ -89,8 +88,8 @@ export function JobDetailScreen({ id }: { id: string }) {
             <TimelineSection jobId={job.id} />
           </View>
         </View>
-        <JobDetailFooter job={job} />
       </ScrollView>
+      <JobDetailFooter job={job} />
     </View>
   );
 }

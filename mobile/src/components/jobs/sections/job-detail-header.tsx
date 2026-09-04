@@ -16,9 +16,10 @@ const STATUS_OPTIONS: readonly SelectOption<JobStatus>[] = JOB_STATUSES.map((s) 
   label: STATUS_META[s].label,
 }));
 
-// Sticky header: back button + identity (title serif, company·location) + the
-// status chip (a Select → useUpdateJob) + the source link. Direct child of the
-// ScrollView so it pins across all content (web job-details.tsx:22).
+// Fixed top bar: back button + identity (title serif, company·location) + the
+// status chip (a Select → useUpdateJob) + the source link. Rendered as a
+// sibling ABOVE the ScrollView so it stays pinned at the viewport top; RN has
+// no position:sticky (web job-details.tsx:22 uses CSS sticky).
 export function JobDetailHeader({ job }: { job: Job }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();

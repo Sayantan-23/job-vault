@@ -7,8 +7,10 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteJob } from '@/hooks/use-jobs';
 import type { Job } from '@/types/job';
 
-// Sticky footer: the one destructive action, pinned to the bottom of the scroll
-// area. ConfirmDialog gates the delete; on success the screen navigates home.
+// Fixed bottom bar: the one destructive action, pinned to the viewport bottom.
+// Rendered as a sibling AFTER the ScrollView so it stays pinned; RN has no
+// position:sticky. ConfirmDialog gates the delete; on success the screen
+// navigates home.
 export function JobDetailFooter({ job }: { job: Job }) {
   const router = useRouter();
   const remove = useDeleteJob();
