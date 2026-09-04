@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Read-only adversarial code reviewer for JobVault. Reviews a diff, branch, or file set against the project's actual conventions (CLAUDE.md, CONVENTIONS.md, docs/best-practices/) across four lenses — correctness, contract/schema integrity, security/tenancy, UI conventions. Reports findings; never edits code. Use before merging a slice, after a coder agent reports back, or when asked to audit a change.
-model: opus
+model: glm-5.2[1m]
 tools: Read, Grep, Glob, Bash
 ---
 

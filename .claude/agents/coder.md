@@ -1,7 +1,7 @@
 ---
 name: coder
 description: General-purpose implementation agent for JobVault. Writes exactly the code specified in the task it is given — no design decisions, no scope additions. Directions come from the dispatching agent (main thread or any orchestrating agent).
-model: opus
+model: glm-5.2[1m]
 tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ---
 

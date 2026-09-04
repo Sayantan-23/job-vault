@@ -681,6 +681,19 @@ is dimmed and every other reading is worthless.
 - **File ownership held again.** Two lanes, one checkout, zero collisions on owned paths. The two crossings were both forced and both declared: the serif lane edited 2 lines of `_layout.tsx` (removing the Instrument Serif package makes its import unresolvable) and added a 6-line `app/gallery.tsx` (a route cannot live under `components/`). One shared-file surprise: `npx expo install` in one lane left `mobile/package.json` + lockfile dirty, and the other lane's `git add` swept them into its commit. Lockfile consistent, nothing lost, but the commit is not purely one lane's.
 - **Web-API divergences are all native-idiom forced** and were declared rather than shipped silently: `hover:`→`active:`, `Sheet` enters from the bottom not the right, no Radix `asChild`, `Select` opens our Sheet rather than a second dropdown idiom, `MonogramAvatar` uses literal sRGB because Tailwind v4's oklch palette does not survive this runtime, `cn` without tailwind-merge because clsx/tailwind-merge are not installed.
 
+## Mobile Wave 3 — C3 Jobs list, filter sheet, detail screen, status change (on `slice-mobile-c3-jobs`, 2026-09-04)
+
+> Milestone `m-0cc02t` (Mobile MVP) · Task `t-0ccxkn` · Run `x-0cj3k1` · Plan `docs/superpowers/plans/2026-09-02-c3-mobile-jobs.md`.
+> The Jobs tab stops being a `Placeholder` and becomes the spine of the app: a grouped infinite list with a filter bottom sheet, full-screen job detail route (`/jobs/[id]`), and status change via a status chip + swipeable row action — reading the existing backend without modifications.
+
+- **Wave 1 Lane A (`df34d26`):** TanStack Query install + `QueryClientProvider` at root `Stack`, pure-logic types/libs ported (`types/job.ts`, `types/filters.ts`, `types/contact.ts`, `lib/job-status.ts`, `lib/ghost.ts`, `lib/filters.ts`, `lib/queries.ts`, `lib/query-keys.ts`), `useInfiniteJobs` (limit 30, flattened page queries) + `useJob` / `useUpdateJob` / `useDeleteJob` hooks.
+- **Wave 1 Lane B (`a30a3ba`):** Missing primitives `Card`, `Badge` (6 variants, surface+ink split for RN text rendering), and `EmptyState` + gallery showcase in `mobile/src/components/ui/gallery.tsx`.
+- **Wave 2 Lane D (`8b95d38`):** Full-screen `/jobs/[id]` route hiding the tab bar, 8 collapsible sections in web order (Header, Details, Outreach with `mailto:`/`tel:` via `parseContact`, Snapshot with `MarkdownProse`, Reminders, Résumé link, Cover-letter link, Timeline feed) + Delete footer with `ConfirmDialog`. Realtime listener on `job:updated`.
+- **Wave 2 Lane C (`60eb9e7`):** Swapped `Placeholder` for `JobsScreen` on `app/(tabs)/index.tsx`, two-bucket partition (`Needs your attention` / `In progress`) preserving server sort order, `FlatList` with `useInfiniteJobs` and `onEndReached` fetch, `FilterSheet` with local filter state (search, status, ghost, sort, date range), `job-row.tsx` with `Swipeable` status advancement, row primitives (`ghost-meter`, `status-chip`, `outreach-badge`). `AppHeader` extended with optional `action` prop. Realtime invalidation on `job:created|updated|deleted`.
+- **Review fix (`60c9dc3`):** Pinned `JobDetailHeader` and `JobDetailFooter` outside the `ScrollView` flex layout (RN Yoga has no `position: sticky`).
+- **Follow-up fixes & test hardening:** Cleaned up `require()` linter warnings in `job-detail-footer.test.tsx`, tracked `job-detail-screen.test.tsx`, added unit tests for `job-row.test.tsx`, `ghost-meter.test.tsx`, `status-chip.test.tsx`, and `outreach-badge.test.tsx`.
+- **Gates:** `make typecheck` · `make lint` · `npm --prefix mobile run typecheck` · `npm --prefix mobile run lint` · `npm --prefix mobile test` (38 suites / 123 tests) · `npx expo export` (iOS, Android, Web) · `blink validate` all green.
+
 
 
 >

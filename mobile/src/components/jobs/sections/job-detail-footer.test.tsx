@@ -2,15 +2,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
+import { useRouter } from 'expo-router';
+
 import * as apiClientModule from '@/lib/api-client';
 import type { Job } from '@/types/job';
 
 import { JobDetailFooter } from './job-detail-footer';
 
-jest.mock('expo-router', () => {
-  const navigate = jest.fn();
-  return { useRouter: () => ({ navigate }) };
-});
+const mockNavigate = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ navigate: mockNavigate }),
+}));
 
 jest.mock('@/lib/api-client', () => ({
   __esModule: true,
@@ -52,7 +54,6 @@ beforeEach(() => {
 describe('JobDetailFooter', () => {
   it('opens the confirm dialog and deletes on confirm', async () => {
     apiClient.delete.mockResolvedValue({ message: 'deleted' });
-    const { useRouter } = require('expo-router');
     const router = useRouter();
 
     await render(<JobDetailFooter job={job} />, { wrapper: Wrapper });
@@ -70,7 +71,6 @@ describe('JobDetailFooter', () => {
 
   it('cancels without deleting', async () => {
     apiClient.delete.mockResolvedValue({ message: 'deleted' });
-    const { useRouter } = require('expo-router');
     const router = useRouter();
 
     await render(<JobDetailFooter job={job} />, { wrapper: Wrapper });
