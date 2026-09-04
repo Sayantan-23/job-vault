@@ -19,3 +19,4 @@ export const jobsInfiniteKey = (f: Omit<JobFilters, 'page'>) =>
 export const TIMELINE_KEY = ['timeline'] as const
 export const timelineKey = (jobId: string) => ['timeline', jobId] as const
 export const contactsKey = (jobId: string) => ['contacts', jobId] as const
+export const remindersKey = (jobId: string) => ['reminders', jobId] as const

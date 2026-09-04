@@ -54,6 +54,11 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Protected guard={signedIn}>
             <Stack.Screen name="(tabs)" />
+            {/* Full-screen detail route, sibling of (tabs) at the root Stack so
+                the tab bar is hidden. Lives under the same signedIn guard — a
+                signed-out user standing on a deep link is navigated out by the
+                Stack.Protected gate. */}
+            <Stack.Screen name="jobs" options={{ headerShown: false }} />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="(auth)" />
