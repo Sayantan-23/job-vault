@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useRef, useState, type ReactNod
 import { Modal, useWindowDimensions, type View as RNView } from 'react-native';
 import { Pressable, View } from 'react-native-css/components';
 
+
 import { cn } from './cn';
+import { Scrim } from './scrim';
 
 type Rect = { x: number; y: number; width: number; height: number };
 
@@ -163,13 +165,9 @@ export function AnchoredPopoverContent({
 
   return (
     <Modal visible transparent animationType="fade" statusBarTranslucent onRequestClose={close}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close menu"
-        onPress={close}
-        className="absolute inset-0"
-      />
+      <Scrim onPress={close} accessibilityLabel="Close menu" />
       <View
+
         // ponytail: opens downward only. A trigger low enough that the popover
         // would run off the bottom gets a scrollable, capped panel rather than a
         // flip — flipping needs the content's measured height, which is a second

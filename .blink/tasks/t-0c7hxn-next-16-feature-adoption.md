@@ -6,7 +6,7 @@ owner: coder
 milestone: m-01
 decisions: [d-0c7hxl]
 created: 2026-08-26T07:54:02Z
-updated: 2026-08-26T08:13:30Z
+updated: 2026-09-05T00:22:00Z
 tags: [upgrade, frontend]
 ---
 
@@ -21,3 +21,6 @@ On top of t-0c7hxm (depends on it):
 
 Scope per d-0c7hxl: Cache Components / Instant Navigations / `<Activity/>` /
 TS7 deliberately deferred.
+
+**This file was written after the work, not before it** — adoption backfill recorded in commit `bd2e2e14`.
+

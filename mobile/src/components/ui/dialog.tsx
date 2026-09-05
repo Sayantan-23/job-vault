@@ -6,6 +6,7 @@ import { X } from 'lucide-react-native';
 import { Icon } from '@/components/icon';
 
 import { cn } from './cn';
+import { Scrim } from './scrim';
 
 type DialogContextValue = { onOpenChange: (open: boolean) => void };
 
@@ -102,17 +103,16 @@ export function DialogDescription({
  * The app's one scrim treatment. Exported because a surface that restyles
  * DialogContent (the search palette on the web) still wants this behind it.
  */
-export function DialogOverlay({ className }: { className?: string }) {
+export function DialogOverlay() {
   const { onOpenChange } = useContext(DialogContext);
   return (
-    <Pressable
-      accessibilityRole="button"
+    <Scrim
       accessibilityLabel="Close dialog"
       onPress={() => onOpenChange(false)}
-      className={cn('absolute inset-0 bg-black/40', className)}
     />
   );
 }
+
 
 export function DialogContent({
   children,

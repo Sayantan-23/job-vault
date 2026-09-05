@@ -1,11 +1,11 @@
 ---
 id: m-0cc02t
 title: JobVault Mobile — React Native + Expo
-status: planned
+status: active
 order: 2
 start: 2026-08-28
 created: 2026-08-28T00:00:00Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-05T00:22:00Z
 summary: A native iOS/Android companion to the web app, built on Expo, reusing the existing TypeScript data layer. Capture-first, not a port of every screen.
 tags: [mobile, expo]
 ---

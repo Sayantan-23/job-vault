@@ -1,12 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'expo-router';
 import { ScrollView, View } from 'react-native-css/components';
 import { useQueryClient } from '@tanstack/react-query';
+import { Pencil, Trash2 } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurTargetView } from 'expo-blur';
 
+import { BlurTargetProvider } from '@/components/ui/blur-target';
 import { RouteProgress } from '@/components/ui/route-progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useJob } from '@/hooks/use-jobs';
+import { SpeedDial } from '@/components/ui/speed-dial';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useDeleteJob, useJob } from '@/hooks/use-jobs';
 import { connectSocket, disconnectSocket } from '@/lib/socket';
-import { SCREEN_BOTTOM_INSET } from '@/theme';
 import { jobKey } from '@/lib/query-keys';
 
 import { JobDetailHeader } from './sections/job-detail-header';
@@ -17,17 +23,20 @@ import { RemindersSection } from './sections/reminders-section';
 import { ResumeLauncher } from './sections/resume-launcher';
 import { CoverLetterLauncher } from './sections/cover-letter-launcher';
 import { TimelineSection } from './sections/timeline-section';
-import { JobDetailFooter } from './sections/job-detail-footer';
+import { EditJobSheet } from './edit-job-sheet';
 
 export function JobDetailScreen({ id }: { id: string }) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { data: job, isLoading } = useJob(id);
+  const remove = useDeleteJob();
   const queryClient = useQueryClient();
+  const blurTargetRef = useRef<any>(null);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // Realtime: invalidate this job's cache when a job:updated event lands for it.
-  // The backend does not yet emit `job:updated` (only `notification`), so this
-  // listener is dormant until that event is added — wired now per the C3 plan so
-  // it lights up the moment the backend ships it.
-  // ponytail: two effects over one hook — extract if a third screen needs it.
   useEffect(() => {
     const socket = connectSocket();
     const onJobUpdated = (payload: { id?: string } | string) => {
@@ -57,39 +66,87 @@ export function JobDetailScreen({ id }: { id: string }) {
     );
   }
 
-  // Fixed top bar + fixed bottom bar + flex-1 scroll area between them. RN's
-  // layout engine (Yoga) has no `position: sticky`; rendering the header/footer
-  // as siblings OUTSIDE the ScrollView is the only way they stay pinned (web
-  // job-details.tsx:22 uses CSS sticky, which RN does not have).
+  const fabBottom = Math.max(insets.bottom, 16) + 8;
+
+  const onConfirmDelete = () => {
+    setConfirmOpen(false);
+    remove.mutate(job.id, {
+      onSuccess: () => {
+        router.navigate('/');
+      },
+    });
+  };
+
+  const dialActions = [
+    {
+      key: 'delete',
+      label: 'Delete job',
+      icon: Trash2,
+      variant: 'destructive' as const,
+      accessibilityLabel: 'Delete job',
+      onPress: () => setConfirmOpen(true),
+    },
+    {
+      key: 'edit',
+      label: 'Edit job',
+      icon: Pencil,
+      accessibilityLabel: 'Edit job',
+      onPress: () => setEditOpen(true),
+    },
+  ];
+
   return (
-    <View className="flex-1 bg-background">
-      <JobDetailHeader job={job} />
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingBottom: SCREEN_BOTTOM_INSET }}>
-        <View className="gap-6 p-5">
-          <JobDetails job={job} />
-          <View className="border-t border-hairline pt-5">
-            <OutreachSection jobId={job.id} />
-          </View>
-          <View className="border-t border-hairline pt-5">
-            <JobSnapshot markdown={job.snapshotMarkdown} sourceUrl={job.sourceUrl} />
-          </View>
-          <View className="border-t border-hairline pt-5">
-            <RemindersSection jobId={job.id} />
-          </View>
-          <View className="border-t border-hairline pt-5">
-            <ResumeLauncher jobId={job.id} />
-          </View>
-          <View className="border-t border-hairline pt-5">
-            <CoverLetterLauncher jobId={job.id} />
-          </View>
-          <View className="border-t border-hairline pt-5">
-            <TimelineSection jobId={job.id} />
-          </View>
-        </View>
-      </ScrollView>
-      <JobDetailFooter job={job} />
-    </View>
+    <BlurTargetProvider blurTarget={blurTargetRef}>
+      <View className="flex-1 bg-background">
+        <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+          <JobDetailHeader job={job} />
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{ paddingBottom: fabBottom + 64 }}>
+            <View className="gap-6 p-5">
+              <JobDetails job={job} />
+              <View className="border-t border-hairline pt-5">
+                <OutreachSection jobId={job.id} />
+              </View>
+              <View className="border-t border-hairline pt-5">
+                <JobSnapshot markdown={job.snapshotMarkdown} sourceUrl={job.sourceUrl} />
+              </View>
+              <View className="border-t border-hairline pt-5">
+                <RemindersSection jobId={job.id} />
+              </View>
+              <View className="border-t border-hairline pt-5">
+                <ResumeLauncher jobId={job.id} />
+              </View>
+              <View className="border-t border-hairline pt-5">
+                <CoverLetterLauncher jobId={job.id} />
+              </View>
+              <View className="border-t border-hairline pt-5">
+                <TimelineSection jobId={job.id} />
+              </View>
+            </View>
+          </ScrollView>
+        </BlurTargetView>
+
+        {/* Floating SpeedDial replacing the fixed bottom bar */}
+        <SpeedDial
+          actions={dialActions}
+          accessibilityLabel="Job actions"
+          bottom={fabBottom}
+          blurTarget={blurTargetRef}
+        />
+
+        <EditJobSheet open={editOpen} onOpenChange={setEditOpen} job={job} />
+
+        <ConfirmDialog
+          open={confirmOpen}
+          onOpenChange={setConfirmOpen}
+          title="Delete job?"
+          description={`"${job.title}" at ${job.company} will be permanently deleted, along with its timeline, reminders, and any cover letters generated from it.`}
+          confirmLabel="Delete"
+          destructive
+          onConfirm={onConfirmDelete}
+        />
+      </View>
+    </BlurTargetProvider>
   );
 }

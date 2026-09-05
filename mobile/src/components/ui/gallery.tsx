@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Bell, LayoutGrid, List, Search } from 'lucide-react-native';
 import { ScrollView, Text, View } from 'react-native-css/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurTargetView } from 'expo-blur';
 
+import { BlurTargetProvider } from './blur-target';
 import {
   AnchoredPopover,
   AnchoredPopoverClose,
@@ -84,10 +86,13 @@ export function Gallery() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const blurTargetRef = useRef<any>(null);
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
+    <BlurTargetProvider blurTarget={blurTargetRef}>
+      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+        <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         <View className="px-5 pb-2 pt-4">
           <Text className="font-serif text-[30px] leading-[34px] text-foreground">Primitives</Text>
           <Text className="mt-1 text-sm text-muted-foreground">
@@ -259,7 +264,8 @@ Run \`npm test\` to verify.
 
 Images are dropped: ![logo](https://example.com/logo.png)`}</MarkdownProse>
         </Section>
-      </ScrollView>
+        </ScrollView>
+      </BlurTargetView>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
@@ -302,5 +308,6 @@ Images are dropped: ![logo](https://example.com/logo.png)`}</MarkdownProse>
         </SheetContent>
       </Sheet>
     </View>
+  </BlurTargetProvider>
   );
 }

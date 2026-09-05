@@ -1,5 +1,5 @@
 import { buildListQuery } from './filters'
-import { jobsInfiniteKey } from './query-keys'
+import { jobsInfiniteKey, kanbanKey, ANSWERS_KEY, PERSONAS_KEY, AI_STATUS_KEY } from './query-keys'
 import type { JobFilters } from '@/types/filters'
 
 // A cache key paired with the endpoint that fills it. Server prefetches and
@@ -22,3 +22,29 @@ export const jobsListQuery = (f: JobFilters): QueryDesc => ({
   key: jobsInfiniteKey(f),
   path: `/api/jobs${buildListQuery(f)}`,
 })
+
+export const kanbanQuery = (filters?: { search?: string; ghost?: string }): QueryDesc => {
+  const params = new URLSearchParams()
+  if (filters?.search) params.set('search', filters.search)
+  if (filters?.ghost && filters.ghost !== 'all') params.set('ghostFilter', filters.ghost)
+  const qs = params.toString()
+  return {
+    key: kanbanKey(filters),
+    path: `/api/dashboard/kanban${qs ? `?${qs}` : ''}`,
+  }
+}
+
+export const answersQuery: QueryDesc = {
+  key: ANSWERS_KEY,
+  path: '/api/answers',
+}
+
+export const personasQuery: QueryDesc = {
+  key: PERSONAS_KEY,
+  path: '/api/personas',
+}
+
+export const aiStatusQuery: QueryDesc = {
+  key: AI_STATUS_KEY,
+  path: '/api/ai/status',
+}

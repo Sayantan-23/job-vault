@@ -1,5 +1,5 @@
-import { Placeholder } from '@/screens/placeholder';
+import { AnswersScreen } from '@/components/answers/answers-screen';
 
 export default function AnswersRoute() {
-  return <Placeholder title="Answers" note="Saved answers land in C4." />;
+  return <AnswersScreen />;
 }

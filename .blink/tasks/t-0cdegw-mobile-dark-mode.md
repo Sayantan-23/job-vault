@@ -4,7 +4,7 @@ title: "Mobile has no dark mode — conditional root variables are dropped by re
 status: backlog
 milestone: m-0cc02t
 created: 2026-08-29T14:00:00Z
-updated: 2026-08-29T14:00:00Z
+updated: 2026-09-05T00:22:00Z
 estimate: S
 decisions: [d-0cd3wr]
 tags: [mobile, design, deferred]
@@ -69,3 +69,6 @@ a component change.
 
 **Done when** flipping the OS scheme flips the app's palette, and the tab bar
 still reads as a distinct surface in both.
+
+**Re-verified 2026-09-05:** Still open in backlog. Citing commit `ed770c9b` explicitly deferred the dark mode runtime switch to `t-0cdegw`.
+

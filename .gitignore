@@ -25,3 +25,9 @@ mobile/node_modules/
 mobile/.expo/
 mobile/ios/
 mobile/android/
+
+# Local RPM and IDE artifacts
+*.rpm
+.idea/
+mobile/.idea/
+.codex/

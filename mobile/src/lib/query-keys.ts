@@ -20,3 +20,11 @@ export const TIMELINE_KEY = ['timeline'] as const
 export const timelineKey = (jobId: string) => ['timeline', jobId] as const
 export const contactsKey = (jobId: string) => ['contacts', jobId] as const
 export const remindersKey = (jobId: string) => ['reminders', jobId] as const
+
+export const ANSWERS_KEY = ['answers'] as const
+export const PERSONAS_KEY = ['personas'] as const
+export const AI_STATUS_KEY = ['ai-status'] as const
+
+export const DASHBOARD_KANBAN_KEY = ['dashboard', 'kanban'] as const
+export const kanbanKey = (filters?: { search?: string; ghost?: string }) =>
+  ['dashboard', 'kanban', filters?.search ?? '', filters?.ghost ?? ''] as const

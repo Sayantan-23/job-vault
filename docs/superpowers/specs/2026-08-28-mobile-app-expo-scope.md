@@ -245,6 +245,23 @@ shadow; no frosted glass.
 custom silhouette) — the bar is a custom `tabBar` component. Full reasoning,
 including the rejected alternatives, in `d-0cd3wr`.
 
+### 3.6 Action button standard & floating SpeedDial — RESOLVED 2026-09-05, see `d-0cqv2p`
+
+**Rule: headers never carry leading action buttons.**
+Opportunistically placing action icons before screen titles (e.g. filter on Jobs or `+` on Answers) crowds the header and misaligns the editorial Newsreader serif title.
+
+**Unified Action Pattern:**
+Every screen that requires action affordances uses the bottom-right floating SpeedDial (`SpeedDial`), matching the web mobile responsive hamburger animation:
+1. **Motion & Backdrop:** Tapping the FAB smoothly darkens and blurs the background (`expo-blur`, `tint="dark"`, `rgba(0, 0, 0, 0.45)` overlay) and rotates the FAB icon to an `X`.
+2. **Action Circles:** Action item buttons are exact `56×56` dp circles (`FAB_SIZE`) matching the primary FAB, with 24px Lucide icons.
+3. **Label Pills:** Clean pills accompany each action disc with 15px medium typography and subtle elevation.
+4. **Hide on Scroll:** Driven by `useHideOnScroll` on scrollable lists, hiding on scroll-down and restoring on scroll-up.
+5. **App-wide Coverage:**
+   - **Jobs screen:** FAB expands to **Add job** (`+`) and **Filter jobs** (sliders).
+   - **Answers screen:** FAB expands to **New answer** (`+`).
+   - **Job detail screen:** FAB expands to **Edit job** (pencil) and **Delete job** (trash, destructive).
+   - All future screens requiring actions follow this exact pattern.
+
 ---
 
 ## 4. Surface-by-surface

@@ -7,6 +7,7 @@ import { X } from 'lucide-react-native';
 import { Icon } from '@/components/icon';
 
 import { cn } from './cn';
+import { Scrim } from './scrim';
 
 type SheetContextValue = { onOpenChange: (open: boolean) => void };
 
@@ -113,12 +114,11 @@ export function SheetContent({
 
   return (
     <View className="flex-1 justify-end">
-      <Pressable
-        accessibilityRole="button"
+      <Scrim
         accessibilityLabel="Close sheet"
         onPress={() => onOpenChange(false)}
-        className="absolute inset-0 bg-black/40"
       />
+
       <View
         className={cn(
           'max-h-[88%] rounded-t-2xl border-t border-border bg-card px-5 pt-5',

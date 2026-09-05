@@ -3,7 +3,7 @@ id: t-0021
 title: Résumé workspace — route split + xl breakpoint parity with the cover-letter editor
 status: backlog
 created: 2026-06-16
-updated: 2026-08-25T12:30:00Z
+updated: 2026-09-05T00:22:00Z
 estimate: S
 tags: [frontend, documents, polish]
 ---
@@ -22,3 +22,6 @@ leaves too little width — the cover-letter editor splits at `xl` for exactly
 that reason, per its own comment at `cover-letter-editor.tsx:130`) and the
 absence of a `/app/resumes/[id]` route: `app/app/resumes/` holds only
 `page.tsx` and `loading.tsx`, while cover letters have `[id]/page.tsx`.
+
+**Re-verified 2026-09-05:** Still open in backlog. Citing commit `a96cae37` confirmed `?resume=<id>` was already functional and dropped `t-0021` from scope.
+

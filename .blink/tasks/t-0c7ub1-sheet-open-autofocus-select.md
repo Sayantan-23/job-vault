@@ -4,7 +4,7 @@ title: "Sheets no longer select the first input's text on open"
 status: done
 milestone: m-01
 created: 2026-08-26T14:05:00Z
-updated: 2026-08-26T14:05:00Z
+updated: 2026-09-05T00:22:00Z
 tags: [frontend, ui, a11y]
 ---
 
@@ -26,3 +26,6 @@ question text" (verified failing before the fix).
 
 Not done: `components/ui/dialog.tsx` has the identical defect for modals —
 separate call, left for the user to decide.
+
+**This file was written after the work, not before it** — recorded in commit `14d64c78`.
+

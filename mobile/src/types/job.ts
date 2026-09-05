@@ -40,6 +40,17 @@ export interface ScrapeResult {
 // The PATCH /api/jobs/:id body — `ManualJobSchema.partial()` on the web. Mobile
 // has no Zod yet, so the shape is mirrored as a plain interface; C5's add-job
 // slice will consolidate. Every field optional, matching the backend contract.
+export interface CreateJobValues {
+  title: string
+  company: string
+  location?: string
+  salaryRange?: string
+  sourceUrl?: string
+  snapshotMarkdown?: string
+  status?: JobStatus
+  notes?: string
+}
+
 export interface UpdateJobValues {
   title?: string
   company?: string

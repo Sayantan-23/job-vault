@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Animated from 'react-native-reanimated';
-import { SlidersHorizontal } from 'lucide-react-native';
+import { BlurTargetView } from 'expo-blur';
+import { Plus, SlidersHorizontal } from 'lucide-react-native';
 import { Text, View } from 'react-native-css/components';
 
+import { BlurTargetProvider } from '@/components/ui/blur-target';
 import { AppHeader } from '@/components/app-header';
-import { Fab } from '@/components/fab';
+import { SpeedDial } from '@/components/ui/speed-dial';
 import { FilterSheet } from '@/components/jobs/filter-sheet';
+import { EditJobSheet } from '@/components/jobs/edit-job-sheet';
 import { JobRow } from '@/components/jobs/job-row';
-import { IconButton } from '@/components/ui/icon-button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RouteProgress } from '@/components/ui/route-progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,7 +20,7 @@ import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { ghostLevel } from '@/lib/ghost';
 import { isListFiltered } from '@/lib/filters';
 import { DEFAULT_FILTERS } from '@/types/filters';
-import { JOBS_KEY } from '@/lib/query-keys';
+import { JOBS_KEY, DASHBOARD_KANBAN_KEY } from '@/lib/query-keys';
 import { useQueryClient } from '@tanstack/react-query';
 import { SCREEN_BOTTOM_INSET } from '@/theme';
 import type { Job } from '@/types/job';
@@ -101,19 +103,22 @@ function ListEmpty({
 export function JobsScreen() {
   const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [addJobOpen, setAddJobOpen] = useState(false);
   const { hidden, onScroll } = useHideOnScroll();
   const qc = useQueryClient();
+  const blurTargetRef = useRef<any>(null);
 
   const query = useInfiniteJobs(filters);
   const rows = useMemo(() => query.data ?? [], [query.data]);
   const groups = useMemo(() => groupJobs(rows), [rows]);
 
-  // ponytail: blunt invalidation on any job event — scope to the changed id if
-  // chatter bites.
+
+  // Blunt invalidation on any job event — scope to the changed id if chatter bites.
   useEffect(() => {
     const socket = connectSocket();
     const handler = () => {
       void qc.invalidateQueries({ queryKey: JOBS_KEY });
+      void qc.invalidateQueries({ queryKey: DASHBOARD_KANBAN_KEY });
     };
     socket.on('job:created', handler);
     socket.on('job:updated', handler);
@@ -154,55 +159,82 @@ export function JobsScreen() {
   const showEmpty = !query.isLoading && rows.length === 0;
   const filtered = isListFiltered(filters);
 
+  const dialActions = [
+    {
+      key: 'filter',
+      label: 'Filter jobs',
+      icon: SlidersHorizontal,
+      accessibilityLabel: 'Filter jobs',
+      onPress: () => setFilterOpen(true),
+    },
+    {
+      key: 'add',
+      label: 'Add job',
+      icon: Plus,
+      accessibilityLabel: 'Add job',
+      onPress: () => setAddJobOpen(true),
+    },
+  ];
+
   return (
-    <View className="flex-1 bg-tab-bar">
-      <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
-        <AppHeader
-          title="Jobs"
-          action={
-            <IconButton
-              icon={SlidersHorizontal}
-              accessibilityLabel="Filter jobs"
-              onPress={() => setFilterOpen(true)}
+    <BlurTargetProvider blurTarget={blurTargetRef}>
+      <View className="flex-1 bg-tab-bar">
+        <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
+          <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
+            <AppHeader title="Jobs" />
+            {query.isLoading && rows.length === 0 ? <RouteProgress /> : null}
+            <Animated.FlatList
+              onScroll={onScroll}
+              scrollEventThrottle={16}
+              data={sections}
+              keyExtractor={(item, i) =>
+                item.kind === 'row' ? `job-${item.job.id}` : `head-${i}`
+              }
+              renderItem={({ item }) =>
+                item.kind === 'header' ? (
+                  <SectionHeader label={item.label} count={item.count} />
+                ) : (
+                  <JobRow job={item.job} />
+                )
+              }
+              onEndReached={onEndReached}
+              onEndReachedThreshold={0.4}
+              ListFooterComponent={
+                query.isFetchingNextPage ? <RouteProgress /> : null
+              }
+              ListEmptyComponent={
+                showSkeleton ? null : showEmpty ? (
+                  <ListEmpty filtered={filtered} onReset={resetFilters} />
+                ) : null
+              }
+              ListHeaderComponent={showSkeleton ? <ListSkeleton /> : null}
+              contentContainerStyle={{ paddingBottom: SCREEN_BOTTOM_INSET }}
             />
-          }
+          </View>
+        </BlurTargetView>
+
+        {/* SpeedDial FAB (Google Keep-style with Add Job + Filter) */}
+        <SpeedDial
+          hidden={hidden}
+          actions={dialActions}
+          accessibilityLabel="Job actions"
+          blurTarget={blurTargetRef}
         />
-        {query.isLoading && rows.length === 0 ? <RouteProgress /> : null}
-        <Animated.FlatList
-          onScroll={onScroll}
-          scrollEventThrottle={16}
-          data={sections}
-          keyExtractor={(item, i) =>
-            item.kind === 'row' ? `job-${item.job.id}` : `head-${i}`
-          }
-          renderItem={({ item }) =>
-            item.kind === 'header' ? (
-              <SectionHeader label={item.label} count={item.count} />
-            ) : (
-              <JobRow job={item.job} />
-            )
-          }
-          onEndReached={onEndReached}
-          onEndReachedThreshold={0.4}
-          ListFooterComponent={
-            query.isFetchingNextPage ? <RouteProgress /> : null
-          }
-          ListEmptyComponent={
-            showSkeleton ? null : showEmpty ? (
-              <ListEmpty filtered={filtered} onReset={resetFilters} />
-            ) : null
-          }
-          ListHeaderComponent={showSkeleton ? <ListSkeleton /> : null}
-          contentContainerStyle={{ paddingBottom: SCREEN_BOTTOM_INSET }}
+
+        <EditJobSheet
+          open={addJobOpen}
+          onOpenChange={setAddJobOpen}
+          job={null}
+        />
+
+        <FilterSheet
+          open={filterOpen}
+          onOpenChange={setFilterOpen}
+          filters={filters}
+          onFiltersChange={setFilters}
         />
       </View>
-      <Fab hidden={hidden} accessibilityLabel="Add job" />
-      <FilterSheet
-        open={filterOpen}
-        onOpenChange={setFilterOpen}
-        filters={filters}
-        onFiltersChange={setFilters}
-      />
-    </View>
+    </BlurTargetProvider>
   );
 }
+

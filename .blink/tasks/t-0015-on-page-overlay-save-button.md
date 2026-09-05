@@ -3,7 +3,7 @@ id: t-0015
 title: On-page overlay "Save to JobVault" button
 status: backlog
 created: 2026-06-22
-updated: 2026-08-25T12:30:00Z
+updated: 2026-09-05T00:22:00Z
 estimate: M
 tags: [extension, deferred]
 ---
@@ -16,3 +16,5 @@ works everywhere. Worth it only if opening the popup turns out to be the
 friction.
 
 **Verified 2026-08-25:** still open — capture is popup-only.
+**Re-verified 2026-09-05:** Still open in backlog. Citing commit `2749d5ea` explicitly excluded on-page overlay (`t-0015`) from scope.
+

@@ -9,7 +9,7 @@ import {
 import { apiClient } from '@/lib/api-client'
 import { JOBS_KEY, jobKey, jobsInfiniteKey } from '@/lib/query-keys'
 import { jobsListQuery } from '@/lib/queries'
-import type { Job, UpdateJobValues } from '@/types/job'
+import type { Job, CreateJobValues, UpdateJobValues } from '@/types/job'
 import type { JobFilters } from '@/types/filters'
 
 export { JOBS_KEY, jobKey }
@@ -37,6 +37,17 @@ export function useJob(id: string | null) {
     queryKey: id ? jobKey(id) : ['jobs', '__none__'],
     queryFn: () => apiClient.get<Job>(`/api/jobs/${id}`),
     enabled: id !== null,
+  })
+}
+
+export function useCreateJob() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (values: CreateJobValues) =>
+      apiClient.post<Job>('/api/jobs', values),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: JOBS_KEY })
+    },
   })
 }
 

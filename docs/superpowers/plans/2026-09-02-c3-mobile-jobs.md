@@ -202,9 +202,9 @@ trusting lint (phantom `import/no-unresolved` — same run, 2026-09-01).
   - Grouping: two-bucket partition (`needsAttention` / `inProgress`), render as section headers (`Text` serif) + the flat rows. Second header suppressed when it's the only group (mirror `job-list.tsx`).
   - Empty state: `<EmptyState>` two variants via `isListFiltered(filters)` (Reset button vs "No jobs yet").
   - Skeleton: `Skeleton` rows when `isLoading && data.length === 0`.
-  - Header: extend `AppHeader` to add a filter `IconButton` (opens `FilterSheet`) — the existing `AppHeader` only takes `title`; add an optional `action?: ReactNode` prop (or a `onFilterPress`). Mirror: don't hand-roll a second header shape — extend the one component (`d-006`, one pattern).
+  - Header & Action affordances: `AppHeader` renders clean `title` only (no leading action buttons, per `d-0cqv2p`). All screen actions (Filter jobs + Add job) live in the bottom-right floating `SpeedDial` FAB (`d-0cqv2p`), matching web mobile hamburger animation with darkened/blurred backdrop.
   - Realtime: `useEffect` → `connectSocket()` on mount, listen for job events, `queryClient.invalidateQueries({ queryKey: JOBS_KEY })` on `job:created|updated|deleted`. `disconnectSocket()` on unmount. `// ponytail: blunt invalidation on any job event — scope to the changed id if chatter bites`.
-- `app/(tabs)/index.tsx` — MODIFY: `<Placeholder .../>` → `<JobsScreen/>`. The FAB `onPress` stays a no-op (C5 wires add-job) — leave it, don't remove.
+- `app/(tabs)/index.tsx` — MODIFY: `<Placeholder .../>` → `<JobsScreen/>`. FAB opens `SpeedDial` actions (Add job opens `EditJobSheet`, Filter jobs opens `FilterSheet`).
 - Gate: full mobile gates.
 
 ## Lane D — job detail (full-screen route)

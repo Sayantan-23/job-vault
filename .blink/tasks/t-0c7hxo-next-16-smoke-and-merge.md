@@ -6,7 +6,7 @@ owner: main
 milestone: m-01
 decisions: [d-0c7hxl]
 created: 2026-08-26T07:54:02Z
-updated: 2026-08-26T08:28:06Z
+updated: 2026-09-05T00:22:00Z
 tags: [upgrade, verification]
 ---
 
@@ -23,3 +23,6 @@ Depends on t-0c7hxm + t-0c7hxn.
 - `make gates` (backend + frontend suites + production build) green.
 - `make build-web` (production Docker image builds on 16).
 - Merge `upgrade-next-16` → `develop` (no push; user pushes).
+
+**This file was written after the work, not before it** — adoption backfill recorded in commit `bd2e2e14`.
+
