@@ -150,18 +150,20 @@ export function DialogContent({
   return (
     <View className="flex-1 items-center justify-center px-4">
       <DialogOverlay />
-      <Animated.View
-        style={animatedStyle}
-        className={cn(
-          'w-full max-w-lg gap-4 rounded-xl border border-border bg-card p-6',
-          className
-        )}>
-        {children}
-        <DialogClose accessibilityLabel="Close" className="absolute right-4 top-4 rounded-md p-1">
-          <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
-        </DialogClose>
+      <Animated.View style={[{ width: '100%', alignItems: 'center' }, animatedStyle]}>
+        <View
+          className={cn(
+            'w-full max-w-lg gap-4 rounded-xl border border-border bg-card p-6 shadow-xl shadow-black/25',
+            className
+          )}>
+          {children}
+          <DialogClose accessibilityLabel="Close" className="absolute right-4 top-4 rounded-md p-1">
+            <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
+          </DialogClose>
+        </View>
       </Animated.View>
     </View>
   );
 }
+
 
