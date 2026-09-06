@@ -135,31 +135,15 @@ function Backdrop({
   onPress: () => void;
   blurTarget?: React.RefObject<any>;
 }) {
-  const opacity = useSharedValue(0);
-
-  useEffect(() => {
-    opacity.value = withTiming(1, {
-      duration: 180,
-      easing: Easing.out(Easing.ease),
-    });
-  }, [opacity]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
   return (
-    <Animated.View
-      style={[StyleSheet.absoluteFill, animatedStyle]}
-      pointerEvents="auto">
-      <Scrim
-        onPress={onPress}
-        accessibilityLabel="Close actions"
-        blurTarget={blurTarget}
-      />
-    </Animated.View>
+    <Scrim
+      onPress={onPress}
+      accessibilityLabel="Close actions"
+      blurTarget={blurTarget}
+    />
   );
 }
+
 
 
 export function SpeedDial({

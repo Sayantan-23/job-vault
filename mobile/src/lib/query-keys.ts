@@ -2,6 +2,7 @@ import type { JobFilters } from '@/types/filters'
 
 export const JOBS_KEY = ['jobs'] as const
 export const jobKey = (id: string) => ['jobs', id] as const
+export const jobOptionsKey = ['jobs', 'options'] as const
 
 // Filtered list cache key (offset pagination, web). Nested under ['jobs', ...]
 // so existing invalidateQueries({ queryKey: JOBS_KEY }) (prefix match) still
@@ -28,3 +29,11 @@ export const AI_STATUS_KEY = ['ai-status'] as const
 export const DASHBOARD_KANBAN_KEY = ['dashboard', 'kanban'] as const
 export const kanbanKey = (filters?: { search?: string; ghost?: string }) =>
   ['dashboard', 'kanban', filters?.search ?? '', filters?.ghost ?? ''] as const
+
+export const COVER_LETTERS_KEY = ['cover-letters'] as const
+export const coverLetterKey = (id: string) => ['cover-letters', id] as const
+export const coverLettersByJobKey = (jobId: string) => ['cover-letters', 'by-job', jobId] as const
+
+export const RESUMES_KEY = ['resumes'] as const
+export const resumeKey = (id: string) => ['resumes', id] as const
+export const resumesByJobKey = (jobId: string) => ['resumes', 'by-job', jobId] as const

@@ -1,6 +1,12 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { Modal } from 'react-native';
 import { Pressable, Text, View } from 'react-native-css/components';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';
@@ -30,7 +36,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
       <Modal
         visible={open}
         transparent
-        animationType="fade"
+        animationType="none"
         statusBarTranslucent
         onRequestClose={() => onOpenChange(false)}>
         {children}
@@ -38,6 +44,7 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
     </DialogContext.Provider>
   );
 }
+
 
 export function DialogTrigger({
   children,
@@ -121,10 +128,30 @@ export function DialogContent({
   children: ReactNode;
   className?: string;
 }) {
+  const opacity = useSharedValue(0);
+  const scale = useSharedValue(0.96);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, {
+      duration: 180,
+      easing: Easing.out(Easing.ease),
+    });
+    scale.value = withTiming(1, {
+      duration: 180,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [opacity, scale]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
     <View className="flex-1 items-center justify-center px-4">
       <DialogOverlay />
-      <View
+      <Animated.View
+        style={animatedStyle}
         className={cn(
           'w-full max-w-lg gap-4 rounded-xl border border-border bg-card p-6',
           className
@@ -133,7 +160,8 @@ export function DialogContent({
         <DialogClose accessibilityLabel="Close" className="absolute right-4 top-4 rounded-md p-1">
           <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
         </DialogClose>
-      </View>
+      </Animated.View>
     </View>
   );
 }
+

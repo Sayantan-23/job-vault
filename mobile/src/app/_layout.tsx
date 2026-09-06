@@ -59,6 +59,8 @@ export default function RootLayout() {
                 signed-out user standing on a deep link is navigated out by the
                 Stack.Protected gate. */}
             <Stack.Screen name="jobs/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="vault/resume/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="vault/cover-letter/[id]" options={{ headerShown: false }} />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="(auth)" />

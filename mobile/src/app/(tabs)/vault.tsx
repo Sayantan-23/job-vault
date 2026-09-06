@@ -1,5 +1,5 @@
-import { Placeholder } from '@/screens/placeholder';
+import { VaultScreen } from '@/components/vault/vault-screen';
 
 export default function VaultRoute() {
-  return <Placeholder title="Vault" note="Résumés and cover letters land in C8." />;
+  return <VaultScreen />;
 }

@@ -1,5 +1,17 @@
+import {
+  jobsInfiniteKey,
+  kanbanKey,
+  ANSWERS_KEY,
+  PERSONAS_KEY,
+  AI_STATUS_KEY,
+  COVER_LETTERS_KEY,
+  coverLetterKey,
+  coverLettersByJobKey,
+  RESUMES_KEY,
+  resumeKey,
+  resumesByJobKey,
+} from './query-keys'
 import { buildListQuery } from './filters'
-import { jobsInfiniteKey, kanbanKey, ANSWERS_KEY, PERSONAS_KEY, AI_STATUS_KEY } from './query-keys'
 import type { JobFilters } from '@/types/filters'
 
 // A cache key paired with the endpoint that fills it. Server prefetches and
@@ -48,3 +60,29 @@ export const aiStatusQuery: QueryDesc = {
   key: AI_STATUS_KEY,
   path: '/api/ai/status',
 }
+
+export const coverLettersQuery: QueryDesc = {
+  key: COVER_LETTERS_KEY,
+  path: '/api/cover-letters',
+}
+
+export const coverLetterQuery = (id: string): QueryDesc => ({
+  key: coverLetterKey(id),
+  path: `/api/cover-letters/${id}`,
+})
+
+export const coverLettersByJobQuery = (jobId: string): QueryDesc => ({
+  key: coverLettersByJobKey(jobId),
+  path: `/api/cover-letters?jobId=${encodeURIComponent(jobId)}`,
+})
+
+export const resumesQuery = (jobId?: string): QueryDesc => ({
+  key: jobId ? resumesByJobKey(jobId) : RESUMES_KEY,
+  path: `/api/resumes${jobId ? `?jobId=${encodeURIComponent(jobId)}` : ''}`,
+})
+
+export const resumeQuery = (id: string): QueryDesc => ({
+  key: resumeKey(id),
+  path: `/api/resumes/${id}`,
+})
+
