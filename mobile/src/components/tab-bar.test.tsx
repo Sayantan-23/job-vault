@@ -1,7 +1,10 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 
+import { NOTIFICATIONS_KEY } from '@/lib/query-keys';
+import type { Notification } from '@/types/notification';
 import { TabBar } from './tab-bar';
 
 const METRICS: Metrics = {
@@ -26,11 +29,13 @@ function makeProps(index: number) {
   } as unknown as BottomTabBarProps;
 }
 
-function renderBar(props: BottomTabBarProps) {
+function renderBar(props: BottomTabBarProps, queryClient = new QueryClient()) {
   return render(
-    <SafeAreaProvider initialMetrics={METRICS}>
-      <TabBar {...props} />
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider initialMetrics={METRICS}>
+        <TabBar {...props} />
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }
 
@@ -59,5 +64,45 @@ describe('TabBar', () => {
     await fireEvent.press(screen.getByText('Jobs'));
 
     expect(props.navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('shows unread dot on activity tab when there are unread notifications', async () => {
+    const qc = new QueryClient();
+    const mockNotifications: Notification[] = [
+      {
+        id: 'n1',
+        userId: 'u1',
+        type: 'REMINDER',
+        message: 'Follow up with Stripe',
+        isRead: false,
+        relatedJobId: 'j1',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    qc.setQueryData(NOTIFICATIONS_KEY, mockNotifications);
+
+    await renderBar(makeProps(0), qc);
+
+    expect(screen.getByTestId('tab-unread-dot')).toBeTruthy();
+  });
+
+  it('does not show unread dot on activity tab when all notifications are read', async () => {
+    const qc = new QueryClient();
+    const mockNotifications: Notification[] = [
+      {
+        id: 'n1',
+        userId: 'u1',
+        type: 'REMINDER',
+        message: 'Follow up with Stripe',
+        isRead: true,
+        relatedJobId: 'j1',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+    qc.setQueryData(NOTIFICATIONS_KEY, mockNotifications);
+
+    await renderBar(makeProps(0), qc);
+
+    expect(screen.queryByTestId('tab-unread-dot')).toBeNull();
   });
 });

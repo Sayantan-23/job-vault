@@ -5,6 +5,7 @@ import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-goog
 import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono';
 import { Newsreader_400Regular } from '@expo-google-fonts/newsreader';
 import { useFonts } from 'expo-font';
+import { isRunningInExpoGo } from 'expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -14,6 +15,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { hydrateSession } from '@/lib/auth';
 import { getQueryClient } from '@/lib/query-client';
 import { useSession } from '@/lib/session';
+import { RealtimeProvider } from '@/components/shared/realtime-provider';
+import { PushNotificationProvider } from '@/components/shared/push-notification-provider';
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,6 +51,12 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={getQueryClient()}>
         <StatusBar style="auto" />
+        {signedIn ? (
+          <>
+            <RealtimeProvider />
+            {!isRunningInExpoGo() ? <PushNotificationProvider /> : null}
+          </>
+        ) : null}
         {/* `Stack.Protected` is expo-router's own guard: a false `guard` removes
             those routes from the tree entirely, and a user standing on one is
             navigated out. So signing in or out needs no imperative navigation —

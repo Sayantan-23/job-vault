@@ -1,5 +1,6 @@
-import { Placeholder } from '@/screens/placeholder';
+import { ActivityScreen } from '@/components/activity/activity-screen';
 
 export default function ActivityRoute() {
-  return <Placeholder title="Activity" note="Timeline and notifications land in C6." />;
+  return <ActivityScreen />;
 }
+

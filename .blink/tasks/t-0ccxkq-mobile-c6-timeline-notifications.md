@@ -1,10 +1,11 @@
 ---
 id: t-0ccxkq
 title: "C6 — Timeline, notifications, push registration"
-status: planned
+status: done
+owner: sayantan-23
 milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-06T18:25:00Z
 estimate: M
 blocked_by: [t-0ccxkn, t-0009]
 decisions: [d-004]

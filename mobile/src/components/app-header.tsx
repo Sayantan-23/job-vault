@@ -1,24 +1,37 @@
+import { useRouter } from 'expo-router';
+import { Bell, Search } from 'lucide-react-native';
 import { Text, View } from 'react-native-css/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search } from 'lucide-react-native';
 
 import { AccountMenu } from '@/components/account-menu';
 import { IconButton } from '@/components/ui/icon-button';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 
 export type AppHeaderProps = {
   title: string;
 };
 
 /**
- * Editorial screen header. Search is an icon and the account menu (sign out now,
- * profile and settings once they exist) hangs off the avatar rather than taking a
- * tab — d-0cd3wr, mirroring the web app's AccountMenu. Search is inert until C7.
+ * Editorial screen header. Search is an icon, Notifications is a top-level bell
+ * taking the user directly to the Activity tab's notifications feed, and the
+ * account menu (sign out now, profile and settings once they exist) hangs off the
+ * avatar rather than taking a tab — d-0cd3wr, mirroring the web app's AccountMenu.
+ * Search is inert until C7.
  *
  * Headers never carry leading action buttons — all screen-level actions live in
  * the bottom-right floating SpeedDial (d-0cqv2p).
  */
 export function AppHeader({ title }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const unreadCount = useUnreadNotificationCount();
+
+  const handleNotificationsPress = () => {
+    router.navigate({
+      pathname: '/(tabs)/activity',
+      params: { filter: 'notifications' },
+    });
+  };
 
   return (
     <View
@@ -29,6 +42,23 @@ export function AppHeader({ title }: AppHeaderProps) {
       </View>
       <View className="flex-row items-center gap-2">
         <IconButton icon={Search} accessibilityLabel="Search" />
+        <View className="relative">
+          <IconButton
+            icon={Bell}
+            accessibilityLabel={
+              unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'
+            }
+            onPress={handleNotificationsPress}
+            testID="header-notification-button"
+          />
+          {unreadCount > 0 ? (
+            <View
+              testID="header-unread-dot"
+              pointerEvents="none"
+              className="absolute right-1.5 top-1.5 size-2 rounded-full bg-ghost-ghosted ring-2 ring-background"
+            />
+          ) : null}
+        </View>
         <AccountMenu />
       </View>
     </View>

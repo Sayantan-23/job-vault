@@ -7,6 +7,7 @@ import type { BottomTabBarProps } from 'expo-router/tabs';
 import { Archive, Briefcase, Clock, MessageSquareQuote, type LucideIcon } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';
+import { useUnreadNotificationCount } from '@/hooks/use-notifications';
 import { TAB_BAR_HEIGHT } from '@/theme';
 
 /**
@@ -30,6 +31,7 @@ const TRAIL_MS = 320;
 
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const unreadCount = useUnreadNotificationCount();
   const [barWidth, setBarWidth] = useState(0);
   const slot = state.routes.length > 0 ? barWidth / state.routes.length : 0;
 
@@ -98,7 +100,16 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   navigation.navigate(route.name, route.params);
                 }
               }}>
-              <Icon icon={meta.icon} size={20} strokeWidth={1.75} className={tone} />
+              <View className="relative">
+                <Icon icon={meta.icon} size={20} strokeWidth={1.75} className={tone} />
+                {route.name === 'activity' && unreadCount > 0 ? (
+                  <View
+                    testID="tab-unread-dot"
+                    pointerEvents="none"
+                    className="absolute -right-1.5 -top-1 size-2 rounded-full bg-ghost-ghosted"
+                  />
+                ) : null}
+              </View>
               <Text className={`font-mono text-[10px] ${tone}`}>{meta.label}</Text>
             </Pressable>
           );

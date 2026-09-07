@@ -17,6 +17,7 @@ export type IconButtonProps = {
   disabled?: boolean;
   size?: number;
   className?: string;
+  testID?: string;
 };
 
 /**
@@ -31,9 +32,11 @@ export function IconButton({
   disabled = false,
   size = 20,
   className,
+  testID,
 }: IconButtonProps) {
   return (
     <Pressable
+      testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
