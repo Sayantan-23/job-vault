@@ -6,7 +6,7 @@ milestone: m-0cc02t
 created: 2026-08-29T07:15:35Z
 updated: 2026-08-29T07:15:35Z
 estimate: M
-blocked_by: [t-0ccxkp, t-0ccxkq, t-0ccxkr, t-0ccxks, t-0ccxkt]
+blocked_by: [t-0ccxkp, t-0ccxkq, t-0ccxkr, t-0cugqm, t-0ccxkt]
 decisions: [d-0cc2w5]
 tags: [mobile, expo, release]
 ---

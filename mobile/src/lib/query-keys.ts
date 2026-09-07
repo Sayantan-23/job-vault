@@ -28,6 +28,8 @@ export const NOTIFICATIONS_KEY = ['notifications'] as const
 
 export const ANSWERS_KEY = ['answers'] as const
 export const PERSONAS_KEY = ['personas'] as const
+export const personaKey = (id: string) => ['personas', id] as const
+export const PROFILE_KEY = ['profile'] as const
 export const AI_STATUS_KEY = ['ai-status'] as const
 
 export const DASHBOARD_KANBAN_KEY = ['dashboard', 'kanban'] as const

@@ -348,14 +348,27 @@ weeks for an interaction nobody wants at 390px.
 clipboard, share the PDF via `expo-print` + the native share sheet. No editing,
 no generation, no refine.
 
-### 4.8 Profile (881) + Personas (959) · **T3, read-only**
+### 4.8 Profile + Personas · **T2, native editing** (amended 2026-09-07, see `d-0cugq2`)
 
-Six editor sections with bullet-list editors, chip inputs and month-year
-pickers; personas add PDF résumé import and an item picker.
+Master profile editor and role-specific personas natively built for mobile.
+Reached from the header avatar (`AccountMenu`).
 
-**Mobile builds:** a read-only profile summary and a persona list. Editing
-links out to the web app. PDF import stays desktop — file-picking a résumé on a
-phone is a rare path.
+**Mobile builds:**
+- **Profile Workspace (`/profile`):** Full-screen editor for the user's master
+  record with 6 touch-adapted sections:
+  1. Basics (name, email, phone, location, links)
+  2. Professional summary (multiline)
+  3. Experience (cards with modal sheet for role, company, dates, bullets)
+  4. Projects (cards with modal sheet for name, tech, description, links, bullets)
+  5. Skills (grouped category cards with chip input)
+  6. Education (cards with modal sheet for degree, school, dates, grade)
+- **Personas Workspace (`/personas` & `/personas/[id]`):**
+  - List of personas showing role badges, item counts, and delete actions.
+  - Creation sheet ("Build from Profile" seeding summary & contact basics, or custom).
+  - Persona Content Editor (`/personas/[id]`): tailored summary plus
+    `PersonaItemPicker` to select and customize items from the master profile.
+- **Out of scope on mobile:** PDF résumé import (stays desktop — AI parsing from
+  raw PDF files is desktop-only).
 
 ### 4.9 Global search · 510 LOC · **T2**
 
@@ -432,7 +445,7 @@ Dependency-ordered. `‖` marks chunks that can run in parallel.
 | C6 | Reminders + timeline + notifications + **push** | C3 | Backend work inside |
 | C7 | Search screen | C3, C4 | |
 | C8 | Cover letters + résumés, read/copy | C1, C2 | ‖ with C3 |
-| C9 | Profile + personas, read-only | C1, C2 | ‖ with C3 |
+| C9 | Profile + personas, native editing | C1, C2 | ‖ with C3 |
 | C10 | Settings + polish — icons, splash, EAS build, store release | all | Deep links moved to C0 |
 
 Three parallel lanes open after C1/C2: **C3→C5→C7** (jobs spine), **C4**,
@@ -446,8 +459,7 @@ Three parallel lanes open after C1/C2: **C3→C5→C7** (jobs spine), **C4**,
 - The Chrome extension and its authorize flow.
 - Offline-first sync. A TanStack Query read cache is in scope; write queuing and
   conflict resolution are not.
-- Kanban drag, résumé/cover-letter generation and refine, profile and persona
-  editing, PDF résumé import, API-key management.
+- Kanban drag, résumé/cover-letter generation and refine, PDF résumé import, API-key management.
 - iPad / tablet layouts.
 
 

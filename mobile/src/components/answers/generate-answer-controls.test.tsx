@@ -1,10 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
+import { emptyProfileContent } from '@/lib/profile';
 import { GenerateAnswerControls } from './generate-answer-controls';
 
 const mockPersonas = [
-  { id: 'p-1', name: 'Software Architect', createdAt: '', updatedAt: '', userId: '' },
-  { id: 'p-2', name: 'Engineering Manager', createdAt: '', updatedAt: '', userId: '' },
+  { id: 'p-1', name: 'Software Architect', createdAt: '', updatedAt: '', userId: '', data: emptyProfileContent() },
+  { id: 'p-2', name: 'Engineering Manager', createdAt: '', updatedAt: '', userId: '', data: emptyProfileContent() },
 ];
 
 const mockJobs = [

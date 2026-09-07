@@ -1,5 +1,6 @@
-import { LogOut } from 'lucide-react-native';
+import { LogOut, User, Users } from 'lucide-react-native';
 import { Text, View } from 'react-native-css/components';
+import { useRouter } from 'expo-router';
 
 import { Icon } from '@/components/icon';
 import {
@@ -16,12 +17,11 @@ const ITEM = 'flex-row items-center gap-2.5 rounded-md px-2.5 py-2.5 active:opac
 
 /**
  * The account menu behind the header avatar, mirroring the web's
- * `layout/app/account-menu.tsx`. Profile and Settings are deliberately absent
- * until those screens exist (C9 / C10) — an item that goes nowhere is worse than
- * no item. Signing out flips the session store, and the root layout's
- * `Stack.Protected` guard does the navigating.
+ * `layout/app/account-menu.tsx`. Navigates to Profile, Personas, and provides
+ * Sign out.
  */
 export function AccountMenu() {
+  const router = useRouter();
   const session = useSession();
   const user = session.status === 'signedIn' ? session.user : null;
   const name = user?.name.trim() || 'Account';
@@ -46,6 +46,21 @@ export function AccountMenu() {
             ) : null}
           </View>
         </View>
+        <View className="my-1 h-px bg-border" />
+        <AnchoredPopoverClose
+          accessibilityLabel="Profile"
+          onPress={() => router.push('/profile' as any)}
+          className={ITEM}>
+          <Icon icon={User} size={16} strokeWidth={1.75} className="text-muted-foreground" />
+          <Text className="text-sm text-foreground">Profile</Text>
+        </AnchoredPopoverClose>
+        <AnchoredPopoverClose
+          accessibilityLabel="Personas"
+          onPress={() => router.push('/personas' as any)}
+          className={ITEM}>
+          <Icon icon={Users} size={16} strokeWidth={1.75} className="text-muted-foreground" />
+          <Text className="text-sm text-foreground">Personas</Text>
+        </AnchoredPopoverClose>
         <View className="my-1 h-px bg-border" />
         <AnchoredPopoverClose
           accessibilityLabel="Sign out"

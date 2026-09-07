@@ -4,6 +4,13 @@ import * as auth from '@/lib/auth';
 import { setSession } from '@/lib/session';
 import { AccountMenu } from './account-menu';
 
+const mockPush = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({
+    push: mockPush,
+  }),
+}));
+
 jest.mock('@/lib/auth', () => ({ login: jest.fn(), register: jest.fn(), logout: jest.fn() }));
 
 const logout = auth.logout as jest.Mock;
@@ -35,6 +42,22 @@ describe('AccountMenu', () => {
 
     expect(logout).toHaveBeenCalled();
     expect(screen.queryByText('Sign out')).toBeNull();
+  });
+
+  it('navigates to profile when Profile is pressed', async () => {
+    await render(<AccountMenu />);
+    await fireEvent.press(screen.getByLabelText('Open account menu'));
+
+    await fireEvent.press(screen.getByLabelText('Profile'));
+    expect(mockPush).toHaveBeenCalledWith('/profile');
+  });
+
+  it('navigates to personas when Personas is pressed', async () => {
+    await render(<AccountMenu />);
+    await fireEvent.press(screen.getByLabelText('Open account menu'));
+
+    await fireEvent.press(screen.getByLabelText('Personas'));
+    expect(mockPush).toHaveBeenCalledWith('/personas');
   });
 
   it('falls back to a generic label before the session resolves', async () => {

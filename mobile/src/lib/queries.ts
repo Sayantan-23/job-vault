@@ -3,6 +3,8 @@ import {
   kanbanKey,
   ANSWERS_KEY,
   PERSONAS_KEY,
+  personaKey,
+  PROFILE_KEY,
   AI_STATUS_KEY,
   COVER_LETTERS_KEY,
   coverLetterKey,
@@ -56,6 +58,16 @@ export const answersQuery: QueryDesc = {
 export const personasQuery: QueryDesc = {
   key: PERSONAS_KEY,
   path: '/api/personas',
+}
+
+export const personaQuery = (id: string): QueryDesc => ({
+  key: personaKey(id),
+  path: `/api/personas/${id}`,
+})
+
+export const profileQuery: QueryDesc = {
+  key: PROFILE_KEY,
+  path: '/api/profile',
 }
 
 export const aiStatusQuery: QueryDesc = {

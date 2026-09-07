@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
+import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, Text } from 'react-native-css/components';
 
+import { Icon } from '@/components/icon';
 import { cn } from './cn';
 
 export type ButtonVariant =
@@ -60,6 +62,8 @@ export type ButtonProps = {
   onPress?: () => void;
   accessibilityLabel?: string;
   className?: string;
+  icon?: LucideIcon;
+  iconSize?: number;
 };
 
 export function Button({
@@ -70,6 +74,8 @@ export function Button({
   onPress,
   accessibilityLabel,
   className,
+  icon,
+  iconSize,
 }: ButtonProps) {
   return (
     <Pressable
@@ -85,6 +91,13 @@ export function Button({
         disabled && 'opacity-50',
         className
       )}>
+      {icon ? (
+        <Icon
+          icon={icon}
+          size={iconSize ?? (size === 'sm' || size === 'iconSm' ? 14 : 16)}
+          className={INK[variant]}
+        />
+      ) : null}
       {typeof children === 'string' ? (
         <Text className={cn('font-sans-medium text-sm', INK[variant])}>{children}</Text>
       ) : (

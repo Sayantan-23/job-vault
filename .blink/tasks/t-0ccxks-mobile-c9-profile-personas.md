@@ -1,31 +1,29 @@
 ---
 id: t-0ccxks
-title: "C9 — Profile + personas, read-only"
-status: planned
+title: "C9.1 — Profile & personas data layer (types, validation, queries & mutations)"
+status: done
 milestone: m-0cc02t
+owner: Antigravity
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-07T23:22:20Z
 estimate: S
 blocked_by: [t-0ccxkl, t-0ccxkm]
-tags: [mobile, expo, profile]
+decisions: [d-0cugq2]
+tags: [mobile, expo, profile, personas]
 ---
 
-Spec §4.8. Runs parallel with C3. **Reached from the header avatar, not a tab**
-([[d-0cd3wr]]) — profile, personas and settings all sit behind it, mirroring web's
-`AccountMenu`.
+Spec §4.8 and [[d-0cugq2]]. Foundation data layer for native profile and persona
+management on mobile.
 
-**Done when** there is a read-only profile summary and a persona list, and
-editing links out to the web app.
-
-**Deliberately not built:** the six editor sections with their bullet-list
-editors, chip inputs and month-year pickers; persona editing; PDF résumé import.
-Web's profile editor is 881 lines and personas 959 — rebuilding them for a
-390px screen is the single most expensive way to add the least value.
-
-No webview fallback: DOM components were rejected outright (spec §3.3), so a T3
-surface links out or is built natively — never wrapped.
-
----
-*Cold-start: read `docs/superpowers/specs/2026-08-28-mobile-app-expo-scope.md` §8 first — it is written to be read with no other
-context. Repo root is `git rev-parse --show-toplevel` (this repo is worked on
-from two machines; never hardcode a home path).*
+**Done when**
+- `ProfileContent`, `ProfileBasics`, `ProfileExperience`, `ProfileProject`,
+  `ProfileSkillGroup`, `ProfileEducation`, and `MonthYear` types ported to
+  `mobile/src/types/profile.ts`.
+- `mobile/src/types/persona.ts` updated so `data` is typed as `ProfileContent`.
+- Validation and helper functions (`emptyProfileContent`, `validateProfileContent`,
+  `formatMonthYearRange`, `formatMonthYear`) ported and tested in `mobile/src/lib/profile.ts`.
+- `useProfile()` and `useUpdateProfile()` hooks implemented in `mobile/src/hooks/use-profile.ts`
+  backed by `GET /api/profile` and `PUT /api/profile`.
+- `usePersonas()`, `usePersona(id)`, `useCreatePersona()`, `useUpdatePersona(id)`,
+  and `useDeletePersona()` implemented in `mobile/src/hooks/use-personas.ts`.
+- Unit tests cover all ported helpers, queries, and mutations.

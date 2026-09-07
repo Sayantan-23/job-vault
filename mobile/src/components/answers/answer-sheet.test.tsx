@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
 import type { Answer } from '@/types/answer';
+import { emptyProfileContent } from '@/lib/profile';
 import { withSafeArea } from '@/components/ui/test-safe-area';
 import { AnswerSheet } from './answer-sheet';
 
@@ -18,7 +19,7 @@ const mockAnswer: Answer = {
 };
 
 const mockPersonas = [
-  { id: 'p-1', name: 'Software Architect', createdAt: '', updatedAt: '', userId: '' },
+  { id: 'p-1', name: 'Software Architect', createdAt: '', updatedAt: '', userId: '', data: emptyProfileContent() },
 ];
 
 function makeWrapper() {

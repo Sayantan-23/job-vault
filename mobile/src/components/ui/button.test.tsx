@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Plus } from 'lucide-react-native';
 
 import { Button } from './button';
 
@@ -29,5 +30,11 @@ describe('Button', () => {
     await fireEvent.press(screen.getByText('Save'));
 
     expect(onPress).not.toHaveBeenCalled();
+  });
+
+  it('renders with icon', async () => {
+    await render(<Button icon={Plus}>Add item</Button>);
+
+    expect(screen.getByText('Add item')).toBeTruthy();
   });
 });
