@@ -1,5 +1,4 @@
-import { Pressable } from 'react-native';
-import { Text, View } from 'react-native-css/components';
+import { Pressable, Text, View } from 'react-native-css/components';
 import { Pencil, Trash2, UserRound } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';

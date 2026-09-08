@@ -40,7 +40,15 @@ async function findById(userId: string, id: string): Promise<PersonaRow | null> 
     .where(and(eq(personas.id, id), eq(personas.userId, userId)))
     .limit(1)
   const row = rows[0]
-  return row ? normalizeRow(row) : null
+  if (!row) return null
+  const normalized = normalizeRow(row)
+  if (JSON.stringify(normalized.data) !== JSON.stringify(row.data)) {
+    await getDb()
+      .update(personas)
+      .set({ data: normalized.data })
+      .where(and(eq(personas.id, id), eq(personas.userId, userId)))
+  }
+  return normalized
 }
 
 async function update(

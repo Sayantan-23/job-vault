@@ -22,8 +22,10 @@ import { usePersona, useUpdatePersona } from '@/hooks/use-personas';
 import { useProfile } from '@/hooks/use-profile';
 import {
   emptyProfileContent,
+  ensureProfileIds,
   formatMonthYearRange,
   newSkillGroup,
+  reconcilePersonaWithProfile,
   validateProfileContent,
 } from '@/lib/profile';
 import type {
@@ -50,13 +52,19 @@ export function PersonaEditorScreen({ id }: PersonaEditorScreenProps) {
   const insets = useSafeAreaInsets();
 
   const { data: persona, isLoading: personaLoading } = usePersona(id);
-  const { data: masterProfile = emptyProfileContent() } = useProfile();
+  const { data: rawMasterProfile } = useProfile();
+  const masterProfile = useMemo(
+    () => ensureProfileIds(rawMasterProfile ?? emptyProfileContent()),
+    [rawMasterProfile]
+  );
   const updateMutation = useUpdatePersona(id);
 
   // Seeded state
   const [seededId, setSeededId] = useState<string | null>(null);
   const [name, setName] = useState('');
+  const [initialName, setInitialName] = useState('');
   const [draft, setDraft] = useState<ProfileContent>(emptyProfileContent());
+  const [initialDraft, setInitialDraft] = useState<ProfileContent | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -88,7 +96,13 @@ export function PersonaEditorScreen({ id }: PersonaEditorScreenProps) {
   if (persona && persona.id !== seededId) {
     setSeededId(persona.id);
     setName(persona.name);
-    setDraft(persona.data ?? emptyProfileContent());
+    setInitialName(persona.name);
+    const reconciled = reconcilePersonaWithProfile(
+      persona.data ?? emptyProfileContent(),
+      masterProfile
+    );
+    setDraft(reconciled);
+    setInitialDraft(reconciled);
   }
 
   const patch = (partial: Partial<ProfileContent>) => {
@@ -96,9 +110,9 @@ export function PersonaEditorScreen({ id }: PersonaEditorScreenProps) {
   };
 
   const isDirty = useMemo(() => {
-    if (!persona) return false;
-    return persona.name !== name || JSON.stringify(persona.data) !== JSON.stringify(draft);
-  }, [persona, name, draft]);
+    if (!persona || !initialDraft) return false;
+    return initialName !== name || JSON.stringify(initialDraft) !== JSON.stringify(draft);
+  }, [persona, initialName, name, initialDraft, draft]);
 
   const handleBack = () => {
     if (isDirty) {

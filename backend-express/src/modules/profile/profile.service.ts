@@ -4,7 +4,13 @@ import { profileRepository } from './profile.repository.js'
 
 async function getForUser(userId: string): Promise<ProfileContent> {
   const row = await profileRepository.findByUserId(userId)
-  if (row) return row.content
+  if (row) {
+    const ensured = ensureIds(row.content)
+    if (JSON.stringify(ensured) !== JSON.stringify(row.content)) {
+      await profileRepository.upsert(userId, ensured)
+    }
+    return ensured
+  }
   // No saved profile yet: seed an unpersisted default with the name + email
   // captured at registration, so the user isn't re-typing what we already have.
   const user = await authRepository.findById(userId)

@@ -8,6 +8,8 @@ import {
   validateProfileContent,
   formatMonthYear,
   formatMonthYearRange,
+  ensureProfileIds,
+  reconcilePersonaWithProfile,
 } from './profile';
 
 describe('profile factories', () => {
@@ -210,3 +212,164 @@ describe('formatMonthYear and formatMonthYearRange', () => {
     expect(formatMonthYearRange(null, null, false)).toBe('');
   });
 });
+
+describe('ensureProfileIds', () => {
+  it('assigns ids to any section item or link that lacks one', () => {
+    const raw = emptyProfileContent();
+    raw.basics.links = [{ label: 'GH', url: 'https://github.com' }];
+    raw.experience = [
+      { company: 'Stripe', role: 'SWE', startDate: null, endDate: null, current: true, bullets: [] },
+    ];
+    raw.projects = [
+      {
+        name: 'JobVault',
+        technologies: [],
+        bullets: [],
+        links: [{ label: 'Repo', url: 'https://x.dev' }],
+        startDate: null,
+        endDate: null,
+        inProgress: true,
+      },
+    ];
+    raw.skills = [{ category: 'Languages', items: ['TS'] }];
+    raw.education = [
+      { degree: 'BS', institution: 'MIT', startDate: null, endDate: null, current: false, bullets: [] },
+    ];
+
+    const ensured = ensureProfileIds(raw);
+    expect(ensured.basics.links[0]?.id).toBeTruthy();
+    expect(ensured.experience[0]?.id).toBeTruthy();
+    expect(ensured.projects[0]?.id).toBeTruthy();
+    expect(ensured.projects[0]?.links[0]?.id).toBeTruthy();
+    expect(ensured.skills[0]?.id).toBeTruthy();
+    expect(ensured.education[0]?.id).toBeTruthy();
+  });
+
+  it('preserves existing ids', () => {
+    const raw = emptyProfileContent();
+    raw.experience = [
+      {
+        id: 'custom-exp-id',
+        company: 'Stripe',
+        role: 'SWE',
+        startDate: null,
+        endDate: null,
+        current: true,
+        bullets: [],
+      },
+    ];
+    const ensured = ensureProfileIds(raw);
+    expect(ensured.experience[0]?.id).toBe('custom-exp-id');
+  });
+});
+
+describe('reconcilePersonaWithProfile', () => {
+  it('aligns draft item ids to master profile item ids matching by content', () => {
+    const profile = emptyProfileContent();
+    profile.experience = [
+      {
+        id: 'exp-master-1',
+        company: 'Northwind Software',
+        role: 'Senior Software Engineer',
+        startDate: null,
+        endDate: null,
+        current: true,
+        bullets: [],
+      },
+      {
+        id: 'exp-master-2',
+        company: 'Bright Harbor',
+        role: 'Software Engineer',
+        startDate: null,
+        endDate: null,
+        current: false,
+        bullets: [],
+      },
+    ];
+    profile.projects = [
+      {
+        id: 'proj-master-1',
+        name: 'JobVault',
+        technologies: [],
+        bullets: [],
+        links: [],
+        startDate: null,
+        endDate: null,
+        inProgress: true,
+      },
+    ];
+    profile.skills = [
+      { id: 'skill-master-1', category: 'Frontend', items: ['React'] },
+    ];
+    profile.education = [
+      {
+        id: 'edu-master-1',
+        degree: 'B.S. CS',
+        institution: 'UT Austin',
+        startDate: null,
+        endDate: null,
+        current: false,
+        bullets: [],
+      },
+    ];
+
+    // Persona draft that has matching items with no ID or different random IDs
+    const draft = emptyProfileContent();
+    draft.experience = [
+      {
+        id: undefined,
+        company: 'Northwind Software',
+        role: 'Senior Software Engineer',
+        startDate: null,
+        endDate: null,
+        current: true,
+        bullets: ['Custom bullet'],
+      },
+      {
+        id: 'random-uuid',
+        company: 'Bright Harbor',
+        role: 'Software Engineer',
+        startDate: null,
+        endDate: null,
+        current: false,
+        bullets: [],
+      },
+    ];
+    draft.projects = [
+      {
+        id: undefined,
+        name: 'JobVault',
+        technologies: [],
+        bullets: [],
+        links: [],
+        startDate: null,
+        endDate: null,
+        inProgress: true,
+      },
+    ];
+    draft.skills = [
+      { id: 'different-id', category: 'Frontend', items: ['React', 'Next.js'] },
+    ];
+    draft.education = [
+      {
+        id: undefined,
+        degree: 'B.S. CS',
+        institution: 'UT Austin',
+        startDate: null,
+        endDate: null,
+        current: false,
+        bullets: [],
+      },
+    ];
+
+    const reconciled = reconcilePersonaWithProfile(draft, profile);
+    expect(reconciled.experience[0]?.id).toBe('exp-master-1');
+    expect(reconciled.experience[0]?.bullets).toEqual(['Custom bullet']); // preserves tailored edits
+    expect(reconciled.experience[1]?.id).toBe('exp-master-2');
+    expect(reconciled.projects[0]?.id).toBe('proj-master-1');
+    expect(reconciled.skills[0]?.id).toBe('skill-master-1');
+    expect(reconciled.skills[0]?.items).toEqual(['React', 'Next.js']); // preserves tailored skills
+    expect(reconciled.education[0]?.id).toBe('edu-master-1');
+  });
+});
+

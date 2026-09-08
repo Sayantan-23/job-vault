@@ -125,3 +125,135 @@ export function validateProfileContent(
 
   return errors
 }
+
+// Assign a stable id to every entry/link that lacks one.
+export function ensureProfileIds(content: ProfileContent): ProfileContent {
+  const withId = <T extends { id?: string }>(x: T): T => (x.id ? x : { ...x, id: newId() })
+  return {
+    ...content,
+    basics: {
+      ...content.basics,
+      links: (content.basics?.links ?? []).map(withId),
+    },
+    experience: (content.experience ?? []).map(withId),
+    projects: (content.projects ?? []).map((p) => ({
+      ...withId(p),
+      links: (p.links ?? []).map(withId),
+    })),
+    skills: (content.skills ?? []).map(withId),
+    education: (content.education ?? []).map(withId),
+  }
+}
+
+/**
+ * Reconciles a persona draft with the master profile:
+ * If an item in the draft has no id, or its id does not match the master profile,
+ * but matches a master profile item by content, sync the profile item's id into the draft.
+ * This guarantees that items already in the persona reflect draft membership in the picker.
+ */
+export function reconcilePersonaWithProfile(
+  draft: ProfileContent,
+  profile: ProfileContent,
+): ProfileContent {
+  const ensuredProfile = ensureProfileIds(profile)
+  const ensuredDraft = ensureProfileIds(draft)
+
+  // 1. Experience: match by id or (company + role)
+  const claimedExpIds = new Set(
+    ensuredDraft.experience
+      .map((e) => e.id)
+      .filter((id): id is string => Boolean(id && ensuredProfile.experience.some((p) => p.id === id))),
+  )
+  const reconciledExp = ensuredDraft.experience.map((exp) => {
+    if (exp.id && claimedExpIds.has(exp.id)) {
+      return exp
+    }
+    const match = ensuredProfile.experience.find(
+      (p) =>
+        Boolean(p.id && !claimedExpIds.has(p.id)) &&
+        p.company.trim().toLowerCase() === exp.company.trim().toLowerCase() &&
+        p.role.trim().toLowerCase() === exp.role.trim().toLowerCase(),
+    )
+    if (match?.id) {
+      claimedExpIds.add(match.id)
+      return { ...exp, id: match.id }
+    }
+    return exp
+  })
+
+  // 2. Projects: match by id or name
+  const claimedProjIds = new Set(
+    ensuredDraft.projects
+      .map((p) => p.id)
+      .filter((id): id is string => Boolean(id && ensuredProfile.projects.some((pr) => pr.id === id))),
+  )
+  const reconciledProjects = ensuredDraft.projects.map((proj) => {
+    if (proj.id && claimedProjIds.has(proj.id)) {
+      return proj
+    }
+    const match = ensuredProfile.projects.find(
+      (p) =>
+        Boolean(p.id && !claimedProjIds.has(p.id)) &&
+        p.name.trim().toLowerCase() === proj.name.trim().toLowerCase(),
+    )
+    if (match?.id) {
+      claimedProjIds.add(match.id)
+      return { ...proj, id: match.id }
+    }
+    return proj
+  })
+
+  // 3. Skills: match by id or category
+  const claimedSkillIds = new Set(
+    ensuredDraft.skills
+      .map((s) => s.id)
+      .filter((id): id is string => Boolean(id && ensuredProfile.skills.some((sk) => sk.id === id))),
+  )
+  const reconciledSkills = ensuredDraft.skills.map((skill) => {
+    if (skill.id && claimedSkillIds.has(skill.id)) {
+      return skill
+    }
+    const match = ensuredProfile.skills.find(
+      (p) =>
+        Boolean(p.id && !claimedSkillIds.has(p.id)) &&
+        p.category.trim().toLowerCase() === skill.category.trim().toLowerCase(),
+    )
+    if (match?.id) {
+      claimedSkillIds.add(match.id)
+      return { ...skill, id: match.id }
+    }
+    return skill
+  })
+
+  // 4. Education: match by id or (institution + degree)
+  const claimedEduIds = new Set(
+    ensuredDraft.education
+      .map((e) => e.id)
+      .filter((id): id is string => Boolean(id && ensuredProfile.education.some((ed) => ed.id === id))),
+  )
+  const reconciledEducation = ensuredDraft.education.map((edu) => {
+    if (edu.id && claimedEduIds.has(edu.id)) {
+      return edu
+    }
+    const match = ensuredProfile.education.find(
+      (p) =>
+        Boolean(p.id && !claimedEduIds.has(p.id)) &&
+        p.institution.trim().toLowerCase() === edu.institution.trim().toLowerCase() &&
+        p.degree.trim().toLowerCase() === edu.degree.trim().toLowerCase(),
+    )
+    if (match?.id) {
+      claimedEduIds.add(match.id)
+      return { ...edu, id: match.id }
+    }
+    return edu
+  })
+
+  return {
+    ...ensuredDraft,
+    experience: reconciledExp,
+    projects: reconciledProjects,
+    skills: reconciledSkills,
+    education: reconciledEducation,
+  }
+}
+

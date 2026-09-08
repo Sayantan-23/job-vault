@@ -13,7 +13,7 @@ import { PdfFileInput } from './pdf-file-input'
 import { PersonaContentEditor } from './persona-content-editor'
 import { SheetErrorMessage, SheetValidationErrors } from './persona-sheet-alerts'
 import { useCreatePersona, useParseResume } from '@/hooks/use-personas'
-import { emptyProfileContent, validateProfileContent } from '@/lib/profile'
+import { emptyProfileContent, validateProfileContent, reconcilePersonaWithProfile } from '@/lib/profile'
 import type { ProfileContent } from '@/types/profile'
 
 // Persona creation in two modes, both ending at the same review-and-save
@@ -81,7 +81,7 @@ export function CreatePersonaSheet({ open, onOpenChange, profile, aiEnabled }: P
       { text: pasted.trim() || undefined, file: file ?? undefined },
       {
         onSuccess: ({ content, rawText: extracted }) => {
-          setDraft(content)
+          setDraft(reconcilePersonaWithProfile(content, profile))
           setRawText(extracted)
           setStep('edit')
         },

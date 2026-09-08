@@ -1,4 +1,4 @@
-import { Text } from 'react-native-css/components';
+import { Text, View } from 'react-native-css/components';
 
 import { cn } from './cn';
 
@@ -15,15 +15,15 @@ import { cn } from './cn';
  * and this stack cannot express conditional root variables yet.
  */
 const PALETTE = [
-  'bg-[#e0e7ff] text-[#4338ca]', // indigo
-  'bg-[#ffe4e6] text-[#be123c]', // rose
-  'bg-[#fef3c7] text-[#92400e]', // amber
-  'bg-[#d1fae5] text-[#047857]', // emerald
-  'bg-[#e0f2fe] text-[#0369a1]', // sky
-  'bg-[#ede9fe] text-[#6d28d9]', // violet
+  { bg: 'bg-[#e0e7ff]', text: 'text-[#4338ca]' }, // indigo
+  { bg: 'bg-[#ffe4e6]', text: 'text-[#be123c]' }, // rose
+  { bg: 'bg-[#fef3c7]', text: 'text-[#92400e]' }, // amber
+  { bg: 'bg-[#d1fae5]', text: 'text-[#047857]' }, // emerald
+  { bg: 'bg-[#e0f2fe]', text: 'text-[#0369a1]' }, // sky
+  { bg: 'bg-[#ede9fe]', text: 'text-[#6d28d9]' }, // violet
 ] as const;
 
-function swatchFor(seed: string): string {
+function swatchFor(seed: string): { bg: string; text: string } {
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   return PALETTE[Math.abs(hash) % PALETTE.length] ?? PALETTE[0];
@@ -34,15 +34,20 @@ export type MonogramAvatarProps = { name: string; className?: string };
 export function MonogramAvatar({ name, className }: MonogramAvatarProps) {
   const seed = name.trim() || '?';
   const initial = seed.charAt(0).toUpperCase();
+  const swatch = swatchFor(seed);
 
   return (
-    <Text
+    <View
       className={cn(
-        'size-8 shrink-0 rounded-md text-center font-sans-medium text-sm leading-8',
-        swatchFor(seed),
+        'size-8 shrink-0 items-center justify-center rounded-md',
+        swatch.bg,
         className
       )}>
-      {initial}
-    </Text>
+      <Text
+        className={cn('font-sans-medium text-sm text-center', swatch.text)}
+        style={{ includeFontPadding: false, textAlignVertical: 'center' }}>
+        {initial}
+      </Text>
+    </View>
   );
 }

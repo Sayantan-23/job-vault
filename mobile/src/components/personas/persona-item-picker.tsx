@@ -1,8 +1,8 @@
-import { Pressable } from 'react-native';
-import { Text, View } from 'react-native-css/components';
+import { Pressable, Text, View } from 'react-native-css/components';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { newId } from '@/lib/profile';
 
 export interface PersonaItemPickerProps<T extends { id?: string }> {
   label: string;
@@ -50,7 +50,15 @@ export function PersonaItemPicker<T extends { id?: string }>({
           size="sm"
           className="h-6 px-2 text-xs"
           disabled={unselected.length === 0}
-          onPress={() => onAdd(unselected.map((item) => structuredClone(item)))}
+          onPress={() =>
+            onAdd(
+              unselected.map((item) => {
+                const copy = structuredClone(item);
+                if (!copy.id) copy.id = newId();
+                return copy;
+              })
+            )
+          }
           accessibilityLabel={`Add all ${label}`}>
           Add all
         </Button>
@@ -68,7 +76,9 @@ export function PersonaItemPicker<T extends { id?: string }>({
             if (checked) {
               if (item.id) onRemove([item.id]);
             } else {
-              onAdd([structuredClone(item)]);
+              const copy = structuredClone(item);
+              if (!copy.id) copy.id = newId();
+              onAdd([copy]);
             }
           };
 
@@ -79,9 +89,9 @@ export function PersonaItemPicker<T extends { id?: string }>({
               accessibilityRole="checkbox"
               accessibilityState={{ checked }}
               accessibilityLabel={`${checked ? 'Remove' : 'Add'} ${title}`}
-              className="flex-row items-start gap-3 p-3 active:bg-muted/30">
-              <View className="pt-0.5 pointer-events-none">
-                <Checkbox checked={checked} onCheckedChange={toggle} />
+              className="flex-row items-center gap-3 p-3 active:bg-muted/30">
+              <View pointerEvents="none" className="shrink-0">
+                <Checkbox checked={checked} />
               </View>
               <View className="min-w-0 flex-1">
                 <Text numberOfLines={1} className="font-sans-medium text-sm text-foreground">

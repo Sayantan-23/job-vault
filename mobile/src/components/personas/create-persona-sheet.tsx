@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Pressable } from 'react-native';
-import { Text, View } from 'react-native-css/components';
+import { Pressable, Text, View } from 'react-native-css/components';
 import { useRouter } from 'expo-router';
 import { Check, Sparkles, FileText } from 'lucide-react-native';
 
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useCreatePersona } from '@/hooks/use-personas';
-import { emptyProfileContent } from '@/lib/profile';
+import { emptyProfileContent, reconcilePersonaWithProfile } from '@/lib/profile';
 import type { ProfileContent } from '@/types/profile';
 import type { Persona } from '@/types/persona';
 
@@ -60,14 +59,17 @@ export function CreatePersonaSheet({
 
     const initialData: ProfileContent =
       mode === 'profile'
-        ? {
-            ...emptyProfileContent(),
-            basics: {
-              ...structuredClone(profile.basics),
-              links: structuredClone(profile.basics.links),
+        ? reconcilePersonaWithProfile(
+            {
+              ...emptyProfileContent(),
+              basics: {
+                ...structuredClone(profile.basics),
+                links: structuredClone(profile.basics.links),
+              },
+              summary: profile.summary,
             },
-            summary: profile.summary,
-          }
+            profile
+          )
         : {
             ...emptyProfileContent(),
             basics: {

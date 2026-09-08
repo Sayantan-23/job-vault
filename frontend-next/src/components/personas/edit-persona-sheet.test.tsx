@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -67,6 +67,19 @@ describe('EditPersonaSheet', () => {
     await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
   })
 
+  it('renders Save and Cancel in the footer, and pristine Cancel closes immediately', async () => {
+    const onOpenChange = vi.fn()
+    const { container } = render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
+
+    const footer = document.querySelector('footer')
+    expect(footer).toBeInTheDocument()
+    expect(within(footer!).getByRole('button', { name: /^cancel$/i })).toBeInTheDocument()
+    expect(within(footer!).getByRole('button', { name: /^save$/i })).toBeInTheDocument()
+
+    await userEvent.click(within(footer!).getByRole('button', { name: /^cancel$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
   it('renders the rich persona editor with profile pickers', () => {
     render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={vi.fn()} />, { wrapper })
 
@@ -98,19 +111,88 @@ describe('EditPersonaSheet', () => {
     expect(screen.getByLabelText('Persona name')).toHaveValue('Frontend')
   })
 
-  it('Escape does not dismiss the sheet once the draft is edited; pristine Escape still closes', async () => {
+  it('pristine Escape and header close button close immediately without prompt', async () => {
     const onOpenChange = vi.fn()
-    render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
+    const { rerender } = render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
 
     await userEvent.keyboard('{Escape}')
     expect(onOpenChange).toHaveBeenCalledWith(false)
+
     onOpenChange.mockClear()
+    rerender(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />)
+    await userEvent.click(screen.getByRole('button', { name: /^close$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('prompts to discard unsaved changes when dirty and Cancel is clicked', async () => {
+    const onOpenChange = vi.fn()
+    render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
+
+    await userEvent.type(screen.getByLabelText('Persona name'), ' X')
+    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+
+    expect(await screen.findByText('Discard unsaved changes?')).toBeInTheDocument()
+    expect(
+      screen.getByText('You have unsaved edits in this persona that will be lost.'),
+    ).toBeInTheDocument()
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    // Cancel in modal keeps sheet open
+    const modal = screen.getByRole('dialog', { name: /discard unsaved changes\?/i })
+    await userEvent.click(within(modal).getByRole('button', { name: /^cancel$/i }))
+    await waitFor(() => expect(screen.queryByText('Discard unsaved changes?')).not.toBeInTheDocument())
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    // Cancel again, then confirm Discard
+    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    const modalAgain = await screen.findByRole('dialog', { name: /discard unsaved changes\?/i })
+    await userEvent.click(within(modalAgain).getByRole('button', { name: /^discard$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('prompts to discard unsaved changes when dirty and Escape is pressed', async () => {
+    const onOpenChange = vi.fn()
+    render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
 
     await userEvent.type(screen.getByLabelText('Persona name'), ' X')
     await userEvent.keyboard('{Escape}')
+
+    expect(await screen.findByText('Discard unsaved changes?')).toBeInTheDocument()
     expect(onOpenChange).not.toHaveBeenCalled()
 
-    await userEvent.click(screen.getByRole('button', { name: /^cancel$/i }))
+    const modal = screen.getByRole('dialog', { name: /discard unsaved changes\?/i })
+    await userEvent.click(within(modal).getByRole('button', { name: /^discard$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('prompts to discard unsaved changes when dirty and header close button is clicked', async () => {
+    const onOpenChange = vi.fn()
+    render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
+
+    await userEvent.type(screen.getByLabelText('Persona name'), ' X')
+    await userEvent.click(screen.getByRole('button', { name: /^close$/i }))
+
+    expect(await screen.findByText('Discard unsaved changes?')).toBeInTheDocument()
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    const modal = screen.getByRole('dialog', { name: /discard unsaved changes\?/i })
+    await userEvent.click(within(modal).getByRole('button', { name: /^discard$/i }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('prompts to discard unsaved changes when dirty and clicking outside', async () => {
+    const onOpenChange = vi.fn()
+    render(<EditPersonaSheet persona={PERSONA} profile={PROFILE} open onOpenChange={onOpenChange} />, { wrapper })
+
+    await userEvent.type(screen.getByLabelText('Persona name'), ' X')
+
+    fireEvent.pointerDown(document.body)
+
+    expect(await screen.findByText('Discard unsaved changes?')).toBeInTheDocument()
+    expect(onOpenChange).not.toHaveBeenCalled()
+
+    const modal = screen.getByRole('dialog', { name: /discard unsaved changes\?/i })
+    await userEvent.click(within(modal).getByRole('button', { name: /^discard$/i }))
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 

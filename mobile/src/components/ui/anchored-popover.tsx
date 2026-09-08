@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from 'react';
-import { Modal, useWindowDimensions, type View as RNView } from 'react-native';
+import { Modal, Platform, StatusBar, useWindowDimensions, View as RNView } from 'react-native';
 import { Pressable, View } from 'react-native-css/components';
-
+import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
 import { cn } from './cn';
 import { Scrim } from './scrim';
@@ -76,29 +76,32 @@ export function AnchoredPopoverTrigger({
   const { setAnchor, openPopover } = useContext(PopoverContext);
   const ref = useRef<RNView>(null);
 
-  // Opening never waits on the measurement: measureInWindow answers on the UI
-  // thread, and a menu that only appears if that callback lands is a menu that
-  // silently does nothing when it does not. Measuring on layout too means the
-  // rect is already known by the first press, so there is no frame at the
-  // fallback position; the press-time measure is what keeps it right after a
-  // scroll.
-  const measure = () => {
-    ref.current?.measureInWindow((x, y, width, height) => setAnchor({ x, y, width, height }));
-  };
+  const measure = useCallback(() => {
+    ref.current?.measureInWindow((x, y, width, height) => {
+      if (width > 0 || height > 0) {
+        // On Android, measureInWindow returns coordinates relative to the
+        // activity window (excluding the status bar), while a Modal with
+        // statusBarTranslucent starts at y=0 at the top of the screen.
+        // We add StatusBar.currentHeight to compensate for this offset.
+        const statusBarOffset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
+        setAnchor({ x, y: y + statusBarOffset, width, height });
+      }
+    });
+  }, [setAnchor]);
 
   return (
-    <Pressable
-      ref={ref}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      className={className}
-      onLayout={measure}
-      onPress={() => {
-        measure();
-        openPopover();
-      }}>
-      {children}
-    </Pressable>
+    <RNView ref={ref} collapsable={false} onLayout={measure}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        className={className}
+        onPress={() => {
+          measure();
+          openPopover();
+        }}>
+        {children}
+      </Pressable>
+    </RNView>
   );
 }
 
@@ -146,10 +149,20 @@ export function AnchoredPopoverContent({
 }) {
   const { open, anchor, close } = useContext(PopoverContext);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const insets = useContext(SafeAreaInsetsContext);
 
   if (!open) return null;
 
-  const rect = anchor ?? { x: EDGE_PADDING, y: EDGE_PADDING, width: 0, height: 0 };
+  const statusBarOffset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
+  const insetsTop = insets?.top ?? 0;
+  const fallbackY = Math.max(insetsTop, statusBarOffset) + 8;
+
+  const rect = anchor ?? {
+    x: align === 'end' ? screenWidth - CONTENT_WIDTH - EDGE_PADDING : EDGE_PADDING,
+    y: fallbackY,
+    width: 36,
+    height: 36,
+  };
   const rawLeft =
     align === 'center'
       ? rect.x + rect.width / 2 - CONTENT_WIDTH / 2

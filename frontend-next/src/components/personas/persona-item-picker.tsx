@@ -3,6 +3,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { newId } from '@/lib/profile'
 
 // Generic multi-select over master-profile items for the persona editor.
 // Checking copies the profile item into the persona draft (deep copy, id kept
@@ -47,7 +48,15 @@ export function PersonaItemPicker<T extends { id?: string }>({
           size="sm"
           className="h-7 px-2 text-xs"
           disabled={unselected.length === 0}
-          onClick={() => onAdd(unselected.map((item) => structuredClone(item)))}
+          onClick={() =>
+            onAdd(
+              unselected.map((item) => {
+                const copy = structuredClone(item)
+                if (!copy.id) copy.id = newId()
+                return copy
+              }),
+            )
+          }
         >
           Add all
         </Button>
@@ -60,8 +69,13 @@ export function PersonaItemPicker<T extends { id?: string }>({
             subtitle={getSubtitle?.(item)}
             checked={isSelected(item)}
             onToggle={() => {
-              if (isSelected(item)) onRemove([item.id as string])
-              else onAdd([structuredClone(item)])
+              if (isSelected(item)) {
+                if (item.id) onRemove([item.id])
+              } else {
+                const copy = structuredClone(item)
+                if (!copy.id) copy.id = newId()
+                onAdd([copy])
+              }
             }}
           />
         ))}

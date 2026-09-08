@@ -30,7 +30,7 @@ export function AccountMenu() {
   return (
     <AnchoredPopover>
       <AnchoredPopoverTrigger accessibilityLabel="Open account menu" className="rounded-full">
-        <MonogramAvatar name={name} className="size-9 rounded-full leading-9" />
+        <MonogramAvatar name={name} className="size-9 rounded-full" />
       </AnchoredPopoverTrigger>
       <AnchoredPopoverContent align="end">
         <View className="flex-row items-center gap-2.5 px-2.5 py-2">

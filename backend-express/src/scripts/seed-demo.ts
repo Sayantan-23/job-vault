@@ -16,7 +16,7 @@ import {
 } from '@/db/schema/index.js'
 import type { JobRow, JobStatus } from '@/db/schema/jobs.js'
 import type { ContactChannel, ContactStatus } from '@/db/schema/job-contacts.js'
-import type { ProfileContent } from '@/shared/profile-content.schema.js'
+import { ensureIds, type ProfileContent } from '@/shared/profile-content.schema.js'
 import type { ResumeContent } from '@/shared/resume-content.schema.js'
 import { hashSecret } from '@/modules/auth/auth.tokens.js'
 import { logger } from '@/shared/logger.js'
@@ -509,21 +509,29 @@ export async function seedDemo(): Promise<{ userId: string; email: string; jobs:
   await db.delete(personas).where(eq(personas.userId, userId))
   await db.delete(userProfiles).where(eq(userProfiles.userId, userId))
 
-  // 3. Master profile
-  await db.insert(userProfiles).values({ userId, content: PROFILE })
+  // 3. Master profile with stable ensured ids
+  const profileContent = ensureIds(PROFILE)
+  await db.insert(userProfiles).values({ userId, content: profileContent })
 
-  // 4. Personas
+  // 4. Personas — derived from profileContent so shared profile items have matching IDs
+  const personaFromProfile = (overrides: Partial<ProfileContent>): ProfileContent =>
+    ensureIds({ ...profileContent, ...overrides })
+
+  const frontendSkill = profileContent.skills.find((s) => s.category === 'Frontend')
+  const backendSkill = profileContent.skills.find((s) => s.category === 'Backend')
+  const infraSkill = profileContent.skills.find((s) => s.category === 'Infrastructure')
+
   const personaRows = await db
     .insert(personas)
     .values([
       {
         userId,
         name: 'Frontend Specialist',
-        data: personaFrom({
+        data: personaFromProfile({
           summary:
             'Frontend-leaning full-stack engineer who has spent six years on design systems, performance, and the unglamorous parts of accessibility.',
           skills: [
-            { category: 'Frontend', items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'TanStack Query'] },
+            frontendSkill ?? { category: 'Frontend', items: ['React', 'Next.js', 'TypeScript', 'Tailwind CSS', 'TanStack Query'] },
             { category: 'Tooling', items: ['Vite', 'Vitest', 'Playwright', 'Storybook'] },
           ],
         }),
@@ -531,12 +539,12 @@ export async function seedDemo(): Promise<{ userId: string; email: string; jobs:
       {
         userId,
         name: 'Backend / Platform',
-        data: personaFrom({
+        data: personaFromProfile({
           summary:
             'Backend engineer focused on data modeling, billing correctness, and keeping deploys boring.',
           skills: [
-            { category: 'Backend', items: ['Node.js', 'Express', 'PostgreSQL', 'Drizzle', 'Redis', 'Go'] },
-            { category: 'Infrastructure', items: ['Docker', 'Terraform', 'AWS', 'GitHub Actions'] },
+            backendSkill ?? { category: 'Backend', items: ['Node.js', 'Express', 'PostgreSQL', 'Drizzle', 'Redis', 'Go'] },
+            infraSkill ?? { category: 'Infrastructure', items: ['Docker', 'Terraform', 'AWS', 'GitHub Actions'] },
           ],
           projects: [],
         }),
