@@ -1,6 +1,6 @@
 # JobVault — Progress Tracker
 
-> **Last Updated**: 2026-08-25
+> **Last Updated**: 2026-09-10
 > **Legend**: `[ ]` Pending · `[-]` In Progress · `[T]` To Test · `[x]` Done · Items marked ⚡ are on the critical path
 >
 > **Stitch Design Project**: `projects/15863924105464026227` — [Open in Stitch](https://stitch.google.com/projects/15863924105464026227)
@@ -693,6 +693,18 @@ is dimmed and every other reading is worthless.
 - **Review fix (`60c9dc3`):** Pinned `JobDetailHeader` and `JobDetailFooter` outside the `ScrollView` flex layout (RN Yoga has no `position: sticky`).
 - **Follow-up fixes & test hardening:** Cleaned up `require()` linter warnings in `job-detail-footer.test.tsx`, tracked `job-detail-screen.test.tsx`, added unit tests for `job-row.test.tsx`, `ghost-meter.test.tsx`, `status-chip.test.tsx`, and `outreach-badge.test.tsx`.
 - **Gates:** `make typecheck` · `make lint` · `npm --prefix mobile run typecheck` · `npm --prefix mobile run lint` · `npm --prefix mobile test` (38 suites / 123 tests) · `npx expo export` (iOS, Android, Web) · `blink validate` all green.
+
+## Mobile C7 — Search Screen & Deep-Linking (2026-09-10)
+
+> Milestone `m-0cc02t` (Mobile MVP) · Task `t-0ccxkt` · Redesign tracked in `t-0d034e` · Spec §4.9.
+> Native full-screen search hitting `GET /api/search` with live debounced querying across all five entity types (Jobs, Contacts, Resumes, Cover Letters, Answers), filter pills with horizontal gap spacing, STX/ETX highlight snippet rendering, and cross-tab deep linking.
+
+- **Foundations & Hooks:** Added `mobile/src/types/search.ts` (entity types, `SearchResultRow`, `SearchResponse`, entity href mapping), `SEARCH_KEY` / `searchKey` in `query-keys.ts`, `searchQuery` descriptor in `queries.ts`, `useDebouncedValue` hook (200ms debounce), and `useSearch` TanStack Query hook with enabled gating (`q.trim().length >= 2`).
+- **Components:** Created `SearchSnippet` with STX (`\u0002`) and ETX (`\u0003`) sentinel parsing and themed accent text highlights, `SearchResultRow` with type monograms, secondary match meta, and arrow indicator, and `SearchScreen` with debounced text input, clear button, horizontal scrollable filter pills with 8px gap spacing, section grouping (`groupByType`), and empty states (idle, no results, error with retry).
+- **Navigation & Deep Linking:** Registered `/search` route in `mobile/src/app/search.tsx` and `mobile/src/app/_layout.tsx` under protected stack. Connected `AppHeader` search icon button across all main tabs. Enhanced `AnswersScreen` to read `?answer=:id` route params and automatically present the `AnswerSheet` modal.
+- **Visual Redesign Concepts Documented:** Documented 4 future visual concepts in task `t-0d034e` (floating frosted sheet palette with `expo-blur`, in-place header expansion with Reanimated, grouped bento surface cards with live pill counts, smart idle recents state).
+- **Gates:** 95 test suites passing (370 tests), `npm run typecheck` clean (0 errors), `expo lint` clean (0 warnings), `npx expo export --platform android` clean (0 errors), `blink validate` clean (0 errors, 0 warnings).
+
 
 
 

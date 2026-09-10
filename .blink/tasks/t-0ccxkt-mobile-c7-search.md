@@ -1,10 +1,11 @@
 ---
 id: t-0ccxkt
 title: "C7 — Search screen"
-status: planned
+status: done
 milestone: m-0cc02t
+owner: Antigravity
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-10T17:42:00Z
 estimate: S
 blocked_by: [t-0ccxkn, t-0ccxko]
 decisions: [d-0c5wyy]

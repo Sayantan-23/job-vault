@@ -14,6 +14,7 @@ import {
   resumesByJobKey,
   NOTIFICATIONS_KEY,
   globalTimelineKey,
+  searchKey,
 } from './query-keys'
 import { buildListQuery } from './filters'
 import type { JobFilters } from '@/types/filters'
@@ -111,5 +112,11 @@ export const globalTimelineQuery = (page = 1): QueryDesc => ({
   key: globalTimelineKey(page),
   path: `/api/timeline?page=${page}&limit=${TIMELINE_PAGE_SIZE}`,
 })
+
+export const searchQuery = (q: string): QueryDesc => ({
+  key: searchKey(q),
+  path: `/api/search?q=${encodeURIComponent(q)}`,
+})
+
 
 

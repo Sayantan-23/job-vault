@@ -7,8 +7,18 @@ import * as personasHook from '@/hooks/use-personas';
 import * as aiStatusHook from '@/hooks/use-ai-status';
 import * as jobsHook from '@/hooks/use-jobs';
 import type { Answer } from '@/types/answer';
+import { useLocalSearchParams } from 'expo-router';
 import { withSafeArea } from '@/components/ui/test-safe-area';
 import { AnswersScreen } from './answers-screen';
+
+jest.mock('expo-router', () => ({
+  useLocalSearchParams: jest.fn(() => ({})),
+  useRouter: () => ({
+    push: jest.fn(),
+    navigate: jest.fn(),
+    back: jest.fn(),
+  }),
+}));
 
 jest.mock('expo-clipboard', () => ({
   setStringAsync: jest.fn().mockResolvedValue(true),
@@ -78,6 +88,8 @@ describe('AnswersScreen', () => {
     jest.spyOn(jobsHook, 'useInfiniteJobs').mockReturnValue({
       data: [],
     } as any);
+
+    (useLocalSearchParams as jest.Mock).mockReturnValue({});
   });
 
   afterEach(() => {
@@ -138,5 +150,16 @@ describe('AnswersScreen', () => {
     // New answer sheet opens
     expect(screen.getByText('New answer')).toBeTruthy();
     expect(screen.getByLabelText('Question')).toBeTruthy();
+  });
+
+  it('automatically opens answer sheet when deep-linked with answer param', async () => {
+    (useLocalSearchParams as jest.Mock).mockReturnValue({ answer: 'a-1' });
+
+    await render(<AnswersScreen />, { wrapper: makeWrapper() });
+
+    expect(screen.getByText('Edit answer')).toBeTruthy();
+    expect(
+      screen.getByDisplayValue('Your platform tackles real-time sync with high elegance.')
+    ).toBeTruthy();
   });
 });

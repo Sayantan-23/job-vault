@@ -43,3 +43,7 @@ export const coverLettersByJobKey = (jobId: string) => ['cover-letters', 'by-job
 export const RESUMES_KEY = ['resumes'] as const
 export const resumeKey = (id: string) => ['resumes', id] as const
 export const resumesByJobKey = (jobId: string) => ['resumes', 'by-job', jobId] as const
+
+export const SEARCH_KEY = ['search'] as const
+export const searchKey = (q: string) => ['search', q] as const
+

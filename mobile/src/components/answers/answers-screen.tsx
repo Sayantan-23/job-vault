@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 import { BlurTargetView } from 'expo-blur';
@@ -22,8 +23,15 @@ import { AnswerRow } from './answer-row';
 import { AnswerSheet } from './answer-sheet';
 
 export function AnswersScreen() {
+  const params = useLocalSearchParams<{ answer?: string }>();
   const [search, setSearch] = useState('');
-  const [activeAnswerId, setActiveAnswerId] = useState<string | null>(null);
+  const [activeAnswerId, setActiveAnswerId] = useState<string | null>(params.answer ?? null);
+  const [prevParamAnswer, setPrevParamAnswer] = useState(params.answer);
+
+  if (params.answer !== prevParamAnswer) {
+    setPrevParamAnswer(params.answer);
+    setActiveAnswerId(params.answer ?? null);
+  }
   const [isNewOpen, setIsNewOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const { hidden, onScroll } = useHideOnScroll();

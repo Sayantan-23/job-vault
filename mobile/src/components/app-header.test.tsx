@@ -28,11 +28,13 @@ function renderHeader(queryClient = new QueryClient()) {
 
 describe('AppHeader', () => {
   const mockNavigate = jest.fn();
+  const mockPush = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue({
       navigate: mockNavigate,
+      push: mockPush,
     });
   });
 
@@ -42,6 +44,13 @@ describe('AppHeader', () => {
     expect(screen.getByText('Vault')).toBeTruthy();
     expect(screen.getByLabelText('Search')).toBeTruthy();
     expect(screen.getByTestId('header-notification-button')).toBeTruthy();
+  });
+
+  it('navigates to search screen when search icon is pressed', async () => {
+    await renderHeader();
+
+    await fireEvent.press(screen.getByLabelText('Search'));
+    expect(mockPush).toHaveBeenCalledWith('/search');
   });
 
   it('shows unread dot on notification bell when there are unread notifications', async () => {
