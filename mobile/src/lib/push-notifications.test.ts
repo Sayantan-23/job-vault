@@ -4,6 +4,8 @@ import * as SecureStore from 'expo-secure-store';
 
 import { apiClient } from './api-client';
 import {
+  getPushStatusAsync,
+  getStoredPushTokenAsync,
   registerForPushNotificationsAsync,
   setupNotificationChannelAsync,
   unregisterPushTokenAsync,
@@ -134,6 +136,22 @@ describe('push-notifications', () => {
       await unregisterPushTokenAsync();
 
       expect(apiClient.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getPushStatusAsync', () => {
+    it('returns permission status from notifications module', async () => {
+      (Notifications.getPermissionsAsync as jest.Mock).mockResolvedValue({ status: 'granted' });
+      const status = await getPushStatusAsync();
+      expect(status).toBe('granted');
+    });
+  });
+
+  describe('getStoredPushTokenAsync', () => {
+    it('retrieves token from SecureStore', async () => {
+      (SecureStore.getItemAsync as jest.Mock).mockResolvedValue('token-abc');
+      const token = await getStoredPushTokenAsync();
+      expect(token).toBe('token-abc');
     });
   });
 });

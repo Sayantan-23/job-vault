@@ -143,3 +143,32 @@ export async function unregisterPushTokenAsync(): Promise<void> {
     console.warn('Failed to unregister push token:', error);
   }
 }
+
+export type PushPermissionStatus = 'granted' | 'denied' | 'undetermined' | 'unsupported';
+
+/**
+ * Checks current push notification permission status on device.
+ */
+export async function getPushStatusAsync(): Promise<PushPermissionStatus> {
+  const Notifications = getNotifications();
+  if (!Notifications) {
+    return 'unsupported';
+  }
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    return status;
+  } catch {
+    return 'unsupported';
+  }
+}
+
+/**
+ * Retrieves the currently registered device push token from SecureStore, if any.
+ */
+export async function getStoredPushTokenAsync(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(PUSH_TOKEN_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}

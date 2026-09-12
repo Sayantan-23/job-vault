@@ -6,6 +6,7 @@ import { FlatList } from 'react-native';
 import { Pressable, ScrollView, Text, View } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
+import { APP_CONFIG } from '@/config/app';
 import { EmptyState } from '@/components/ui/empty-state';
 import { IconButton } from '@/components/ui/icon-button';
 import { Input } from '@/components/ui/input';
@@ -181,7 +182,7 @@ export function SearchScreen({ onSelect }: SearchScreenProps) {
             <Icon icon={Search} size={32} className="text-muted-foreground/60" />
           </View>
           <Text className="text-center font-serif text-xl text-foreground">
-            Search JobVault
+            {`Search ${APP_CONFIG.name}`}
           </Text>
           <Text className="mt-2 max-w-xs text-center text-sm text-muted-foreground">
             Find applications, saved answers, résumés, cover letters, and personas.

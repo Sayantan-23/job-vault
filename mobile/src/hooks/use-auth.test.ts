@@ -1,5 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
+import { APP_CONFIG } from '@/config/app';
 import { ApiError } from '@/lib/api-client';
 import * as auth from '@/lib/auth';
 import { useAuth } from './use-auth';
@@ -43,7 +44,9 @@ describe('useAuth', () => {
 
     await act(() => result.current.login('ada@jobvault.app', 'secret123'));
 
-    await waitFor(() => expect(result.current.error).toMatch(/Could not reach JobVault/));
+    await waitFor(() =>
+      expect(result.current.error).toMatch(new RegExp(`Could not reach ${APP_CONFIG.name}`))
+    );
   });
 
   it('signs out', async () => {

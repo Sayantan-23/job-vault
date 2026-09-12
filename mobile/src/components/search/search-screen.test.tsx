@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 
+import { APP_CONFIG } from '@/config/app';
 import { withSafeArea } from '@/components/ui/test-safe-area';
 import * as useSearchModule from '@/hooks/use-search';
 import type { SearchResult } from '@/types/search';
@@ -85,7 +86,7 @@ describe('SearchScreen', () => {
 
     await render(<SearchScreen />, { wrapper: wrapper() });
 
-    expect(screen.getByText('Search JobVault')).toBeTruthy();
+    expect(screen.getByText(`Search ${APP_CONFIG.name}`)).toBeTruthy();
     expect(
       screen.getByText('Find applications, saved answers, résumés, cover letters, and personas.')
     ).toBeTruthy();

@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 
 import { AuthScreen, Field, FormError, FormFooter } from '@/components/auth/auth-form';
 import { Button } from '@/components/ui/button';
+import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/hooks/use-auth';
 
 export function LoginForm() {
@@ -12,7 +13,7 @@ export function LoginForm() {
   const [password, setPassword] = useState('');
 
   return (
-    <AuthScreen title="Welcome back" subtitle="Sign in to your JobVault account.">
+    <AuthScreen title="Welcome back" subtitle={`Sign in to your ${APP_CONFIG.name} account.`}>
       <FormError message={error} />
       <Field
         label="Email"

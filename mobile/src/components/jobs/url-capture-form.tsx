@@ -16,6 +16,7 @@ import { Icon } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { APP_CONFIG } from '@/config/app';
 import { useCreateJob, useScrapeJob } from '@/hooks/use-jobs';
 import type { CreateJobValues, ScrapeResult } from '@/types/job';
 
@@ -308,7 +309,7 @@ export function UrlCaptureForm({
                   Universal URL capture
                 </Text>
                 <Text className="text-xs leading-relaxed text-muted-foreground">
-                  Paste a link from LinkedIn, Indeed, Glassdoor, Greenhouse, Lever, Workday, or direct careers pages. JobVault parses the title, company, description, and details automatically.
+                  Paste a link from LinkedIn, Indeed, Glassdoor, Greenhouse, Lever, Workday, or direct careers pages. {APP_CONFIG.name} parses the title, company, description, and details automatically.
                 </Text>
               </View>
             </View>

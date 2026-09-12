@@ -1,4 +1,4 @@
-import { LogOut, User, Users } from 'lucide-react-native';
+import { LogOut, Settings, User, Users } from 'lucide-react-native';
 import { Text, View } from 'react-native-css/components';
 import { useRouter } from 'expo-router';
 
@@ -60,6 +60,13 @@ export function AccountMenu() {
           className={ITEM}>
           <Icon icon={Users} size={16} strokeWidth={1.75} className="text-muted-foreground" />
           <Text className="text-sm text-foreground">Personas</Text>
+        </AnchoredPopoverClose>
+        <AnchoredPopoverClose
+          accessibilityLabel="Settings"
+          onPress={() => router.push('/settings' as any)}
+          className={ITEM}>
+          <Icon icon={Settings} size={16} strokeWidth={1.75} className="text-muted-foreground" />
+          <Text className="text-sm text-foreground">Settings</Text>
         </AnchoredPopoverClose>
         <View className="my-1 h-px bg-border" />
         <AnchoredPopoverClose

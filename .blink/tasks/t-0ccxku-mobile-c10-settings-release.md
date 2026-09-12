@@ -1,10 +1,11 @@
 ---
 id: t-0ccxku
 title: "C10 — Settings, icons, splash, EAS build, store release"
-status: planned
+status: done
 milestone: m-0cc02t
+owner: sayantan-23
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-12T22:45:00Z
 estimate: M
 blocked_by: [t-0ccxkp, t-0ccxkq, t-0ccxkr, t-0cugqm, t-0ccxkt]
 decisions: [d-0cc2w5]

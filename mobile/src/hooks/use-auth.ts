@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { APP_CONFIG } from '@/config/app';
 import { ApiError } from '@/lib/api-client';
 import {
   login as loginRequest,
@@ -11,7 +12,7 @@ import {
 function messageOf(error: unknown): string {
   return error instanceof ApiError
     ? error.message
-    : 'Could not reach JobVault. Check your connection and try again.';
+    : `Could not reach ${APP_CONFIG.name}. Check your connection and try again.`;
 }
 
 /**

@@ -77,6 +77,7 @@ export default function RootLayout() {
             <Stack.Screen name="personas/index" options={{ headerShown: false }} />
             <Stack.Screen name="personas/[id]" options={{ headerShown: false }} />
             <Stack.Screen name="search" options={{ headerShown: false }} />
+            <Stack.Screen name="settings" options={{ headerShown: false }} />
           </Stack.Protected>
           <Stack.Protected guard={!signedIn}>
             <Stack.Screen name="(auth)" />

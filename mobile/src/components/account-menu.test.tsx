@@ -60,6 +60,14 @@ describe('AccountMenu', () => {
     expect(mockPush).toHaveBeenCalledWith('/personas');
   });
 
+  it('navigates to settings when Settings is pressed', async () => {
+    await render(<AccountMenu />);
+    await fireEvent.press(screen.getByLabelText('Open account menu'));
+
+    await fireEvent.press(screen.getByLabelText('Settings'));
+    expect(mockPush).toHaveBeenCalledWith('/settings');
+  });
+
   it('falls back to a generic label before the session resolves', async () => {
     setSession({ status: 'loading' });
     await render(<AccountMenu />);
