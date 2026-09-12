@@ -62,7 +62,7 @@ export function Select<T extends string>({
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent hideClose>
           {ariaLabel ? <SheetTitle className="mb-2">{ariaLabel}</SheetTitle> : null}
-          <ScrollView>
+          <ScrollView style={{ flexGrow: 0 }} bounces={false} showsVerticalScrollIndicator={false}>
             {options.map((option) => {
               const active = option.value === value;
               return (

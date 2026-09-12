@@ -124,6 +124,13 @@ export function SheetContent({
   const { height: windowHeight } = useWindowDimensions();
   const screenHeight = windowHeight || 800;
 
+  const maxPercent = className?.includes('max-h-[94%]')
+    ? 0.94
+    : className?.includes('max-h-[92%]')
+      ? 0.92
+      : 0.88;
+  const calculatedMaxHeight = Math.round(screenHeight * maxPercent);
+
   const translateY = useSharedValue(screenHeight);
 
   useEffect(() => {
@@ -145,14 +152,17 @@ export function SheetContent({
       />
 
       <Animated.View
-        style={[{ width: '100%', maxHeight: '100%', justifyContent: 'flex-end' }, animatedStyle]}
+        style={[{ width: '100%' }, animatedStyle]}
         pointerEvents="box-none">
         <View
           className={cn(
-            'max-h-[88%] rounded-t-2xl border-t border-border bg-card px-5 pt-5',
+            'rounded-t-2xl border-t border-border bg-card px-5 pt-5',
             className
           )}
-          style={{ paddingBottom: insets.bottom + 20 }}>
+          style={{
+            maxHeight: calculatedMaxHeight,
+            paddingBottom: insets.bottom + 20,
+          }}>
           {/* Grab handle: the affordance that says this panel came up from the edge. */}
           <View className="mb-4 h-1 w-10 self-center rounded-full bg-border" />
           <BlurTargetProvider blurTarget={null}>
