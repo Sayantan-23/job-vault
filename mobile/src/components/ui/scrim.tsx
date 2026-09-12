@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, View } from 'react-native-css/components';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -58,6 +58,12 @@ export function Scrim({
     opacity: opacity.value,
   }));
 
+  // On iOS, BlurView blurs native compositor layers directly.
+  // On Android, dimezisBlurView requires a blurTarget. When blurTarget is null
+  // (e.g. inside a nested sheet or dialog), skip BlurView to avoid re-rendering
+  // and painting the root screen over the parent modal.
+  const shouldRenderBlur = Platform.OS === 'ios' || Boolean(blurTarget);
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -67,13 +73,15 @@ export function Scrim({
       <Animated.View
         style={[StyleSheet.absoluteFill, animatedStyle]}
         pointerEvents="none">
-        <BlurView
-          intensity={intensity}
-          tint="dark"
-          blurMethod="dimezisBlurView"
-          blurTarget={blurTarget ?? undefined}
-          style={StyleSheet.absoluteFill}
-        />
+        {shouldRenderBlur ? (
+          <BlurView
+            intensity={intensity}
+            tint="dark"
+            blurMethod="dimezisBlurView"
+            blurTarget={blurTarget ?? undefined}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : null}
         <View
           style={[
             StyleSheet.absoluteFill,

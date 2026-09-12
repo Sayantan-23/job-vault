@@ -12,6 +12,7 @@ import { X } from 'lucide-react-native';
 import { Icon } from '@/components/icon';
 
 import { cn } from './cn';
+import { BlurTargetProvider } from './blur-target';
 import { Scrim } from './scrim';
 
 type DialogContextValue = { onOpenChange: (open: boolean) => void };
@@ -156,7 +157,9 @@ export function DialogContent({
             'w-full max-w-lg gap-4 rounded-xl border border-border bg-card p-6 shadow-xl shadow-black/25',
             className
           )}>
-          {children}
+          <BlurTargetProvider blurTarget={null}>
+            {children}
+          </BlurTargetProvider>
           <DialogClose accessibilityLabel="Close" className="absolute right-4 top-4 rounded-md p-1">
             <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
           </DialogClose>

@@ -1,11 +1,18 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { Modal } from 'react-native';
+import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { Modal, useWindowDimensions } from 'react-native';
 import { Pressable, Text, View } from 'react-native-css/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { X } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';
 
+import { BlurTargetProvider } from './blur-target';
 import { cn } from './cn';
 import { Scrim } from './scrim';
 
@@ -22,8 +29,11 @@ export type SheetProps = {
 /**
  * The web's Sheet is a right-hand drawer; on a phone the same role — a panel
  * that owns the screen without leaving it — is a bottom sheet, so this one
- * enters from the bottom. Modal's own `slide` animation is the native one, which
- * is why there is no gesture library behind this.
+ * enters from the bottom.
+ *
+ * The Modal uses animationType="none" so its backdrop Scrim dissolves in place
+ * without sliding from any direction, while SheetContent animates the panel
+ * translation up from the bottom edge using Reanimated.
  */
 export function Sheet({ open, onOpenChange, children }: SheetProps) {
   return (
@@ -31,7 +41,7 @@ export function Sheet({ open, onOpenChange, children }: SheetProps) {
       <Modal
         visible={open}
         transparent
-        animationType="slide"
+        animationType="none"
         statusBarTranslucent
         onRequestClose={() => onOpenChange(false)}>
         {children}
@@ -111,6 +121,21 @@ export function SheetContent({
 }) {
   const insets = useSafeAreaInsets();
   const { onOpenChange } = useContext(SheetContext);
+  const { height: windowHeight } = useWindowDimensions();
+  const screenHeight = windowHeight || 800;
+
+  const translateY = useSharedValue(screenHeight);
+
+  useEffect(() => {
+    translateY.value = withTiming(0, {
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [translateY]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   return (
     <View className="flex-1 justify-end">
@@ -119,21 +144,27 @@ export function SheetContent({
         onPress={() => onOpenChange(false)}
       />
 
-      <View
-        className={cn(
-          'max-h-[88%] rounded-t-2xl border-t border-border bg-card px-5 pt-5',
-          className
-        )}
-        style={{ paddingBottom: insets.bottom + 20 }}>
-        {/* Grab handle: the affordance that says this panel came up from the edge. */}
-        <View className="mb-4 h-1 w-10 self-center rounded-full bg-border" />
-        {children}
-        {hideClose ? null : (
-          <SheetClose accessibilityLabel="Close" className="absolute right-4 top-4 rounded-md p-1">
-            <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
-          </SheetClose>
-        )}
-      </View>
+      <Animated.View
+        style={[{ width: '100%', maxHeight: '100%', justifyContent: 'flex-end' }, animatedStyle]}
+        pointerEvents="box-none">
+        <View
+          className={cn(
+            'max-h-[88%] rounded-t-2xl border-t border-border bg-card px-5 pt-5',
+            className
+          )}
+          style={{ paddingBottom: insets.bottom + 20 }}>
+          {/* Grab handle: the affordance that says this panel came up from the edge. */}
+          <View className="mb-4 h-1 w-10 self-center rounded-full bg-border" />
+          <BlurTargetProvider blurTarget={null}>
+            {children}
+          </BlurTargetProvider>
+          {hideClose ? null : (
+            <SheetClose accessibilityLabel="Close" className="absolute right-4 top-4 rounded-md p-1">
+              <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
+            </SheetClose>
+          )}
+        </View>
+      </Animated.View>
     </View>
   );
 }

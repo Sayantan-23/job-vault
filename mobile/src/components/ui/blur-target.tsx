@@ -8,7 +8,7 @@ export function BlurTargetProvider({
   blurTarget,
 }: {
   children: ReactNode;
-  blurTarget: RefObject<View | null>;
+  blurTarget: RefObject<View | null> | null;
 }) {
   return (
     <BlurTargetContext.Provider value={blurTarget}>
