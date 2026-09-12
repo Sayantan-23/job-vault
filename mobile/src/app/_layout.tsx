@@ -17,6 +17,7 @@ import { getQueryClient } from '@/lib/query-client';
 import { useSession } from '@/lib/session';
 import { RealtimeProvider } from '@/components/shared/realtime-provider';
 import { PushNotificationProvider } from '@/components/shared/push-notification-provider';
+import { ShareIntentProvider } from '@/components/shared/share-intent-provider';
 
 
 SplashScreen.preventAutoHideAsync();
@@ -55,6 +56,7 @@ export default function RootLayout() {
           <>
             <RealtimeProvider />
             {!isRunningInExpoGo() ? <PushNotificationProvider /> : null}
+            <ShareIntentProvider />
           </>
         ) : null}
         {/* `Stack.Protected` is expo-router's own guard: a false `guard` removes

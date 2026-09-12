@@ -8,6 +8,7 @@
     "scheme": "jobvault",
     "userInterfaceStyle": "automatic",
     "android": {
+      "package": "com.jobvault.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#fefcf9",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -15,6 +16,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false
+    },
+    "ios": {
+      "bundleIdentifier": "com.jobvault.mobile",
+      "supportsTablet": false
     },
     "web": {
       "output": "static",
@@ -35,7 +40,8 @@
       ],
       "expo-secure-store",
       "expo-sharing",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-share-intent"
     ],
     "experiments": {
       "typedRoutes": true,

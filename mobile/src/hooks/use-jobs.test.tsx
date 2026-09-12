@@ -7,7 +7,7 @@ import { JOBS_KEY } from '@/lib/query-keys'
 import type { Job } from '@/types/job'
 import type { JobFilters } from '@/types/filters'
 
-import { useInfiniteJobs, useUpdateJob } from './use-jobs'
+import { useInfiniteJobs, useUpdateJob, useScrapeJob, useCreateJob } from './use-jobs'
 
 // The full { data, meta } envelope that apiClient.getPage returns (it skips the
 // unwrap, see api-client.ts:144). So the mock returns the envelope whole.
@@ -139,3 +139,57 @@ describe('useUpdateJob', () => {
     expect(invalidatedKeys).toContainEqual(JOBS_KEY)
   })
 })
+
+describe('useCreateJob', () => {
+  it('posts payload to /api/jobs and invalidates JOBS_KEY', async () => {
+    const newJob = job('j-new')
+    apiClient.post.mockResolvedValue(newJob)
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const invalidateSpy = jest.spyOn(client, 'invalidateQueries')
+
+    const { result } = await renderHook(() => useCreateJob(), {
+      wrapper: makeWrapper(client),
+    })
+
+    await act(() => result.current.mutateAsync({ title: 'Engineer', company: 'Acme' }))
+
+    expect(apiClient.post).toHaveBeenCalledWith('/api/jobs', {
+      title: 'Engineer',
+      company: 'Acme',
+    })
+    const invalidatedKeys = invalidateSpy.mock.calls.map((c) => c[0]?.queryKey)
+    expect(invalidatedKeys).toContainEqual(JOBS_KEY)
+  })
+})
+
+describe('useScrapeJob', () => {
+  it('posts sourceUrl to /api/jobs/scrape and returns ScrapeResult', async () => {
+    const scrapeResult = {
+      title: 'Senior Engineer',
+      company: 'Acme Corp',
+      location: 'Remote',
+      salaryRange: '$150k - $180k',
+      snapshotMarkdown: 'Job description content',
+      status: 'ok' as const,
+    }
+    apiClient.post.mockResolvedValue(scrapeResult)
+
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+
+    const { result } = await renderHook(() => useScrapeJob(), {
+      wrapper: makeWrapper(client),
+    })
+
+    let data
+    await act(async () => {
+      data = await result.current.mutateAsync('https://example.com/job/123')
+    })
+
+    expect(apiClient.post).toHaveBeenCalledWith('/api/jobs/scrape', {
+      sourceUrl: 'https://example.com/job/123',
+    })
+    expect(data).toEqual(scrapeResult)
+  })
+})
+

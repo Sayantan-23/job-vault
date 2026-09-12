@@ -1,10 +1,11 @@
 ---
 id: t-0ccxkp
 title: "C5 — Capture: share-sheet target, URL scrape, manual form"
-status: planned
+status: done
 milestone: m-0cc02t
+owner: sayantan-23
 created: 2026-08-29T07:15:35Z
-updated: 2026-08-29T07:15:35Z
+updated: 2026-09-12T21:05:00Z
 estimate: M
 blocked_by: [t-0ccxkn]
 tags: [mobile, expo, capture]

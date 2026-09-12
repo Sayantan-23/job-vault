@@ -19,6 +19,8 @@ export type SegmentedControlProps<T extends string> = {
   'aria-label'?: string;
   /** Hide text labels below the sm breakpoint (icons must be provided). */
   collapseLabels?: boolean;
+  /** When true, segments expand equally to fill available width with centered content. */
+  fullWidth?: boolean;
 };
 
 export function SegmentedControl<T extends string>({
@@ -28,13 +30,17 @@ export function SegmentedControl<T extends string>({
   className,
   'aria-label': ariaLabel,
   collapseLabels = false,
+  fullWidth = false,
 }: SegmentedControlProps<T>) {
+  const isFullWidth = fullWidth || className?.includes('w-full');
+
   return (
     <View
       accessibilityRole="tablist"
       accessibilityLabel={ariaLabel}
       className={cn(
-        'h-10 flex-row items-center gap-1 self-start rounded-lg border border-border bg-muted/50 p-1',
+        'h-10 flex-row items-center gap-1 rounded-lg border border-border bg-muted/50 p-1',
+        isFullWidth ? 'w-full self-stretch' : 'self-start',
         className
       )}>
       {options.map((option) => {
@@ -47,7 +53,8 @@ export function SegmentedControl<T extends string>({
             accessibilityState={{ selected: active }}
             onPress={() => onValueChange(option.value)}
             className={cn(
-              'h-full flex-row items-center gap-1.5 rounded-md px-3',
+              'h-full flex-row items-center justify-center gap-1.5 rounded-md px-3',
+              isFullWidth && 'flex-1',
               active && 'bg-background'
             )}>
             {option.icon ? (
@@ -62,7 +69,7 @@ export function SegmentedControl<T extends string>({
               // `sm:inline` has no meaning in React Native's layout model; the
               // collapse is expressed as hidden → flex, which behaves the same.
               className={cn(
-                'font-sans-medium text-sm',
+                'font-sans-medium text-sm text-center',
                 active ? 'text-foreground' : 'text-muted-foreground',
                 collapseLabels && 'hidden sm:flex'
               )}>

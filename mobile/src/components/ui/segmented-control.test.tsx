@@ -33,4 +33,20 @@ describe('SegmentedControl', () => {
 
     expect(onValueChange).toHaveBeenCalledWith('board');
   });
+
+  it('renders with fullWidth prop', async () => {
+    await render(
+      <SegmentedControl
+        value="list"
+        onValueChange={() => {}}
+        options={OPTIONS}
+        aria-label="View"
+        fullWidth
+      />
+    );
+
+    expect(screen.getByLabelText('View')).toBeTruthy();
+    expect(screen.getByLabelText('List')).toBeTruthy();
+    expect(screen.getByLabelText('Board')).toBeTruthy();
+  });
 });

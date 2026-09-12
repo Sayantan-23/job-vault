@@ -81,6 +81,7 @@ jest.mock('@/hooks/use-jobs', () => ({
   useInfiniteJobs: () => mockUseInfiniteJobs(),
   useUpdateJob: () => ({ mutate: jest.fn(), isPending: false }),
   useCreateJob: () => ({ mutate: jest.fn(), isPending: false }),
+  useScrapeJob: () => ({ mutate: jest.fn(), isPending: false, isError: false }),
 }));
 
 jest.mock('@/hooks/use-kanban', () => ({
@@ -130,8 +131,8 @@ describe('JobsScreen', () => {
     // Press Add Job
     await fireEvent.press(screen.getByLabelText('Add job'));
 
-    // New job sheet opens
-    expect(screen.getByText('New job')).toBeTruthy();
+    // Add job sheet opens
+    expect(screen.getByText('Add a job')).toBeTruthy();
   });
 
   it('opens SpeedDial options and triggers Filter sheet', async () => {

@@ -8,7 +8,7 @@ import { BlurTargetProvider } from '@/components/ui/blur-target';
 import { AppHeader } from '@/components/app-header';
 import { SpeedDial } from '@/components/ui/speed-dial';
 import { FilterSheet } from '@/components/jobs/filter-sheet';
-import { EditJobSheet } from '@/components/jobs/edit-job-sheet';
+import { AddJobSheet } from '@/components/jobs/add-job-sheet';
 import { JobRow } from '@/components/jobs/job-row';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RouteProgress } from '@/components/ui/route-progress';
@@ -221,10 +221,9 @@ export function JobsScreen() {
           blurTarget={blurTargetRef}
         />
 
-        <EditJobSheet
+        <AddJobSheet
           open={addJobOpen}
           onOpenChange={setAddJobOpen}
-          job={null}
         />
 
         <FilterSheet
