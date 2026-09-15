@@ -33,6 +33,8 @@ import {
   useUpdateCoverLetter,
 } from '@/hooks/use-cover-letters';
 import { useJobOptions } from '@/hooks/use-job-options';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { CoverLetterProposal } from './cover-letter-proposal';
 import { DocumentActionFab } from './document-action-fab';
@@ -52,6 +54,7 @@ function countWords(str: string): number {
 export function CoverLetterScreen({ id }: { id: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const blurTargetRef = useRef(null);
 
   const [mode, setMode] = useState<EditorMode>('edit');
@@ -195,12 +198,16 @@ export function CoverLetterScreen({ id }: { id: string }) {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-background">
+      <View style={{ backgroundColor: colors.background }} className="flex-1 bg-background">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
           {/* Top Header Bar */}
           <View
             className="border-b border-border bg-card px-4 pb-3"
-            style={{ paddingTop: insets.top + 8 }}>
+            style={{
+              paddingTop: insets.top + 8,
+              backgroundColor: colors.card,
+              borderBottomColor: colors.border,
+            }}>
             <View className="flex-row items-center justify-between gap-2">
               <View className="flex-row items-center gap-2 min-w-0 flex-1">
                 <IconButton
@@ -213,10 +220,13 @@ export function CoverLetterScreen({ id }: { id: string }) {
                   accessibilityLabel={`Rename cover letter: ${effectiveTitle}`}
                   onPress={() => setRenameOpen(true)}
                   className="min-w-0 flex-1 flex-row items-center gap-1.5 py-1 active:opacity-70">
-                  <Text numberOfLines={1} className="font-serif text-lg font-semibold text-foreground">
+                  <Text
+                    style={{ color: colors.foreground }}
+                    numberOfLines={1}
+                    className="font-serif text-lg font-semibold text-foreground">
                     {effectiveTitle}
                   </Text>
-                  <Icon icon={Pencil} size={13} className="text-muted-foreground flex-shrink-0" />
+                  <Icon icon={Pencil} size={13} color={colors.mutedForeground} className="text-muted-foreground flex-shrink-0" />
                 </Pressable>
               </View>
 
@@ -240,7 +250,10 @@ export function CoverLetterScreen({ id }: { id: string }) {
 
             {/* Subtitle / Context Bar: quiet text breadcrumb & mode toggle */}
             <View className="mt-2 flex-row items-center justify-between gap-2">
-              <Text numberOfLines={1} className="min-w-0 flex-1 pl-1 text-xs text-muted-foreground">
+              <Text
+                style={{ color: colors.mutedForeground }}
+                numberOfLines={1}
+                className="min-w-0 flex-1 pl-1 text-xs text-muted-foreground">
                 {targetLabel}
               </Text>
               <SegmentedControl
@@ -314,17 +327,20 @@ export function CoverLetterScreen({ id }: { id: string }) {
               {/* Mode Switch: Edit vs Preview */}
               {mode === 'preview' ? (
                 <View
-                  className="rounded-xl border border-slate-200/90 p-6 shadow-sm shadow-black/10"
-                  style={{ backgroundColor: '#ffffff' }}>
+                  className="rounded-xl border border-border p-6 shadow-sm shadow-black/10"
+                  style={{
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  }}>
                   <MarkdownProse>{draftBody}</MarkdownProse>
                 </View>
               ) : (
                 <View className="gap-1.5">
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-xs font-sans-medium text-muted-foreground">
+                    <Text style={{ color: colors.mutedForeground }} className="text-xs font-sans-medium text-muted-foreground">
                       Body (Markdown)
                     </Text>
-                    <Text className="text-xs text-muted-foreground">
+                    <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground">
                       {wordCount} words · {draftBody.length} chars
                     </Text>
                   </View>

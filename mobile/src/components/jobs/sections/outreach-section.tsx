@@ -3,7 +3,9 @@ import { Pressable, Text, View } from 'react-native-css/components';
 
 import { Card } from '@/components/ui/card';
 import { useJobContacts } from '@/hooks/use-contacts';
+import { useTheme } from '@/hooks/use-theme';
 import { shortDate } from '@/lib/relative-time';
+import { LIGHT_COLORS } from '@/theme';
 import type { ContactChannel, JobContact } from '@/types/contact';
 
 const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
@@ -31,6 +33,8 @@ export function parseContact(contact: JobContact): ContactTarget {
 
 function ContactRow({ contact }: { contact: JobContact }) {
   const target = parseContact(contact);
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
   return (
     <Card>
       <View className="flex-row items-start justify-between gap-3">
@@ -40,20 +44,20 @@ function ContactRow({ contact }: { contact: JobContact }) {
               accessibilityRole="link"
               accessibilityLabel={`Contact ${target.value}`}
               onPress={() => void Linking.openURL(target.href!)}>
-              <Text className="text-sm text-primary underline">{target.value}</Text>
+              <Text style={{ color: colors.primary }} className="text-sm text-primary underline">{target.value}</Text>
             </Pressable>
           ) : (
-            <Text className="text-sm text-foreground">{target.value}</Text>
+            <Text style={{ color: colors.foreground }} className="text-sm text-foreground">{target.value}</Text>
           )}
-          <Text className="mt-1 font-mono text-xs text-muted-foreground">
+          <Text style={{ color: colors.mutedForeground }} className="mt-1 font-mono text-xs text-muted-foreground">
             Reached out {shortDate(contact.reachedOutAt)}
           </Text>
           {contact.notes ? (
-            <Text className="mt-1 text-xs text-muted-foreground">{contact.notes}</Text>
+            <Text style={{ color: colors.mutedForeground }} className="mt-1 text-xs text-muted-foreground">{contact.notes}</Text>
           ) : null}
         </View>
         <View className="shrink-0">
-          <Text className="text-xs text-muted-foreground">{contact.status}</Text>
+          <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground">{contact.status}</Text>
         </View>
       </View>
     </Card>
@@ -62,14 +66,15 @@ function ContactRow({ contact }: { contact: JobContact }) {
 
 export function OutreachSection({ jobId }: { jobId: string }) {
   const { data: contacts = [], isLoading } = useJobContacts(jobId);
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
 
   return (
     <View className="gap-3">
-      <Text className="font-sans-medium text-sm text-foreground">Outreach</Text>
+      <Text style={{ color: colors.foreground }} className="font-sans-medium text-sm text-foreground">Outreach</Text>
       {isLoading ? (
-        <Text className="text-sm text-muted-foreground">Loading…</Text>
+        <Text style={{ color: colors.mutedForeground }} className="text-sm text-muted-foreground">Loading…</Text>
       ) : contacts.length === 0 ? (
-        <Text className="text-sm text-muted-foreground">
+        <Text style={{ color: colors.mutedForeground }} className="text-sm text-muted-foreground">
           No outreach yet. Track who you&apos;ve contacted for a referral.
         </Text>
       ) : (

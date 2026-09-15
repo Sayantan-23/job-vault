@@ -12,6 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { SpeedDial } from '@/components/ui/speed-dial';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useDeleteJob, useJob } from '@/hooks/use-jobs';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { jobKey } from '@/lib/query-keys';
 
@@ -28,6 +30,7 @@ import { EditJobSheet } from './edit-job-sheet';
 export function JobDetailScreen({ id }: { id: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const { data: job, isLoading } = useJob(id);
   const remove = useDeleteJob();
   const queryClient = useQueryClient();
@@ -54,7 +57,7 @@ export function JobDetailScreen({ id }: { id: string }) {
 
   if (isLoading || !job) {
     return (
-      <View className="flex-1 bg-background">
+      <View style={{ backgroundColor: colors.background }} className="flex-1 bg-background">
         <RouteProgress />
         <View className="p-5">
           <Skeleton className="h-6 w-2/3" />
@@ -90,6 +93,7 @@ export function JobDetailScreen({ id }: { id: string }) {
       key: 'edit',
       label: 'Edit job',
       icon: Pencil,
+      variant: 'default' as const,
       accessibilityLabel: 'Edit job',
       onPress: () => setEditOpen(true),
     },
@@ -97,7 +101,7 @@ export function JobDetailScreen({ id }: { id: string }) {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-background">
+      <View style={{ backgroundColor: colors.background }} className="flex-1 bg-background">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
           <JobDetailHeader job={job} />
           <ScrollView
@@ -105,22 +109,22 @@ export function JobDetailScreen({ id }: { id: string }) {
             contentContainerStyle={{ paddingBottom: fabBottom + 64 }}>
             <View className="gap-6 p-5">
               <JobDetails job={job} />
-              <View className="border-t border-hairline pt-5">
+              <View style={{ borderTopColor: colors.hairline }} className="border-t border-hairline pt-5">
                 <OutreachSection jobId={job.id} />
               </View>
-              <View className="border-t border-hairline pt-5">
+              <View style={{ borderTopColor: colors.hairline }} className="border-t border-hairline pt-5">
                 <JobSnapshot markdown={job.snapshotMarkdown} sourceUrl={job.sourceUrl} />
               </View>
-              <View className="border-t border-hairline pt-5">
+              <View style={{ borderTopColor: colors.hairline }} className="border-t border-hairline pt-5">
                 <RemindersSection jobId={job.id} />
               </View>
-              <View className="border-t border-hairline pt-5">
+              <View style={{ borderTopColor: colors.hairline }} className="border-t border-hairline pt-5">
                 <ResumeLauncher jobId={job.id} />
               </View>
-              <View className="border-t border-hairline pt-5">
+              <View style={{ borderTopColor: colors.hairline }} className="border-t border-hairline pt-5">
                 <CoverLetterLauncher jobId={job.id} />
               </View>
-              <View className="border-t border-hairline pt-5">
+              <View style={{ borderTopColor: colors.hairline }} className="border-t border-hairline pt-5">
                 <TimelineSection jobId={job.id} />
               </View>
             </View>

@@ -18,6 +18,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { APP_CONFIG } from '@/config/app';
 import { useCreateJob, useScrapeJob } from '@/hooks/use-jobs';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 import type { CreateJobValues, ScrapeResult } from '@/types/job';
 
 const PLACEHOLDER_TITLE = 'Untitled Position';
@@ -58,6 +59,7 @@ export function UrlCaptureForm({
   onCreated,
   onSwitchToManual,
 }: UrlCaptureFormProps) {
+  const { colors = LIGHT_COLORS, effectiveTheme } = useTheme() ?? {};
   const [url, setUrl] = useState(initialUrl);
   const [preview, setPreview] = useState<ScrapeResult | null>(null);
 
@@ -140,14 +142,22 @@ export function UrlCaptureForm({
         {/* URL Input Section */}
         <View className="gap-1.5">
           <View className="flex-row items-center justify-between">
-            <Text className="font-sans-medium text-xs text-muted-foreground">JOB POSTING URL</Text>
+            <Text
+              className="font-sans-medium text-xs"
+              style={{ color: colors.mutedForeground }}>
+              JOB POSTING URL
+            </Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Paste URL from clipboard"
               onPress={handlePaste}
               className="flex-row items-center gap-1 active:opacity-70">
-              <Icon icon={Clipboard} size={12} strokeWidth={2} className="text-accent" />
-              <Text className="font-sans-medium text-xs text-accent">Paste</Text>
+              <Icon icon={Clipboard} size={12} strokeWidth={2} color={colors.primary} />
+              <Text
+                className="font-sans-medium text-xs"
+                style={{ color: colors.primary }}>
+                Paste
+              </Text>
             </Pressable>
           </View>
 
@@ -175,7 +185,7 @@ export function UrlCaptureForm({
                     setPreview(null);
                   }}
                   className="absolute right-2.5 top-2.5 p-1 active:opacity-70">
-                  <Icon icon={X} size={14} strokeWidth={2} className="text-muted-foreground" />
+                  <Icon icon={X} size={14} strokeWidth={2} color={colors.mutedForeground} />
                 </Pressable>
               ) : null}
             </View>
@@ -186,7 +196,7 @@ export function UrlCaptureForm({
               size="default"
               accessibilityLabel="Fetch job posting">
               {isScraping ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color={colors.primaryForeground} />
               ) : (
                 'Capture'
               )}
@@ -195,8 +205,10 @@ export function UrlCaptureForm({
 
           {isScraping ? (
             <View className="mt-1 flex-row items-center gap-2">
-              <ActivityIndicator size="small" />
-              <Text className="text-xs text-muted-foreground">
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text
+                className="text-xs"
+                style={{ color: colors.mutedForeground }}>
                 Capturing posting details — this can take a few seconds…
               </Text>
             </View>
@@ -205,14 +217,23 @@ export function UrlCaptureForm({
 
         {/* Scrape Error State */}
         {isScrapeError ? (
-          <View className="gap-2.5 rounded-lg border border-destructive/20 bg-destructive/10 p-3.5">
+          <View
+            className="gap-2.5 rounded-lg border p-3.5"
+            style={{
+              backgroundColor: colors.destructive + '1a',
+              borderColor: colors.destructive + '33',
+            }}>
             <View className="flex-row items-start gap-2">
-              <Icon icon={AlertCircle} size={16} strokeWidth={2} className="mt-0.5 text-destructive" />
+              <Icon icon={AlertCircle} size={16} strokeWidth={2} className="mt-0.5" color={colors.destructive} />
               <View className="flex-1">
-                <Text className="font-sans-medium text-xs text-destructive">
+                <Text
+                  className="font-sans-medium text-xs"
+                  style={{ color: colors.destructive }}>
                   Could not capture posting automatically
                 </Text>
-                <Text className="mt-0.5 text-xs text-destructive/80">
+                <Text
+                  className="mt-0.5 text-xs"
+                  style={{ color: colors.destructive }}>
                   Some job boards restrict automated access. You can enter the details manually with the URL prefilled.
                 </Text>
               </View>
@@ -229,12 +250,21 @@ export function UrlCaptureForm({
 
         {/* Scrape Preview Card */}
         {preview ? (
-          <Card className="border-border/80 bg-card/70 p-4">
+          <Card
+            className="p-4"
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+            }}>
             <View className="gap-3">
               <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center gap-1.5 rounded-full bg-accent/10 px-2 py-0.5">
-                  <Icon icon={Sparkles} size={12} strokeWidth={2} className="text-accent" />
-                  <Text className="font-sans-medium text-[11px] text-accent">
+                <View
+                  className="flex-row items-center gap-1.5 rounded-full px-2 py-0.5"
+                  style={{ backgroundColor: colors.primary + '1a' }}>
+                  <Icon icon={Sparkles} size={12} strokeWidth={2} color={colors.primary} />
+                  <Text
+                    className="font-sans-medium text-[11px]"
+                    style={{ color: colors.primary }}>
                     Captured from link
                   </Text>
                 </View>
@@ -244,10 +274,14 @@ export function UrlCaptureForm({
               </View>
 
               <View className="gap-0.5">
-                <Text className="font-sans-semibold text-base text-foreground">
+                <Text
+                  className="font-sans-semibold text-base"
+                  style={{ color: colors.foreground }}>
                   {displayTitle || 'Untitled Position'}
                 </Text>
-                <Text className="font-sans-medium text-sm text-muted-foreground">
+                <Text
+                  className="font-sans-medium text-sm"
+                  style={{ color: colors.mutedForeground }}>
                   {displayCompany || 'Unknown Company'}
                 </Text>
               </View>
@@ -255,30 +289,49 @@ export function UrlCaptureForm({
               {preview.location || preview.salaryRange ? (
                 <View className="flex-row flex-wrap items-center gap-2 pt-1">
                   {preview.location ? (
-                    <View className="flex-row items-center gap-1 rounded-md bg-muted px-2 py-1">
-                      <Icon icon={MapPin} size={12} strokeWidth={2} className="text-muted-foreground" />
-                      <Text className="text-xs text-foreground">{preview.location}</Text>
+                    <View
+                      className="flex-row items-center gap-1 rounded-md px-2 py-1"
+                      style={{ backgroundColor: colors.muted }}>
+                      <Icon icon={MapPin} size={12} strokeWidth={2} color={colors.mutedForeground} />
+                      <Text
+                        className="text-xs"
+                        style={{ color: colors.foreground }}>
+                        {preview.location}
+                      </Text>
                     </View>
                   ) : null}
                   {preview.salaryRange ? (
-                    <View className="flex-row items-center gap-1 rounded-md bg-muted px-2 py-1">
-                      <Icon icon={CircleDollarSign} size={12} strokeWidth={2} className="text-muted-foreground" />
-                      <Text className="text-xs text-foreground">{preview.salaryRange}</Text>
+                    <View
+                      className="flex-row items-center gap-1 rounded-md px-2 py-1"
+                      style={{ backgroundColor: colors.muted }}>
+                      <Icon icon={CircleDollarSign} size={12} strokeWidth={2} color={colors.mutedForeground} />
+                      <Text
+                        className="text-xs"
+                        style={{ color: colors.foreground }}>
+                        {preview.salaryRange}
+                      </Text>
                     </View>
                   ) : null}
                 </View>
               ) : null}
 
               {preview.snapshotMarkdown ? (
-                <View className="rounded-md bg-muted/40 p-2.5">
-                  <Text numberOfLines={3} className="text-xs text-muted-foreground">
+                <View
+                  className="rounded-md p-2.5"
+                  style={{ backgroundColor: colors.muted }}>
+                  <Text
+                    numberOfLines={3}
+                    className="text-xs"
+                    style={{ color: colors.mutedForeground }}>
                     {preview.snapshotMarkdown.replace(/[#*`_\[\]]/g, '').trim()}
                   </Text>
                 </View>
               ) : null}
 
               {/* Action Buttons */}
-              <View className="mt-1 flex-row items-center justify-end gap-2.5 border-t border-hairline pt-3">
+              <View
+                className="mt-1 flex-row items-center justify-end gap-2.5 border-t pt-3"
+                style={{ borderTopColor: colors.border }}>
                 <Button
                   variant="outline"
                   size="sm"
@@ -301,28 +354,47 @@ export function UrlCaptureForm({
 
         {/* Idle Helper Callout */}
         {!preview && !isScrapeError && !isScraping ? (
-          <View className="rounded-lg border border-hairline bg-muted/30 p-3.5">
+          <View
+            className="rounded-lg border p-3.5"
+            style={{
+              backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+              borderColor: colors.border,
+            }}>
             <View className="flex-row items-start gap-2.5">
-              <Icon icon={Globe} size={16} strokeWidth={1.75} className="mt-0.5 text-muted-foreground" />
+              <Icon icon={Globe} size={16} strokeWidth={1.75} className="mt-0.5" color={colors.mutedForeground} />
               <View className="flex-1 gap-1">
-                <Text className="font-sans-medium text-xs text-foreground">
+                <Text
+                  className="font-sans-medium text-xs"
+                  style={{ color: colors.foreground }}>
                   Universal URL capture
                 </Text>
-                <Text className="text-xs leading-relaxed text-muted-foreground">
+                <Text
+                  className="text-xs leading-relaxed"
+                  style={{ color: colors.mutedForeground }}>
                   Paste a link from LinkedIn, Indeed, Glassdoor, Greenhouse, Lever, Workday, or direct careers pages. {APP_CONFIG.name} parses the title, company, description, and details automatically.
                 </Text>
               </View>
             </View>
-            <View className="mt-3 border-t border-hairline pt-2.5">
+            <View
+              className="mt-3 border-t pt-2.5"
+              style={{ borderTopColor: colors.border }}>
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Switch to manual form"
                 onPress={handleManualSwitch}
                 className="flex-row items-center justify-between active:opacity-70">
-                <Text className="text-xs text-muted-foreground">Prefer to type details by hand?</Text>
+                <Text
+                  className="text-xs"
+                  style={{ color: colors.mutedForeground }}>
+                  Prefer to type details by hand?
+                </Text>
                 <View className="flex-row items-center gap-1">
-                  <Text className="font-sans-medium text-xs text-accent">Manual form</Text>
-                  <Icon icon={ArrowRight} size={12} strokeWidth={2} className="text-accent" />
+                  <Text
+                    className="font-sans-medium text-xs"
+                    style={{ color: colors.primary }}>
+                    Manual form
+                  </Text>
+                  <Icon icon={ArrowRight} size={12} strokeWidth={2} color={colors.primary} />
                 </View>
               </Pressable>
             </View>

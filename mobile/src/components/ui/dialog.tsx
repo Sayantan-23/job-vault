@@ -10,6 +10,8 @@ import Animated, {
 import { X } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { cn } from './cn';
 import { BlurTargetProvider } from './blur-target';
@@ -90,8 +92,11 @@ export function DialogClose({
 }
 
 export function DialogTitle({ children, className }: { children: ReactNode; className?: string }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
-    <Text className={cn('font-sans-semibold text-base text-card-foreground', className)}>
+    <Text
+      style={{ color: colors.foreground }}
+      className={cn('font-sans-semibold text-base text-card-foreground', className)}>
       {children}
     </Text>
   );
@@ -104,7 +109,14 @@ export function DialogDescription({
   children: ReactNode;
   className?: string;
 }) {
-  return <Text className={cn('text-sm text-muted-foreground', className)}>{children}</Text>;
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+  return (
+    <Text
+      style={{ color: colors.mutedForeground }}
+      className={cn('text-sm text-muted-foreground', className)}>
+      {children}
+    </Text>
+  );
 }
 
 /**
@@ -131,6 +143,7 @@ export function DialogContent({
 }) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.96);
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
 
   useEffect(() => {
     opacity.value = withTiming(1, {
@@ -156,7 +169,11 @@ export function DialogContent({
           className={cn(
             'w-full max-w-lg gap-4 rounded-xl border border-border bg-card p-6 shadow-xl shadow-black/25',
             className
-          )}>
+          )}
+          style={{
+            backgroundColor: colors.card,
+            borderColor: colors.hairline,
+          }}>
           <BlurTargetProvider blurTarget={null}>
             {children}
           </BlurTargetProvider>

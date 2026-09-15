@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react';
 import { Text, View } from 'react-native-css/components';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
+
 import { cn } from './cn';
 
 export type EmptyStateProps = {
@@ -19,11 +22,19 @@ export type EmptyStateProps = {
  * editorial tone; re-implemented on our tokens, not ported DOM.
  */
 export function EmptyState({ title, description, action, className }: EmptyStateProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
   return (
     <View className={cn('items-center px-6 py-16', className)}>
-      <Text className="font-serif text-xl text-foreground text-center">{title}</Text>
+      <Text
+        style={{ color: colors.foreground }}
+        className="font-serif text-xl text-foreground text-center">
+        {title}
+      </Text>
       {description ? (
-        <Text className="mt-2 text-center text-sm text-muted-foreground">
+        <Text
+          style={{ color: colors.mutedForeground }}
+          className="mt-2 text-center text-sm text-muted-foreground">
           {description}
         </Text>
       ) : null}

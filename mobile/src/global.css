@@ -94,6 +94,10 @@
     --input: #282623;
     --ring: #708ade;
 
+    --tab-bar: #000000;
+    --tab-bar-foreground: #f0eeeb;
+    --tab-bar-muted: #96918c;
+
     --ghost-active: #43c07a;
     --ghost-stale: #f5ae39;
     --ghost-ghosted: #f44f5d;

@@ -3,6 +3,9 @@ import { Pressable, Text, View } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
+
 import { cn } from './cn';
 
 export type SegmentedOption<T extends string> = {
@@ -32,12 +35,17 @@ export function SegmentedControl<T extends string>({
   collapseLabels = false,
   fullWidth = false,
 }: SegmentedControlProps<T>) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const isFullWidth = fullWidth || className?.includes('w-full');
 
   return (
     <View
       accessibilityRole="tablist"
       accessibilityLabel={ariaLabel}
+      style={{
+        backgroundColor: colors.secondary,
+        borderColor: colors.border,
+      }}
       className={cn(
         'h-10 flex-row items-center gap-1 rounded-lg border border-border bg-muted/50 p-1',
         isFullWidth ? 'w-full self-stretch' : 'self-start',
@@ -52,6 +60,7 @@ export function SegmentedControl<T extends string>({
             accessibilityLabel={option.label}
             accessibilityState={{ selected: active }}
             onPress={() => onValueChange(option.value)}
+            style={active ? { backgroundColor: colors.card } : undefined}
             className={cn(
               'h-full flex-row items-center justify-center gap-1.5 rounded-md px-3',
               isFullWidth && 'flex-1',
@@ -62,12 +71,14 @@ export function SegmentedControl<T extends string>({
                 icon={option.icon}
                 size={16}
                 strokeWidth={1.75}
+                color={active ? colors.foreground : colors.mutedForeground}
                 className={active ? 'text-foreground' : 'text-muted-foreground'}
               />
             ) : null}
             <Text
               // `sm:inline` has no meaning in React Native's layout model; the
               // collapse is expressed as hidden → flex, which behaves the same.
+              style={{ color: active ? colors.foreground : colors.mutedForeground }}
               className={cn(
                 'font-sans-medium text-sm text-center',
                 active ? 'text-foreground' : 'text-muted-foreground',

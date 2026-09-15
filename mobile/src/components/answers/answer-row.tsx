@@ -6,6 +6,8 @@ import { relativeTime } from '@/lib/relative-time';
 import type { Answer } from '@/types/answer';
 import { AnswerCopyChip } from './answer-copy-chip';
 
+import { useTheme } from '@/hooks/use-theme';
+
 export interface AnswerRowProps {
   answer: Answer;
   onSelect: (id: string) => void;
@@ -14,14 +16,20 @@ export interface AnswerRowProps {
 }
 
 export function AnswerRow({ answer, onSelect, onDelete, onCopied }: AnswerRowProps) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Answer: ${answer.question}`}
       onPress={() => onSelect(answer.id)}
+      style={{ borderBottomColor: colors.border }}
       className="border-b border-border/60 px-4 py-3.5 active:bg-muted/40">
       <View className="gap-2.5">
-        <Text className="font-sans-medium text-sm text-foreground" numberOfLines={2}>
+        <Text
+          style={{ color: colors.foreground }}
+          className="font-sans-medium text-sm text-foreground"
+          numberOfLines={2}>
           {answer.question}
         </Text>
 
@@ -46,7 +54,9 @@ export function AnswerRow({ answer, onSelect, onDelete, onCopied }: AnswerRowPro
           </View>
 
           <View className="flex-row items-center gap-3">
-            <Text className="font-mono text-xs tabular-nums text-muted-foreground">
+            <Text
+              style={{ color: colors.mutedForeground }}
+              className="font-mono text-xs tabular-nums text-muted-foreground">
               {relativeTime(answer.lastUsedAt)}
             </Text>
 

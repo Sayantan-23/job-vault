@@ -22,7 +22,8 @@ import { isListFiltered } from '@/lib/filters';
 import { DEFAULT_FILTERS } from '@/types/filters';
 import { JOBS_KEY, DASHBOARD_KANBAN_KEY } from '@/lib/query-keys';
 import { useQueryClient } from '@tanstack/react-query';
-import { SCREEN_BOTTOM_INSET } from '@/theme';
+import { SCREEN_BOTTOM_INSET, darkVars, lightVars } from '@/theme';
+import { useTheme } from '@/hooks/use-theme';
 import type { Job } from '@/types/job';
 import type { JobFilters as Filters } from '@/types/filters';
 
@@ -52,10 +53,19 @@ function groupJobs(jobs: Job[]): Group[] {
 }
 
 function SectionHeader({ label, count }: { label: string; count: number }) {
+  const { colors } = useTheme();
   return (
     <View className="flex-row items-center gap-2 px-5 pb-1 pt-4">
-      <Text className="font-sans-medium text-sm text-muted-foreground">{label}</Text>
-      <Text className="font-mono text-[11px] text-muted-foreground/80">{count}</Text>
+      <Text
+        style={{ color: colors.mutedForeground }}
+        className="font-sans-medium text-sm text-muted-foreground">
+        {label}
+      </Text>
+      <Text
+        style={{ color: colors.mutedForeground }}
+        className="font-mono text-[11px] text-muted-foreground/80">
+        {count}
+      </Text>
     </View>
   );
 }
@@ -101,6 +111,10 @@ function ListEmpty({
 }
 
 export function JobsScreen() {
+  const { effectiveTheme, colors } = useTheme();
+  const activeVars = effectiveTheme === 'dark' ? darkVars : lightVars;
+  const barBg = colors.tabBar;
+  const pageBg = colors.background;
   const [filters, setFilters] = useState<Filters>({ ...DEFAULT_FILTERS });
   const [filterOpen, setFilterOpen] = useState(false);
   const [addJobOpen, setAddJobOpen] = useState(false);
@@ -178,9 +192,14 @@ export function JobsScreen() {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-tab-bar">
+      <View
+        key={effectiveTheme}
+        style={[activeVars, { backgroundColor: barBg }]}
+        className="flex-1 bg-tab-bar">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-          <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
+          <View
+            style={{ backgroundColor: pageBg }}
+            className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
             <AppHeader title="Jobs" />
             {query.isLoading && rows.length === 0 ? <RouteProgress /> : null}
             <Animated.FlatList

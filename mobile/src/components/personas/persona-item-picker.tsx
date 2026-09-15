@@ -2,6 +2,8 @@ import { Pressable, Text, View } from 'react-native-css/components';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { newId } from '@/lib/profile';
 
 export interface PersonaItemPickerProps<T extends { id?: string }> {
@@ -25,10 +27,14 @@ export function PersonaItemPicker<T extends { id?: string }>({
   onRemove,
   emptyHint,
 }: PersonaItemPickerProps<T>) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
   if (profileItems.length === 0) {
     return (
-      <View className="rounded-lg border border-dashed border-border/80 p-3 bg-muted/10">
-        <Text className="text-xs text-muted-foreground italic">{emptyHint}</Text>
+      <View
+        style={{ borderColor: colors.border, backgroundColor: colors.muted }}
+        className="rounded-lg border border-dashed border-border/80 p-3 bg-muted/10">
+        <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic">{emptyHint}</Text>
       </View>
     );
   }
@@ -39,10 +45,19 @@ export function PersonaItemPicker<T extends { id?: string }>({
   return (
     <View
       accessibilityLabel={label}
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+      }}
       className="rounded-lg border border-border/80 bg-card overflow-hidden">
       {/* Picker Header */}
-      <View className="flex-row items-center justify-between border-b border-border/60 bg-muted/20 px-3 py-2">
-        <Text className="font-sans-medium text-xs uppercase tracking-wide text-muted-foreground">
+      <View
+        style={{
+          borderBottomColor: colors.border,
+          backgroundColor: colors.muted,
+        }}
+        className="flex-row items-center justify-between border-b border-border/60 bg-muted/20 px-3 py-2">
+        <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs uppercase tracking-wide text-muted-foreground">
           From your profile
         </Text>
         <Button
@@ -94,11 +109,17 @@ export function PersonaItemPicker<T extends { id?: string }>({
                 <Checkbox checked={checked} />
               </View>
               <View className="min-w-0 flex-1">
-                <Text numberOfLines={1} className="font-sans-medium text-sm text-foreground">
+                <Text
+                  style={{ color: colors.foreground }}
+                  numberOfLines={1}
+                  className="font-sans-medium text-sm text-foreground">
                   {title}
                 </Text>
                 {subtitle ? (
-                  <Text numberOfLines={1} className="mt-0.5 text-xs text-muted-foreground">
+                  <Text
+                    style={{ color: colors.mutedForeground }}
+                    numberOfLines={1}
+                    className="mt-0.5 text-xs text-muted-foreground">
                     {subtitle}
                   </Text>
                 ) : null}

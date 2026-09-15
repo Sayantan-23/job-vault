@@ -9,7 +9,6 @@ import { isRunningInExpoGo } from 'expo';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { hydrateSession } from '@/lib/auth';
@@ -18,7 +17,37 @@ import { useSession } from '@/lib/session';
 import { RealtimeProvider } from '@/components/shared/realtime-provider';
 import { PushNotificationProvider } from '@/components/shared/push-notification-provider';
 import { ShareIntentProvider } from '@/components/shared/share-intent-provider';
+import { ThemeProvider } from '@/components/shared/theme-provider';
+import { useTheme } from '@/hooks/use-theme';
 
+function AppNavigator({ signedIn }: { signedIn: boolean }) {
+  const { colors } = useTheme();
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+      <Stack.Protected guard={signedIn}>
+        <Stack.Screen name="(tabs)" />
+        {/* Full-screen detail route, sibling of (tabs) at the root Stack so
+            the tab bar is hidden. Lives under the same signedIn guard — a
+            signed-out user standing on a deep link is navigated out by the
+            Stack.Protected gate. */}
+        <Stack.Screen name="jobs/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="vault/resume/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="vault/cover-letter/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="profile/index" options={{ headerShown: false }} />
+        <Stack.Screen name="personas/index" options={{ headerShown: false }} />
+        <Stack.Screen name="personas/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="search" options={{ headerShown: false }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={!signedIn}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+      {/* Dev surface, deliberately outside the guard: a device pass over the
+          primitives should not need an account. */}
+      <Stack.Screen name="gallery" />
+    </Stack>
+  );
+}
 
 SplashScreen.preventAutoHideAsync();
 
@@ -51,41 +80,16 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <QueryClientProvider client={getQueryClient()}>
-        <StatusBar style="auto" />
-        {signedIn ? (
-          <>
-            <RealtimeProvider />
-            {!isRunningInExpoGo() ? <PushNotificationProvider /> : null}
-            <ShareIntentProvider />
-          </>
-        ) : null}
-        {/* `Stack.Protected` is expo-router's own guard: a false `guard` removes
-            those routes from the tree entirely, and a user standing on one is
-            navigated out. So signing in or out needs no imperative navigation —
-            flipping the session store is the navigation. */}
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Protected guard={signedIn}>
-            <Stack.Screen name="(tabs)" />
-            {/* Full-screen detail route, sibling of (tabs) at the root Stack so
-                the tab bar is hidden. Lives under the same signedIn guard — a
-                signed-out user standing on a deep link is navigated out by the
-                Stack.Protected gate. */}
-            <Stack.Screen name="jobs/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="vault/resume/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="vault/cover-letter/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="profile/index" options={{ headerShown: false }} />
-            <Stack.Screen name="personas/index" options={{ headerShown: false }} />
-            <Stack.Screen name="personas/[id]" options={{ headerShown: false }} />
-            <Stack.Screen name="search" options={{ headerShown: false }} />
-            <Stack.Screen name="settings" options={{ headerShown: false }} />
-          </Stack.Protected>
-          <Stack.Protected guard={!signedIn}>
-            <Stack.Screen name="(auth)" />
-          </Stack.Protected>
-          {/* Dev surface, deliberately outside the guard: a device pass over the
-              primitives should not need an account. */}
-          <Stack.Screen name="gallery" />
-        </Stack>
+        <ThemeProvider>
+          {signedIn ? (
+            <>
+              <RealtimeProvider />
+              {!isRunningInExpoGo() ? <PushNotificationProvider /> : null}
+              <ShareIntentProvider />
+            </>
+          ) : null}
+          <AppNavigator signedIn={signedIn} />
+        </ThemeProvider>
       </QueryClientProvider>
     </GestureHandlerRootView>
   );

@@ -8,6 +8,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { cn } from './cn';
 
 /**
@@ -20,6 +22,7 @@ import { cn } from './cn';
  * layers never have to agree on a style object.
  */
 export function Skeleton({ className }: { className?: string }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const pulse = useSharedValue(1);
 
   useEffect(() => {
@@ -38,7 +41,7 @@ export function Skeleton({ className }: { className?: string }) {
       importantForAccessibility="no-hide-descendants"
       className={cn('overflow-hidden rounded-md', className)}>
       <Animated.View style={[{ flex: 1 }, style]}>
-        <View className="h-full w-full bg-muted" />
+        <View style={{ backgroundColor: colors.muted }} className="h-full w-full bg-muted" />
       </Animated.View>
     </View>
   );

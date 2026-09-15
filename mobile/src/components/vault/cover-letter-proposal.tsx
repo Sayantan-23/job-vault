@@ -6,6 +6,7 @@ import { Icon } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/components/ui/cn';
 import { MarkdownProse } from '@/components/ui/markdown-prose';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 import type { RefineAction } from '@/types/cover-letter';
 
 import { CoverLetterDiff } from './cover-letter-diff';
@@ -42,6 +43,7 @@ export function CoverLetterProposal({
   onDiscard,
   onTryAgain,
 }: CoverLetterProposalProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const isGrammar = action === 'fix-grammar';
   const [showAlt, setShowAlt] = useState(false);
 
@@ -60,25 +62,40 @@ export function CoverLetterProposal({
     <View
       accessibilityLiveRegion="polite"
       className={cn(
-        'overflow-hidden rounded-lg border border-border',
-        viewingOriginal ? 'bg-card' : 'border-l-4 border-l-primary bg-primary/[0.03]'
-      )}>
+        'overflow-hidden rounded-lg border',
+        viewingOriginal ? '' : 'border-l-4'
+      )}
+      style={{
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+        borderLeftColor: viewingOriginal ? colors.border : colors.primary,
+      }}>
       {/* Proposal Header */}
-      <View className="flex-row items-center justify-between border-b border-border/60 px-4 py-2.5">
+      <View
+        className="flex-row items-center justify-between px-4 py-2.5"
+        style={{ borderBottomWidth: 1, borderBottomColor: colors.border }}>
         {viewingOriginal ? (
-          <Text className="font-sans-medium text-xs uppercase tracking-wider text-muted-foreground">
+          <Text
+            className="font-sans-medium text-xs uppercase tracking-wider"
+            style={{ color: colors.mutedForeground }}>
             Current letter
           </Text>
         ) : (
           <View className="flex-row items-center gap-1.5">
-            <Icon icon={Sparkles} size={14} className="text-primary" />
-            <Text className="font-sans-medium text-xs uppercase tracking-wider text-primary">
+            <Icon icon={Sparkles} size={14} color={colors.primary} />
+            <Text
+              className="font-sans-medium text-xs uppercase tracking-wider"
+              style={{ color: colors.primary }}>
               Proposed rewrite
             </Text>
           </View>
         )}
-        <View className="rounded-full bg-muted px-2 py-0.5">
-          <Text className="font-sans-medium text-xs text-muted-foreground">
+        <View
+          className="rounded-full px-2 py-0.5"
+          style={{ backgroundColor: colors.muted }}>
+          <Text
+            className="font-sans-medium text-xs"
+            style={{ color: colors.mutedForeground }}>
             {ACTION_LABEL[action]}
           </Text>
         </View>
@@ -98,14 +115,20 @@ export function CoverLetterProposal({
       </View>
 
       {/* Action footer */}
-      <View className="flex-row flex-wrap items-center gap-2 border-t border-border/60 px-3 py-2.5">
+      <View
+        className="flex-row flex-wrap items-center gap-2 px-3 py-2.5"
+        style={{ borderTopWidth: 1, borderTopColor: colors.border }}>
         {!viewingOriginal ? (
           <Button
             size="sm"
             accessibilityLabel="Keep proposed changes"
             disabled={busy}
             onPress={onKeep}>
-            <Text className="text-xs font-sans-medium text-primary-foreground">Keep</Text>
+            <Text
+              className="text-xs font-sans-medium"
+              style={{ color: colors.primaryForeground }}>
+              Keep
+            </Text>
           </Button>
         ) : null}
 
@@ -115,7 +138,11 @@ export function CoverLetterProposal({
           accessibilityLabel={toggleLabel}
           disabled={busy}
           onPress={() => setShowAlt((v) => !v)}>
-          <Text className="text-xs font-sans-medium text-foreground">{toggleLabel}</Text>
+          <Text
+            className="text-xs font-sans-medium"
+            style={{ color: colors.foreground }}>
+            {toggleLabel}
+          </Text>
         </Button>
 
         {!viewingOriginal ? (
@@ -125,7 +152,9 @@ export function CoverLetterProposal({
             accessibilityLabel="Try again"
             disabled={busy}
             onPress={onTryAgain}>
-            <Text className="text-xs font-sans-medium text-foreground">
+            <Text
+              className="text-xs font-sans-medium"
+              style={{ color: colors.foreground }}>
               {busy ? 'Improving…' : 'Try again'}
             </Text>
           </Button>
@@ -139,7 +168,11 @@ export function CoverLetterProposal({
           accessibilityLabel="Discard proposed changes"
           disabled={busy}
           onPress={onDiscard}>
-          <Text className="text-xs font-sans-medium text-destructive">Discard</Text>
+          <Text
+            className="text-xs font-sans-medium"
+            style={{ color: colors.destructive }}>
+            Discard
+          </Text>
         </Button>
       </View>
     </View>

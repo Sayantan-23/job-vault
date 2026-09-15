@@ -14,6 +14,8 @@ import { RouteProgress } from '@/components/ui/route-progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useProfile, useUpdateProfile } from '@/hooks/use-profile';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import {
   emptyProfileContent,
   formatMonthYearRange,
@@ -37,6 +39,7 @@ import { ProfileSection } from './profile-section';
 export function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors = LIGHT_COLORS, effectiveTheme } = useTheme() ?? {};
   const { data, isLoading } = useProfile();
   const updateMutation = useUpdateProfile();
 
@@ -207,11 +210,15 @@ export function ProfileScreen() {
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ backgroundColor: colors.background }} className="flex-1 bg-background">
       {/* Top Header */}
       <View
         className="border-b border-border bg-card px-4 pb-3"
-        style={{ paddingTop: insets.top + 8 }}>
+        style={{
+          paddingTop: insets.top + 8,
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border,
+        }}>
         <View className="flex-row items-center justify-between gap-2">
           <View className="flex-row items-center gap-2 min-w-0 flex-1">
             <IconButton
@@ -220,10 +227,16 @@ export function ProfileScreen() {
               onPress={() => router.back()}
             />
             <View className="min-w-0 flex-1">
-              <Text numberOfLines={1} className="font-serif text-2xl font-bold text-foreground">
+              <Text
+                style={{ color: colors.foreground }}
+                numberOfLines={1}
+                className="font-serif text-2xl font-bold text-foreground">
                 Profile
               </Text>
-              <Text numberOfLines={1} className="text-xs text-muted-foreground">
+              <Text
+                style={{ color: colors.mutedForeground }}
+                numberOfLines={1}
+                className="text-xs text-muted-foreground">
                 Your master career record
               </Text>
             </View>
@@ -329,18 +342,27 @@ export function ProfileScreen() {
               </View>
 
               {draft.basics.links.length === 0 ? (
-                <Text className="text-xs text-muted-foreground italic py-1">No links added yet.</Text>
+                <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic py-1">No links added yet.</Text>
               ) : (
                 <View className="gap-2">
                   {draft.basics.links.map((link, idx) => (
                     <View
                       key={link.id ?? idx}
+                      style={{
+                        backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+                        borderColor: colors.border,
+                      }}
                       className="flex-row items-center justify-between rounded-lg border border-border/70 bg-muted/20 p-2.5">
                       <View className="min-w-0 flex-1 pr-2">
-                        <Text className="font-sans-medium text-sm text-foreground">
+                        <Text
+                          style={{ color: colors.foreground }}
+                          className="font-sans-medium text-sm text-foreground">
                           {link.label}
                         </Text>
-                        <Text numberOfLines={1} className="text-xs text-muted-foreground">
+                        <Text
+                          style={{ color: colors.mutedForeground }}
+                          numberOfLines={1}
+                          className="text-xs text-muted-foreground">
                           {link.url}
                         </Text>
                       </View>
@@ -350,14 +372,14 @@ export function ProfileScreen() {
                           accessibilityLabel={`Edit ${link.label}`}
                           onPress={() => setLinkModal({ open: true, link, index: idx })}
                           className="rounded p-1.5 active:opacity-60">
-                          <Icon icon={Pencil} size={14} className="text-muted-foreground" />
+                          <Icon icon={Pencil} size={14} color={colors.mutedForeground} className="text-muted-foreground" />
                         </Pressable>
                         <Pressable
                           accessibilityRole="button"
                           accessibilityLabel={`Delete ${link.label}`}
                           onPress={() => deleteLink(idx)}
                           className="rounded p-1.5 active:opacity-60">
-                          <Icon icon={Trash2} size={14} className="text-muted-foreground" />
+                          <Icon icon={Trash2} size={14} color={colors.mutedForeground} className="text-muted-foreground" />
                         </Pressable>
                       </View>
                     </View>
@@ -390,38 +412,51 @@ export function ProfileScreen() {
               variant="outline"
               size="sm"
               onPress={() => setExpModal({ open: true, item: null, index: null })}>
-              <Icon icon={Plus} size={13} />
+              <Icon icon={Plus} size={13} color={colors.foreground} />
               <Text className="text-xs">Add</Text>
             </Button>
           }>
           {draft.experience.length === 0 ? (
-            <Text className="text-xs text-muted-foreground italic py-2">No roles added yet.</Text>
+            <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic py-2">No roles added yet.</Text>
           ) : (
             <View className="gap-2.5">
               {draft.experience.map((exp, idx) => (
                 <Pressable
                   key={exp.id ?? idx}
+                  style={{
+                    backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+                    borderColor: colors.border,
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit role ${exp.role} at ${exp.company}`}
                   onPress={() => setExpModal({ open: true, item: exp, index: idx })}
                   className="rounded-lg border border-border/80 bg-muted/20 p-3 active:opacity-75">
                   <View className="flex-row items-start justify-between gap-2">
                     <View className="min-w-0 flex-1">
-                      <Text className="font-sans-medium text-sm text-foreground">
+                      <Text
+                        style={{ color: colors.foreground }}
+                        className="font-sans-medium text-sm text-foreground">
                         {exp.role}
                       </Text>
-                      <Text className="text-xs font-semibold text-muted-foreground">
+                      <Text
+                        style={{ color: colors.mutedForeground }}
+                        className="text-xs font-semibold text-muted-foreground">
                         {exp.company}
                         {exp.location ? ` · ${exp.location}` : ''}
                       </Text>
-                      <Text className="mt-0.5 text-[11px] text-muted-foreground">
+                      <Text
+                        style={{ color: colors.mutedForeground }}
+                        className="mt-0.5 text-[11px] text-muted-foreground">
                         {formatMonthYearRange(exp.startDate, exp.endDate, exp.current)}
                       </Text>
                     </View>
-                    <Icon icon={Pencil} size={14} className="text-muted-foreground mt-0.5" />
+                    <Icon icon={Pencil} size={14} color={colors.mutedForeground} className="text-muted-foreground mt-0.5" />
                   </View>
                   {exp.bullets.length > 0 ? (
-                    <Text className="mt-2 text-xs text-muted-foreground" numberOfLines={2}>
+                    <Text
+                      style={{ color: colors.mutedForeground }}
+                      className="mt-2 text-xs text-muted-foreground"
+                      numberOfLines={2}>
                       • {exp.bullets[0]}
                       {exp.bullets.length > 1 ? ` (+${exp.bullets.length - 1} more)` : ''}
                     </Text>
@@ -441,36 +476,49 @@ export function ProfileScreen() {
               variant="outline"
               size="sm"
               onPress={() => setProjModal({ open: true, item: null, index: null })}>
-              <Icon icon={Plus} size={13} />
+              <Icon icon={Plus} size={13} color={colors.foreground} />
               <Text className="text-xs">Add</Text>
             </Button>
           }>
           {draft.projects.length === 0 ? (
-            <Text className="text-xs text-muted-foreground italic py-2">No projects added yet.</Text>
+            <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic py-2">No projects added yet.</Text>
           ) : (
             <View className="gap-2.5">
               {draft.projects.map((proj, idx) => (
                 <Pressable
                   key={proj.id ?? idx}
+                  style={{
+                    backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+                    borderColor: colors.border,
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit project ${proj.name}`}
                   onPress={() => setProjModal({ open: true, item: proj, index: idx })}
                   className="rounded-lg border border-border/80 bg-muted/20 p-3 active:opacity-75">
                   <View className="flex-row items-start justify-between gap-2">
                     <View className="min-w-0 flex-1">
-                      <Text className="font-sans-medium text-sm text-foreground">
+                      <Text
+                        style={{ color: colors.foreground }}
+                        className="font-sans-medium text-sm text-foreground">
                         {proj.name}
                       </Text>
                       {proj.role ? (
-                        <Text className="text-xs text-muted-foreground">{proj.role}</Text>
+                        <Text
+                          style={{ color: colors.mutedForeground }}
+                          className="text-xs text-muted-foreground">
+                          {proj.role}
+                        </Text>
                       ) : null}
                       {proj.description ? (
-                        <Text numberOfLines={2} className="mt-1 text-xs text-muted-foreground">
+                        <Text
+                          style={{ color: colors.mutedForeground }}
+                          numberOfLines={2}
+                          className="mt-1 text-xs text-muted-foreground">
                           {proj.description}
                         </Text>
                       ) : null}
                     </View>
-                    <Icon icon={Pencil} size={14} className="text-muted-foreground mt-0.5" />
+                    <Icon icon={Pencil} size={14} color={colors.mutedForeground} className="text-muted-foreground mt-0.5" />
                   </View>
                   {proj.technologies && proj.technologies.length > 0 ? (
                     <View className="mt-2 flex-row flex-wrap gap-1">
@@ -497,13 +545,15 @@ export function ProfileScreen() {
                 variant="outline"
                 size="sm"
                 onPress={() => setAddingCategory(true)}>
-                <Icon icon={Plus} size={13} />
+                <Icon icon={Plus} size={13} color={colors.foreground} />
                 <Text className="text-xs">Add</Text>
               </Button>
             ) : null
           }>
           {addingCategory ? (
-            <View className="mb-3 flex-row items-center gap-2 rounded-lg border border-border p-2.5">
+            <View
+              style={{ borderColor: colors.border }}
+              className="mb-3 flex-row items-center gap-2 rounded-lg border border-border p-2.5">
               <View className="flex-1">
                 <Input
                   value={newCategoryName}
@@ -522,7 +572,7 @@ export function ProfileScreen() {
           ) : null}
 
           {draft.skills.length === 0 ? (
-            <Text className="text-xs text-muted-foreground italic py-2">
+            <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic py-2">
               No skill groups yet. Add a category to start grouping skills.
             </Text>
           ) : (
@@ -534,9 +584,17 @@ export function ProfileScreen() {
                 return (
                   <View
                     key={groupId}
+                    style={{
+                      backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+                      borderColor: colors.border,
+                    }}
                     className="rounded-lg border border-border/80 bg-muted/20 p-3">
-                    <View className="flex-row items-center justify-between pb-2 border-b border-border/50">
-                      <Text className="font-sans-medium text-xs text-foreground uppercase tracking-wide">
+                    <View
+                      style={{ borderBottomColor: colors.border }}
+                      className="flex-row items-center justify-between pb-2 border-b border-border/50">
+                      <Text
+                        style={{ color: colors.foreground }}
+                        className="font-sans-medium text-xs text-foreground uppercase tracking-wide">
                         {group.category}
                       </Text>
                       <Pressable
@@ -544,26 +602,30 @@ export function ProfileScreen() {
                         accessibilityLabel={`Delete category ${group.category}`}
                         onPress={() => removeCategory(gIdx)}
                         className="rounded p-1 active:opacity-60">
-                        <Icon icon={Trash2} size={13} className="text-muted-foreground" />
+                        <Icon icon={Trash2} size={13} color={colors.mutedForeground} className="text-muted-foreground" />
                       </Pressable>
                     </View>
 
                     {/* Skill Badges */}
                     <View className="flex-row flex-wrap gap-1.5 py-2.5">
                       {group.items.length === 0 ? (
-                        <Text className="text-xs text-muted-foreground italic">No items yet</Text>
+                        <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic">No items yet</Text>
                       ) : (
                         group.items.map((skill, sIdx) => (
                           <View
                             key={sIdx}
+                            style={{
+                              backgroundColor: colors.card,
+                              borderColor: colors.border,
+                            }}
                             className="flex-row items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1">
-                            <Text className="text-xs text-foreground">{skill}</Text>
+                            <Text style={{ color: colors.foreground }} className="text-xs text-foreground">{skill}</Text>
                             <Pressable
                               accessibilityRole="button"
                               accessibilityLabel={`Remove skill ${skill}`}
                               onPress={() => removeSkillFromGroup(gIdx, sIdx)}
                               className="rounded-full active:opacity-60">
-                              <Text className="text-[11px] font-bold text-muted-foreground leading-none">
+                              <Text style={{ color: colors.mutedForeground }} className="text-[11px] font-bold text-muted-foreground leading-none">
                                 ×
                               </Text>
                             </Pressable>
@@ -591,7 +653,7 @@ export function ProfileScreen() {
                         size="sm"
                         onPress={() => addSkillToGroup(groupId, gIdx)}
                         disabled={!draftText.trim()}>
-                        <Icon icon={Plus} size={14} />
+                        <Icon icon={Plus} size={14} color={colors.foreground} />
                       </Button>
                     </View>
                   </View>
@@ -610,38 +672,48 @@ export function ProfileScreen() {
               variant="outline"
               size="sm"
               onPress={() => setEduModal({ open: true, item: null, index: null })}>
-              <Icon icon={Plus} size={13} />
+              <Icon icon={Plus} size={13} color={colors.foreground} />
               <Text className="text-xs">Add</Text>
             </Button>
           }>
           {draft.education.length === 0 ? (
-            <Text className="text-xs text-muted-foreground italic py-2">No education entries yet.</Text>
+            <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground italic py-2">No education entries yet.</Text>
           ) : (
             <View className="gap-2.5">
               {draft.education.map((edu, idx) => (
                 <Pressable
                   key={edu.id ?? idx}
+                  style={{
+                    backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+                    borderColor: colors.border,
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Edit education ${edu.degree} at ${edu.institution}`}
                   onPress={() => setEduModal({ open: true, item: edu, index: idx })}
                   className="rounded-lg border border-border/80 bg-muted/20 p-3 active:opacity-75">
                   <View className="flex-row items-start justify-between gap-2">
                     <View className="min-w-0 flex-1">
-                      <Text className="font-sans-medium text-sm text-foreground">
+                      <Text
+                        style={{ color: colors.foreground }}
+                        className="font-sans-medium text-sm text-foreground">
                         {edu.degree}
                       </Text>
-                      <Text className="text-xs font-semibold text-muted-foreground">
+                      <Text
+                        style={{ color: colors.mutedForeground }}
+                        className="text-xs font-semibold text-muted-foreground">
                         {edu.institution}
                         {edu.location ? ` · ${edu.location}` : ''}
                       </Text>
-                      <Text className="mt-0.5 text-[11px] text-muted-foreground">
+                      <Text
+                        style={{ color: colors.mutedForeground }}
+                        className="mt-0.5 text-[11px] text-muted-foreground">
                         {formatMonthYearRange(edu.startDate, edu.endDate, edu.current)}
                       </Text>
                     </View>
-                    <Icon icon={Pencil} size={14} className="text-muted-foreground mt-0.5" />
+                    <Icon icon={Pencil} size={14} color={colors.mutedForeground} className="text-muted-foreground mt-0.5" />
                   </View>
                   {edu.grade ? (
-                    <Text className="mt-1 text-xs text-muted-foreground">Grade: {edu.grade}</Text>
+                    <Text style={{ color: colors.mutedForeground }} className="mt-1 text-xs text-muted-foreground">Grade: {edu.grade}</Text>
                   ) : null}
                 </Pressable>
               ))}

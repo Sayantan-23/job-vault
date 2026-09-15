@@ -23,6 +23,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { downloadDocumentPdf, resumeToHtml, shareDocumentPdf } from '@/lib/document-pdf';
 import { resumeToPlainText } from '@/lib/resume-markup';
 import { useDeleteResume, useResume, useUpdateResume } from '@/hooks/use-resumes';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { DocumentActionFab } from './document-action-fab';
 import { ResumeDocumentWebView } from './resume-document-webview';
@@ -32,6 +34,7 @@ const WEB_RESUMES_URL = 'https://jobvault.app/app/resumes';
 export function ResumeScreen({ id }: { id: string }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const blurTargetRef = useRef(null);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -124,12 +127,16 @@ export function ResumeScreen({ id }: { id: string }) {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-muted/30">
+      <View style={{ backgroundColor: colors.background }} className="flex-1 bg-muted/30">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
           {/* Top Header Bar */}
           <View
             className="border-b border-border bg-card px-4 pb-3"
-            style={{ paddingTop: insets.top + 8 }}>
+            style={{
+              paddingTop: insets.top + 8,
+              backgroundColor: colors.card,
+              borderBottomColor: colors.border,
+            }}>
             <View className="flex-row items-center justify-between gap-2">
               <View className="flex-row items-center gap-2 min-w-0 flex-1">
                 <IconButton
@@ -142,25 +149,35 @@ export function ResumeScreen({ id }: { id: string }) {
                   accessibilityLabel={`Rename résumé: ${effectiveResumeTitle}`}
                   onPress={() => setRenameOpen(true)}
                   className="min-w-0 flex-1 flex-row items-center gap-1.5 py-0.5 active:opacity-70">
-                  <Text numberOfLines={1} className="font-serif text-lg font-semibold text-foreground">
+                  <Text
+                    style={{ color: colors.foreground }}
+                    numberOfLines={1}
+                    className="font-serif text-lg font-semibold text-foreground">
                     {effectiveResumeTitle}
                   </Text>
-                  <Icon icon={Pencil} size={13} className="text-muted-foreground flex-shrink-0" />
+                  <Icon icon={Pencil} size={13} color={colors.mutedForeground} className="text-muted-foreground flex-shrink-0" />
                 </Pressable>
               </View>
             </View>
 
             {/* Subtitle / Context Bar */}
             <View className="mt-1 pl-10">
-              <Text numberOfLines={1} className="text-xs text-muted-foreground">
+              <Text
+                style={{ color: colors.mutedForeground }}
+                numberOfLines={1}
+                className="text-xs text-muted-foreground">
                 {basics.name}
               </Text>
             </View>
 
             {/* Coming Soon notice banner */}
-            <View className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1">
-              <Icon icon={Sparkles} size={11} className="text-muted-foreground" />
-              <Text className="text-[11px] font-sans-medium text-muted-foreground">
+            <View
+              style={{ backgroundColor: colors.muted }}
+              className="mt-2.5 flex-row items-center gap-1.5 self-start rounded-full bg-muted/60 px-2.5 py-1">
+              <Icon icon={Sparkles} size={11} color={colors.mutedForeground} className="text-muted-foreground" />
+              <Text
+                style={{ color: colors.mutedForeground }}
+                className="text-[11px] font-sans-medium text-muted-foreground">
                 Editing & Generation coming soon to mobile · Web workspace active
               </Text>
             </View>
@@ -177,14 +194,18 @@ export function ResumeScreen({ id }: { id: string }) {
             </View>
 
             {/* Web Workspace Notice */}
-            <View className="mx-4 mt-4 rounded-lg border border-border bg-card p-4">
+            <View
+              style={{ backgroundColor: colors.card, borderColor: colors.border }}
+              className="mx-4 mt-4 rounded-lg border border-border bg-card p-4">
               <View className="flex-row items-center gap-2">
-                <Icon icon={Sparkles} size={16} className="text-primary" />
-                <Text className="font-sans-medium text-sm text-foreground">
+                <Icon icon={Sparkles} size={16} color={colors.primary} className="text-primary" />
+                <Text style={{ color: colors.foreground }} className="font-sans-medium text-sm text-foreground">
                   Want to customize or regenerate?
                 </Text>
               </View>
-              <Text className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+              <Text
+                style={{ color: colors.mutedForeground }}
+                className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                 Tailored AI résumé generation and granular section editing are on the way to mobile.
                 You can edit or generate fresh résumés anytime in the web workspace.
               </Text>
@@ -193,8 +214,8 @@ export function ResumeScreen({ id }: { id: string }) {
                 accessibilityLabel="Open web resumes editor"
                 onPress={() => void Linking.openURL(WEB_RESUMES_URL)}
                 className="mt-3 flex-row items-center gap-1">
-                <Text className="text-xs font-sans-medium text-primary">Open web workspace</Text>
-                <Icon icon={ExternalLink} size={12} className="text-primary" />
+                <Text style={{ color: colors.primary }} className="text-xs font-sans-medium text-primary">Open web workspace</Text>
+                <Icon icon={ExternalLink} size={12} color={colors.primary} className="text-primary" />
               </Pressable>
             </View>
           </ScrollView>

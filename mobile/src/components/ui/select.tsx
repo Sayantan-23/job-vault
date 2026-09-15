@@ -3,6 +3,8 @@ import { Check, ChevronDown } from 'lucide-react-native';
 import { Pressable, ScrollView, Text } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { cn } from './cn';
 import { Sheet, SheetContent, SheetTitle } from './sheet';
@@ -38,6 +40,7 @@ export function Select<T extends string>({
   className,
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false);
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const selected = options.find((option) => option.value === value);
 
   return (
@@ -48,15 +51,27 @@ export function Select<T extends string>({
         accessibilityState={{ disabled, expanded: open }}
         disabled={disabled}
         onPress={() => setOpen(true)}
+        style={{
+          backgroundColor: colors.background,
+          borderColor: colors.input,
+        }}
         className={cn(
           'h-11 w-full flex-row items-center justify-between rounded-lg border border-input bg-background pl-3.5 pr-3',
           disabled && 'opacity-50',
           className
         )}>
-        <Text className={cn('text-sm', selected ? 'text-foreground' : 'text-muted-foreground')}>
+        <Text
+          style={{ color: selected ? colors.foreground : colors.mutedForeground }}
+          className={cn('text-sm', selected ? 'text-foreground' : 'text-muted-foreground')}>
           {selected?.label ?? placeholder}
         </Text>
-        <Icon icon={ChevronDown} size={16} strokeWidth={1.75} className="text-muted-foreground" />
+        <Icon
+          icon={ChevronDown}
+          size={16}
+          strokeWidth={1.75}
+          color={colors.mutedForeground}
+          className="text-muted-foreground"
+        />
       </Pressable>
 
       <Sheet open={open} onOpenChange={setOpen}>
@@ -76,6 +91,7 @@ export function Select<T extends string>({
                   }}
                   className="h-12 flex-row items-center justify-between rounded-md px-2 active:opacity-70">
                   <Text
+                    style={{ color: active ? colors.primary : colors.foreground }}
                     className={cn(
                       'text-sm',
                       active ? 'font-sans-medium text-primary' : 'text-foreground'
@@ -83,7 +99,13 @@ export function Select<T extends string>({
                     {option.label}
                   </Text>
                   {active ? (
-                    <Icon icon={Check} size={16} strokeWidth={2} className="text-primary" />
+                    <Icon
+                      icon={Check}
+                      size={16}
+                      strokeWidth={2}
+                      color={colors.primary}
+                      className="text-primary"
+                    />
                   ) : null}
                 </Pressable>
               );

@@ -2,6 +2,8 @@ import type { LucideIcon } from 'lucide-react-native';
 import { Pressable } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { cn } from './cn';
 
@@ -34,6 +36,7 @@ export function IconButton({
   className,
   testID,
 }: IconButtonProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
     <Pressable
       testID={testID}
@@ -47,7 +50,13 @@ export function IconButton({
         disabled && 'opacity-50',
         className
       )}>
-      <Icon icon={icon} size={size} strokeWidth={1.75} className="text-muted-foreground" />
+      <Icon
+        icon={icon}
+        size={size}
+        strokeWidth={1.75}
+        color={colors.mutedForeground}
+        className="text-muted-foreground"
+      />
     </Pressable>
   );
 }

@@ -3,6 +3,8 @@ import { Linking } from 'react-native';
 import { Text, View } from 'react-native-css/components';
 import { marked, type Token } from 'marked';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS, type ThemeColors } from '@/theme';
 import { cn } from './cn';
 
 /**
@@ -29,28 +31,35 @@ export function repairSplitBold(markdown: string): string {
  * inherited styling, so `<Text className="font-sans-semibold"><Text>bold</Text></Text>`
  * bolds its child — the same mechanism the web sibling uses with `<strong>`.
  */
-function renderInline(tokens: Token[] | undefined): ReactNode[] {
+function renderInline(tokens: Token[] | undefined, colors: ThemeColors): ReactNode[] {
   if (!tokens) return [];
   return tokens.map((rawToken, i) => {
     const token = rawToken as LooseToken;
     switch (token.type) {
       case 'text':
-        return <Text key={i}>{token.text}</Text>;
+        return (
+          <Text style={{ color: colors.foreground }} key={i}>
+            {token.text}
+          </Text>
+        );
       case 'strong':
         return (
-          <Text key={i} className="font-sans-semibold">
-            {renderInline(token.tokens)}
+          <Text style={{ color: colors.foreground }} key={i} className="font-sans-semibold">
+            {renderInline(token.tokens, colors)}
           </Text>
         );
       case 'em':
         return (
-          <Text key={i} className="italic">
-            {renderInline(token.tokens)}
+          <Text style={{ color: colors.foreground }} key={i} className="italic">
+            {renderInline(token.tokens, colors)}
           </Text>
         );
       case 'codespan':
         return (
-          <Text key={i} className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+          <Text
+            key={i}
+            style={{ backgroundColor: colors.muted, color: colors.foreground }}
+            className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
             {token.text}
           </Text>
         );
@@ -58,21 +67,30 @@ function renderInline(tokens: Token[] | undefined): ReactNode[] {
         return (
           <Text
             key={i}
+            style={{ color: colors.primary }}
             className="text-primary underline underline-offset-2"
             onPress={() => token.href && Linking.openURL(token.href)}>
-            {renderInline(token.tokens)}
+            {renderInline(token.tokens, colors)}
           </Text>
         );
       case 'br':
         return <Text key={i}>{'\n'}</Text>;
       case 'escape':
-        return <Text key={i}>{token.text}</Text>;
+        return (
+          <Text style={{ color: colors.foreground }} key={i}>
+            {token.text}
+          </Text>
+        );
       // Images are never meaningful in a scraped job description — company logos,
       // tracking pixels, anti-scrape decoys. Drop them, same as the web sibling.
       case 'image':
         return null;
       default:
-        return token.text ? <Text key={i}>{token.text}</Text> : null;
+        return token.text ? (
+          <Text style={{ color: colors.foreground }} key={i}>
+            {token.text}
+          </Text>
+        ) : null;
     }
   });
 }
@@ -82,67 +100,94 @@ function renderInline(tokens: Token[] | undefined): ReactNode[] {
  * (matching the web sibling's `mb-3`), except the last — ScrollView pads its
  * own bottom, so trailing space would double up.
  */
-function renderBlock(rawToken: Token, index: number, total: number): ReactNode {
+function renderBlock(
+  rawToken: Token,
+  index: number,
+  total: number,
+  colors: ThemeColors
+): ReactNode {
   const token = rawToken as LooseToken;
   const last = index === total - 1;
   const mb = last ? '' : 'mb-3';
 
   switch (token.type) {
-      case 'heading': {
-        // h1/h2 and h3 use slightly different margins, mirroring the web.
-        const headingMb =
-          token.depth <= 2 ? 'mb-2 mt-4' : 'mb-1.5 mt-3';
-        return (
-          <Text
-            key={index}
-            className={cn('text-sm font-sans-semibold text-foreground', headingMb, index === 0 && 'mt-0')}>
-            {renderInline(token.tokens)}
+    case 'heading': {
+      // h1/h2 and h3 use slightly different margins, mirroring the web.
+      const headingMb =
+        token.depth <= 2 ? 'mb-2 mt-4' : 'mb-1.5 mt-3';
+      return (
+        <Text
+          key={index}
+          style={{ color: colors.foreground }}
+          className={cn('text-sm font-sans-semibold text-foreground', headingMb, index === 0 && 'mt-0')}>
+          {renderInline(token.tokens, colors)}
+        </Text>
+      );
+    }
+    case 'paragraph':
+      return (
+        <Text
+          key={index}
+          style={{ color: colors.foreground }}
+          className={cn('text-sm leading-relaxed text-foreground', mb)}>
+          {renderInline(token.tokens, colors)}
+        </Text>
+      );
+    case 'list': {
+      const ordered = (token as { ordered?: boolean }).ordered;
+      return (
+        <View key={index} className={cn('gap-1 pl-2', mb)}>
+          {(token as { items?: Token[] }).items?.map((item, i) => (
+            <View key={i} className="flex-row gap-2">
+              <Text
+                style={{ color: colors.mutedForeground }}
+                className="text-sm leading-relaxed text-foreground">
+                {ordered ? `${i + 1}.` : '•'}
+              </Text>
+              <Text
+                style={{ color: colors.foreground }}
+                className="flex-1 text-sm leading-relaxed text-foreground">
+                {renderInline((item as LooseToken).tokens, colors)}
+              </Text>
+            </View>
+          ))}
+        </View>
+      );
+    }
+    case 'blockquote':
+      return (
+        <View
+          key={index}
+          style={{ borderLeftColor: colors.border }}
+          className={cn('border-l-2 border-border pl-3', mb)}>
+          {(token as { tokens?: Token[] }).tokens?.map((t, i) =>
+            renderBlock(t, i, (token as { tokens?: Token[] }).tokens?.length ?? 0, colors)
+          )}
+        </View>
+      );
+    case 'code':
+      return (
+        <View
+          key={index}
+          style={{ backgroundColor: colors.muted }}
+          className={cn('rounded bg-muted p-3', mb)}>
+          <Text style={{ color: colors.foreground }} className="font-mono text-xs text-foreground">
+            {token.text}
           </Text>
-        );
-      }
-      case 'paragraph':
-        return (
-          <Text key={index} className={cn('text-sm leading-relaxed text-foreground', mb)}>
-            {renderInline(token.tokens)}
-          </Text>
-        );
-      case 'list': {
-        const ordered = (token as { ordered?: boolean }).ordered;
-        return (
-          <View key={index} className={cn('gap-1 pl-2', mb)}>
-            {(token as { items?: Token[] }).items?.map((item, i) => (
-              <View key={i} className="flex-row gap-2">
-                <Text className="text-sm leading-relaxed text-foreground">
-                  {ordered ? `${i + 1}.` : '•'}
-                </Text>
-                <Text className="flex-1 text-sm leading-relaxed text-foreground">
-                  {renderInline((item as LooseToken).tokens)}
-                </Text>
-              </View>
-            ))}
-          </View>
-        );
-      }
-      case 'blockquote':
-        return (
-          <View key={index} className={cn('border-l-2 border-border pl-3', mb)}>
-            {(token as { tokens?: Token[] }).tokens?.map((t, i) =>
-              renderBlock(t, i, (token as { tokens?: Token[] }).tokens?.length ?? 0)
-            )}
-          </View>
-        );
-      case 'code':
-        return (
-          <View key={index} className={cn('rounded bg-muted p-3', mb)}>
-            <Text className="font-mono text-xs text-foreground">{token.text}</Text>
-          </View>
-        );
-      case 'hr':
-        return <View key={index} className={cn('border-t border-hairline', last ? '' : 'my-4')} />;
-      case 'space':
-        return null;
-      default:
-        return null;
+        </View>
+      );
+    case 'hr':
+      return (
+        <View
+          key={index}
+          style={{ borderTopColor: colors.hairline }}
+          className={cn('border-t border-hairline', last ? '' : 'my-4')}
+        />
+      );
+    case 'space':
+      return null;
+    default:
+      return null;
   }
 }
 
@@ -157,10 +202,11 @@ function renderBlock(rawToken: Token, index: number, total: number): ReactNode {
  * Used wherever arbitrary Markdown (scraped job descriptions, etc.) is shown.
  */
 export function MarkdownProse({ children }: { children: string }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const tokens = marked.lexer(repairSplitBold(children));
   return (
     <View className="text-sm text-foreground">
-      {tokens.map((token, i) => renderBlock(token, i, tokens.length))}
+      {tokens.map((token, i) => renderBlock(token, i, tokens.length, colors))}
     </View>
   );
 }

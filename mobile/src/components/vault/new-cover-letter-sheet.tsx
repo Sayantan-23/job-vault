@@ -14,6 +14,8 @@ import { useAiStatus } from '@/hooks/use-ai-status';
 import { useGenerateCoverLetter } from '@/hooks/use-cover-letters';
 import { useJobOptions } from '@/hooks/use-job-options';
 import { usePersonas } from '@/hooks/use-personas';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import type { CoverLetter, GenerateCoverLetterBody } from '@/types/cover-letter';
 
 export interface NewCoverLetterSheetProps {
@@ -36,6 +38,7 @@ export function NewCoverLetterSheet({
   initialJobId,
   onGenerated,
 }: NewCoverLetterSheetProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const { data: personas = [] } = usePersonas();
   const { data: jobs = [] } = useJobOptions();
   const { data: aiStatus } = useAiStatus();
@@ -61,24 +64,31 @@ export function NewCoverLetterSheet({
     setDescription('');
     setInstructions('');
     setSource('tracked');
+    generateMutation.reset();
   };
 
-  const personaOptions: SelectOption<string>[] = personas.map((p) => ({
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
+  };
+
+  const aiConfigured = aiStatus?.enabled ?? true;
+
+  const isValid =
+    Boolean(personaId) &&
+    (source === 'tracked'
+      ? Boolean(jobId)
+      : title.trim().length > 0 && company.trim().length > 0);
+
+  const personaOptions: readonly SelectOption<string>[] = personas.map((p) => ({
     value: p.id,
     label: p.name,
   }));
 
-  const jobOptions: SelectOption<string>[] = jobs.map((j) => ({
+  const jobOptions: readonly SelectOption<string>[] = jobs.map((j) => ({
     value: j.id,
-    label: `${j.title} — ${j.company}`,
+    label: `${j.company} · ${j.title}`,
   }));
-
-  const trackedJobValid = jobs.some((j) => j.id === jobId);
-  const isValid =
-    Boolean(personaId) &&
-    (source === 'tracked' ? trackedJobValid : Boolean(title.trim() && company.trim()));
-
-  const aiConfigured = aiStatus?.enabled !== false;
 
   const handleGenerate = async () => {
     if (!isValid || generateMutation.isPending) return;
@@ -118,15 +128,17 @@ export function NewCoverLetterSheet({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="max-h-[94%] gap-0 p-0">
+    <Sheet open={open} onOpenChange={handleClose}>
+      <SheetContent className="max-h-[92%] px-0 pb-0" hideClose>
         {/* Header */}
-        <View className="border-b border-border px-5 pb-3.5 pt-5">
+        <View className="border-b border-border px-5 pb-3">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
-              <Icon icon={Sparkles} size={18} className="text-primary" />
-              <SheetTitle className="text-base font-sans-medium text-foreground">
-                New Cover Letter
+              <Icon icon={Sparkles} size={18} color={colors.primary} className="text-primary" />
+              <SheetTitle>
+                <Text style={{ color: colors.foreground }} className="font-serif text-lg font-bold text-foreground">
+                  New Cover Letter
+                </Text>
               </SheetTitle>
             </View>
             <Pressable
@@ -134,10 +146,10 @@ export function NewCoverLetterSheet({
               accessibilityLabel="Close new cover letter sheet"
               onPress={() => onOpenChange(false)}
               className="rounded-md p-1 active:opacity-70">
-              <Icon icon={X} size={18} className="text-muted-foreground" />
+              <Icon icon={X} size={18} color={colors.mutedForeground} className="text-muted-foreground" />
             </Pressable>
           </View>
-          <Text className="mt-1 text-xs text-muted-foreground">
+          <Text style={{ color: colors.mutedForeground }} className="mt-1 text-xs text-muted-foreground">
             Generate a tailored cover letter using your persona and target job.
           </Text>
         </View>
@@ -148,15 +160,19 @@ export function NewCoverLetterSheet({
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           {!aiConfigured ? (
-            <View className="rounded-lg border border-border bg-muted/40 p-3.5">
-              <Text className="text-xs text-muted-foreground">
+            <View
+              style={{ backgroundColor: colors.muted, borderColor: colors.border }}
+              className="rounded-lg border border-border bg-muted/40 p-3.5">
+              <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground">
                 AI features are not configured on the server. Please check your backend
                 configuration.
               </Text>
             </View>
           ) : personas.length === 0 ? (
-            <View className="rounded-lg border border-border bg-muted/40 p-3.5">
-              <Text className="text-xs text-muted-foreground">
+            <View
+              style={{ backgroundColor: colors.muted, borderColor: colors.border }}
+              className="rounded-lg border border-border bg-muted/40 p-3.5">
+              <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground">
                 No personas found. Please create a persona first to generate tailored cover letters.
               </Text>
             </View>
@@ -164,7 +180,7 @@ export function NewCoverLetterSheet({
             <View className="gap-4">
               {/* Persona Selector */}
               <View className="gap-1.5">
-                <Text className="text-xs font-sans-medium text-foreground">Select Persona</Text>
+                <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">Select Persona</Text>
                 <Select
                   value={personaId}
                   onValueChange={setSelectedPersonaId}
@@ -176,7 +192,7 @@ export function NewCoverLetterSheet({
 
               {/* Source Switcher */}
               <View className="gap-1.5">
-                <Text className="text-xs font-sans-medium text-foreground">Job Source</Text>
+                <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">Job Source</Text>
                 <SegmentedControl
                   value={source}
                   onValueChange={setSource}
@@ -188,9 +204,9 @@ export function NewCoverLetterSheet({
               {/* Source Fields */}
               {source === 'tracked' ? (
                 <View className="gap-1.5">
-                  <Text className="text-xs font-sans-medium text-foreground">Target Job</Text>
+                  <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">Target Job</Text>
                   {jobs.length === 0 ? (
-                    <Text className="text-xs text-muted-foreground">
+                    <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground">
                       No tracked jobs yet — switch to &quot;Paste JD&quot;.
                     </Text>
                   ) : (
@@ -206,7 +222,7 @@ export function NewCoverLetterSheet({
               ) : (
                 <View className="gap-3">
                   <View className="gap-1.5">
-                    <Text className="text-xs font-sans-medium text-foreground">Job Title *</Text>
+                    <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">Job Title *</Text>
                     <Input
                       value={title}
                       onChangeText={setTitle}
@@ -217,7 +233,7 @@ export function NewCoverLetterSheet({
                   </View>
 
                   <View className="gap-1.5">
-                    <Text className="text-xs font-sans-medium text-foreground">Company *</Text>
+                    <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">Company *</Text>
                     <Input
                       value={company}
                       onChangeText={setCompany}
@@ -228,7 +244,7 @@ export function NewCoverLetterSheet({
                   </View>
 
                   <View className="gap-1.5">
-                    <Text className="text-xs font-sans-medium text-foreground">
+                    <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">
                       Job Description (Optional)
                     </Text>
                     <Textarea
@@ -244,7 +260,7 @@ export function NewCoverLetterSheet({
 
               {/* Instructions */}
               <View className="gap-1.5">
-                <Text className="text-xs font-sans-medium text-foreground">
+                <Text style={{ color: colors.foreground }} className="text-xs font-sans-medium text-foreground">
                   Special Instructions (Optional)
                 </Text>
                 <Textarea

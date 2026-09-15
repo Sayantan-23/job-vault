@@ -29,6 +29,7 @@ import {
 import { APP_CONFIG } from '@/config/app';
 import { useAuth } from '@/hooks/use-auth';
 import { useTheme, type Theme } from '@/hooks/use-theme';
+import { LIGHT_COLORS, darkVars, lightVars } from '@/theme';
 import {
   getPushStatusAsync,
   getStoredPushTokenAsync,
@@ -53,11 +54,15 @@ function SettingRow({
   value?: string;
   children?: React.ReactNode;
 }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
     <View className="flex-row items-center justify-between gap-4 py-3">
-      <Text className="text-sm text-muted-foreground">{label}</Text>
+      <Text style={{ color: colors.mutedForeground }} className="text-sm text-muted-foreground">{label}</Text>
       {value ? (
-        <Text numberOfLines={1} className="min-w-0 font-sans-medium text-sm text-foreground">
+        <Text
+          style={{ color: colors.foreground }}
+          numberOfLines={1}
+          className="min-w-0 font-sans-medium text-sm text-foreground">
           {value}
         </Text>
       ) : (
@@ -73,7 +78,8 @@ export function SettingsScreen() {
   const session = useSession();
   const user = session.status === 'signedIn' ? session.user : null;
   const { logout, pending: isLoggingOut } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, effectiveTheme, colors = LIGHT_COLORS } = useTheme() ?? {};
+  const activeVars = effectiveTheme === 'dark' ? darkVars : lightVars;
   const queryClient = useQueryClient();
 
   const { data: pushData } = useQuery({
@@ -121,11 +127,18 @@ export function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background">
+    <View
+      key={effectiveTheme}
+      style={[activeVars, { backgroundColor: effectiveTheme === 'dark' ? '#131110' : '#fefcf9' }]}
+      className="flex-1 bg-background">
       {/* Top Header */}
       <View
         className="border-b border-border bg-card px-4 pb-3"
-        style={{ paddingTop: insets.top + 8 }}>
+        style={{
+          paddingTop: insets.top + 8,
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border,
+        }}>
         <View className="flex-row items-center gap-2">
           <IconButton
             icon={ChevronLeft}
@@ -133,10 +146,16 @@ export function SettingsScreen() {
             onPress={() => router.back()}
           />
           <View className="min-w-0 flex-1">
-            <Text numberOfLines={1} className="font-serif text-2xl font-bold text-foreground">
+            <Text
+              style={{ color: colors.foreground }}
+              numberOfLines={1}
+              className="font-serif text-2xl font-bold text-foreground">
               Settings
             </Text>
-            <Text numberOfLines={1} className="text-xs text-muted-foreground">
+            <Text
+              style={{ color: colors.mutedForeground }}
+              numberOfLines={1}
+              className="text-xs text-muted-foreground">
               Manage appearance, account, and preferences
             </Text>
           </View>
@@ -153,14 +172,16 @@ export function SettingsScreen() {
           {/* Account Section */}
           <Card>
             <View className="mb-3 flex-row items-center gap-2">
-              <Icon icon={User} size={18} className="text-foreground" />
-              <Text className="font-sans-medium text-base text-foreground">Account</Text>
+              <Icon icon={User} size={18} color={colors.foreground} className="text-foreground" />
+              <Text style={{ color: colors.foreground }} className="font-sans-medium text-base text-foreground">Account</Text>
             </View>
             <View className="divide-y divide-border">
               <SettingRow label="Name" value={user?.name?.trim() || '—'} />
               <SettingRow label="Email" value={user?.email || '—'} />
             </View>
-            <View className="mt-4 flex-row items-center justify-between border-t border-border pt-4">
+            <View
+              style={{ borderTopColor: colors.border }}
+              className="mt-4 flex-row items-center justify-between border-t border-border pt-4">
               <Button
                 variant="outline"
                 size="sm"
@@ -183,10 +204,10 @@ export function SettingsScreen() {
           {/* Appearance Section */}
           <Card>
             <View className="mb-3 flex-row items-center gap-2">
-              <Icon icon={Sun} size={18} className="text-foreground" />
-              <Text className="font-sans-medium text-base text-foreground">Appearance</Text>
+              <Icon icon={Sun} size={18} color={colors.foreground} className="text-foreground" />
+              <Text style={{ color: colors.foreground }} className="font-sans-medium text-base text-foreground">Appearance</Text>
             </View>
-            <Text className="mb-3 text-xs text-muted-foreground">
+            <Text style={{ color: colors.mutedForeground }} className="mb-3 text-xs text-muted-foreground">
               Choose your theme. System follows your device&apos;s light or dark display settings.
             </Text>
             <SegmentedControl<Theme>
@@ -205,9 +226,10 @@ export function SettingsScreen() {
                 <Icon
                   icon={pushEnabled ? Bell : BellOff}
                   size={18}
+                  color={colors.foreground}
                   className="text-foreground"
                 />
-                <Text className="font-sans-medium text-base text-foreground">
+                <Text style={{ color: colors.foreground }} className="font-sans-medium text-base text-foreground">
                   Push Notifications
                 </Text>
               </View>
@@ -215,12 +237,14 @@ export function SettingsScreen() {
                 {pushEnabled ? 'Active' : 'Off'}
               </Badge>
             </View>
-            <Text className="mb-4 text-xs text-muted-foreground">
+            <Text style={{ color: colors.mutedForeground }} className="mb-4 text-xs text-muted-foreground">
               Instant alerts when an application needs follow-up, status changes occur, or
               reminders trigger.
             </Text>
-            <View className="flex-row items-center justify-between border-t border-border pt-3">
-              <Text className="text-sm text-foreground">
+            <View
+              style={{ borderTopColor: colors.border }}
+              className="flex-row items-center justify-between border-t border-border pt-3">
+              <Text style={{ color: colors.foreground }} className="text-sm text-foreground">
                 {pushEnabled ? 'Notifications enabled' : 'Notifications disabled'}
               </Text>
               <Button
@@ -243,8 +267,8 @@ export function SettingsScreen() {
           {/* About & Identity Section */}
           <Card>
             <View className="mb-3 flex-row items-center gap-2">
-              <Icon icon={Info} size={18} className="text-foreground" />
-              <Text className="font-sans-medium text-base text-foreground">
+              <Icon icon={Info} size={18} color={colors.foreground} className="text-foreground" />
+              <Text style={{ color: colors.foreground }} className="font-sans-medium text-base text-foreground">
                 About {APP_CONFIG.name}
               </Text>
             </View>
@@ -256,30 +280,32 @@ export function SettingsScreen() {
               />
               <SettingRow label="Package" value={APP_CONFIG.packageId} />
             </View>
-            <View className="mt-4 flex-row flex-wrap items-center gap-4 border-t border-border pt-4">
+            <View
+              style={{ borderTopColor: colors.border }}
+              className="mt-4 flex-row flex-wrap items-center gap-4 border-t border-border pt-4">
               <Pressable
                 accessibilityRole="link"
                 accessibilityLabel="Privacy Policy"
                 onPress={() => void handleOpenLink(APP_CONFIG.links.privacy)}
                 className="flex-row items-center gap-1 active:opacity-70">
-                <Icon icon={Shield} size={14} className="text-muted-foreground" />
-                <Text className="text-xs text-primary underline">Privacy Policy</Text>
+                <Icon icon={Shield} size={14} color={colors.mutedForeground} className="text-muted-foreground" />
+                <Text style={{ color: colors.primary }} className="text-xs text-primary underline">Privacy Policy</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="link"
                 accessibilityLabel="Terms of Service"
                 onPress={() => void handleOpenLink(APP_CONFIG.links.terms)}
                 className="flex-row items-center gap-1 active:opacity-70">
-                <Icon icon={ExternalLink} size={14} className="text-muted-foreground" />
-                <Text className="text-xs text-primary underline">Terms</Text>
+                <Icon icon={ExternalLink} size={14} color={colors.mutedForeground} className="text-muted-foreground" />
+                <Text style={{ color: colors.primary }} className="text-xs text-primary underline">Terms</Text>
               </Pressable>
               <Pressable
                 accessibilityRole="link"
                 accessibilityLabel="Website"
                 onPress={() => void handleOpenLink(APP_CONFIG.links.website)}
                 className="flex-row items-center gap-1 active:opacity-70">
-                <Icon icon={ExternalLink} size={14} className="text-muted-foreground" />
-                <Text className="text-xs text-primary underline">Website</Text>
+                <Icon icon={ExternalLink} size={14} color={colors.mutedForeground} className="text-muted-foreground" />
+                <Text style={{ color: colors.primary }} className="text-xs text-primary underline">Website</Text>
               </Pressable>
             </View>
           </Card>

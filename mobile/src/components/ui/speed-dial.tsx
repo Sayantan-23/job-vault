@@ -12,8 +12,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Menu, X, type LucideIcon } from 'lucide-react-native';
 
-
 import { Icon } from '@/components/icon';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 import { Scrim } from './scrim';
 import { FAB_GAP, FAB_SIZE } from '@/theme';
 
@@ -43,7 +43,6 @@ export interface SpeedDialProps {
   blurTarget?: React.RefObject<any>;
 }
 
-
 /**
  * Single speed-dial row reproducing the web app's mobile header speed dial:
  * Google-Keep-style cascading entrance (0.18s ease-out, 40ms stagger,
@@ -59,6 +58,7 @@ function SpeedDialItem({
   delay: number;
   onPress: () => void;
 }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const isDestructive = action.variant === 'destructive';
   const progress = useSharedValue(0);
 
@@ -89,33 +89,36 @@ function SpeedDialItem({
         className="flex-row items-center justify-end gap-3 active:opacity-85">
         {/* Label pill */}
         <View
-          className={
-            isDestructive
-              ? 'rounded-full border border-destructive/30 bg-card px-4 py-2.5 shadow-md'
-              : 'rounded-full border border-hairline bg-card px-4 py-2.5 shadow-md'
-          }>
+          style={{
+            backgroundColor: colors.card,
+            borderColor: isDestructive ? colors.destructive + '4d' : colors.border,
+          }}
+          className="rounded-full border px-4 py-2.5 shadow-md">
           <Text
-            className={
-              isDestructive
-                ? 'font-sans-medium text-[15px] text-destructive'
-                : 'font-sans-medium text-[15px] text-foreground'
-            }>
+            style={{ color: isDestructive ? colors.destructive : colors.foreground }}
+            className="font-sans-medium text-[15px]">
             {action.label}
           </Text>
         </View>
 
         {/* Icon disc - same 56px size as the FAB */}
         <View
-          style={{ width: FAB_SIZE, height: FAB_SIZE }}
+          style={{
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            backgroundColor: isDestructive ? colors.destructive : colors.card,
+            borderColor: colors.border,
+          }}
           className={
             isDestructive
-              ? 'items-center justify-center rounded-full bg-destructive shadow-lg active:opacity-90'
-              : 'items-center justify-center rounded-full border border-hairline bg-card shadow-lg active:bg-secondary'
+              ? 'items-center justify-center rounded-full shadow-lg active:opacity-90'
+              : 'items-center justify-center rounded-full border shadow-lg active:opacity-80'
           }>
           <Icon
             icon={action.icon}
             size={24}
             strokeWidth={2}
+            color={isDestructive ? colors.destructiveForeground : colors.foreground}
             className={
               isDestructive
                 ? 'text-destructive-foreground'
@@ -144,8 +147,6 @@ function Backdrop({
   );
 }
 
-
-
 export function SpeedDial({
   actions,
   icon: ClosedIcon = Menu,
@@ -155,6 +156,7 @@ export function SpeedDial({
   right = 20,
   blurTarget,
 }: SpeedDialProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const [open, setOpen] = useState(false);
   const rotation = useSharedValue(0);
 
@@ -188,13 +190,14 @@ export function SpeedDial({
           accessibilityRole="button"
           accessibilityLabel={accessibilityLabel}
           onPress={() => setOpen(true)}
-          className="items-center justify-center rounded-full bg-primary shadow-lg active:opacity-90"
-          style={{ width: FAB_SIZE, height: FAB_SIZE }}>
+          className="items-center justify-center rounded-full shadow-lg active:opacity-90"
+          style={{ width: FAB_SIZE, height: FAB_SIZE, backgroundColor: colors.primary }}>
           <Animated.View style={fabRotateStyle}>
             <Icon
               icon={ClosedIcon}
               size={24}
               strokeWidth={2}
+              color={colors.primaryForeground}
               className="text-primary-foreground"
             />
           </Animated.View>
@@ -207,7 +210,6 @@ export function SpeedDial({
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop / scrim click-catcher with blur + dark overlay */}
       <Backdrop onPress={() => setOpen(false)} blurTarget={blurTarget} />
-
 
       {/* Floating column of actions and main toggle */}
       <View
@@ -241,13 +243,14 @@ export function SpeedDial({
           accessibilityRole="button"
           accessibilityLabel="Close actions"
           onPress={() => setOpen(false)}
-          className="items-center justify-center rounded-full bg-primary shadow-lg active:opacity-90"
-          style={{ width: FAB_SIZE, height: FAB_SIZE }}>
+          className="items-center justify-center rounded-full shadow-lg active:opacity-90"
+          style={{ width: FAB_SIZE, height: FAB_SIZE, backgroundColor: colors.primary }}>
           <Animated.View style={fabRotateStyle}>
             <Icon
               icon={X}
               size={24}
               strokeWidth={2}
+              color={colors.primaryForeground}
               className="text-primary-foreground"
             />
           </Animated.View>

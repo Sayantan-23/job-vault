@@ -29,6 +29,7 @@ import { coverLetterToPlainText } from '@/lib/cover-letter-markdown';
 import { useCoverLetterRefine } from '@/hooks/use-cover-letter-refine';
 import { useDeleteCoverLetter, useUpdateCoverLetter } from '@/hooks/use-cover-letters';
 import { useJobOptions } from '@/hooks/use-job-options';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 import type { CoverLetter } from '@/types/cover-letter';
 
 import { CoverLetterProposal } from './cover-letter-proposal';
@@ -60,6 +61,7 @@ export function CoverLetterSheet({
   onDeleted,
   onSaved,
 }: CoverLetterSheetProps) {
+  const { colors = LIGHT_COLORS, effectiveTheme } = useTheme() ?? {};
   const [mode, setMode] = useState<EditorMode>('edit');
   const [draftTitle, setDraftTitle] = useState('');
   const [draftBody, setDraftBody] = useState('');
@@ -117,7 +119,7 @@ export function CoverLetterSheet({
       clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Clipboard write failed
+      // Handled silently
     }
   };
 
@@ -125,7 +127,6 @@ export function CoverLetterSheet({
     try {
       setSharing(true);
       const html = coverLetterToHtml({
-        ...coverLetter,
         title: effectiveTitle,
         bodyMarkdown: draftBody,
       });
@@ -134,17 +135,16 @@ export function CoverLetterSheet({
         html,
       });
     } catch {
-      // Share failed or dismissed
+      // Sharing canceled or failed
     } finally {
       setSharing(false);
     }
   };
 
   const handleSave = async () => {
-    if (!isDirty || updateMutation.isPending) return;
     try {
       const updated = await updateMutation.mutateAsync({
-        title: effectiveTitle,
+        title: draftTitle.trim() || undefined,
         bodyMarkdown: draftBody,
       });
       try {
@@ -174,12 +174,14 @@ export function CoverLetterSheet({
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="max-h-[94%] gap-0 p-0">
           {/* Header */}
-          <View className="border-b border-border px-5 pb-3.5 pt-5">
+          <View
+            className="border-b px-5 pb-3.5 pt-5"
+            style={{ borderBottomColor: colors.border }}>
             <View className="flex-row items-start justify-between gap-3">
               <View className="min-w-0 flex-1">
                 <View className="flex-row items-center gap-1.5">
-                  <Icon icon={FileText} size={16} className="text-primary" />
-                  <SheetTitle className="text-sm font-sans-medium text-foreground">
+                  <Icon icon={FileText} size={16} color={colors.primary} />
+                  <SheetTitle className="text-sm font-sans-medium">
                     Cover Letter
                   </SheetTitle>
                 </View>
@@ -188,7 +190,7 @@ export function CoverLetterSheet({
                   onChangeText={setDraftTitle}
                   placeholder="Document Title"
                   accessibilityLabel="Cover letter title"
-                  className="mt-1 h-9 font-sans-medium text-sm text-foreground"
+                  className="mt-1 h-9 font-sans-medium text-sm"
                 />
               </View>
               <Pressable
@@ -196,7 +198,7 @@ export function CoverLetterSheet({
                 accessibilityLabel="Close cover letter"
                 onPress={() => onOpenChange(false)}
                 className="mt-1 rounded-md p-1 active:opacity-70">
-                <Icon icon={X} size={18} className="text-muted-foreground" />
+                <Icon icon={X} size={18} color={colors.mutedForeground} />
               </Pressable>
             </View>
 
@@ -206,7 +208,12 @@ export function CoverLetterSheet({
           </View>
 
           {/* Action Bar */}
-          <View className="flex-row flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/20 px-5 py-2.5">
+          <View
+            className="flex-row flex-wrap items-center justify-between gap-2 border-b px-5 py-2.5"
+            style={{
+              backgroundColor: effectiveTheme === 'dark' ? '#181614' : '#f5f3ef',
+              borderBottomColor: colors.border,
+            }}>
             <View className="flex-row items-center gap-2">
               <SegmentedControl
                 value={mode}
@@ -221,9 +228,11 @@ export function CoverLetterSheet({
                   accessibilityLabel="Save cover letter changes"
                   disabled={updateMutation.isPending}
                   onPress={handleSave}
-                  className="gap-1 bg-primary px-3">
-                  <Icon icon={Save} size={14} className="text-primary-foreground" />
-                  <Text className="text-xs font-sans-medium text-primary-foreground">
+                  className="gap-1 px-3">
+                  <Icon icon={Save} size={14} color={colors.primaryForeground} />
+                  <Text
+                    className="text-xs font-sans-medium"
+                    style={{ color: colors.primaryForeground }}>
                     {updateMutation.isPending ? 'Saving…' : 'Save'}
                   </Text>
                 </Button>
@@ -240,9 +249,11 @@ export function CoverLetterSheet({
                 <Icon
                   icon={copied ? Check : Copy}
                   size={13}
-                  className={copied ? 'text-primary' : 'text-foreground'}
+                  color={copied ? colors.primary : colors.foreground}
                 />
-                <Text className="text-xs font-sans-medium text-foreground">
+                <Text
+                  className="text-xs font-sans-medium"
+                  style={{ color: colors.foreground }}>
                   {copied ? 'Copied' : 'Copy'}
                 </Text>
               </Button>
@@ -254,8 +265,10 @@ export function CoverLetterSheet({
                 onPress={handleSharePdf}
                 disabled={sharing}
                 className="gap-1 px-2.5">
-                <Icon icon={Share2} size={13} className="text-primary-foreground" />
-                <Text className="text-xs font-sans-medium text-primary-foreground">
+                <Icon icon={Share2} size={13} color={colors.primaryForeground} />
+                <Text
+                  className="text-xs font-sans-medium"
+                  style={{ color: colors.primaryForeground }}>
                   {sharing ? 'Generating…' : 'PDF'}
                 </Text>
               </Button>
@@ -266,7 +279,7 @@ export function CoverLetterSheet({
                 accessibilityLabel="Delete cover letter"
                 onPress={() => setConfirmDelete(true)}
                 className="p-1.5">
-                <Icon icon={Trash2} size={15} className="text-destructive" />
+                <Icon icon={Trash2} size={15} color={colors.destructive} />
               </Button>
             </View>
           </View>
@@ -294,8 +307,15 @@ export function CoverLetterSheet({
                 <>
                   {/* Undo proposal banner */}
                   {refine.undoBody !== null ? (
-                    <View className="flex-row items-center justify-between rounded-lg border border-border bg-muted/50 px-3 py-2">
-                      <Text className="text-xs text-muted-foreground">
+                    <View
+                      className="flex-row items-center justify-between rounded-lg border px-3 py-2"
+                      style={{
+                        backgroundColor: colors.muted,
+                        borderColor: colors.border,
+                      }}>
+                      <Text
+                        className="text-xs"
+                        style={{ color: colors.mutedForeground }}>
                         Applied proposal to editor.
                       </Text>
                       <Pressable
@@ -303,8 +323,12 @@ export function CoverLetterSheet({
                         accessibilityLabel="Undo proposal"
                         onPress={refine.undo}
                         className="flex-row items-center gap-1 active:opacity-70">
-                        <Icon icon={Undo2} size={12} className="text-primary" />
-                        <Text className="text-xs font-sans-medium text-primary">Undo</Text>
+                        <Icon icon={Undo2} size={12} color={colors.primary} />
+                        <Text
+                          className="text-xs font-sans-medium"
+                          style={{ color: colors.primary }}>
+                          Undo
+                        </Text>
                       </Pressable>
                     </View>
                   ) : null}
@@ -316,15 +340,29 @@ export function CoverLetterSheet({
 
               {/* Error alerts */}
               {refine.error ? (
-                <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-                  <Text className="text-xs text-destructive">
+                <View
+                  className="rounded-lg border p-3"
+                  style={{
+                    backgroundColor: colors.destructive + '1a',
+                    borderColor: colors.destructive + '33',
+                  }}>
+                  <Text
+                    className="text-xs"
+                    style={{ color: colors.destructive }}>
                     {refine.error.message || 'AI refinement failed.'}
                   </Text>
                 </View>
               ) : null}
               {updateMutation.error ? (
-                <View className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-                  <Text className="text-xs text-destructive">
+                <View
+                  className="rounded-lg border p-3"
+                  style={{
+                    backgroundColor: colors.destructive + '1a',
+                    borderColor: colors.destructive + '33',
+                  }}>
+                  <Text
+                    className="text-xs"
+                    style={{ color: colors.destructive }}>
                     {updateMutation.error.message || 'Failed to save cover letter.'}
                   </Text>
                 </View>
@@ -332,16 +370,25 @@ export function CoverLetterSheet({
 
               {/* Editor vs Preview Mode */}
               {mode === 'preview' ? (
-                <View className="rounded-lg border border-border bg-card p-4">
+                <View
+                  className="rounded-lg border p-4"
+                  style={{
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  }}>
                   <MarkdownProse>{draftBody}</MarkdownProse>
                 </View>
               ) : (
                 <View className="gap-1.5">
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-xs font-sans-medium text-muted-foreground">
+                    <Text
+                      className="text-xs font-sans-medium"
+                      style={{ color: colors.mutedForeground }}>
                       Body (Markdown)
                     </Text>
-                    <Text className="text-xs text-muted-foreground">
+                    <Text
+                      className="text-xs"
+                      style={{ color: colors.mutedForeground }}>
                       {wordCount} words · {draftBody.length} chars
                     </Text>
                   </View>

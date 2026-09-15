@@ -3,6 +3,8 @@ import { Modal, Platform, StatusBar, useWindowDimensions, View as RNView } from 
 import { Pressable, View } from 'react-native-css/components';
 import { SafeAreaInsetsContext } from 'react-native-safe-area-context';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { cn } from './cn';
 import { Scrim } from './scrim';
 
@@ -151,6 +153,8 @@ export function AnchoredPopoverContent({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useContext(SafeAreaInsetsContext);
 
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
   if (!open) return null;
 
   const statusBarOffset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0;
@@ -191,6 +195,8 @@ export function AnchoredPopoverContent({
           top,
           width: CONTENT_WIDTH,
           maxHeight: Math.max(screenHeight - top - EDGE_PADDING, 0),
+          backgroundColor: colors.popover,
+          borderColor: colors.border,
         }}>
         {children}
       </View>

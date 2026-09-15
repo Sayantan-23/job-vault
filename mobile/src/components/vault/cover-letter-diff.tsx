@@ -1,5 +1,7 @@
 import { Text } from 'react-native-css/components';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { coverLetterToPlainText } from '@/lib/cover-letter-markdown';
 import { diffWords } from '@/lib/word-diff';
 
@@ -15,18 +17,23 @@ export interface CoverLetterDiffProps {
  * so markdown markers do not confuse the diff.
  */
 export function CoverLetterDiff({ current, proposed }: CoverLetterDiffProps) {
+  const { colors = LIGHT_COLORS, effectiveTheme } = useTheme() ?? {};
   const plainCurrent = coverLetterToPlainText(current);
   const plainProposed = coverLetterToPlainText(proposed);
   const segments = diffWords(plainCurrent, plainProposed);
 
   return (
-    <Text className="text-sm leading-relaxed text-foreground">
+    <Text style={{ color: colors.foreground }} className="text-sm leading-relaxed text-foreground">
       {segments.map((seg, i) => {
         if (seg.op === 'insert') {
           return (
             <Text
               key={i}
               accessibilityLabel={`Inserted: ${seg.text}`}
+              style={{
+                backgroundColor: effectiveTheme === 'dark' ? 'rgba(112, 138, 222, 0.25)' : undefined,
+                color: colors.foreground,
+              }}
               className="bg-primary/20 font-sans-medium text-foreground">
               {seg.text}
             </Text>
@@ -37,13 +44,14 @@ export function CoverLetterDiff({ current, proposed }: CoverLetterDiffProps) {
             <Text
               key={i}
               accessibilityLabel={`Deleted: ${seg.text}`}
+              style={{ color: colors.mutedForeground }}
               className="bg-destructive/15 text-muted-foreground line-through">
               {seg.text}
             </Text>
           );
         }
         return (
-          <Text key={i} className="text-foreground">
+          <Text key={i} style={{ color: colors.foreground }} className="text-foreground">
             {seg.text}
           </Text>
         );

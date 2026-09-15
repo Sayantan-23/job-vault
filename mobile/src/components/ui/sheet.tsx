@@ -11,6 +11,8 @@ import Animated, {
 import { X } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { BlurTargetProvider } from './blur-target';
 import { cn } from './cn';
@@ -93,8 +95,11 @@ export function SheetClose({
 }
 
 export function SheetTitle({ children, className }: { children: ReactNode; className?: string }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
-    <Text className={cn('font-sans-semibold text-base text-card-foreground', className)}>
+    <Text
+      style={{ color: colors.foreground }}
+      className={cn('font-sans-semibold text-base text-card-foreground', className)}>
       {children}
     </Text>
   );
@@ -107,7 +112,14 @@ export function SheetDescription({
   children: ReactNode;
   className?: string;
 }) {
-  return <Text className={cn('text-sm text-muted-foreground', className)}>{children}</Text>;
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+  return (
+    <Text
+      style={{ color: colors.mutedForeground }}
+      className={cn('text-sm text-muted-foreground', className)}>
+      {children}
+    </Text>
+  );
 }
 
 export function SheetContent({
@@ -122,6 +134,7 @@ export function SheetContent({
   const insets = useSafeAreaInsets();
   const { onOpenChange } = useContext(SheetContext);
   const { height: windowHeight } = useWindowDimensions();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const screenHeight = windowHeight || 800;
 
   const maxPercent = className?.includes('max-h-[94%]')
@@ -160,11 +173,13 @@ export function SheetContent({
             className
           )}
           style={{
+            backgroundColor: colors.card,
+            borderTopColor: colors.hairline,
             maxHeight: calculatedMaxHeight,
             paddingBottom: insets.bottom + 20,
           }}>
           {/* Grab handle: the affordance that says this panel came up from the edge. */}
-          <View className="mb-4 h-1 w-10 self-center rounded-full bg-border" />
+          <View style={{ backgroundColor: colors.border }} className="mb-4 h-1 w-10 self-center rounded-full bg-border" />
           <BlurTargetProvider blurTarget={null}>
             {children}
           </BlurTargetProvider>

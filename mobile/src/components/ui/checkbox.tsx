@@ -2,6 +2,8 @@ import { Check } from 'lucide-react-native';
 import { Pressable } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { cn } from './cn';
 
@@ -24,6 +26,7 @@ export function Checkbox({
   'aria-label': ariaLabel,
   className,
 }: CheckboxProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -32,6 +35,10 @@ export function Checkbox({
       disabled={disabled}
       hitSlop={12}
       onPress={() => onCheckedChange?.(!checked)}
+      style={{
+        borderColor: checked ? colors.primary : colors.input,
+        backgroundColor: checked ? colors.primary : colors.background,
+      }}
       className={cn(
         'size-4 shrink-0 items-center justify-center rounded border border-input',
         checked ? 'border-primary bg-primary' : 'bg-background',
@@ -39,7 +46,7 @@ export function Checkbox({
         className
       )}>
       {checked ? (
-        <Icon icon={Check} size={12} strokeWidth={3} className="text-primary-foreground" />
+        <Icon icon={Check} size={12} strokeWidth={3} color={colors.primaryForeground} className="text-primary-foreground" />
       ) : null}
     </Pressable>
   );

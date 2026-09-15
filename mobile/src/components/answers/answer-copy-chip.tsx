@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 
 import { Icon } from '@/components/icon';
 import { cn } from '@/components/ui/cn';
+import { useTheme } from '@/hooks/use-theme';
 
 const LABEL = { short: 'S', long: 'L' } as const;
 
@@ -32,6 +33,7 @@ export function AnswerCopyChip({
 }: AnswerCopyChipProps) {
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const { colors } = useTheme();
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -60,6 +62,7 @@ export function AnswerCopyChip({
       accessibilityRole="button"
       accessibilityLabel={`Copy the ${variant} answer to “${question}”`}
       onPress={handleCopy}
+      style={!copied ? { backgroundColor: colors.card, borderColor: colors.input } : {}}
       className={cn(
         'h-7 flex-row items-center gap-1.5 rounded-md border border-input bg-background px-2 active:opacity-70',
         copied && 'border-primary/40 bg-primary/10',
@@ -72,6 +75,7 @@ export function AnswerCopyChip({
         className={copied ? 'text-primary' : 'text-muted-foreground'}
       />
       <Text
+        style={!copied ? { color: colors.foreground } : {}}
         className={cn(
           'font-mono text-xs tabular-nums',
           copied ? 'font-mono-medium text-primary' : 'text-foreground'

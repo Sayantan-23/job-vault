@@ -23,8 +23,9 @@ import {
 } from '@/hooks/use-notifications';
 import { apiClient } from '@/lib/api-client';
 import { globalTimelineQuery } from '@/lib/queries';
+import { useTheme } from '@/hooks/use-theme';
 import { dayGroupLabel, dayKey } from '@/lib/relative-time';
-import { SCREEN_BOTTOM_INSET } from '@/theme';
+import { darkVars, lightVars, SCREEN_BOTTOM_INSET } from '@/theme';
 import type { Notification } from '@/types/notification';
 import type { GlobalTimelineEvent } from '@/types/timeline';
 
@@ -43,6 +44,10 @@ export interface ActivityScreenProps {
 }
 
 export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
+  const { effectiveTheme, colors } = useTheme();
+  const activeVars = effectiveTheme === 'dark' ? darkVars : lightVars;
+  const barBg = colors.tabBar;
+  const pageBg = colors.background;
   const router = useRouter();
   const params = useLocalSearchParams<{ filter?: string }>();
 
@@ -292,9 +297,14 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-tab-bar">
+      <View
+        key={effectiveTheme}
+        style={[activeVars, { backgroundColor: barBg }]}
+        className="flex-1 bg-tab-bar">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-          <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
+          <View
+            style={{ backgroundColor: pageBg }}
+            className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
             <AppHeader title="Activity" />
 
             {/* Filter Pills */}
@@ -304,10 +314,12 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
                 accessibilityLabel="Filter all activity"
                 accessibilityState={{ selected: filter === 'all' }}
                 onPress={() => setFilter('all')}
+                style={filter === 'all' ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`rounded-full px-3.5 py-1.5 active:opacity-80 ${
                   filter === 'all' ? 'bg-primary' : 'border border-border/80 bg-muted/60'
                 }`}>
                 <Text
+                  style={filter === 'all' ? { color: colors.primaryForeground } : { color: colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     filter === 'all' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -320,6 +332,7 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
                 accessibilityLabel="Filter timeline"
                 accessibilityState={{ selected: filter === 'timeline' }}
                 onPress={() => setFilter('timeline')}
+                style={filter === 'timeline' ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 active:opacity-80 ${
                   filter === 'timeline' ? 'bg-primary' : 'border border-border/80 bg-muted/60'
                 }`}>
@@ -331,6 +344,7 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
                   }
                 />
                 <Text
+                  style={filter === 'timeline' ? { color: colors.primaryForeground } : { color: colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     filter === 'timeline' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -343,6 +357,7 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
                 accessibilityLabel="Filter notifications"
                 accessibilityState={{ selected: filter === 'notifications' }}
                 onPress={() => setFilter('notifications')}
+                style={filter === 'notifications' ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 active:opacity-80 ${
                   filter === 'notifications' ? 'bg-primary' : 'border border-border/80 bg-muted/60'
                 }`}>
@@ -354,6 +369,7 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
                   }
                 />
                 <Text
+                  style={filter === 'notifications' ? { color: colors.primaryForeground } : { color: colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     filter === 'notifications' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -404,10 +420,15 @@ export function ActivityScreen({ initialFilter }: ActivityScreenProps) {
                 if (item.kind === 'day_header') {
                   return (
                     <View className="flex-row items-center gap-3 px-4 pb-2 pt-4">
-                      <Text className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                      <Text
+                        style={{ color: colors.mutedForeground }}
+                        className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                         {item.label}
                       </Text>
-                      <View className="h-px flex-1 bg-border/80" />
+                      <View
+                        style={{ backgroundColor: colors.border }}
+                        className="h-px flex-1 bg-border/80"
+                      />
                     </View>
                   );
                 }

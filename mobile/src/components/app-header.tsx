@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AccountMenu } from '@/components/account-menu';
 import { IconButton } from '@/components/ui/icon-button';
 import { useUnreadNotificationCount } from '@/hooks/use-notifications';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 export type AppHeaderProps = {
   title: string;
@@ -24,6 +26,7 @@ export function AppHeader({ title }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const unreadCount = useUnreadNotificationCount();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
 
   const handleNotificationsPress = () => {
     router.navigate({
@@ -37,7 +40,11 @@ export function AppHeader({ title }: AppHeaderProps) {
       className="flex-row items-center justify-between px-5 pb-3"
       style={{ paddingTop: insets.top + 8 }}>
       <View className="min-w-0 flex-row items-center gap-2">
-        <Text className="font-serif text-[30px] leading-[34px] text-foreground">{title}</Text>
+        <Text
+          style={{ color: colors.foreground }}
+          className="font-serif text-[30px] leading-[34px] text-foreground">
+          {title}
+        </Text>
       </View>
       <View className="flex-row items-center gap-2">
         <IconButton

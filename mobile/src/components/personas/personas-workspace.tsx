@@ -15,6 +15,8 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RouteProgress } from '@/components/ui/route-progress';
 import { usePersonas, useDeletePersona } from '@/hooks/use-personas';
 import { useProfile } from '@/hooks/use-profile';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { emptyProfileContent } from '@/lib/profile';
 import type { Persona } from '@/types/persona';
 import { PersonaCard } from './persona-card';
@@ -25,6 +27,7 @@ const MAX_PERSONAS = 5;
 export function PersonasWorkspace() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
 
   const [createOpen, setCreateOpen] = useState(false);
   const [personaToDelete, setPersonaToDelete] = useState<Persona | null>(null);
@@ -60,11 +63,15 @@ export function PersonasWorkspace() {
   }
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ backgroundColor: colors.background }} className="flex-1 bg-background">
       {/* Top Header */}
       <View
         className="border-b border-border bg-card px-4 pb-3.5"
-        style={{ paddingTop: insets.top + 8 }}>
+        style={{
+          paddingTop: insets.top + 8,
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border,
+        }}>
         <View className="flex-row items-center justify-between gap-3">
           <View className="flex-row items-center gap-2.5 min-w-0 flex-1">
             <IconButton
@@ -73,16 +80,21 @@ export function PersonasWorkspace() {
               onPress={() => router.back()}
             />
             <View className="min-w-0 flex-1">
-              <Text numberOfLines={1} className="font-serif text-2xl font-bold text-foreground">
+              <Text
+                style={{ color: colors.foreground }}
+                numberOfLines={1}
+                className="font-serif text-2xl font-bold text-foreground">
                 Personas
               </Text>
               <View className="flex-row items-center gap-2 mt-0.5">
-                <View className="rounded-full bg-secondary px-2 py-0.5 border border-border/60">
-                  <Text className="font-mono text-[11px] text-muted-foreground font-medium">
+                <View
+                  style={{ backgroundColor: colors.muted, borderColor: colors.border }}
+                  className="rounded-full bg-secondary px-2 py-0.5 border border-border/60">
+                  <Text style={{ color: colors.mutedForeground }} className="font-mono text-[11px] text-muted-foreground font-medium">
                     {`${personas.length} / ${MAX_PERSONAS}`}
                   </Text>
                 </View>
-                <Text numberOfLines={1} className="text-xs text-muted-foreground">
+                <Text style={{ color: colors.mutedForeground }} numberOfLines={1} className="text-xs text-muted-foreground">
                   role-focused backgrounds
                 </Text>
               </View>
@@ -91,9 +103,11 @@ export function PersonasWorkspace() {
         </View>
 
         {atCap ? (
-          <View className="mt-3 rounded-xl bg-muted/60 p-3 border border-border flex-row items-center gap-2.5">
-            <Icon icon={Sparkles} size={15} className="text-muted-foreground flex-shrink-0" />
-            <Text className="text-xs text-muted-foreground flex-1 leading-snug">
+          <View
+            style={{ backgroundColor: colors.muted, borderColor: colors.border }}
+            className="mt-3 rounded-xl bg-muted/60 p-3 border border-border flex-row items-center gap-2.5">
+            <Icon icon={Sparkles} size={15} color={colors.mutedForeground} className="text-muted-foreground flex-shrink-0" />
+            <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground flex-1 leading-snug">
               You’ve reached the maximum of {MAX_PERSONAS} personas. Delete one to add another.
             </Text>
           </View>

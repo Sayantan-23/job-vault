@@ -13,6 +13,8 @@ import { Input } from '@/components/ui/input';
 import { RouteProgress } from '@/components/ui/route-progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSearch } from '@/hooks/use-search';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { searchResultHref, type SearchResult, type SearchResultType } from '@/types/search';
 import { SearchResultRow } from './search-result-row';
 
@@ -59,6 +61,7 @@ type ListItem =
 export function SearchScreen({ onSelect }: SearchScreenProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const [term, setTerm] = useState('');
   const [activeFilter, setActiveFilter] = useState<SearchFilter>('all');
 
@@ -110,11 +113,11 @@ export function SearchScreen({ onSelect }: SearchScreenProps) {
   }, [filteredResults]);
 
   return (
-    <View className="flex-1 bg-background">
+    <View style={{ backgroundColor: colors.background }} className="flex-1 bg-background">
       {/* Search Header */}
       <View
-        className="border-b border-border/60 bg-card px-4 pb-3"
-        style={{ paddingTop: insets.top + 8 }}>
+        style={{ paddingTop: insets.top + 8, backgroundColor: colors.card, borderBottomColor: colors.border }}
+        className="border-b border-border/60 bg-card px-4 pb-3">
         <View className="flex-row items-center gap-2">
           <IconButton
             icon={ChevronLeft}
@@ -137,7 +140,7 @@ export function SearchScreen({ onSelect }: SearchScreenProps) {
                 accessibilityLabel="Clear search"
                 onPress={() => setTerm('')}
                 className="absolute right-2.5 rounded-full p-1 active:opacity-70">
-                <Icon icon={X} size={16} className="text-muted-foreground" />
+                <Icon icon={X} size={16} color={colors.mutedForeground} className="text-muted-foreground" />
               </Pressable>
             ) : null}
           </View>
@@ -157,10 +160,12 @@ export function SearchScreen({ onSelect }: SearchScreenProps) {
                 accessibilityRole="button"
                 accessibilityLabel={`Filter by ${tab.label}`}
                 onPress={() => setActiveFilter(tab.key)}
+                style={isActive ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`rounded-full px-3 py-1.5 ${
                   isActive ? 'bg-primary' : 'bg-muted/70'
                 }`}>
                 <Text
+                  style={{ color: isActive ? colors.primaryForeground : colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     isActive ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -178,19 +183,19 @@ export function SearchScreen({ onSelect }: SearchScreenProps) {
       {/* Content Area */}
       {trimmed.length === 0 ? (
         <View className="items-center px-6 py-20">
-          <View className="mb-4 rounded-full bg-muted/50 p-4">
-            <Icon icon={Search} size={32} className="text-muted-foreground/60" />
+          <View style={{ backgroundColor: colors.secondary }} className="mb-4 rounded-full bg-muted/50 p-4">
+            <Icon icon={Search} size={32} color={colors.mutedForeground} className="text-muted-foreground/60" />
           </View>
-          <Text className="text-center font-serif text-xl text-foreground">
+          <Text style={{ color: colors.foreground }} className="text-center font-serif text-xl text-foreground">
             {`Search ${APP_CONFIG.name}`}
           </Text>
-          <Text className="mt-2 max-w-xs text-center text-sm text-muted-foreground">
+          <Text style={{ color: colors.mutedForeground }} className="mt-2 max-w-xs text-center text-sm text-muted-foreground">
             Find applications, saved answers, résumés, cover letters, and personas.
           </Text>
         </View>
       ) : trimmed.length === 1 ? (
         <View className="items-center px-6 py-16">
-          <Text className="text-center text-sm text-muted-foreground">
+          <Text style={{ color: colors.mutedForeground }} className="text-center text-sm text-muted-foreground">
             Type at least 2 characters to search
           </Text>
         </View>
@@ -218,11 +223,17 @@ export function SearchScreen({ onSelect }: SearchScreenProps) {
           renderItem={({ item }) => {
             if (item.kind === 'header') {
               return (
-                <View className="flex-row items-center justify-between border-b border-border/40 bg-muted/30 px-4 py-1.5">
-                  <Text className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                <View
+                  style={{ backgroundColor: colors.secondary, borderBottomColor: colors.border }}
+                  className="flex-row items-center justify-between border-b border-border/40 bg-muted/30 px-4 py-1.5">
+                  <Text
+                    style={{ color: colors.mutedForeground }}
+                    className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
                     {item.label}
                   </Text>
-                  <Text className="font-mono text-[11px] text-muted-foreground/70">
+                  <Text
+                    style={{ color: colors.mutedForeground }}
+                    className="font-mono text-[11px] text-muted-foreground/70">
                     {item.count}
                   </Text>
                 </View>

@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
+import type { TextStyle, ViewStyle } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { Pressable, Text } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { cn } from './cn';
 
 export type ButtonVariant =
@@ -77,6 +80,28 @@ export function Button({
   icon,
   iconSize,
 }: ButtonProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
+  const surfaceStyles: Partial<Record<ButtonVariant, ViewStyle>> = {
+    default: { backgroundColor: colors.primary },
+    secondary: { backgroundColor: colors.secondary },
+    outline: { borderColor: colors.border, backgroundColor: colors.background, borderWidth: 1 },
+    destructive: { backgroundColor: colors.destructive },
+    softPrimary: { backgroundColor: `${colors.primary}20` },
+    softDestructive: { backgroundColor: `${colors.destructive}20` },
+  };
+
+  const inkStyles: Record<ButtonVariant, TextStyle> = {
+    default: { color: colors.primaryForeground },
+    secondary: { color: colors.secondaryForeground },
+    outline: { color: colors.foreground },
+    ghost: { color: colors.foreground },
+    destructive: { color: colors.destructiveForeground },
+    softPrimary: { color: colors.primary },
+    softDestructive: { color: colors.destructive },
+    link: { color: colors.primary },
+  };
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -84,6 +109,7 @@ export function Button({
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}
+      style={surfaceStyles[variant]}
       className={cn(
         'flex-row items-center justify-center gap-2 rounded-md active:opacity-90',
         SURFACE[variant],
@@ -95,11 +121,16 @@ export function Button({
         <Icon
           icon={icon}
           size={iconSize ?? (size === 'sm' || size === 'iconSm' ? 14 : 16)}
+          color={inkStyles[variant].color}
           className={INK[variant]}
         />
       ) : null}
       {typeof children === 'string' ? (
-        <Text className={cn('font-sans-medium text-sm', INK[variant])}>{children}</Text>
+        <Text
+          style={inkStyles[variant]}
+          className={cn('font-sans-medium text-sm', INK[variant])}>
+          {children}
+        </Text>
       ) : (
         children
       )}

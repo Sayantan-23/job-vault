@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useCreatePersona } from '@/hooks/use-personas';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import { emptyProfileContent, reconcilePersonaWithProfile } from '@/lib/profile';
 import type { ProfileContent } from '@/types/profile';
 import type { Persona } from '@/types/persona';
@@ -28,6 +30,7 @@ export function CreatePersonaSheet({
   onCreated,
 }: CreatePersonaSheetProps) {
   const router = useRouter();
+  const { colors = LIGHT_COLORS, effectiveTheme } = useTheme() ?? {};
   const [name, setName] = useState('');
   const [mode, setMode] = useState<CreationMode>('profile');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -99,8 +102,10 @@ export function CreatePersonaSheet({
         <View className="gap-5 p-5">
           {/* Header */}
           <View className="flex-row items-center justify-between">
-            <SheetTitle className="font-serif text-xl font-bold text-foreground">
-              New Persona
+            <SheetTitle>
+              <Text style={{ color: colors.foreground }} className="font-serif text-xl font-bold text-foreground">
+                New Persona
+              </Text>
             </SheetTitle>
             <Button
               variant="ghost"
@@ -130,7 +135,7 @@ export function CreatePersonaSheet({
 
           {/* Persona Name */}
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground uppercase tracking-wider">
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground uppercase tracking-wider">
               Persona Name *
             </Text>
             <Input
@@ -147,7 +152,7 @@ export function CreatePersonaSheet({
 
           {/* Mode Selection */}
           <View className="gap-2">
-            <Text className="font-sans-medium text-xs text-muted-foreground uppercase tracking-wider">
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground uppercase tracking-wider">
               Starting Content
             </Text>
 
@@ -157,6 +162,12 @@ export function CreatePersonaSheet({
               accessibilityRole="radio"
               accessibilityState={{ checked: mode === 'profile' }}
               accessibilityLabel="Build from profile"
+              style={{
+                borderColor: mode === 'profile' ? colors.primary : colors.border,
+                backgroundColor: mode === 'profile'
+                  ? (effectiveTheme === 'dark' ? 'rgba(112, 138, 222, 0.15)' : 'rgba(79, 70, 229, 0.05)')
+                  : (effectiveTheme === 'dark' ? '#181614' : '#f5f3ef'),
+              }}
               className={`rounded-lg border p-3.5 transition-colors active:opacity-75 ${
                 mode === 'profile'
                   ? 'border-primary bg-primary/5'
@@ -164,22 +175,24 @@ export function CreatePersonaSheet({
               }`}>
               <View className="flex-row items-start justify-between gap-3">
                 <View className="flex-row items-start gap-3 min-w-0 flex-1">
-                  <View className="rounded-md bg-primary/10 p-2 mt-0.5">
-                    <Icon icon={Sparkles} size={16} className="text-primary" />
+                  <View
+                    style={{ backgroundColor: effectiveTheme === 'dark' ? 'rgba(112, 138, 222, 0.2)' : undefined }}
+                    className="rounded-md bg-primary/10 p-2 mt-0.5">
+                    <Icon icon={Sparkles} size={16} color={colors.primary} className="text-primary" />
                   </View>
                   <View className="min-w-0 flex-1">
-                    <Text className="font-sans-medium text-sm text-foreground">
+                    <Text style={{ color: colors.foreground }} className="font-sans-medium text-sm text-foreground">
                       Build from profile
                     </Text>
-                    <Text className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                    <Text style={{ color: colors.mutedForeground }} className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
                       Pre-fills summary and contact basics from your master profile. Pick and tailor
                       roles later.
                     </Text>
                   </View>
                 </View>
                 {mode === 'profile' ? (
-                  <View className="rounded-full bg-primary p-1">
-                    <Icon icon={Check} size={12} className="text-primary-foreground" />
+                  <View style={{ backgroundColor: colors.primary }} className="rounded-full bg-primary p-1">
+                    <Icon icon={Check} size={12} color={colors.primaryForeground} className="text-primary-foreground" />
                   </View>
                 ) : null}
               </View>
@@ -191,6 +204,12 @@ export function CreatePersonaSheet({
               accessibilityRole="radio"
               accessibilityState={{ checked: mode === 'blank' }}
               accessibilityLabel="Start blank"
+              style={{
+                borderColor: mode === 'blank' ? colors.primary : colors.border,
+                backgroundColor: mode === 'blank'
+                  ? (effectiveTheme === 'dark' ? 'rgba(112, 138, 222, 0.15)' : 'rgba(79, 70, 229, 0.05)')
+                  : (effectiveTheme === 'dark' ? '#181614' : '#f5f3ef'),
+              }}
               className={`rounded-lg border p-3.5 transition-colors active:opacity-75 ${
                 mode === 'blank'
                   ? 'border-primary bg-primary/5'
@@ -198,21 +217,23 @@ export function CreatePersonaSheet({
               }`}>
               <View className="flex-row items-start justify-between gap-3">
                 <View className="flex-row items-start gap-3 min-w-0 flex-1">
-                  <View className="rounded-md bg-muted p-2 mt-0.5">
-                    <Icon icon={FileText} size={16} className="text-muted-foreground" />
+                  <View
+                    style={{ backgroundColor: colors.muted }}
+                    className="rounded-md bg-muted p-2 mt-0.5">
+                    <Icon icon={FileText} size={16} color={colors.mutedForeground} className="text-muted-foreground" />
                   </View>
                   <View className="min-w-0 flex-1">
-                    <Text className="font-sans-medium text-sm text-foreground">
+                    <Text style={{ color: colors.foreground }} className="font-sans-medium text-sm text-foreground">
                       Blank slate
                     </Text>
-                    <Text className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                    <Text style={{ color: colors.mutedForeground }} className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
                       Start fresh with an empty persona to tailor specifically from scratch.
                     </Text>
                   </View>
                 </View>
                 {mode === 'blank' ? (
-                  <View className="rounded-full bg-primary p-1">
-                    <Icon icon={Check} size={12} className="text-primary-foreground" />
+                  <View style={{ backgroundColor: colors.primary }} className="rounded-full bg-primary p-1">
+                    <Icon icon={Check} size={12} color={colors.primaryForeground} className="text-primary-foreground" />
                   </View>
                 ) : null}
               </View>

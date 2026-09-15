@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { SegmentedControl } from '@/components/ui/segmented-control';
 import { Select, type SelectOption } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import {
   GHOST_OPTIONS,
   DEFAULT_FILTERS,
@@ -153,9 +155,10 @@ export function FilterSheet({
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
     <View className="gap-1.5">
-      <Text className="font-sans-medium text-xs text-muted-foreground">
+      <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">
         {label.toUpperCase()}
       </Text>
       {children}

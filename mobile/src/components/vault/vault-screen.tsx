@@ -19,8 +19,9 @@ import { useJobOptions, type JobOption } from '@/hooks/use-job-options';
 import { usePersonas } from '@/hooks/use-personas';
 import { useAllCoverLetters, useDeleteCoverLetter } from '@/hooks/use-cover-letters';
 import { useDeleteResume, useResumes } from '@/hooks/use-resumes';
+import { useTheme } from '@/hooks/use-theme';
 import { shortDate } from '@/lib/relative-time';
-import { SCREEN_BOTTOM_INSET } from '@/theme';
+import { darkVars, LIGHT_COLORS, lightVars, SCREEN_BOTTOM_INSET } from '@/theme';
 import type { CoverLetter } from '@/types/cover-letter';
 
 import { NewCoverLetterSheet } from './new-cover-letter-sheet';
@@ -46,6 +47,10 @@ function resolveLetterContext(letter: CoverLetter, jobsById: Map<string, JobOpti
 
 export function VaultScreen() {
   const router = useRouter();
+  const { effectiveTheme, colors = LIGHT_COLORS } = useTheme() ?? {};
+  const activeVars = effectiveTheme === 'dark' ? darkVars : lightVars;
+  const barBg = colors.tabBar;
+  const pageBg = colors.background;
   const [filter, setFilter] = useState<VaultFilter>('all');
   const [isNewLetterOpen, setIsNewLetterOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
@@ -144,24 +149,31 @@ export function VaultScreen() {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-tab-bar">
+      <View
+        key={effectiveTheme}
+        style={[activeVars, { backgroundColor: barBg }]}
+        className="flex-1 bg-tab-bar">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-          <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
+          <View
+            style={{ backgroundColor: pageBg }}
+            className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
             <AppHeader title="Vault" />
 
-            {/* Native Filter Pills (Option A) */}
+            {/* Native Filter Pills */}
             <View className="flex-row items-center gap-2 px-4 pb-3 pt-1">
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Filter all documents"
                 accessibilityState={{ selected: filter === 'all' }}
                 onPress={() => setFilter('all')}
+                style={filter === 'all' ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`rounded-full px-3.5 py-1.5 active:opacity-80 ${
                   filter === 'all'
                     ? 'bg-primary'
                     : 'border border-border/80 bg-muted/60'
                 }`}>
                 <Text
+                  style={filter === 'all' ? { color: colors.primaryForeground } : { color: colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     filter === 'all' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -174,6 +186,7 @@ export function VaultScreen() {
                 accessibilityLabel="Filter résumés"
                 accessibilityState={{ selected: filter === 'resumes' }}
                 onPress={() => setFilter('resumes')}
+                style={filter === 'resumes' ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 active:opacity-80 ${
                   filter === 'resumes'
                     ? 'bg-primary'
@@ -185,6 +198,7 @@ export function VaultScreen() {
                   className={filter === 'resumes' ? 'text-primary-foreground' : 'text-muted-foreground'}
                 />
                 <Text
+                  style={filter === 'resumes' ? { color: colors.primaryForeground } : { color: colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     filter === 'resumes' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -197,6 +211,7 @@ export function VaultScreen() {
                 accessibilityLabel="Filter cover letters"
                 accessibilityState={{ selected: filter === 'letters' }}
                 onPress={() => setFilter('letters')}
+                style={filter === 'letters' ? { backgroundColor: colors.primary } : { backgroundColor: colors.secondary, borderColor: colors.border }}
                 className={`flex-row items-center gap-1.5 rounded-full px-3.5 py-1.5 active:opacity-80 ${
                   filter === 'letters'
                     ? 'bg-primary'
@@ -208,6 +223,7 @@ export function VaultScreen() {
                   className={filter === 'letters' ? 'text-primary-foreground' : 'text-muted-foreground'}
                 />
                 <Text
+                  style={filter === 'letters' ? { color: colors.primaryForeground } : { color: colors.mutedForeground }}
                   className={`text-xs font-sans-medium ${
                     filter === 'letters' ? 'text-primary-foreground' : 'text-muted-foreground'
                   }`}>
@@ -259,6 +275,7 @@ export function VaultScreen() {
                       router.push(`/vault/cover-letter/${item.id}`);
                     }
                   }}
+                  style={{ borderBottomColor: colors.border }}
                   className="flex-row items-center gap-3 border-b border-border/60 px-4 py-3.5 active:bg-muted/40">
                   <View
                     className={`rounded-lg p-2 ${
@@ -274,6 +291,7 @@ export function VaultScreen() {
                   <View className="min-w-0 flex-1">
                     <View className="flex-row items-center gap-1.5">
                       <Text
+                        style={{ color: colors.foreground }}
                         className="font-sans-medium text-sm text-foreground"
                         numberOfLines={1}>
                         {item.title}
@@ -281,17 +299,24 @@ export function VaultScreen() {
                     </View>
                     <View className="mt-0.5 flex-row items-center gap-1">
                       <Text
+                        style={{ color: colors.mutedForeground }}
                         className="text-[11px] font-sans-medium uppercase tracking-wider text-muted-foreground/70">
                         {item.type === 'resume' ? 'CV' : 'Letter'}
                       </Text>
-                      <Text className="text-xs text-muted-foreground/40">·</Text>
-                      <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                      <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground/40">·</Text>
+                      <Text
+                        style={{ color: colors.mutedForeground }}
+                        className="text-xs text-muted-foreground"
+                        numberOfLines={1}>
                         {item.context}
                       </Text>
                       {item.personaName ? (
                         <>
-                          <Text className="text-xs text-muted-foreground/40">·</Text>
-                          <Text className="text-xs text-muted-foreground" numberOfLines={1}>
+                          <Text style={{ color: colors.mutedForeground }} className="text-xs text-muted-foreground/40">·</Text>
+                          <Text
+                            style={{ color: colors.mutedForeground }}
+                            className="text-xs text-muted-foreground"
+                            numberOfLines={1}>
                             {item.personaName}
                           </Text>
                         </>
@@ -300,7 +325,9 @@ export function VaultScreen() {
                   </View>
 
                   <View className="flex-row items-center gap-2.5">
-                    <Text className="font-mono text-xs tabular-nums text-muted-foreground">
+                    <Text
+                      style={{ color: colors.mutedForeground }}
+                      className="font-mono text-xs tabular-nums text-muted-foreground">
                       {shortDate(item.createdAt)}
                     </Text>
 

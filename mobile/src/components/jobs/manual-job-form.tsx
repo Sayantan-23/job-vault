@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateJob, useUpdateJob } from '@/hooks/use-jobs';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import type { Job, CreateJobValues } from '@/types/job';
 
 export interface ManualJobFormProps {
@@ -25,6 +27,7 @@ export function ManualJobForm({
   onClose,
   onSuccess,
 }: ManualJobFormProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const [title, setTitle] = useState(job?.title ?? initialValues?.title ?? '');
   const [company, setCompany] = useState(job?.company ?? initialValues?.company ?? '');
   const [location, setLocation] = useState(job?.location ?? initialValues?.location ?? '');
@@ -106,7 +109,7 @@ export function ManualJobForm({
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="gap-4 pb-6">
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">TITLE *</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">TITLE *</Text>
             <Input
               value={title}
               onChangeText={setTitle}
@@ -116,7 +119,7 @@ export function ManualJobForm({
           </View>
 
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">COMPANY *</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">COMPANY *</Text>
             <Input
               value={company}
               onChangeText={setCompany}
@@ -126,7 +129,7 @@ export function ManualJobForm({
           </View>
 
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">LOCATION</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">LOCATION</Text>
             <Input
               value={location}
               onChangeText={setLocation}
@@ -136,7 +139,7 @@ export function ManualJobForm({
           </View>
 
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">SALARY RANGE</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">SALARY RANGE</Text>
             <Input
               value={salaryRange}
               onChangeText={setSalaryRange}
@@ -146,7 +149,7 @@ export function ManualJobForm({
           </View>
 
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">JOB POSTING URL</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">JOB POSTING URL</Text>
             <Input
               value={sourceUrl}
               onChangeText={setSourceUrl}
@@ -158,7 +161,7 @@ export function ManualJobForm({
           </View>
 
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">NOTES</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">NOTES</Text>
             <Textarea
               value={notes}
               onChangeText={setNotes}
@@ -167,7 +170,7 @@ export function ManualJobForm({
             />
           </View>
 
-          <View className="mt-2 flex-row justify-end gap-3 border-t border-border/70 pt-4">
+          <View style={{ borderTopColor: colors.border }} className="mt-2 flex-row justify-end gap-3 border-t border-border/70 pt-4">
             <Button variant="outline" onPress={onClose} disabled={isSaving}>
               Cancel
             </Button>

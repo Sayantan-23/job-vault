@@ -13,6 +13,9 @@ import { MonogramAvatar } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
 import { useSession } from '@/lib/session';
 
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
+
 const ITEM = 'flex-row items-center gap-2.5 rounded-md px-2.5 py-2.5 active:opacity-70';
 
 /**
@@ -26,6 +29,7 @@ export function AccountMenu() {
   const user = session.status === 'signedIn' ? session.user : null;
   const name = user?.name.trim() || 'Account';
   const { logout } = useAuth();
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
 
   return (
     <AnchoredPopover>
@@ -36,45 +40,51 @@ export function AccountMenu() {
         <View className="flex-row items-center gap-2.5 px-2.5 py-2">
           <MonogramAvatar name={name} />
           <View className="min-w-0 flex-1">
-            <Text numberOfLines={1} className="font-sans-medium text-sm text-foreground">
+            <Text
+              style={{ color: colors.foreground }}
+              numberOfLines={1}
+              className="font-sans-medium text-sm text-foreground">
               {name}
             </Text>
             {user?.email ? (
-              <Text numberOfLines={1} className="text-xs text-muted-foreground">
+              <Text
+                style={{ color: colors.mutedForeground }}
+                numberOfLines={1}
+                className="text-xs text-muted-foreground">
                 {user.email}
               </Text>
             ) : null}
           </View>
         </View>
-        <View className="my-1 h-px bg-border" />
+        <View style={{ backgroundColor: colors.border }} className="my-1 h-px bg-border" />
         <AnchoredPopoverClose
           accessibilityLabel="Profile"
           onPress={() => router.push('/profile' as any)}
           className={ITEM}>
           <Icon icon={User} size={16} strokeWidth={1.75} className="text-muted-foreground" />
-          <Text className="text-sm text-foreground">Profile</Text>
+          <Text style={{ color: colors.foreground }} className="text-sm text-foreground">Profile</Text>
         </AnchoredPopoverClose>
         <AnchoredPopoverClose
           accessibilityLabel="Personas"
           onPress={() => router.push('/personas' as any)}
           className={ITEM}>
           <Icon icon={Users} size={16} strokeWidth={1.75} className="text-muted-foreground" />
-          <Text className="text-sm text-foreground">Personas</Text>
+          <Text style={{ color: colors.foreground }} className="text-sm text-foreground">Personas</Text>
         </AnchoredPopoverClose>
         <AnchoredPopoverClose
           accessibilityLabel="Settings"
           onPress={() => router.push('/settings' as any)}
           className={ITEM}>
           <Icon icon={Settings} size={16} strokeWidth={1.75} className="text-muted-foreground" />
-          <Text className="text-sm text-foreground">Settings</Text>
+          <Text style={{ color: colors.foreground }} className="text-sm text-foreground">Settings</Text>
         </AnchoredPopoverClose>
-        <View className="my-1 h-px bg-border" />
+        <View style={{ backgroundColor: colors.border }} className="my-1 h-px bg-border" />
         <AnchoredPopoverClose
           accessibilityLabel="Sign out"
           onPress={() => void logout()}
           className={ITEM}>
           <Icon icon={LogOut} size={16} strokeWidth={1.75} className="text-muted-foreground" />
-          <Text className="text-sm text-foreground">Sign out</Text>
+          <Text style={{ color: colors.foreground }} className="text-sm text-foreground">Sign out</Text>
         </AnchoredPopoverClose>
       </AnchoredPopoverContent>
     </AnchoredPopover>

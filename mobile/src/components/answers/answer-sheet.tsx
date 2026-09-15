@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { useCreateAnswer, useGenerateAnswer, useUpdateAnswer } from '@/hooks/use-answers';
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 import type { Answer, AnswerDraft } from '@/types/answer';
 import type { Persona } from '@/types/persona';
 import { GenerateAnswerControls, type JobOptionItem } from './generate-answer-controls';
@@ -22,8 +24,9 @@ export interface AnswerSheetProps {
 }
 
 function CharacterCount({ value, target }: { value: string; target: number }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
-    <Text className="font-mono text-xs tabular-nums text-muted-foreground">
+    <Text style={{ color: colors.mutedForeground }} className="font-mono text-xs tabular-nums text-muted-foreground">
       {value.length.toLocaleString()} characters · aims for {target.toLocaleString()}
     </Text>
   );
@@ -97,6 +100,8 @@ function AnswerSheetBody({
     setDraft(null);
   };
 
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
   return (
     <>
       <View className="mb-3 flex-row items-center justify-between">
@@ -106,7 +111,7 @@ function AnswerSheetBody({
           accessibilityLabel="Close sheet"
           onPress={onClose}
           className="rounded-md p-1">
-          <Icon icon={X} size={16} strokeWidth={2} className="text-muted-foreground" />
+          <Icon icon={X} size={16} strokeWidth={2} color={colors.mutedForeground} className="text-muted-foreground" />
         </Pressable>
       </View>
 
@@ -121,7 +126,7 @@ function AnswerSheetBody({
       <ScrollView showsVerticalScrollIndicator={false}>
         <View className="gap-5 pb-6">
           <View className="gap-1.5">
-            <Text className="font-sans-medium text-xs text-muted-foreground">QUESTION</Text>
+            <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">QUESTION</Text>
             <Input
               value={question}
               onChangeText={setQuestion}
@@ -133,7 +138,7 @@ function AnswerSheetBody({
 
           <View className="gap-1.5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-sans-medium text-xs text-muted-foreground">SHORT ANSWER</Text>
+              <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">SHORT ANSWER</Text>
               <CharacterCount value={answerShort} target={500} />
             </View>
             <Textarea
@@ -146,7 +151,7 @@ function AnswerSheetBody({
 
           <View className="gap-1.5">
             <View className="flex-row items-center justify-between">
-              <Text className="font-sans-medium text-xs text-muted-foreground">LONG ANSWER</Text>
+              <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">LONG ANSWER</Text>
               <CharacterCount value={answerLong} target={2000} />
             </View>
             <Textarea
@@ -170,19 +175,21 @@ function AnswerSheetBody({
 
           {/* AI Draft Acceptance Preview */}
           {draft ? (
-            <View className="gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
-              <Text className="font-sans-medium text-xs text-primary uppercase">
+            <View
+              style={{ borderColor: `${colors.primary}40`, backgroundColor: `${colors.primary}15` }}
+              className="gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+              <Text style={{ color: colors.primary }} className="font-sans-medium text-xs text-primary uppercase">
                 Generated Draft Preview
               </Text>
 
               <View className="gap-1">
-                <Text className="font-sans-medium text-xs text-muted-foreground">SHORT DRAFT</Text>
-                <Text className="text-sm text-foreground">{draft.short}</Text>
+                <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">SHORT DRAFT</Text>
+                <Text style={{ color: colors.foreground }} className="text-sm text-foreground">{draft.short}</Text>
               </View>
 
               <View className="gap-1">
-                <Text className="font-sans-medium text-xs text-muted-foreground">LONG DRAFT</Text>
-                <Text className="text-sm text-foreground">{draft.long}</Text>
+                <Text style={{ color: colors.mutedForeground }} className="font-sans-medium text-xs text-muted-foreground">LONG DRAFT</Text>
+                <Text style={{ color: colors.foreground }} className="text-sm text-foreground">{draft.long}</Text>
               </View>
 
               <View className="mt-2 flex-row gap-2">
@@ -200,7 +207,7 @@ function AnswerSheetBody({
             </View>
           ) : null}
 
-          <View className="mt-2 flex-row justify-end gap-3 border-t border-border/70 pt-4">
+          <View style={{ borderTopColor: colors.border }} className="mt-2 flex-row justify-end gap-3 border-t border-border/70 pt-4">
             <Button
               variant="outline"
               onPress={onClose}

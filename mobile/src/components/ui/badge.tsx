@@ -1,8 +1,9 @@
-// cn.ts is NOT tailwind-merge — a caller's className competes by CSS
-// specificity, it does not replace. Any variant that needs to differ gets an
-// entry here, never an override.
 import type { ReactNode } from 'react';
+import type { TextStyle, ViewStyle } from 'react-native';
 import { Text, View } from 'react-native-css/components';
+
+import { useTheme } from '@/hooks/use-theme';
+import { LIGHT_COLORS } from '@/theme';
 
 import { cn } from './cn';
 
@@ -44,15 +45,38 @@ const INK: Record<BadgeVariant, string> = {
 };
 
 export function Badge({ children, variant = 'default', className }: BadgeProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
+
+  const surfaceStyles: Record<BadgeVariant, ViewStyle> = {
+    default: { backgroundColor: `${colors.primary}25` },
+    secondary: { backgroundColor: colors.secondary },
+    outline: { borderColor: colors.border, backgroundColor: colors.background, borderWidth: 1 },
+    'ghost-active': { backgroundColor: `${colors.ghostActive}25` },
+    'ghost-stale': { backgroundColor: `${colors.ghostStale}25` },
+    'ghost-ghosted': { backgroundColor: `${colors.ghostGhosted}25` },
+  };
+
+  const inkStyles: Record<BadgeVariant, TextStyle> = {
+    default: { color: colors.primary },
+    secondary: { color: colors.secondaryForeground },
+    outline: { color: colors.foreground },
+    'ghost-active': { color: colors.ghostActive },
+    'ghost-stale': { color: colors.ghostStale },
+    'ghost-ghosted': { color: colors.ghostGhosted },
+  };
+
   return (
     <View
+      style={surfaceStyles[variant]}
       className={cn(
         'flex-row items-center self-start rounded-full px-2 py-0.5',
         SURFACE[variant],
         className
       )}>
       {typeof children === 'string' ? (
-        <Text className={cn('font-sans-medium text-[11px] uppercase', INK[variant])}>
+        <Text
+          style={inkStyles[variant]}
+          className={cn('font-sans-medium text-[11px] uppercase', INK[variant])}>
           {children}
         </Text>
       ) : (

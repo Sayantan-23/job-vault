@@ -29,6 +29,7 @@ import { Select } from './select';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from './sheet';
 import { Skeleton } from './skeleton';
 import { Textarea } from './textarea';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 
 const VARIANTS: ButtonVariant[] = [
   'default',
@@ -63,9 +64,16 @@ const STATUS_OPTIONS = [
 ] as const;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   return (
-    <View className="gap-3 border-b border-hairline px-5 py-6">
-      <Text className="font-mono text-[11px] uppercase text-muted-foreground">{title}</Text>
+    <View
+      className="gap-3 border-b px-5 py-6"
+      style={{ borderBottomColor: colors.border }}>
+      <Text
+        className="font-mono text-[11px] uppercase"
+        style={{ color: colors.mutedForeground }}>
+        {title}
+      </Text>
       {children}
     </View>
   );
@@ -77,6 +85,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  * surface; it hangs off /gallery and nothing links to it.
  */
 export function Gallery() {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const insets = useSafeAreaInsets();
   const [checked, setChecked] = useState(true);
   const [view, setView] = useState<'board' | 'list'>('list');
@@ -90,12 +99,18 @@ export function Gallery() {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      <View className="flex-1" style={{ paddingTop: insets.top, backgroundColor: colors.background }}>
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}>
         <View className="px-5 pb-2 pt-4">
-          <Text className="font-serif text-[30px] leading-[34px] text-foreground">Primitives</Text>
-          <Text className="mt-1 text-sm text-muted-foreground">
+          <Text
+            className="font-serif text-[30px] leading-[34px]"
+            style={{ color: colors.foreground }}>
+            Primitives
+          </Text>
+          <Text
+            className="mt-1 text-sm"
+            style={{ color: colors.mutedForeground }}>
             C2 — every primitive on our tokens.
           </Text>
         </View>
@@ -205,13 +220,19 @@ export function Gallery() {
             </AnchoredPopoverTrigger>
             <AnchoredPopoverContent>
               <AnchoredPopoverClose className="rounded-md px-3 py-2.5">
-                <Text className="text-sm text-card-foreground">Profile</Text>
+                <Text className="text-sm" style={{ color: colors.foreground }}>
+                  Profile
+                </Text>
               </AnchoredPopoverClose>
               <AnchoredPopoverClose className="rounded-md px-3 py-2.5">
-                <Text className="text-sm text-card-foreground">Settings</Text>
+                <Text className="text-sm" style={{ color: colors.foreground }}>
+                  Settings
+                </Text>
               </AnchoredPopoverClose>
               <AnchoredPopoverClose className="rounded-md px-3 py-2.5">
-                <Text className="text-sm text-destructive">Sign out</Text>
+                <Text className="text-sm" style={{ color: colors.destructive }}>
+                  Sign out
+                </Text>
               </AnchoredPopoverClose>
             </AnchoredPopoverContent>
           </AnchoredPopover>
@@ -301,7 +322,9 @@ Images are dropped: ![logo](https://example.com/logo.png)`}</MarkdownProse>
             {['Priya Raman', 'Devon Clarke'].map((name) => (
               <View key={name} className="flex-row items-center gap-3">
                 <MonogramAvatar name={name} />
-                <Text className="text-sm text-card-foreground">{name}</Text>
+                <Text className="text-sm" style={{ color: colors.foreground }}>
+                  {name}
+                </Text>
               </View>
             ))}
           </View>

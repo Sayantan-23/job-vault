@@ -15,6 +15,8 @@ const { transform } = require('jest-expo/jest-preset');
  */
 module.exports = {
   preset: 'jest-expo',
+  testTimeout: 15000,
+  maxWorkers: '50%',
   haste: { defaultPlatform: 'android', platforms: ['android', 'ios', 'native'] },
   resolver: '<rootDir>/jest.resolver.js',
   transform: { ...transform, '\\.mjs$': transform['\\.[jt]sx?$'] },

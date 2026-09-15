@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native-css/components';
 import { Icon } from '@/components/icon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 import type { RefineAction } from '@/types/cover-letter';
 
 const PRESETS: readonly { label: string; action: RefineAction }[] = [
@@ -25,14 +26,21 @@ export interface RefineControlsProps {
  * prompt instructions.
  */
 export function RefineControls({ busy, onRun }: RefineControlsProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const [instructions, setInstructions] = useState('');
   const trimmed = instructions.trim();
 
   return (
-    <View className="gap-3 rounded-lg border border-border bg-card p-3.5">
+    <View
+      className="gap-3 rounded-lg border p-3.5"
+      style={{ backgroundColor: colors.card, borderColor: colors.border }}>
       <View className="flex-row items-center gap-1.5">
-        <Icon icon={Sparkles} size={15} className="text-primary" />
-        <Text className="font-sans-medium text-xs text-foreground">Improve with AI</Text>
+        <Icon icon={Sparkles} size={15} color={colors.primary} />
+        <Text
+          className="font-sans-medium text-xs"
+          style={{ color: colors.foreground }}>
+          Improve with AI
+        </Text>
       </View>
 
       <View className="flex-row flex-wrap gap-1.5">
@@ -43,8 +51,16 @@ export function RefineControls({ busy, onRun }: RefineControlsProps) {
             accessibilityLabel={`Refine: ${preset.label}`}
             disabled={busy}
             onPress={() => onRun(preset.action, trimmed || undefined)}
-            className="rounded-md border border-input bg-background px-2.5 py-1.5 active:bg-muted active:opacity-80">
-            <Text className="text-xs font-sans-medium text-foreground">{preset.label}</Text>
+            className="rounded-md border px-2.5 py-1.5 active:opacity-80"
+            style={{
+              backgroundColor: colors.background,
+              borderColor: colors.input,
+            }}>
+            <Text
+              className="text-xs font-sans-medium"
+              style={{ color: colors.foreground }}>
+              {preset.label}
+            </Text>
           </Pressable>
         ))}
       </View>
@@ -68,8 +84,10 @@ export function RefineControls({ busy, onRun }: RefineControlsProps) {
             if (trimmed) onRun('custom', trimmed);
           }}
           className="h-9 px-3">
-          <Icon icon={Wand2} size={14} className="text-primary-foreground" />
-          <Text className="text-xs font-sans-medium text-primary-foreground">
+          <Icon icon={Wand2} size={14} color={colors.primaryForeground} />
+          <Text
+            className="text-xs font-sans-medium"
+            style={{ color: colors.primaryForeground }}>
             {busy ? 'Improving…' : 'Refine'}
           </Text>
         </Button>

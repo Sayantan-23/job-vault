@@ -8,6 +8,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icon';
+import { LIGHT_COLORS, useTheme } from '@/hooks/use-theme';
 import { cn } from './cn';
 import { FAB_GAP, FAB_SIZE } from '@/theme';
 
@@ -52,6 +53,7 @@ export function Fab({
   testID,
   className,
 }: FabProps) {
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
   const insets = useSafeAreaInsets();
   const effectiveBottom = bottom ?? Math.max(insets.bottom, 16) + FAB_GAP;
 
@@ -94,14 +96,22 @@ export function Fab({
           (disabled || loading) && 'opacity-50',
           className
         )}
-        style={{ width: FAB_SIZE, height: FAB_SIZE }}>
+        style={{
+          width: FAB_SIZE,
+          height: FAB_SIZE,
+          backgroundColor: isDestructive ? colors.destructive : colors.primary,
+        }}>
         {loading ? (
-          <ActivityIndicator size="small" color="#fcfcfc" />
+          <ActivityIndicator
+            size="small"
+            color={isDestructive ? colors.destructiveForeground : colors.primaryForeground}
+          />
         ) : (
           <Icon
             icon={icon}
             size={24}
             strokeWidth={2}
+            color={isDestructive ? colors.destructiveForeground : colors.primaryForeground}
             className={inkClass}
           />
         )}

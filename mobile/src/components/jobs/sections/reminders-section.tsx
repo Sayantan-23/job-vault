@@ -2,7 +2,9 @@ import { Linking } from 'react-native';
 import { Pressable, Text, View } from 'react-native-css/components';
 
 import { useJobReminders } from '@/hooks/use-reminders';
+import { useTheme } from '@/hooks/use-theme';
 import { shortDate } from '@/lib/relative-time';
+import { LIGHT_COLORS } from '@/theme';
 
 const WEB_BASE = 'https://jobvault.app';
 
@@ -10,23 +12,25 @@ const WEB_BASE = 'https://jobvault.app';
 // ponytail: read-only — CRUD is a later slice.
 export function RemindersSection({ jobId }: { jobId: string }) {
   const { data: reminders = [], isLoading } = useJobReminders(jobId);
+  const { colors = LIGHT_COLORS } = useTheme() ?? {};
 
   return (
     <View className="gap-3">
-      <Text className="font-sans-medium text-sm text-foreground">Reminders</Text>
+      <Text style={{ color: colors.foreground }} className="font-sans-medium text-sm text-foreground">Reminders</Text>
       {isLoading ? (
-        <Text className="text-sm text-muted-foreground">Loading…</Text>
+        <Text style={{ color: colors.mutedForeground }} className="text-sm text-muted-foreground">Loading…</Text>
       ) : reminders.length === 0 ? (
-        <Text className="text-sm text-muted-foreground">No reminders.</Text>
+        <Text style={{ color: colors.mutedForeground }} className="text-sm text-muted-foreground">No reminders.</Text>
       ) : (
         <View className="gap-2">
           {reminders.map((r) => (
             <View key={r.id} className="flex-row items-center justify-between gap-2">
               <Text
+                style={{ color: r.isCompleted ? colors.mutedForeground : colors.foreground }}
                 className={`text-sm ${r.isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                 {r.message}
               </Text>
-              <Text className="font-mono text-xs text-muted-foreground">
+              <Text style={{ color: colors.mutedForeground }} className="font-mono text-xs text-muted-foreground">
                 {shortDate(r.remindAt)}
               </Text>
             </View>
@@ -38,7 +42,7 @@ export function RemindersSection({ jobId }: { jobId: string }) {
         accessibilityLabel="Manage reminders on the web"
         onPress={() => void Linking.openURL(`${WEB_BASE}/app/jobs?job=${jobId}`)}
         className="flex-row items-center gap-1">
-        <Text className="text-xs font-sans-medium text-primary">Open on web</Text>
+        <Text style={{ color: colors.primary }} className="text-xs font-sans-medium text-primary">Open on web</Text>
       </Pressable>
     </View>
   );

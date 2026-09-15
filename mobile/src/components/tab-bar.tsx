@@ -7,8 +7,9 @@ import type { BottomTabBarProps } from 'expo-router/tabs';
 import { Archive, Briefcase, Clock, MessageSquareQuote, type LucideIcon } from 'lucide-react-native';
 
 import { Icon } from '@/components/icon';
-import { useUnreadNotificationCount } from '@/hooks/use-notifications';
-import { TAB_BAR_HEIGHT } from '@/theme';
+import { useNotifications, useUnreadNotificationCount } from '@/hooks/use-notifications';
+import { useTheme } from '@/hooks/use-theme';
+import { darkVars, lightVars, TAB_BAR_HEIGHT } from '@/theme';
 
 /**
  * Four tabs, per d-0cd3wr — the six web routes regrouped. Keyed by route name so
@@ -32,6 +33,10 @@ const TRAIL_MS = 320;
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const unreadCount = useUnreadNotificationCount();
+  const { effectiveTheme, colors } = useTheme();
+  const activeVars = effectiveTheme === 'dark' ? darkVars : lightVars;
+  const barBg = colors.tabBar;
+  const primaryBg = colors.primary;
   const [barWidth, setBarWidth] = useState(0);
   const slot = state.routes.length > 0 ? barWidth / state.routes.length : 0;
 
@@ -59,12 +64,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   }));
 
   return (
-    // Square-edged, full-bleed and deliberately borderless: a straight 1pt rule
-    // across the top read louder than the content's curve and made the bar look
-    // like a separate section. The dark surface against the near-white page is
-    // the boundary now (d-0cd3wr, second amendment). The rounded corner belongs
-    // to the *page*, which paints this colour behind its own curved bottom.
-    <View className="bg-tab-bar" style={{ paddingBottom: insets.bottom }}>
+    // Square-edged, full-bleed and borderless: the surface difference between the page
+    // and the tab bar serves as the boundary.
+    <View
+      key={effectiveTheme}
+      className="bg-tab-bar"
+      style={[activeVars, { paddingBottom: insets.bottom, backgroundColor: barBg }]}>
       <View
         className="flex-row"
         style={{ height: TAB_BAR_HEIGHT }}
@@ -75,7 +80,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             { position: 'absolute', top: CAPSULE_INSET_Y, bottom: CAPSULE_INSET_Y },
             capsuleStyle,
           ]}>
-          <View className="flex-1 rounded-full bg-primary" />
+          <View
+            className="flex-1 rounded-full bg-primary"
+            style={{ backgroundColor: primaryBg }}
+          />
         </Animated.View>
 
         {state.routes.map((route, index) => {

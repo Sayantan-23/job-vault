@@ -18,11 +18,16 @@ import { useAnswers, useDeleteAnswer, useMarkAnswerUsed } from '@/hooks/use-answ
 import { useHideOnScroll } from '@/hooks/use-hide-on-scroll';
 import { useInfiniteJobs } from '@/hooks/use-jobs';
 import { usePersonas } from '@/hooks/use-personas';
-import { SCREEN_BOTTOM_INSET } from '@/theme';
+import { useTheme } from '@/hooks/use-theme';
+import { darkVars, lightVars, SCREEN_BOTTOM_INSET } from '@/theme';
 import { AnswerRow } from './answer-row';
 import { AnswerSheet } from './answer-sheet';
 
 export function AnswersScreen() {
+  const { effectiveTheme, colors } = useTheme();
+  const activeVars = effectiveTheme === 'dark' ? darkVars : lightVars;
+  const barBg = colors.tabBar;
+  const pageBg = colors.background;
   const params = useLocalSearchParams<{ answer?: string }>();
   const [search, setSearch] = useState('');
   const [activeAnswerId, setActiveAnswerId] = useState<string | null>(params.answer ?? null);
@@ -108,9 +113,14 @@ export function AnswersScreen() {
 
   return (
     <BlurTargetProvider blurTarget={blurTargetRef}>
-      <View className="flex-1 bg-tab-bar">
+      <View
+        key={effectiveTheme}
+        style={[activeVars, { backgroundColor: barBg }]}
+        className="flex-1 bg-tab-bar">
         <BlurTargetView ref={blurTargetRef} style={{ flex: 1 }}>
-          <View className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
+          <View
+            style={{ backgroundColor: pageBg }}
+            className="flex-1 overflow-hidden rounded-b-[20px] bg-background">
             <AppHeader title="Answers" />
 
             <View className="px-4 pb-2.5 pt-1">

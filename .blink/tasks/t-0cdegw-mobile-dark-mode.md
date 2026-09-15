@@ -1,13 +1,14 @@
 ---
 id: t-0cdegw
 title: "Mobile has no dark mode — conditional root variables are dropped by react-native-css"
-status: backlog
+status: done
 milestone: m-0cc02t
+owner: Antigravity
 created: 2026-08-29T14:00:00Z
-updated: 2026-09-05T00:22:00Z
+updated: 2026-09-15T22:51:00Z
 estimate: S
-decisions: [d-0cd3wr]
-tags: [mobile, design, deferred]
+decisions: [d-0cd3wr, d-0cdegb]
+tags: [mobile, design]
 ---
 
 **Deferred by the user 2026-08-29** — mark it, fix it later. Recorded now so the
@@ -71,4 +72,12 @@ a component change.
 still reads as a distinct surface in both.
 
 **Re-verified 2026-09-05:** Still open in backlog. Citing commit `ed770c9b` explicitly deferred the dark mode runtime switch to `t-0cdegw`.
+
+## Resolution (2026-09-15)
+
+Implemented Option B per user confirmation and decision [[d-0cdegb]]:
+- **Tab Bar & Navigation Shell**: Tab bar surface is borderless pitch black (`#000000`), with page content curved with `rounded-b-[20px]` and deep charcoal background (`#131110`). Root and tab scene styles prevent white flashing during navigation.
+- **Color Palette**: High contrast dark theme tokens (`#f0eeeb` foreground, `#96918c` muted text, `#1a1816` cards, `#282623` borders, `#708ade` accents).
+- **Surface Coverage**: Complete coverage across all screens (Jobs, Answers, Activity, Vault, Detail routes, Profile, Personas, Search, Settings, Auth), sheets, modals, popovers, and primitives (Buttons, Cards, Inputs, Select, SegmentedControl, Textarea, Avatar, Fab, SpeedDial, Diff, Prose).
+- **Verification**: 0 TypeScript errors (`npm --prefix mobile run typecheck`) and 103/103 test suites passing (409 tests) in `npm --prefix mobile test`.
 
