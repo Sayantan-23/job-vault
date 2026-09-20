@@ -83,6 +83,15 @@ describe('jobsService.list', () => {
     expect(result.rows[0]).toMatchObject({ id: 'a', outreachCount: 3, outreachReplies: 1 })
     expect(result.rows[1]).toMatchObject({ id: 'b', outreachCount: 0, outreachReplies: 0 })
   })
+
+  it('derives ghostDays live from lastActivityAt', async () => {
+    const fiveDaysAgo = new Date(Date.now() - 5 * 86_400_000)
+    const row = fakeJob({ id: 'a', lastActivityAt: fiveDaysAgo })
+    repo.findAll.mockResolvedValue({ rows: [row], total: 1 })
+
+    const result = await jobsService.list('u1', baseQuery)
+    expect(result.rows[0]?.ghostDays).toBe(5)
+  })
 })
 
 describe('jobsService.create', () => {
@@ -126,6 +135,13 @@ describe('jobsService.get', () => {
   it('throws NOT_FOUND when the job is missing or not owned', async () => {
     repo.findById.mockResolvedValue(null)
     await expect(jobsService.get('u1', 'missing')).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  it('derives ghostDays live from lastActivityAt', async () => {
+    const tenDaysAgo = new Date(Date.now() - 10 * 86_400_000)
+    repo.findById.mockResolvedValue(fakeJob({ id: 'j1', lastActivityAt: tenDaysAgo }))
+    const result = await jobsService.get('u1', 'j1')
+    expect(result.ghostDays).toBe(10)
   })
 })
 

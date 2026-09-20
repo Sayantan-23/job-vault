@@ -5,10 +5,15 @@ import { timelineService } from '@/modules/timeline/timeline.service.js'
 import { scrapeUrl, type ScrapeResult } from './scraper.js'
 import { createScrapeFallback } from './scrape-fallback.js'
 import { contactsRepository, type OutreachCounts } from '@/modules/contacts/contacts.repository.js'
+import { deriveGhostDays } from '@/shared/ghost.js'
 import type { JobRow, NewJobRow } from '@/db/schema/jobs.js'
 import type { CreateJobInput, UpdateJobInput, MoveJobInput, JobQueryInput } from './jobs.schema.js'
 
 const ZERO_OUTREACH: OutreachCounts = { outreachCount: 0, outreachReplies: 0 }
+
+function withDerivedGhostDays<T extends JobRow>(row: T, now = Date.now()): T {
+  return { ...row, ghostDays: deriveGhostDays(row, now) }
+}
 
 // The auto-event is a follow-on write after the job mutation has already
 // committed. The job mutation is the source of truth, so a timeline write
@@ -58,7 +63,7 @@ async function create(userId: string, input: CreateJobInput, options?: CreateJob
     title: options?.autoEntryTitle ?? 'Job added to vault',
     description: options?.autoEntryDescription ?? `Added to ${job.status} column`,
   })
-  return job
+  return withDerivedGhostDays(job)
 }
 
 async function list(
@@ -69,14 +74,19 @@ async function list(
   // One grouped query powers the outreach badges — merged here so the
   // repository's paginated query stays untouched.
   const counts = await contactsRepository.countsForJobs(userId, rows.map((r) => r.id))
-  const withCounts = rows.map((row) => ({ ...row, ...(counts.get(row.id) ?? ZERO_OUTREACH) }))
+  const now = Date.now()
+  const withCounts = rows.map((row) => ({
+    ...row,
+    ghostDays: deriveGhostDays(row, now),
+    ...(counts.get(row.id) ?? ZERO_OUTREACH),
+  }))
   return { rows: withCounts, total, page: query.page, limit: query.limit }
 }
 
 async function get(userId: string, id: string): Promise<JobRow> {
   const job = await jobsRepository.findById(userId, id)
   if (!job) throw new AppError('NOT_FOUND', 'Job not found')
-  return job
+  return withDerivedGhostDays(job)
 }
 
 async function update(userId: string, id: string, input: UpdateJobInput): Promise<JobRow> {
@@ -96,7 +106,7 @@ async function update(userId: string, id: string, input: UpdateJobInput): Promis
       description: `Moved from ${oldStatus} to ${job.status}`,
     })
   }
-  return job
+  return withDerivedGhostDays(job)
 }
 
 async function move(userId: string, id: string, input: MoveJobInput): Promise<JobRow> {
@@ -114,7 +124,7 @@ async function move(userId: string, id: string, input: MoveJobInput): Promise<Jo
       description: `Moved from ${oldStatus} to ${job.status}`,
     })
   }
-  return job
+  return withDerivedGhostDays(job)
 }
 
 async function remove(userId: string, id: string): Promise<void> {
