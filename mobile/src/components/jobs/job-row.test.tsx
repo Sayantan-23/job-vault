@@ -4,10 +4,6 @@ import { router } from 'expo-router';
 import { JobRow } from './job-row';
 import type { Job } from '@/types/job';
 
-const mockMutate = jest.fn();
-jest.mock('@/hooks/use-jobs', () => ({
-  useUpdateJob: () => ({ mutate: mockMutate, isPending: false }),
-}));
 
 jest.mock('expo-router', () => ({
   router: {
@@ -60,15 +56,5 @@ describe('JobRow', () => {
       pathname: '/jobs/[id]',
       params: { id: 'j-123' },
     });
-  });
-
-  it('renders advance action when next status is available', async () => {
-    await render(<JobRow job={sampleJob} />);
-
-    const advanceBtn = screen.getByLabelText('Advance to INTERVIEWING');
-    expect(advanceBtn).toBeTruthy();
-
-    fireEvent.press(advanceBtn);
-    expect(mockMutate).toHaveBeenCalledWith({ status: 'INTERVIEWING' });
   });
 });

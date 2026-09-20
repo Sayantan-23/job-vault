@@ -11,7 +11,7 @@ describe('OutreachBadge', () => {
   it('renders list variant with count and replies', async () => {
     await render(<OutreachBadge variant="list" count={3} replies={1} />);
     expect(screen.getByText('3')).toBeTruthy();
-    expect(screen.getByText('· 1 replied')).toBeTruthy();
+    expect(screen.getByText('1')).toBeTruthy();
     expect(screen.getByLabelText('3 contacted · 1 replied')).toBeTruthy();
   });
 

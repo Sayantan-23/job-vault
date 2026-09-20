@@ -1,4 +1,4 @@
-import { Mail } from 'lucide-react-native';
+import { Mail, Reply } from 'lucide-react-native';
 import { Text, View } from 'react-native-css/components';
 
 import { Icon } from '@/components/icon';
@@ -24,11 +24,16 @@ export function OutreachBadge({
     return (
       <View
         accessibilityLabel={`${count} contacted${replies > 0 ? ` · ${replies} replied` : ''}`}
-        className="flex-row items-center gap-1">
-        <Icon icon={Mail} size={14} strokeWidth={2} className="text-muted-foreground" />
-        <Text className="font-mono text-xs text-muted-foreground">{count}</Text>
+        className="flex-row items-center gap-1.5">
+        <View className="flex-row items-center gap-1">
+          <Icon icon={Mail} size={13} strokeWidth={2} className="text-muted-foreground" />
+          <Text className="font-mono text-xs text-muted-foreground">{count}</Text>
+        </View>
         {replies > 0 ? (
-          <Text className="font-mono text-xs text-muted-foreground">{`· ${replies} replied`}</Text>
+          <View className="flex-row items-center gap-0.5">
+            <Icon icon={Reply} size={11} strokeWidth={2} className="text-muted-foreground" />
+            <Text className="font-mono text-xs text-muted-foreground">{replies}</Text>
+          </View>
         ) : null}
       </View>
     );
